@@ -5,17 +5,17 @@
 
 - **Project**: /home/tom/github/semcod/koru
 - **Primary Language**: python
-- **Languages**: python: 796, typescript: 94, shell: 60, json: 45, yaml: 34
+- **Languages**: python: 797, typescript: 94, shell: 60, json: 45, yaml: 35
 - **Analysis Mode**: static
-- **Total Functions**: 7577
+- **Total Functions**: 7586
 - **Total Classes**: 536
-- **Modules**: 1084
-- **Entry Points**: 2819
+- **Modules**: 1087
+- **Entry Points**: 2831
 
 ## Architecture by Module
 
 ### src.koru.integrations.vdisplay_client
-- **Functions**: 260
+- **Functions**: 261
 - **File**: `vdisplay_client.py`
 
 ### packages.coru.src.coru.cli
@@ -46,17 +46,17 @@
 - **Functions**: 69
 - **File**: `scan.py`
 
-### src.koruide.plugin_installer
-- **Functions**: 64
-- **Classes**: 3
-- **File**: `plugin_installer.py`
-
 ### plugins.koru-autopilot-shared.src.bridge-focus-strategy
 - **Functions**: 64
 - **Classes**: 1
 - **File**: `bridge-focus-strategy.ts`
 
-### src.koruide.ide
+### packages.koruide.src.koruide.plugin_installer
+- **Functions**: 64
+- **Classes**: 3
+- **File**: `plugin_installer.py`
+
+### packages.koruide.src.koruide.ide
 - **Functions**: 59
 - **Classes**: 2
 - **File**: `ide.py`
@@ -66,7 +66,7 @@
 - **Classes**: 1
 - **File**: `install_manager.py`
 
-### src.koruide.drive_orchestrator
+### packages.koruide.src.koruide.drive_orchestrator
 - **Functions**: 56
 - **Classes**: 1
 - **File**: `drive_orchestrator.py`
@@ -151,10 +151,6 @@ Args:
     args: Parsed command-line argumen
 - **Calls**: args.project.resolve, src.koru.autopilot.log_contract.emit_log, client_fn, project.print, src.koru.autopilot.log_contract.emit_log, src.koru.autopilot.commands.handoff._build_brief, brief.strip, project.print
 
-### src.koru.queue.contracts.CapabilityContract.evaluate
-> Judge one intended action. Any single violation refuses the whole.
-- **Calls**: ContractDecision, ContractDecision, ContractDecision, _RISK_ORDER.get, _RISK_ORDER.get, ContractDecision, str, ContractDecision
-
 ### src.koru.autopilot.commands.status.action_status
 > Execute ``koru autopilot status`` command.
 
@@ -167,9 +163,6 @@ Args:
 ### packages.coru.src.coru.supervisor.models.LaneRecord.from_dict
 - **Calls**: LaneHealth, cls, isinstance, raw.get, raw.get, bool, bool, int
 
-### src.koruide.daemon.handlers.handle_status
-- **Calls**: daemon._plugin_router.drop_version_mismatch_plugins, src.koruide.daemon.protocol._daemon_package_version, daemon._send, daemon.log, row.to_dict, hasattr, daemon.daemon_metadata, str
-
 ### src.koru.deployment_events.models.DeploymentEvent.from_dict
 > Create event from dictionary.
 - **Calls**: data.get, cls, Component, data.get, data.get, DeploymentEventType, EventSource, Severity
@@ -181,6 +174,9 @@ Args:
     args: Parsed command-line arguments
     client_fn: Factory for AutopilotClient (injected for test
 - **Calls**: src.koru.autopilot.commands.drive._drive_text_from_args, src.koru.autopilot.commands.drive._record_drive_command, src.koru.autopilot.log_contract.emit_log, src.koru.autopilot.commands.drive._connect_drive_client, src.koru.autopilot.commands.drive._drive_daemon, src.koru.autopilot.commands.drive._finish_drive_reply, src.koru.autopilot.log_contract.emit_log, src.koru.autopilot.log_contract.emit_log
+
+### packages.koruide.src.koruide.daemon.handlers.handle_status
+- **Calls**: daemon._plugin_router.drop_version_mismatch_plugins, packages.koruide.src.koruide.daemon.protocol._daemon_package_version, daemon._send, daemon.log, row.to_dict, hasattr, daemon.daemon_metadata, str
 
 ### packages.nlp2koru.src.nlp2koru.cli.main
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, to.add_argument, to.add_argument, to.add_argument, sub.add_parser, apply.add_argument
@@ -206,11 +202,11 @@ Args:
 > Check if autopilot should be skipped and return (should_skip, skip_reason).
 - **Calls**: src.koru.autonomy.cycle.cycle_skip_conditions._diagnostics_fail_skip_result, src.koru.autonomy.cycle.cycle_skip_conditions._manual_send_required_skip_result, src.koru.autonomy.cycle.cycle_skip_conditions._should_skip_for_idle_streak, src.koru.autonomy.cycle.cycle_skip_conditions._is_waiting_llm_ready_ticket, src.koru.autonomy.cycle.cycle_skip_conditions._is_stuck_status_skip_candidate, None.as_skip_tuple, src.koru.autonomy.cycle.cycle_skip_conditions._is_topology_enabled, _hp
 
-### src.koru.autonomy.operator.operator_runtime.setup_autonomous_session
-- **Calls**: apply_env_defaults, str, args.project.resolve, project.mkdir, src.koru.context._load_project_dotenv, src.koru.activity_log.configure_nfo_activity_log, src.koru.activity_log.activity, src.koru.autonomy.operator.operator_runtime.project_venv_warning_lines
-
 ### src.koru.autonomy.phases.scan_phase.handle_scan_phase
 - **Calls**: src.koru.autonomy.phases.scan_phase._should_skip_repeated_create_failed_scan, src.koru.autonomy.phases.scan_phase._should_skip_repeated_duplicate_scan, src.koru.autonomy.phases.utils.is_topology_enabled, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp, packages.nlp2coru.src.nlp2coru.cli._emit, _hp
+
+### src.koru.autonomy.operator.operator_runtime.setup_autonomous_session
+- **Calls**: apply_env_defaults, str, args.project.resolve, project.mkdir, src.koru.context._load_project_dotenv, src.koru.activity_log.configure_nfo_activity_log, src.koru.activity_log.activity, src.koru.autonomy.operator.operator_runtime.project_venv_warning_lines
 
 ### src.koru.doctor_render.render_text
 > Human-readable rendering — fixed-width status column.
@@ -228,6 +224,10 @@ Args:
 
 ### packages.nlp2coru.src.nlp2coru.cli.main
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, to_dsl.add_argument, to_dsl.add_argument, to_dsl.add_argument, to_dsl.add_argument, sub.add_parser
+
+### src.koru.cli_tagi.auto
+> Auto-commit all changes using Tagi's auto-ordering.
+- **Calls**: tagi.command, click.argument, click.option, click.option, click.option, None.resolve, click.echo, TagiIntegration
 
 ## Process Flows
 
@@ -329,10 +329,10 @@ action_handoff [src.koru.autopilot.commands.handoff]
 - **Methods**: 64
 - **Key Methods**: plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.focusChat, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.primary, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.context, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.alreadyFocused, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.inputOnly, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.result, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy._buildFocusChatContext, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.ide, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.existing, plugins.koru-autopilot-shared.src.bridge-focus-strategy.SharedAutopilotBridgeFocusStrategy.cache
 
-### src.koruide.drive_orchestrator.DriveOrchestrator
+### packages.koruide.src.koruide.drive_orchestrator.DriveOrchestrator
 > Pure helpers used by the autopilot daemon.
 - **Methods**: 56
-- **Key Methods**: src.koruide.drive_orchestrator.DriveOrchestrator.plugin_required_message, src.koruide.drive_orchestrator.DriveOrchestrator.should_try_os_fallback, src.koruide.drive_orchestrator.DriveOrchestrator.build_message_sent_info, src.koruide.drive_orchestrator.DriveOrchestrator.annotate_plugin_ack, src.koruide.drive_orchestrator.DriveOrchestrator.drive_intent_evidence, src.koruide.drive_orchestrator.DriveOrchestrator._deliver_prompt_evidence, src.koruide.drive_orchestrator.DriveOrchestrator._submit_evidence_is_untrusted, src.koruide.drive_orchestrator.DriveOrchestrator._untrusted_submit_evidence, src.koruide.drive_orchestrator.DriveOrchestrator._strict_submit_evidence, src.koruide.drive_orchestrator.DriveOrchestrator._submit_failure_reason
+- **Key Methods**: packages.koruide.src.koruide.drive_orchestrator.DriveOrchestrator.plugin_required_message, packages.koruide.src.koruide.drive_orchestrator.DriveOrchestrator.should_try_os_fallback, packages.koruide.src.koruide.drive_orchestrator.DriveOrchestrator.build_message_sent_info, packages.koruide.src.koruide.drive_orchestrator.DriveOrchestrator.annotate_plugin_ack, packages.koruide.src.koruide.drive_orchestrator.DriveOrchestrator.drive_intent_evidence, packages.koruide.src.koruide.drive_orchestrator.DriveOrchestrator._deliver_prompt_evidence, packages.koruide.src.koruide.drive_orchestrator.DriveOrchestrator._submit_evidence_is_untrusted, packages.koruide.src.koruide.drive_orchestrator.DriveOrchestrator._untrusted_submit_evidence, packages.koruide.src.koruide.drive_orchestrator.DriveOrchestrator._strict_submit_evidence, packages.koruide.src.koruide.drive_orchestrator.DriveOrchestrator._submit_failure_reason
 
 ### plugins.koru-autopilot-shared.src.bridge-fastpath.SharedAutopilotBridgeFastPath
 - **Methods**: 54
@@ -379,28 +379,28 @@ action_handoff [src.koru.autopilot.commands.handoff]
 - **Methods**: 16
 - **Key Methods**: plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.storeAvailable, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.fetchNewer, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.lastRowid, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.latestBubbleRowid, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.n, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.r, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.parseCursorBubbleRows, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.recSep, plugins.koru-autopilot-shared.src.cursor-bubble-adapter.CursorBubbleAdapter.fldSep
 
-### src.koruide.plugin_router.PluginRouter
-> Select, enumerate and deduplicate connected plugin sessions.
+### plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher
 - **Methods**: 15
-- **Key Methods**: src.koruide.plugin_router.PluginRouter.__init__, src.koruide.plugin_router.PluginRouter.plugin_for, src.koruide.plugin_router.PluginRouter._plugin_candidates, src.koruide.plugin_router.PluginRouter._matches_plugin_target, src.koruide.plugin_router.PluginRouter._match_project_plugin, src.koruide.plugin_router.PluginRouter._first_workspace_match, src.koruide.plugin_router.PluginRouter._has_workspace_aware_candidates, src.koruide.plugin_router.PluginRouter._project_mismatch_blocks_fallback, src.koruide.plugin_router.PluginRouter._log_project_match, src.koruide.plugin_router.PluginRouter._log_workspace_mismatches
+- **Key Methods**: plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.sleep, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.anchor, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.debugLog, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.adapter, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.debugLog, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.cfg, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.timeoutMs, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.deadline, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.attempts, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.debugLog
 
-### src.koruide.daemon.server.AutopilotDaemon
-> Selector-based unix-socket broker.
-- **Methods**: 15
-- **Key Methods**: src.koruide.daemon.server.AutopilotDaemon.__init__, src.koruide.daemon.server.AutopilotDaemon.start, src.koruide.daemon.server.AutopilotDaemon.daemon_metadata, src.koruide.daemon.server.AutopilotDaemon.serve_forever, src.koruide.daemon.server.AutopilotDaemon.stop, src.koruide.daemon.server.AutopilotDaemon._shutdown, src.koruide.daemon.server.AutopilotDaemon._accept, src.koruide.daemon.server.AutopilotDaemon._on_readable, src.koruide.daemon.server.AutopilotDaemon._dispatch, src.koruide.daemon.server.AutopilotDaemon._send
-
-### src.koruide.ides.base.IdeStrategy
+### packages.koruide.src.koruide.ides.base.IdeStrategy
 > Per-IDE knowledge object.
 
 Subclasses are **pure data + thin helpers** — no global mutable state,
 no
 - **Methods**: 15
-- **Key Methods**: src.koruide.ides.base.IdeStrategy.id, src.koruide.ides.base.IdeStrategy.label, src.koruide.ides.base.IdeStrategy.detection, src.koruide.ides.base.IdeStrategy.terminal, src.koruide.ides.base.IdeStrategy.aliases, src.koruide.ides.base.IdeStrategy.config_home, src.koruide.ides.base.IdeStrategy.user_settings_path, src.koruide.ides.base.IdeStrategy.workspace_settings_path, src.koruide.ides.base.IdeStrategy.state_vscdb_path, src.koruide.ides.base.IdeStrategy.extensions_metadata_path
+- **Key Methods**: packages.koruide.src.koruide.ides.base.IdeStrategy.id, packages.koruide.src.koruide.ides.base.IdeStrategy.label, packages.koruide.src.koruide.ides.base.IdeStrategy.detection, packages.koruide.src.koruide.ides.base.IdeStrategy.terminal, packages.koruide.src.koruide.ides.base.IdeStrategy.aliases, packages.koruide.src.koruide.ides.base.IdeStrategy.config_home, packages.koruide.src.koruide.ides.base.IdeStrategy.user_settings_path, packages.koruide.src.koruide.ides.base.IdeStrategy.workspace_settings_path, packages.koruide.src.koruide.ides.base.IdeStrategy.state_vscdb_path, packages.koruide.src.koruide.ides.base.IdeStrategy.extensions_metadata_path
 - **Inherits**: ABC
 
-### plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher
+### packages.koruide.src.koruide.daemon.server.AutopilotDaemon
+> Selector-based unix-socket broker.
 - **Methods**: 15
-- **Key Methods**: plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.sleep, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.anchor, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.debugLog, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.adapter, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.debugLog, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.cfg, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.timeoutMs, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.deadline, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.attempts, plugins.koru-autopilot-shared.src.bridge-watcher.SharedAutopilotBridgeWatcher.debugLog
+- **Key Methods**: packages.koruide.src.koruide.daemon.server.AutopilotDaemon.__init__, packages.koruide.src.koruide.daemon.server.AutopilotDaemon.start, packages.koruide.src.koruide.daemon.server.AutopilotDaemon.daemon_metadata, packages.koruide.src.koruide.daemon.server.AutopilotDaemon.serve_forever, packages.koruide.src.koruide.daemon.server.AutopilotDaemon.stop, packages.koruide.src.koruide.daemon.server.AutopilotDaemon._shutdown, packages.koruide.src.koruide.daemon.server.AutopilotDaemon._accept, packages.koruide.src.koruide.daemon.server.AutopilotDaemon._on_readable, packages.koruide.src.koruide.daemon.server.AutopilotDaemon._dispatch, packages.koruide.src.koruide.daemon.server.AutopilotDaemon._send
+
+### packages.koruide.src.koruide.plugin_router.PluginRouter
+> Select, enumerate and deduplicate connected plugin sessions.
+- **Methods**: 15
+- **Key Methods**: packages.koruide.src.koruide.plugin_router.PluginRouter.__init__, packages.koruide.src.koruide.plugin_router.PluginRouter.plugin_for, packages.koruide.src.koruide.plugin_router.PluginRouter._plugin_candidates, packages.koruide.src.koruide.plugin_router.PluginRouter._matches_plugin_target, packages.koruide.src.koruide.plugin_router.PluginRouter._match_project_plugin, packages.koruide.src.koruide.plugin_router.PluginRouter._first_workspace_match, packages.koruide.src.koruide.plugin_router.PluginRouter._has_workspace_aware_candidates, packages.koruide.src.koruide.plugin_router.PluginRouter._project_mismatch_blocks_fallback, packages.koruide.src.koruide.plugin_router.PluginRouter._log_project_match, packages.koruide.src.koruide.plugin_router.PluginRouter._log_workspace_mismatches
 
 ### src.koru.queue.repair_recording.RepairRecordingSession
 > One queue run of one patch ticket, mirrored into the store.
@@ -580,24 +580,22 @@ Functions exposed as public API (no underscore prefix):
 - `packages.dsl2koru.src.dsl2koru.events.EventStore.append_command` - 33 calls
 - `src.koru.context_render.render_markdown_handoff` - 33 calls
 - `src.koru.autopilot.commands.handoff.action_handoff` - 33 calls
-- `src.koru.queue.contracts.CapabilityContract.evaluate` - 32 calls
 - `src.koru.autopilot.commands.status.action_status` - 32 calls
 - `src.koru.integrations.vdisplay_client.record_koru_drive_step` - 31 calls
 - `packages.coru.src.coru.supervisor.models.LaneRecord.from_dict` - 30 calls
-- `src.koruide.daemon.handlers.handle_status` - 30 calls
 - `src.koru.deployment_events.models.DeploymentEvent.from_dict` - 30 calls
 - `src.koru.autopilot.commands.drive.action_drive` - 30 calls
+- `packages.koruide.src.koruide.daemon.handlers.handle_status` - 30 calls
 - `packages.nlp2koru.src.nlp2koru.cli.main` - 29 calls
 - `koru.observability_dsl.parse_observability_dsl` - 29 calls
 - `src.koru.autonomy.env.autonomous_environ_doctor_probe` - 29 calls
-- `src.koru.queue.planfile_sdk.parse_lifecycle_request` - 29 calls
 - `scripts.subactor-development-repair-pilot.main` - 29 calls
 - `packages.uri2coru.src.uri2coru.cli.main` - 28 calls
 - `packages.uri2koru.src.uri2koru.cli.main` - 28 calls
 - `src.koru.control_commands.control_command_replay_plan` - 28 calls
 - `src.koru.cli_queue.render_clean_report_text` - 28 calls
-- `src.koru.autonomy.operator.operator_runtime.setup_autonomous_session` - 28 calls
 - `src.koru.autonomy.phases.scan_phase.handle_scan_phase` - 28 calls
+- `src.koru.autonomy.operator.operator_runtime.setup_autonomous_session` - 28 calls
 - `src.koru.integrations.vdisplay_client.refresh_photo_vql_sidecar` - 28 calls
 - `src.koru.doctor_render.render_text` - 27 calls
 - `src.koru.cli_tagi.deploy` - 27 calls
@@ -606,6 +604,8 @@ Functions exposed as public API (no underscore prefix):
 - `packages.nlp2coru.src.nlp2coru.cli.main` - 26 calls
 - `src.koru.cli_tagi.auto` - 26 calls
 - `src.koru.cli_strategy.strategy_main` - 26 calls
+- `src.koru.autonomy.drive_result.DriveAttemptResult.from_reply` - 26 calls
+- `src.koru.autonomy.operator.operator_daemon.start_or_reuse_daemon` - 26 calls
 
 ## System Interactions
 

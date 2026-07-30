@@ -2402,6 +2402,76 @@ def test_start_or_reuse_daemon_reuses_current_version(tmp_path, monkeypatch) -> 
     assert any("reusing autopilot daemon" in line for line in starts)
 
 
+def test_start_or_reuse_daemon_restarts_current_version_for_other_project(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(autonomous_mod, "_current_koru_version", lambda: "1.2.3")
+    other_project = tmp_path / "other-project"
+    other_project.mkdir()
+
+    class FakeClient:
+        shutdowns = 0
+
+        def is_running(self):
+            return FakeClient.shutdowns == 0
+
+        def status(self):
+            return {
+                "daemon_version": "1.2.3",
+                "daemon": {
+                    "project": str(other_project),
+                    "python_executable": sys.executable,
+                },
+            }
+
+        def shutdown(self):
+            FakeClient.shutdowns += 1
+            return {"ok": True}
+
+    class FakeDaemon:
+        def __init__(self, **_kwargs) -> None:
+            self.started = False
+
+        def start(self):
+            self.started = True
+
+        def serve_forever(self):
+            return None
+
+    class FakeThread:
+        def __init__(self, target, daemon) -> None:
+            self.target = target
+            self.daemon = daemon
+            self.started = False
+
+        def start(self):
+            self.started = True
+
+    messages: list[str] = []
+    monkeypatch.setattr(autonomous_mod, "build_ide_client", lambda **_kwargs: FakeClient())
+    monkeypatch.setattr(autonomous_mod, "AutopilotDaemon", FakeDaemon)
+    monkeypatch.setattr(autonomous_mod.threading, "Thread", FakeThread)
+    monkeypatch.setattr(autonomous_mod.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(
+        autonomous_mod,
+        "_stdio_info",
+        lambda message, **_kwargs: messages.append(message),
+    )
+
+    _client, daemon, thread = autonomous_mod._start_or_reuse_daemon(
+        project=tmp_path,
+        socket_path=tmp_path / "koru.sock",
+    )
+
+    assert isinstance(daemon, FakeDaemon)
+    assert daemon.started is True
+    assert isinstance(thread, FakeThread)
+    assert thread.started is True
+    assert FakeClient.shutdowns == 1
+    assert any("other project" in line for line in messages)
+
+
 def test_start_or_reuse_daemon_restarts_daemon_without_version(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(autonomous_mod, "_current_koru_version", lambda: "1.2.3")
 

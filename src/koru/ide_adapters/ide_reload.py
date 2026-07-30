@@ -25,12 +25,14 @@ from gillm.focus import (
     OsStrategy,
     resolve_active_os_strategy,
 )
+from koruide.ides import get_strategy as _get_ide_strategy
 
 from koru.ide_adapters.gillm_recovery import recovery_hints_for_ide_reload
 from koru.ide_adapters.shared import config_home_for_ide
-from koruide.ides import get_strategy as _get_ide_strategy
 
-_VSCODE_FAMILY_IDES = frozenset({"antigravity", "cursor", "vscode", "vscodium", "windsurf"})
+_VSCODE_FAMILY_IDES = frozenset(
+    {"antigravity", "cursor", "qoder", "vscode", "vscodium", "windsurf"}
+)
 _AUTO_RELOAD_DISABLED_MSG = "auto reload disabled"
 
 

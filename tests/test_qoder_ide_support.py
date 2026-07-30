@@ -16,6 +16,8 @@ from koruide.plugin_installer import (
     plugin_dir_names_for_ide,
 )
 
+from koru.ide_adapters import ide_reload
+
 
 def test_qoder_signature_matches_real_process() -> None:
     patterns, label = _IDE_SIGNATURES["qoder"]
@@ -46,3 +48,10 @@ def test_qoder_plugin_install_mappings() -> None:
     assert plugin_dir_names_for_ide("qoder") == ("koru-autopilot-qoder", "koru-autopilot-vscode")
     assert _EXTENSION_IDS["qoder"] == "semcod.koru-autopilot-vscode"
     assert _IDE_COMMANDS["qoder"][0] == "qoder"
+
+
+def test_qoder_supports_vscode_family_reload_and_connect() -> None:
+    assert ide_reload._ide_accepts_integrated_terminal("qoder") is True
+    method, reason = ide_reload.detect_reload_command("qoder", dry_run=True)
+    assert method == "dry_run"
+    assert reason is None

@@ -11,6 +11,7 @@ import contextlib
 import os
 import signal
 import subprocess
+import sys
 import threading
 import time
 from collections.abc import Callable, Mapping
@@ -18,9 +19,10 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
+from koruide.daemon import AutopilotDaemon
+
 from koru.autonomy.operator import operator_plugin as autonomous_plugin
 from koru.ide_client import IDEControlClient, build_ide_client
-from koruide.daemon import AutopilotDaemon
 
 
 def _stdio_info(msg: str, *, fmt: str) -> None:
@@ -69,10 +71,45 @@ def daemon_status_compatible(
     status: Mapping[str, Any] | None,
     *,
     current_version: Callable[[], str | None] = _current_koru_version,
+    project: Path | None = None,
+    current_python: str | Path | None = None,
 ) -> tuple[bool, str]:
     expected = current_version()
     actual = _daemon_status_version(status)
-    return _version_compatibility_check(expected, actual)
+    compatible, reason = _version_compatibility_check(expected, actual)
+    if not compatible or project is None or not status:
+        return compatible, reason
+
+    metadata = status.get("daemon_metadata") or status.get("daemon")
+    if not isinstance(metadata, Mapping):
+        return True, reason
+
+    daemon_project = str(metadata.get("project") or "").strip()
+    if daemon_project:
+        from koru.autonomy.operator.operator_runtime import projects_equivalent
+
+        if not projects_equivalent(daemon_project, project):
+            return (
+                False,
+                f"daemon project {daemon_project} belongs to other project; "
+                f"expected {project.resolve()}",
+            )
+
+    daemon_python = str(metadata.get("python_executable") or "").strip()
+    if daemon_python and current_python is not None:
+        left = Path(daemon_python).expanduser().resolve()
+        right = Path(current_python).expanduser().resolve()
+        same_python = left == right or (
+            left.parent == right.parent
+            and left.name in {"python", "python3"}
+            and right.name in {"python", "python3"}
+        )
+        if not same_python:
+            return (
+                False,
+                f"daemon python {daemon_python} != current python {current_python}",
+            )
+    return True, reason
 
 
 def daemon_status_log_summary(
@@ -158,7 +195,12 @@ def start_or_reuse_daemon(
                 f"koru autonomous: autopilot daemon status failed ({exc}); restarting",
                 fmt=stdio_format,
             )
-        compatible, reason = daemon_status_compatible(status, current_version=current_version)
+        compatible, reason = daemon_status_compatible(
+            status,
+            current_version=current_version,
+            project=project,
+            current_python=sys.executable,
+        )
         if compatible:
             stdio_info(
                 f"koru autonomous: reusing autopilot daemon on {socket_path} ({reason})",

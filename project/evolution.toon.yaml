@@ -1,38 +1,30 @@
-# code2llm/evolution | 7420 func | 706f | 2026-07-19
-# generated in 0.03s
+# code2llm/evolution | 7429 func | 707f | 2026-07-29
+# generated in 0.04s
 
-NEXT[5] (ranked by impact):
+NEXT[3] (ranked by impact):
   [1] !! SPLIT           src/koru/integrations/vdisplay_client.py
-      WHY: 6629L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 92806
+      WHY: 6577L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 92078
 
   [2] !! SPLIT           packages/coru/src/coru/cli.py
       WHY: 3464L, 3 classes, max CC=13
       EFFORT: ~4h  IMPACT: 45032
 
-  [3] !  SPLIT-FUNC      parse_lifecycle_request  CC=22  fan=14
-      WHY: CC=22 exceeds 15
-      EFFORT: ~1h  IMPACT: 308
-
-  [4] !  SPLIT-FUNC      CapabilityContract.evaluate  CC=21  fan=13
-      WHY: CC=21 exceeds 15
-      EFFORT: ~1h  IMPACT: 273
-
-  [5] !! SPLIT           tree.txt
+  [3] !! SPLIT           tree.txt
       WHY: 2722L, 0 classes, max CC=0
       EFFORT: ~4h  IMPACT: 0
 
 
 RISKS[3]:
-  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 260 import paths
+  ⚠ Splitting src/koru/integrations/vdisplay_client.py may break 261 import paths
   ⚠ Splitting packages/coru/src/coru/cli.py may break 180 import paths
   ⚠ Splitting tree.txt may break 0 import paths
 
 METRICS-TARGET:
   CC̄:          3.8 → ≤2.7
-  max-CC:      22 → ≤11
+  max-CC:      18 → ≤9
   god-modules: 60 → 0
-  high-CC(≥15): 7 → ≤3
+  high-CC(≥15): 5 → ≤2
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

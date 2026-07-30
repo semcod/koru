@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.438] - 2026-07-29
+
+### Fixed
+- Fix ruff-sorted-imports issues (ticket-92db80b0)
+
 ## [Unreleased]
 
 ### Fixed
@@ -84,6 +89,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   production namespace and enforcing the boundary in wheel/import checks.
 - Completed DEP-0's validated dependency-boundary inventory and DEP-3's typed,
   bounded Gillm actuator integration.
+
+## [0.1.439] - 2026-07-30
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_autonomous.py
+- Update tests/test_qoder_ide_support.py
+
+### Other
+- Update app.doql.less
+- Update planfile.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- ... and 8 more files
 
 ## [0.1.438] - 2026-07-22
 

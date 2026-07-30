@@ -1083,19 +1083,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-1c546e89
-    name: Fix ruff-sorted-imports issues
-    description: Resolve 1 ruff-sorted-imports issues in src/koru/autonomy/cycle/cycle_config.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - src/koru/autonomy/cycle/cycle_config.py
-    rule_id: ruff-sorted-imports
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-68210ed0
     name: Fix import-dependencies issues
     description: Resolve 8 import-dependencies issues in src/koru/autonomy/cycle/cycle_config.py
@@ -1209,6 +1196,19 @@ sprints:
     files:
     - src/koru/autonomy/cycle/cycle_drive_retry.py
     rule_id: ast-sorted-imports
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-92db80b0
+    name: Fix ruff-sorted-imports issues
+    description: Resolve 1 ruff-sorted-imports issues in src/koru/autonomy/cycle/cycle.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - src/koru/autonomy/cycle/cycle.py
+    rule_id: ruff-sorted-imports
     count: 1
     model_hints:
       planning: balanced
