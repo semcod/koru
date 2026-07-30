@@ -102,6 +102,20 @@ def _handle_autopilot_events(
                 except (TypeError, ValueError):
                     state.last_message_sent_ts = time.time()
                 state.last_message_sent_ide = str(ev.get("ide") or "")
+        if autopilot_ide:
+            try:
+                from koru.agent_availability import learn_unavailability_from_events
+
+                unavailable = learn_unavailability_from_events(autopilot_ide, events)
+            except OSError as exc:
+                _hp(f"  agent availability registry write failed: {exc}")
+            else:
+                if unavailable is not None:
+                    _hp(
+                        "  agent unavailable learned from response: "
+                        f"ide={unavailable.agent_id} reason={unavailable.reason}; "
+                        "future drives are blocked"
+                    )
 
 
 def _cycle_socket_path(client: Any) -> Path | None:

@@ -17,8 +17,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from koru.autonomy.cycle.cycle_common import DiagnosticResult
 from koru.autonomy.cycle.cycle_orchestrator import (
     _drive_result_autopilot_status,
+    _handle_autopilot_phase,
     _plugin_gate_recovery_key,
 )
 from koru.queue import QueueLoopResult
@@ -147,3 +149,48 @@ class TestPluginGateRecoveryKey:
         long_reason = "x" * 500
         key = _plugin_gate_recovery_key(tmp_path, "vscode", long_reason)
         assert len(key[2]) == 240
+
+
+def test_handle_autopilot_phase_skips_unavailable_agent_before_client_use(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    import koru.autonomy.cycle.cycle_orchestrator as orchestrator
+    from koru.agent_availability import block_agent
+
+    block_agent("qoder", reason="usage_limit_exhausted")
+    emitted: dict[str, object] = {}
+    monkeypatch.setattr(
+        orchestrator,
+        "_emit_autopilot_preflight_skip",
+        lambda **kwargs: emitted.update(kwargs),
+    )
+    telemetry: dict[str, object] = {}
+    logs: list[str] = []
+
+    status, backend, drive_kind = _handle_autopilot_phase(
+        project=tmp_path,
+        state=object(),
+        cycle=1,
+        queue_result=_queue_result(waiting=["STARTER-1"]),
+        enable_autopilot=True,
+        client=None,
+        autopilot_ide="qoder",
+        drive_prompt="work",
+        submit=True,
+        autopilot_action="drive",
+        autopilot_on_idle_only=False,
+        autopilot_skip_on_diagnostics_fail=False,
+        autopilot_skip_drive_idle_streak=0,
+        autopilot_skip_statuses="",
+        diag_result=DiagnosticResult(status="ok", failed=[]),
+        topology_integration=False,
+        cycle_telemetry=telemetry,
+        _hp=logs.append,
+        _emit=lambda *_args, **_kwargs: None,
+    )
+
+    assert (status, backend, drive_kind) == ("skipped(agent_unavailable)", None, None)
+    assert telemetry["autopilot_skipped_agent_unavailable"] is True
+    assert emitted["blocker"] == "agent_unavailable"
+    assert emitted["verification"] == "agent_operational"

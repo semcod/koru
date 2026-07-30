@@ -479,6 +479,32 @@ def setup_autopilot_daemon(
         resolve_ide_route_fn=resolve_ide_route_fn,
         default_socket_path=default_socket_path,
     )
+    from koru.agent_availability import get_agent_availability
+
+    availability = get_agent_availability(decision.autopilot_ide)
+    if availability.blocked:
+        args.enable_autopilot = False
+        args.agent_availability_blocker = availability.to_dict()
+        retry_hint = (
+            f" retry_after={availability.retry_after:.3f}"
+            if availability.retry_after is not None
+            else ""
+        )
+        stdio_info(
+            "koru autonomous: [BLOCK] agent_unavailable: "
+            f"ide={availability.agent_id} reason={availability.reason or '-'} "
+            f"source={availability.source or '-'}{retry_hint}; "
+            f"recovery=`koru agent-availability clear {availability.agent_id}` "
+            "or select another --autopilot-ide",
+            fmt=args.emit_events,
+        )
+        activity(
+            "AUTOPILOT",
+            "agent unavailable; daemon and plugin startup skipped",
+            fmt=args.emit_events,
+            data=availability.to_dict(),
+        )
+        return client, daemon, thread, socket_path
     socket_path = decision.socket_path
     _log_autopilot_socket_decision(args, decision, stdio_info=stdio_info)
     client, daemon, thread = start_or_reuse_daemon(

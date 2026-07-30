@@ -53,6 +53,21 @@ def apply_autopilot_drive_outcome(
         state.last_submit_unverified_ts = time.time()
         state.last_submit_unverified_ticket_id = waiting_ticket
 
+    if not ok:
+        try:
+            from koru.agent_availability import learn_unavailability_from_reply
+
+            unavailable = learn_unavailability_from_reply(autopilot_ide, reply)
+        except OSError as exc:
+            _hp(f"  agent availability registry write failed: {exc}")
+        else:
+            if unavailable is not None:
+                cycle_telemetry["agent_unavailability_learned"] = unavailable.reason
+                _hp(
+                    "  → agent marked unavailable: "
+                    f"ide={unavailable.agent_id} reason={unavailable.reason}"
+                )
+
     record_submit_drive_outcome(
         state,
         queue_result=queue_result,

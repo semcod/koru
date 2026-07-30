@@ -868,6 +868,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "vision",
             "observe",
             "agent-backends",
+            "agent-availability",
             "task",
             "agent",
             "local-serve",

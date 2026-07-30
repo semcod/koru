@@ -128,7 +128,39 @@ def _handle_autopilot_phase(
     autopilot_backend: str | None = None
     autopilot_drive_kind: str | None = None
 
-    if not enable_autopilot or client is None:
+    if not enable_autopilot:
+        return autopilot_status, autopilot_backend, autopilot_drive_kind
+    from koru.agent_availability import get_agent_availability
+
+    availability = get_agent_availability(autopilot_ide)
+    if availability.blocked:
+        reason = availability.reason or "operational availability block"
+        cycle_telemetry["autopilot_skipped_agent_unavailable"] = True
+        cycle_telemetry["autopilot_skipped_agent_unavailable_ide"] = availability.agent_id
+        cycle_telemetry["autopilot_skipped_agent_unavailable_reason"] = reason
+        _hp(
+            f"- autopilot skipped (agent_unavailable: ide={availability.agent_id} "
+            f"reason={reason} source={availability.source or '-'})"
+        )
+        _hp(
+            f"  → restore with `koru agent-availability clear {availability.agent_id}` "
+            "or select another --autopilot-ide."
+        )
+        _emit_autopilot_preflight_skip(
+            project=project,
+            cycle=cycle,
+            queue_result=queue_result,
+            autopilot_ide=autopilot_ide,
+            drive_prompt=drive_prompt,
+            submit=submit,
+            blocker="agent_unavailable",
+            reason=reason,
+            next_action=f"koru agent-availability clear {availability.agent_id}",
+            decision_name="preflight_agent_availability",
+            verification="agent_operational",
+        )
+        return "skipped(agent_unavailable)", None, None
+    if client is None:
         return autopilot_status, autopilot_backend, autopilot_drive_kind
     if plugin_status := _plugin_gate_status(
         project,
@@ -433,6 +465,8 @@ def _emit_autopilot_preflight_skip(
     blocker: str,
     reason: str,
     next_action: str,
+    decision_name: str = "preflight_plugin_gate",
+    verification: str = "plugin_connected",
 ) -> None:
     corr = f"auto-{cycle}-preflight"
     ticket = _queue_loop_waiting_ticket_label(queue_result)
@@ -455,7 +489,7 @@ def _emit_autopilot_preflight_skip(
             corr=corr,
             cycle=cycle,
             ticket=ticket_id,
-            name="preflight_plugin_gate",
+            name=decision_name,
             chosen="skip",
             because=blocker,
             ide=autopilot_ide,
@@ -469,7 +503,7 @@ def _emit_autopilot_preflight_skip(
             code=blocker,
             message=reason,
             ide=autopilot_ide,
-            verification="plugin_connected",
+            verification=verification,
         ),
         emit_blocker(
             project,
@@ -488,7 +522,7 @@ def _emit_autopilot_preflight_skip(
             ticket=ticket_id,
             action=next_action,
             ide=autopilot_ide,
-            decision_kind="preflight_plugin_gate",
+            decision_kind=decision_name,
         ),
     ]
     emit_terminal_observability_path(events)

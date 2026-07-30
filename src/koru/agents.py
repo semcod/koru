@@ -94,6 +94,7 @@ def _detect_gui_agent_commands() -> dict[str, str | None]:
     return {
         "windsurf": _which("windsurf"),
         "cursor": _which("cursor"),
+        "qoder": _which("qoder"),
     }
 
 
@@ -231,6 +232,27 @@ def _apply_project_hints(agents: list[AgentOption], project: Path) -> list[Agent
     return out
 
 
+def _apply_operational_availability(agents: list[AgentOption]) -> list[AgentOption]:
+    """Remove explicitly blocked lanes from recommendation and launch paths."""
+    from koru.agent_availability import get_agent_availability
+
+    out: list[AgentOption] = []
+    for agent in agents:
+        availability = get_agent_availability(agent.id)
+        if availability.blocked:
+            agent = dataclasses.replace(
+                agent,
+                available=False,
+                launchable=False,
+                reason=(
+                    f"{agent.reason} Operationally unavailable: "
+                    f"{availability.reason or 'blocked'} ({availability.source or 'registry'})."
+                ).strip(),
+            )
+        out.append(agent)
+    return out
+
+
 def recommend_agent_for_project(agents: list[AgentOption]) -> AgentOption | None:
     """Project-aware pick: a lane the project is configured for wins over the
     generic preference order; otherwise first available (legacy behavior)."""
@@ -302,6 +324,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
         *shell_agents,
         _build_cli_agent_option("cursor", "Cursor", commands["cursor"], project, ".cursor"),
         _build_cli_agent_option("windsurf", "Windsurf", commands["windsurf"], project, ".windsurf"),
+        _build_cli_agent_option("qoder", "Qoder", commands.get("qoder"), project, ".qoder"),
         AgentOption(
             id="openrouter",
             label="OpenRouter automation lane",
@@ -316,7 +339,7 @@ def detect_agent_options(project: Path) -> list[AgentOption]:
             ),
         ),
     ]
-    return _apply_project_hints(options, project)
+    return _apply_operational_availability(_apply_project_hints(options, project))
 
 
 def detect_project_environment(project: Path) -> dict[str, Any]:
@@ -409,6 +432,7 @@ _LANE_AUTOPILOT_IDE: dict[str, str] = {
     "windsurf": "windsurf",
     "vscode": "vscode",
     "vscodium": "vscodium",
+    "qoder": "qoder",
     "jetbrains": "jetbrains",
     "zed": "zed",
     "openrouter": "auto",

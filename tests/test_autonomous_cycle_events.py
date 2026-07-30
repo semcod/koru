@@ -54,3 +54,30 @@ def test_handle_autopilot_events_logs_only_selected_ide(
         {"ts": now + 0.001, "type": "message.sent", "ide": "vscodium"}
     ]
     assert state.last_message_sent_ide == "vscodium"
+
+
+def test_handle_events_learns_quota_exhaustion_for_selected_agent(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from koru.agent_availability import get_agent_availability
+
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
+    path = tmp_path / "koru-autopilot-events.ndjson"
+    state = AutoloopState()
+    state.autopilot_event_cursor_ts = time.time() - 1.0
+    _append_event(
+        path,
+        {
+            "ts": time.time(),
+            "type": "message.received",
+            "ide": "qoder",
+            "text": "You have reached your usage limit.",
+        },
+    )
+    logs: list[str] = []
+
+    _handle_autopilot_events(state, logs.append, autopilot_ide="qoder")
+
+    assert get_agent_availability("qoder").blocked is True
+    assert any("future drives are blocked" in line for line in logs)

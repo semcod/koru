@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from koru.agent_availability import block_agent
 from koru.agents import (
     agent_lane_environment,
     autopilot_backend_for_agent_id,
@@ -18,6 +19,19 @@ from koru.agents import (
 
 
 class TestAgentDetection(unittest.TestCase):
+    def test_operational_block_removes_agent_from_recommendations(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".qoder").mkdir()
+            block_agent("qoder", reason="usage_limit_exhausted")
+            with patch("shutil.which", return_value="/usr/bin/qoder"):
+                agents = detect_agent_options(project)
+
+            qoder = next(agent for agent in agents if agent.id == "qoder")
+            self.assertFalse(qoder.available)
+            self.assertFalse(qoder.launchable)
+            self.assertIn("usage_limit_exhausted", qoder.reason)
+
     def test_detects_project_hints_without_cli(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

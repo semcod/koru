@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 
 import pytest
-
 from koruide import command_picker
 from koruide.config import clear_config_cache
 
@@ -31,6 +30,10 @@ _VOLATILE_ENV_KEYS = (
     "KORU_TILLM_MODEL",
     "KORU_TILLM_EXECUTE_PROFILE",
     "KORU_AUTOPILOT_SOCKET",
+    "KORU_AGENT_AVAILABILITY_FILE",
+    "KORU_AGENT_AVAILABLE",
+    "KORU_AGENT_UNAVAILABLE",
+    "KORU_AGENT_RATE_LIMIT_RETRY_SECONDS",
 )
 
 
@@ -58,6 +61,15 @@ def _isolated_global_killswitch(monkeypatch: pytest.MonkeyPatch, tmp_path_factor
     ctl_dir = tmp_path_factory.mktemp("koru-global-ctl")
     monkeypatch.setenv("KORU_GLOBAL_CONTROL_DIR", str(ctl_dir))
     monkeypatch.delenv("KORU_GLOBAL_DISABLE", raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _isolated_agent_availability(monkeypatch: pytest.MonkeyPatch, tmp_path_factory):
+    """Never read or mutate the developer's machine-global agent blocks in tests."""
+    registry = tmp_path_factory.mktemp("koru-agent-availability") / "registry.json"
+    monkeypatch.setenv("KORU_AGENT_AVAILABILITY_FILE", str(registry))
+    monkeypatch.delenv("KORU_AGENT_AVAILABLE", raising=False)
+    monkeypatch.delenv("KORU_AGENT_UNAVAILABLE", raising=False)
 
 
 @pytest.fixture(autouse=True)

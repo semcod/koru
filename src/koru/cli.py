@@ -156,6 +156,11 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "init-ci": lambda argv: _lazy_module_main("koru.cli_init", "init_ci_main", argv),
     "init-ide": lambda argv: _lazy_module_main("koru.mcp_provision", "init_ide_main", argv),
     "agent-backends": _agent_backends_main,
+    "agent-availability": lambda argv: _lazy_module_main(
+        "koru.cli_agent_availability",
+        "agent_availability_main",
+        argv,
+    ),
     "task": lambda argv: _lazy_module_main("koru.cli_task", "_task_main", argv),
     "agent": lambda argv: _lazy_module_main("koru.cli_agent", "_agent_main", argv),
     "local-serve": lambda argv: _lazy_module_main(
@@ -391,7 +396,9 @@ def _handle_parser_exit(exc: SystemExit, raw_args: list[str], subcommand: str) -
     return code
 
 
-_GLOBAL_CONTROL_SUBCOMMANDS: frozenset[str] = frozenset({"on", "off", "status"})
+_GLOBAL_CONTROL_SUBCOMMANDS: frozenset[str] = frozenset(
+    {"on", "off", "status", "agent-availability"}
+)
 
 
 def _dispatch_before_parse(subcommand: str, raw_args: list[str]) -> int | None:

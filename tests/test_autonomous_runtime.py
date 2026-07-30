@@ -8,6 +8,7 @@ from unittest.mock import patch
 import pytest
 
 from koru import autonomous_runtime
+from koru.agent_availability import block_agent
 from koru.autonomous import _apply_agent_lane_environ
 from koru.autonomous_startup import resolve_autopilot_ide_for_autonomous
 from koru.autopilot import default_socket_path
@@ -394,6 +395,43 @@ def test_setup_autopilot_daemon_sets_instance_before_default_socket(
     assert captured["socket_path"] == socket_path
     # Explicit --autopilot-ide wins over auto-detect; instance must be set before socket resolution.
     assert os.environ["KORU_AUTOPILOT_INSTANCE"] == "vscodium"
+
+
+def test_setup_autopilot_daemon_skips_known_unavailable_agent(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
+    monkeypatch.delenv("KORU_AUTOPILOT_INSTANCE", raising=False)
+    monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
+    block_agent("qoder", reason="usage_limit_exhausted")
+    args = SimpleNamespace(
+        enable_autopilot=True,
+        agent_lane="auto",
+        autopilot_ide="qoder",
+        socket=None,
+        emit_events="human",
+    )
+    logs: list[str] = []
+
+    def fail_start(**_kwargs):
+        raise AssertionError("daemon must not start for an unavailable agent")
+
+    client, daemon, thread, socket_path = autonomous_runtime.setup_autopilot_daemon(
+        args,
+        tmp_path,
+        apply_agent_lane_environ=_apply_agent_lane_environ,
+        resolve_autopilot_ide=resolve_autopilot_ide_for_autonomous,
+        resolve_ide_route_fn=resolve_ide_route,
+        default_socket_path=default_socket_path,
+        start_or_reuse_daemon=fail_start,
+        stdio_info=lambda message, **_kwargs: logs.append(message),
+    )
+
+    assert (client, daemon, thread, socket_path) == (None, None, None, None)
+    assert args.enable_autopilot is False
+    assert args.agent_availability_blocker["agent_id"] == "qoder"
+    assert any("agent_unavailable" in line and "qoder" in line for line in logs)
 
 
 def test_normalize_project_root_from_venv_prefix(tmp_path: Path) -> None:
