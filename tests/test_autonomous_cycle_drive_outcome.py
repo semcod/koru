@@ -112,7 +112,11 @@ def test_failed_drive_learns_agent_usage_limit(monkeypatch) -> None:
         project=Path("/tmp/project"),
         state=AutoloopState(),
         queue_result=queue,
-        reply={"ok": False, "error": "You have 0 weighted tokens left."},
+        reply={
+            "ok": False,
+            "message": "drive failed",
+            "stderr": "You have 0 weighted tokens left.",
+        },
         ok=False,
         decision_kind="ticket_prompt",
         idle_prompt_kind=None,

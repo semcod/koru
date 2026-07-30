@@ -271,12 +271,26 @@ def classify_unavailability(text: str) -> AvailabilitySignal | None:
 
 
 def _event_text(event: Mapping[str, Any]) -> str:
-    for key in ("text", "message", "error", "reason", "detail", "summary"):
+    parts: list[str] = []
+    for key in (
+        "text",
+        "message",
+        "error",
+        "reason",
+        "detail",
+        "summary",
+        "stderr",
+        "output",
+    ):
         value = event.get(key)
         if isinstance(value, str) and value.strip():
-            return value
+            parts.append(value)
     data = event.get("data")
-    return _event_text(data) if isinstance(data, Mapping) else ""
+    if isinstance(data, Mapping):
+        nested = _event_text(data)
+        if nested:
+            parts.append(nested)
+    return "\n".join(parts)
 
 
 def learn_unavailability_from_events(

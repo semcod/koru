@@ -74,6 +74,18 @@ def test_learning_uses_received_events_only() -> None:
     assert get_agent_availability("qoder").blocked is True
 
 
+def test_learning_checks_error_fields_after_generic_message() -> None:
+    from koru.agent_availability import learn_unavailability_from_reply
+
+    learned = learn_unavailability_from_reply(
+        "qoder",
+        {"message": "drive failed", "stderr": "429: too many requests"},
+    )
+
+    assert learned is not None
+    assert learned.reason == "rate_limit"
+
+
 def test_cli_block_status_and_clear(capsys) -> None:
     assert agent_availability_main(
         ["block", "qoder", "--reason", "usage_limit_exhausted"]
