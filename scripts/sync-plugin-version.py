@@ -57,7 +57,9 @@ def _update_expected_versions(ide_id: str, version: str) -> bool:
     """Patch only the ``"<ide>": "<version>"`` entry in
     ``EXPECTED_PLUGIN_VERSIONS``. Returns True when the file changed."""
 
-    version_file = REPO_ROOT / "src" / "koruide" / "plugin_version.py"
+    version_file = (
+        REPO_ROOT / "packages" / "koruide" / "src" / "koruide" / "plugin_version.py"
+    )
     content = version_file.read_text(encoding="utf-8")
     pattern = rf'("{re.escape(ide_id)}"\s*:\s*")[^"]+(")'
     updated, count = re.subn(pattern, rf"\g<1>{version}\g<2>", content, count=1)

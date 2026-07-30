@@ -395,9 +395,28 @@ def test_focus_ide_window_accepts_integrated_terminal_for_cursor(
         monkeypatch=monkeypatch,
         focus_outcome=FocusOutcome(ok=True, method="integrated_terminal"),
     )
+    monkeypatch.setattr(ide_reload, "_terminal_host_ide_id", lambda: "cursor")
     ok, method = ide_reload._focus_ide_window("cursor")
     assert ok is True
     assert method == "integrated_terminal"
+
+
+def test_focus_ide_window_rejects_other_integrated_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from gillm.focus.strategy import FocusOutcome
+
+    _fake_os_strategy(
+        ide_reload_module=ide_reload,
+        monkeypatch=monkeypatch,
+        focus_outcome=FocusOutcome(ok=True, method="integrated_terminal"),
+    )
+    monkeypatch.setattr(ide_reload, "_terminal_host_ide_id", lambda: "jetbrains")
+
+    focused, method = ide_reload._focus_ide_window("qoder")
+
+    assert focused is False
+    assert method == ""
 
 
 def test_reload_via_command_palette_uses_os_strategy_inject_keys(
@@ -457,7 +476,7 @@ def test_reload_via_command_palette_refuses_integrated_terminal_focus(
     strategy.inject_keys.assert_not_called()
 
 
-def test_reload_via_command_palette_allows_cross_ide_integrated_terminal(
+def test_reload_via_command_palette_rejects_cross_ide_integrated_terminal(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from gillm.focus.strategy import FocusOutcome
@@ -471,8 +490,9 @@ def test_reload_via_command_palette_allows_cross_ide_integrated_terminal(
     )
     monkeypatch.setattr(ide_reload.time, "sleep", lambda *_a: None)
     outcome = ide_reload.reload_via_command_palette("cursor")
-    assert outcome.ok is True
-    assert strategy.inject_keys.call_count == 3
+    assert outcome.ok is False
+    assert "could not focus cursor window" in (outcome.detail or "")
+    assert strategy.inject_keys.call_count == 0
 
 
 def test_reload_via_command_palette_explains_wayland_failure(

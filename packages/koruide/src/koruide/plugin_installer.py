@@ -537,6 +537,12 @@ def resolve_extension_vsix(target_ide: str | None = None) -> Path | None:
     for dir_name in dir_names:
         candidates.extend(_bundled_vsix_candidates(dir_name))
 
+    from koruide.plugin_version import expected_plugin_version_for_ide
+
+    expected_suffix = f"-{expected_plugin_version_for_ide(target_ide)}.vsix"
+    expected = [candidate for candidate in candidates if candidate.name.endswith(expected_suffix)]
+    if match := _newest_existing_vsix(expected):
+        return match
     return _newest_existing_vsix(candidates)
 
 

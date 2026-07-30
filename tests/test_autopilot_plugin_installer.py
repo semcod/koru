@@ -10,9 +10,9 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from koruide.plugin_version import expected_plugin_version_for_ide
 
 from koru.autopilot import install_plugin_cli, plugin_installer
-from koruide.plugin_version import expected_plugin_version_for_ide
 
 
 def _hermetic_editor_bin_usable(exe: str) -> bool:
@@ -224,6 +224,23 @@ def test_bundled_vscodium_vsix_matches_expected_version() -> None:
     assert json.loads(package_json.read_text(encoding="utf-8"))["version"] == expected
     assert asset.is_file()
     assert '"assets/koru-autopilot-vscodium/*.vsix"' in pyproject.read_text(encoding="utf-8")
+
+
+def test_bundled_vscode_vsix_matches_expected_version() -> None:
+    root = Path(__file__).resolve().parents[1]
+    expected = expected_plugin_version_for_ide("qoder")
+    asset = (
+        root
+        / "src"
+        / "koru"
+        / "assets"
+        / "koru-autopilot-vscode"
+        / f"koru-autopilot-{expected}.vsix"
+    )
+    package_json = root / "plugins" / "koru-autopilot-vscode" / "package.json"
+
+    assert json.loads(package_json.read_text(encoding="utf-8"))["version"] == expected
+    assert asset.is_file()
 
 
 def test_install_plugin_configures_socket_path(

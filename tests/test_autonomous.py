@@ -1280,7 +1280,7 @@ def test_stop_prior_autonomous_for_auto_start_terminates(tmp_path, monkeypatch) 
     monkeypatch.setattr(
         autonomous_processes_mod,
         "_find_existing_autonomous_processes",
-        lambda project, any_project=False: existing if any_project else [],
+        lambda project, any_project=False: existing if not any_project else [],
     )
     monkeypatch.setattr(
         autonomous_processes_mod, "_find_existing_wup_processes", lambda project: []
@@ -1292,6 +1292,32 @@ def test_stop_prior_autonomous_for_auto_start_terminates(tmp_path, monkeypatch) 
     )
     autonomous_mod.stop_prior_autonomous_for_auto_start(tmp_path)
     assert stopped == [99]
+
+
+def test_stop_prior_autonomous_for_auto_start_does_not_scan_other_projects(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    any_project_values: list[bool] = []
+
+    def _find(_project, *, any_project=False):
+        any_project_values.append(any_project)
+        return []
+
+    monkeypatch.setattr(
+        autonomous_processes_mod,
+        "_find_existing_autonomous_processes",
+        _find,
+    )
+    monkeypatch.setattr(
+        autonomous_processes_mod,
+        "_find_existing_wup_processes",
+        lambda _project: [],
+    )
+
+    autonomous_mod.stop_prior_autonomous_for_auto_start(tmp_path)
+
+    assert any_project_values == [False]
 
 
 def test_try_acquire_autonomous_start_lock_blocks_second_owner(tmp_path) -> None:

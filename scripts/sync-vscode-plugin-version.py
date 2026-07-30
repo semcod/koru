@@ -22,11 +22,11 @@ from pathlib import Path
 
 def get_plugin_version_from_source(root: Path) -> str:
     """Read the plugin version from the source of truth."""
-    version_file = root / "src" / "koruide" / "plugin_version.py"
+    version_file = root / "packages" / "koruide" / "src" / "koruide" / "plugin_version.py"
     content = version_file.read_text(encoding="utf-8")
-    match = re.search(r'EXPECTED_VSCODE_PLUGIN_VERSION\s*=\s*"([^"]+)"', content)
+    match = re.search(r'"vscode"\s*:\s*"([^"]+)"', content)
     if not match:
-        raise ValueError(f"Could not find EXPECTED_VSCODE_PLUGIN_VERSION in {version_file}")
+        raise ValueError(f"Could not find EXPECTED_PLUGIN_VERSIONS['vscode'] in {version_file}")
     return match.group(1)
 
 
@@ -42,13 +42,16 @@ def get_plugin_version_from_package(root: Path) -> str:
 
 def update_plugin_version_source(version: str, root: Path) -> None:
     """Update the version in plugin_version.py."""
-    version_file = root / "src" / "koruide" / "plugin_version.py"
+    version_file = root / "packages" / "koruide" / "src" / "koruide" / "plugin_version.py"
     content = version_file.read_text(encoding="utf-8")
-    updated = re.sub(
-        r'EXPECTED_VSCODE_PLUGIN_VERSION\s*=\s*"([^"]+)"',
-        f'EXPECTED_VSCODE_PLUGIN_VERSION = "{version}"',
+    updated, count = re.subn(
+        r'("vscode"\s*:\s*")[^"]+("\s*,?)',
+        rf"\g<1>{version}\g<2>",
         content,
+        count=1,
     )
+    if count == 0:
+        raise ValueError(f"Could not find EXPECTED_PLUGIN_VERSIONS['vscode'] in {version_file}")
     if content == updated:
         print(f"  ✓ plugin_version.py already at version {version}")
     else:

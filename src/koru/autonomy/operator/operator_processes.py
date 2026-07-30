@@ -354,12 +354,12 @@ def stop_prior_autonomous_for_auto_start(
     *,
     stdio_format: str = "human",
 ) -> None:
-    """Stop koru autonomous/auto loops (any project) and WUP watch for ``project``."""
+    """Stop koru autonomous/auto loops and WUP watch for ``project`` only."""
     project = project.resolve()
     existing = [
         *(
             _as_managed(proc)
-            for proc in _find_existing_autonomous_processes(project, any_project=True)
+            for proc in _find_existing_autonomous_processes(project, any_project=False)
         ),
         *_find_existing_wup_processes(project),
     ]

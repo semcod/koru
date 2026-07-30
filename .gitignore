@@ -8,6 +8,7 @@ plugins/koru-autopilot-cursor/.vscodeignore
 plugins/koru-autopilot-vscode/.vscodeignore
 node_modules
 *.vsix
+!src/koru/assets/koru-autopilot-vscode/koru-autopilot-0.2.13.vsix
 .env.example
 .idea
 .idea/inspectionProfiles/profiles_settings.xml

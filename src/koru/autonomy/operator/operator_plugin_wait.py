@@ -530,6 +530,7 @@ def _try_plugin_reconnect_pipeline(
     from koru.ide_adapters.ide_reload import (
         connect_via_command_palette,
         detached_reload_enabled,
+        reload_via_reopen_workspace,
         spawn_detached_ide_reload,
         try_reload_vscode_family_ide,
     )
@@ -553,10 +554,21 @@ def _try_plugin_reconnect_pipeline(
             )
             return False
         connect = connect_via_command_palette(autopilot_ide)
-        if connect.ok:
+        if connect.ok and _wait(min(2.0, max(0.5, wait_seconds))):
             return True
         reload = try_reload_vscode_family_ide(autopilot_ide, project=project)
-        return bool(reload.attempted and reload.ok)
+        if reload.attempted and reload.ok:
+            return True
+        if project.is_dir():
+            reopen = reload_via_reopen_workspace(autopilot_ide, project)
+            stdio_info(
+                "koru autonomous: plugin reconnect workspace reopen "
+                f"ide={autopilot_ide} attempted={reopen.attempted} ok={reopen.ok} "
+                f"detail={reopen.detail or '-'}",
+                fmt=args.emit_events,
+            )
+            return bool(reopen.attempted and reopen.ok)
+        return False
 
     def _wait(timeout: float) -> bool:
         return bool(

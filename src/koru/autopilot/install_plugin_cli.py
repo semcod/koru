@@ -12,13 +12,6 @@ from collections.abc import Callable
 from importlib import resources
 from pathlib import Path
 
-from koru.autopilot.ide import (
-    detect_focused_ide_id,
-    detect_running_ides,
-    detect_terminal_host_ide_id,
-    normalize_ide_id,
-)
-
 # Editor-bin resolution moved to koruide.plugin_installer (STARTER-563:
 # koruide must be standalone-importable). These re-export shims keep the
 # historical koru-side import paths and monkeypatch targets working — the
@@ -35,6 +28,13 @@ from koruide.plugin_installer import (
 )
 from koruide.plugin_installer import (
     resolve_plugin_editor_bin as resolve_plugin_editor_bin,
+)
+
+from koru.autopilot.ide import (
+    detect_focused_ide_id,
+    detect_running_ides,
+    detect_terminal_host_ide_id,
+    normalize_ide_id,
 )
 
 PLUGIN_INSTALL_IDES = frozenset(
@@ -93,6 +93,7 @@ def _versioned_plugin_vsix_candidates(plugin_dir: Path) -> list[Path]:
 
 def bundled_plugin_vsix_candidates(ide: str | None = None) -> list[Path]:
     from koruide.plugin_installer import plugin_dir_names_for_ide
+    from koruide.plugin_version import expected_plugin_version_for_ide
 
     out: list[Path] = []
     for dir_name in plugin_dir_names_for_ide(ide):
@@ -108,7 +109,12 @@ def bundled_plugin_vsix_candidates(ide: str | None = None) -> list[Path]:
         except (FileNotFoundError, NotADirectoryError, OSError):
             continue
     files = [candidate for candidate in out if candidate.is_file()]
-    return sorted(files, key=lambda p: p.stat().st_mtime, reverse=True)
+    expected_suffix = f"-{expected_plugin_version_for_ide(ide)}.vsix"
+    return sorted(
+        files,
+        key=lambda p: (p.name.endswith(expected_suffix), p.stat().st_mtime),
+        reverse=True,
+    )
 
 
 def jetbrains_plugin_repo_dir() -> Path:

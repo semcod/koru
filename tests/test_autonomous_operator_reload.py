@@ -11,6 +11,8 @@ running extension is stale and we should reload automatically.
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 from unittest import mock
 
@@ -20,6 +22,8 @@ from koru.autonomous_operator import (
     _live_plugin_version,
     _retry_plugin_wait_after_reload,
 )
+from koru.autonomy.operator import operator_plugin_wait
+from koru.ide_adapters.ide_reload import IdeReloadOutcome
 
 
 class StubClient:
@@ -218,6 +222,80 @@ class RetryPluginWaitAfterReloadTests(unittest.TestCase):
         joined = "\n".join(logs)
         self.assertIn("automatyczny Reload Window po mismatch nie powiódł się", joined)
         self.assertIn("would write into the shell", joined)
+
+    def test_reconnect_pipeline_reloads_when_connect_has_no_handshake(self) -> None:
+        waits = iter([False, True])
+        reload_calls: list[Path] = []
+
+        def wait_for_plugin(*_args: Any, **_kwargs: Any) -> bool:
+            return next(waits)
+
+        def reload_ide(_ide: str, *, project: Path):
+            reload_calls.append(project)
+            return IdeReloadOutcome(attempted=True, ok=True, method="reuse_window")
+
+        with (
+            mock.patch.object(operator_plugin_wait, "_terminal_host_ide_id", return_value=None),
+            mock.patch(
+                "koru.ide_adapters.ide_reload.connect_via_command_palette",
+                return_value=IdeReloadOutcome(attempted=True, ok=True, method="connect_palette"),
+            ),
+            mock.patch(
+                "koru.ide_adapters.ide_reload.try_reload_vscode_family_ide",
+                side_effect=reload_ide,
+            ),
+        ):
+            result = operator_plugin_wait._try_plugin_reconnect_pipeline(
+                SimpleNamespace(emit_events="human", project="/tmp/project"),
+                "qoder",
+                8.0,
+                client=StubClient({"plugins": []}),
+                wait_for_plugin=wait_for_plugin,
+                stdio_info=lambda *_args, **_kwargs: None,
+            )
+
+        self.assertTrue(result)
+        self.assertEqual(reload_calls, [Path("/tmp/project")])
+
+    def test_reconnect_pipeline_reopens_workspace_when_palette_reload_is_unavailable(
+        self,
+    ) -> None:
+        waits = iter([True])
+
+        with (
+            mock.patch.object(operator_plugin_wait, "_terminal_host_ide_id", return_value=None),
+            mock.patch(
+                "koru.ide_adapters.ide_reload.connect_via_command_palette",
+                return_value=IdeReloadOutcome(attempted=False, ok=False),
+            ),
+            mock.patch(
+                "koru.ide_adapters.ide_reload.try_reload_vscode_family_ide",
+                return_value=IdeReloadOutcome(
+                    attempted=False,
+                    ok=False,
+                    detail="command palette unavailable",
+                ),
+            ),
+            mock.patch(
+                "koru.ide_adapters.ide_reload.reload_via_reopen_workspace",
+                return_value=IdeReloadOutcome(
+                    attempted=True,
+                    ok=True,
+                    method="reuse_window",
+                ),
+            ) as reopen,
+        ):
+            result = operator_plugin_wait._try_plugin_reconnect_pipeline(
+                SimpleNamespace(emit_events="human", project="/tmp"),
+                "qoder",
+                8.0,
+                client=StubClient({"plugins": []}),
+                wait_for_plugin=lambda *_args, **_kwargs: next(waits),
+                stdio_info=lambda *_args, **_kwargs: None,
+            )
+
+        self.assertTrue(result)
+        reopen.assert_called_once_with("qoder", Path("/tmp"))
 
     def test_reuse_window_falls_back_to_fresh_window_when_plugin_still_missing(self) -> None:
         logs: list[str] = []

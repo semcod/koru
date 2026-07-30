@@ -220,6 +220,9 @@ def _focus_ide_window(ide: str) -> tuple[bool, str]:
     if outcome.ok and outcome.method == "integrated_terminal":
         if not _ide_accepts_integrated_terminal(ide):
             return False, ""
+        terminal_ide = _terminal_host_ide_id()
+        if terminal_ide is not None and terminal_ide != ide:
+            return False, ""
     return outcome.ok, outcome.method
 
 
