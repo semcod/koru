@@ -268,15 +268,16 @@ def _ticket_expects_edits(ticket: dict) -> bool:
     """Whether finishing this ticket means the declared files must change.
 
     Opt in explicitly with ``inputs.expect_files_changed``; scan-emitted
-    refactor tickets are treated as edit tickets by default, since that is what
-    "refactor" means. Tickets that merely *reference* files (a deploy recipe, a
-    question) are unaffected.
+    refactor and todo2code code-change tickets are edit tickets by definition.
+    The labels are also the durable fallback when planfile's JSON view drops
+    Koru-specific input keys. Tickets that merely *reference* files (a deploy
+    recipe, a question) are unaffected.
     """
     inputs = ticket.get("inputs") or {}
     if "expect_files_changed" in inputs:
         return bool(inputs["expect_files_changed"])
     labels = {str(label).lower() for label in (ticket.get("labels") or [])}
-    return "refactor" in labels
+    return bool(labels & {"refactor", "todo2code", "code-change"})
 
 
 def _snapshot_declared_files(project: Path, ticket: dict) -> dict[str, str]:

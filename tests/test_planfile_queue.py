@@ -1503,6 +1503,7 @@ class TestQueueEditVerification(unittest.TestCase):
         from koru.queue.runner import _ticket_expects_edits
 
         self.assertTrue(_ticket_expects_edits(self._ticket()))
+        self.assertTrue(_ticket_expects_edits(self._ticket(labels=["todo2code", "code-change"])))
         self.assertFalse(_ticket_expects_edits(self._ticket(labels=["deploy"])))
 
     def test_explicit_flag_overrides_label_heuristic(self) -> None:
