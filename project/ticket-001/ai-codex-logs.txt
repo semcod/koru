@@ -68,3 +68,9 @@ All checks passed!
 $ docker compose --profile verify run --rm --entrypoint sh koru-verify -lc '<staged-source lint and transaction suite>'
 All checks passed!
 284 passed, 11 subtests passed in 9.38s
+
+$ git commit -m 'fix(todo2code): enforce target governance'
+[main 4d061d28] fix(todo2code): enforce target governance
+
+$ git push origin main
+main -> main

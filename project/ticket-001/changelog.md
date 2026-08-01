@@ -16,3 +16,4 @@
   service with no network.
 - Added and expanded regression coverage across discovery, scanning, CLI,
   ticket hydration, context construction, transaction gates and governance.
+- Published the governed implementation directly to `main` as `4d061d28`.
