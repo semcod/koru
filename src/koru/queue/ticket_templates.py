@@ -9,6 +9,8 @@ from __future__ import annotations
 import copy
 import os
 import re
+import shlex
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -244,6 +246,98 @@ def hydrate_subactor_repair_ticket(ticket: dict[str, Any]) -> dict[str, Any]:
     template_env = template.get("environment") or {}
     for key, value in template_env.items():
         os.environ.setdefault(str(key), str(value))
+    return out
+
+
+def hydrate_todo2code_ticket(ticket: dict[str, Any], project: Path) -> dict[str, Any]:
+    """Restore the autonomous contract that older planfile schemas discard."""
+    labels = [str(label) for label in (ticket.get("labels") or [])]
+    lowered = {label.lower() for label in labels}
+    source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
+    source_tool = str(source.get("tool") or "").lower()
+    if "todo2code" not in lowered and "todo2code" not in source_tool:
+        return ticket
+
+    out = dict(ticket)
+    inputs = dict(ticket.get("inputs") or {})
+    execution = ticket.get("execution") if isinstance(ticket.get("execution"), dict) else {}
+    try:
+        attempt = int(execution.get("attempt") or 0)
+    except (TypeError, ValueError):
+        attempt = 0
+
+    primary = os.environ.get(
+        "KORU_TODO2CODE_LLM_MODEL",
+        "openrouter/anthropic/claude-opus-5",
+    )
+    fallback = os.environ.get(
+        "KORU_TODO2CODE_LLM_FALLBACK_MODEL",
+        "openrouter/qwen/qwen3-coder-next",
+    )
+    inputs["llm_model"] = fallback if attempt > 0 else str(inputs.get("llm_model") or primary)
+    inputs.setdefault("llm_max_tokens", int(os.environ.get("KORU_TODO2CODE_LLM_MAX_TOKENS", "4000")))
+    inputs.setdefault("llm_timeout_seconds", 300)
+    inputs.setdefault("include_project_context", True)
+    inputs.setdefault("context_files", list(ticket.get("files") or [])[:12])
+    inputs["expect_files_changed"] = True
+    inputs["patch_mode"] = True
+    inputs.setdefault("promotion_mode", "branch")
+    inputs.setdefault("worktree", True)
+    inputs.setdefault("max_patch_attempts", 3)
+    inputs.setdefault("risk_class", "R1")
+    from koru.autonomy.todo2code_discovery import _config_value
+
+    contract = str(
+        inputs.get("contract")
+        or _config_value("KORU_TODO2CODE_CONTRACT", project)
+        or ""
+    ).strip()
+    if contract:
+        inputs["contract"] = contract
+
+    executor = out.get("executor") if isinstance(out.get("executor"), dict) else {}
+    if str(executor.get("kind") or "human").lower() == "llm" and not contract:
+        # Older imported tickets may already say llm/automatic. Do not let a
+        # lossy Planfile round-trip turn that historical value into authority:
+        # autonomous todo2code patches require a target-owned capability contract.
+        out["executor"] = {"kind": "human", "mode": "interactive"}
+        inputs["governance_block_reason"] = (
+            "todo2code LLM execution requires KORU_TODO2CODE_CONTRACT"
+        )
+
+    context = source.get("context") if isinstance(source.get("context"), dict) else {}
+    diagnostic_ids = [
+        str(value) for value in (context.get("diagnostic_ids") or [])
+        if re.fullmatch(r"DIAG-[a-f0-9]+", str(value))
+    ]
+    if not str(inputs.get("verify_command") or "").strip() and diagnostic_ids:
+        from koru.autonomy.todo2code_discovery import _t2c_executable
+
+        t2c = _t2c_executable(project)
+        if t2c:
+            # Verification runs in a temporary worktree of the target project.
+            # A relative developer PYTHONPATH (commonly ``src``) would then
+            # resolve against that project and make the Koru gate disappear.
+            koru_source_root = str(Path(__file__).resolve().parents[2])
+            command = [
+                "env",
+                f"PYTHONPATH={koru_source_root}",
+                sys.executable,
+                "-m",
+                "koru.queue.todo2code_gate",
+                "--project",
+                ".",
+                "--t2c",
+                t2c,
+            ]
+            for diagnostic_id in diagnostic_ids:
+                command.extend(["--diagnostic", diagnostic_id])
+            inputs["verify_command"] = shlex.join(command)
+
+    if "type:development-defect" not in lowered:
+        labels.append("type:development-defect")
+    out["labels"] = list(dict.fromkeys(labels))
+    out["inputs"] = inputs
     return out
 
 

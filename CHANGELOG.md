@@ -12,6 +12,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **todo2code → planfile → ticket2dsl** idle chain: useful code-change plans
+  become human-review planfile tickets by default; explicitly contracted LLM
+  tickets use patch mode, hygiene archives junk paths, direct source patches
+  are quarantined for the manifest transaction, and ticket2dsl work units are
+  refreshed. CLI:
+  `koru ide discover-todo2code`, `koru ide ticket2dsl`,
+  `koru ide code-change-autonomy`.
+- Path usefulness filter shared by koru and todo2code (rejects venv,
+  site-packages, binaries, analysis dumps, globs, governance and participant
+  files).
+
+### Security
+- todo2code discovery now includes deterministic `project/ticket-*`
+  communication without allowing it to become an autonomous patch target.
+- Removed todo2code patch self-approval; automatic execution requires a named
+  target-project capability contract and always enters Koru's manifest path.
+- Docker projects fail closed unless `koru.yaml` declares the Compose service
+  and container commands used by the todo2code verification gate.
+
 ### Fixed
 - The dev environment now installs Starlette's preferred `httpx2` test-client
   transport, and legacy injector bridge tests explicitly assert their expected
@@ -89,6 +109,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   production namespace and enforcing the boundary in wheel/import checks.
 - Completed DEP-0's validated dependency-boundary inventory and DEP-3's typed,
   bounded Gillm actuator integration.
+
+## [0.1.443] - 2026-08-01
+
+### Docs
+- Update .intent-t2c-test/runs/20260730T182618Z-3f358da5/CODE_CHANGE.review.md
+- Update .intent-t2c-test/runs/20260730T182618Z-3f358da5/team-summary.md
+- Update .intent/runs/20260730T182849Z-49aa7e70/CODE_CHANGE.review.md
+- Update .intent/runs/20260730T182849Z-49aa7e70/team-summary.md
+- Update .intent/runs/20260730T183137Z-91a5afa3/CODE_CHANGE.review.md
+- Update .intent/runs/20260730T183137Z-91a5afa3/team-summary.md
+- Update CHANGELOG.md
+- Update README.md
+- Update docs/project-discovery-strategy.md
+- Update docs/semcod-ticket-sources.md
+- ... and 5 more files
+
+### Test
+- Update tests/test_code_change_autonomy.py
+- Update tests/test_code_change_usefulness.py
+- Update tests/test_llm_context.py
+- Update tests/test_semcod_tools.py
+- Update tests/test_ticket2dsl.py
+- Update tests/test_ticket_hygiene.py
+- Update tests/test_todo2code_autonomous_gate.py
+- Update tests/test_todo2code_discovery.py
+
+### Other
+- Update .intent-t2c-test/latest.json
+- Update .intent-t2c-test/runs/20260730T182618Z-3f358da5/CODE_CHANGE.review.json
+- Update .intent-t2c-test/runs/20260730T182618Z-3f358da5/ast.intent.jsonl
+- Update .intent-t2c-test/runs/20260730T182618Z-3f358da5/changelog.intent.jsonl
+- Update .intent-t2c-test/runs/20260730T182618Z-3f358da5/code-change-plans.json
+- Update .intent-t2c-test/runs/20260730T182618Z-3f358da5/code-change-source-patches.json
+- Update .intent-t2c-test/runs/20260730T182618Z-3f358da5/communication.intent.jsonl
+- Update .intent-t2c-test/runs/20260730T182618Z-3f358da5/configuration.intent.jsonl
+- Update .intent-t2c-test/runs/20260730T182618Z-3f358da5/diagnostics.json
+- Update .intent-t2c-test/runs/20260730T182618Z-3f358da5/document.intent.jsonl
+- ... and 39 more files
 
 ## [0.1.442] - 2026-07-30
 

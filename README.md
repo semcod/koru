@@ -7,13 +7,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.442-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$9.59-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-274.6h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.443-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$9.59-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-275.6h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
 
-- 🤖 **LLM usage:** $9.5866 (741 commits)
-- 👤 **Human dev:** ~$27457 (274.6h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $9.5882 (742 commits)
+- 👤 **Human dev:** ~$27564 (275.6h @ $100/h, 30min dedup)
 
-Generated on 2026-07-30 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
+Generated on 2026-08-01 using [openrouter/deep/deep-v4-pro](https://openrouter.ai/deep/deep-v4-pro)
 
 ---
 
@@ -1203,7 +1203,7 @@ The source of truth stays in `.planfile/`; Koru does not hand-edit sprint YAML.
 Agents should consume the resulting work through `planfile ticket next` or
 `koru --queue`.
 
-#### Idle queue discovery with code2llm
+#### Idle queue discovery with code2llm / todo2code / ticket2dsl
 
 When `koru auto` or `koru autonomous up` drains the queue and reports `idle`,
 Koru can move from local ticket execution back to whole-project discovery. The
@@ -1251,8 +1251,24 @@ and other code2llm findings. Koru records the result as a
 `Code2llmDiscoveryCompleted` event with `applied`, `skipped`, `ran`, and error
 metadata.
 
-If scan + code2llm still leave the queue empty, Koru adds a bounded IDE LLM
-follow-up task:
+If scan + code2llm still leave the queue empty, Koru runs **todo2code** (`t2c`)
+to turn grounded, **useful** code-change plans into reviewable planfile tickets.
+Project communication under `project/ticket-*` participates in deterministic
+analysis but remains a protected, read-only input for source patches. The
+default executor is human; LLM/patch execution requires both
+`KORU_TODO2CODE_LLM_EXECUTOR=1` and a project-owned capability contract named by
+`KORU_TODO2CODE_CONTRACT`. **Code-change autonomy** archives junk tickets,
+quarantines fully-diffed source patches from direct application, and refreshes
+**ticket2dsl** work units:
+
+```bash
+koru ide discover-todo2code --project . --force --limit 10
+koru ide code-change-autonomy --project .
+koru --queue --loop   # drains only tickets authorized by their executor/contract
+```
+
+If scan + code2llm + todo2code still leave the queue empty, Koru adds a bounded
+IDE LLM follow-up task:
 
 > "Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety do planfile."
 

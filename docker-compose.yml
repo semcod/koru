@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   koru:
     build:
@@ -38,6 +36,24 @@ services:
     command: bash
     profiles:
       - dev
+
+  # Deterministic, offline verification lane used by the todo2code gate. It
+  # deliberately creates no Compose network: source checks need only the
+  # project mount and must still work on hosts with exhausted address pools.
+  koru-verify:
+    build:
+      context: .
+      target: development
+    image: koru:dev
+    volumes:
+      - .:/app
+    working_dir: /app
+    network_mode: none
+    environment:
+      - PYTHONPATH=/app/src
+    command: sh
+    profiles:
+      - verify
 
   # External dependencies for testing
   planfile:

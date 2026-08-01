@@ -1,0 +1,2241 @@
+{
+  "schemaVersion": "t2c.code-change-source-patch-set/v1",
+  "generatedAt": "2026-07-30T18:26:30.013Z",
+  "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+  "patches": [
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-236578cfc7267a175afe",
+      "patchHash": "236578cfc7267a175afe7820159f17e3e9f6f289d88b07857121760a85c46ad5",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-083e65a70baaff89a6a2",
+      "planHash": "083e65a70baaff89a6a20776ee94a82f4c89c4837e88e9b1951c2c8a20aa176f",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-020c07250a590128943c"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-0e90c54176f454435b41"
+      ],
+      "edits": [
+        {
+          "path": ".vdisplay/2026-06-10T14-32-42Z__local__cli/env.json",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `.vdisplay/2026-06-10T14-32-42Z__local__cli/env.json`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-020c07250a590128943c (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: .vdisplay/2026-06-10T14-32-42Z__local__cli/env.json.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-020c07250a590128943c (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .vdisplay/2026-06-10T14-32-42Z__local__cli/env.json."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-08ed6a95b5663a2007fc",
+      "patchHash": "08ed6a95b5663a2007fccf64c34a836b7c924a9d4a5c4bfd61be1e3b4374afd8",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-08ee81e2474c8e10fc34",
+      "planHash": "08ee81e2474c8e10fc3450af59d2b3def9f5e5c9e73379a5c5b59c4dbf9e1a52",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-04f94f9a642f7414f69c"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-62f03ca2c76efee8d036"
+      ],
+      "edits": [
+        {
+          "path": ".koru/project.json",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `.koru/project.json`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-04f94f9a642f7414f69c (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: .koru/project.json.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-04f94f9a642f7414f69c (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .koru/project.json."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-87360e6c42e9e006e959",
+      "patchHash": "87360e6c42e9e006e959f812a0b930aa8441e4830f7fb4e614f71b7395c767ce",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-15fa2883d44139c1743b",
+      "planHash": "15fa2883d44139c1743b62cf628761d91e724f8e91dda53ce3922c91261ff339",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-1135249f7438290f32e4"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-4f34afd331e210049349"
+      ],
+      "edits": [
+        {
+          "path": "docs/llm-tools/op3",
+          "action": "modify",
+          "symbols": [
+            "install.sh",
+            "op3"
+          ],
+          "instruction": "modify `docs/llm-tools/op3`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Focus on symbols: install.sh, op3. Acceptance: Do not introduce new blocking diagnostics. Provide AST evidence for symbols: install.sh, op3. Re-run todo2code link+diagnose and clear diagnostic DIAG-1135249f7438290f32e4 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/llm-tools/op3, install.sh.",
+          "unifiedDiff": null
+        },
+        {
+          "path": "install.sh",
+          "action": "modify",
+          "symbols": [
+            "install.sh",
+            "op3"
+          ],
+          "instruction": "modify `install.sh`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Focus on symbols: install.sh, op3. Acceptance: Do not introduce new blocking diagnostics. Provide AST evidence for symbols: install.sh, op3. Re-run todo2code link+diagnose and clear diagnostic DIAG-1135249f7438290f32e4 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/llm-tools/op3, install.sh.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Provide AST evidence for symbols: install.sh, op3.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-1135249f7438290f32e4 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/llm-tools/op3, install.sh."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-8dee28228420277251f6",
+      "patchHash": "8dee28228420277251f686d867bb38b98fd003b7d4eedbf8a2a71d542cd357c9",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-17ef320d9579e8c474cd",
+      "planHash": "17ef320d9579e8c474cda6df98b476687739808cf53bd641d396125b3d827f48",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-097fb3e27fe309801be1"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-2f966e1687a9180a828c"
+      ],
+      "edits": [
+        {
+          "path": ".windsurf/workflows/koru-gate.md",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `.windsurf/workflows/koru-gate.md`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-097fb3e27fe309801be1 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: .windsurf/workflows/koru-gate.md.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-097fb3e27fe309801be1 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .windsurf/workflows/koru-gate.md."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-ae649eeb42942f0dde15",
+      "patchHash": "ae649eeb42942f0dde15d1ac13b3fa3543bc298b55ff91c3644e9759522845da",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-17ffada7fcb74d80fb5e",
+      "planHash": "17ffada7fcb74d80fb5e651181f5653d06ceb81b81cc0adc0e9be28bc8b3ed01",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-07f134838f18a2ef8a21"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-e275b80adb92cca340c0"
+      ],
+      "edits": [
+        {
+          "path": "docs/refactoring/REFACTORING_PLAN.md",
+          "action": "modify",
+          "symbols": [
+            "REFACTORING_PLAN"
+          ],
+          "instruction": "modify `docs/refactoring/REFACTORING_PLAN.md`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Focus on symbols: REFACTORING_PLAN. Acceptance: Do not introduce new blocking diagnostics. Provide AST evidence for symbols: REFACTORING_PLAN. Re-run todo2code link+diagnose and clear diagnostic DIAG-07f134838f18a2ef8a21 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/refactoring/REFACTORING_PLAN.md.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Provide AST evidence for symbols: REFACTORING_PLAN.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-07f134838f18a2ef8a21 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/refactoring/REFACTORING_PLAN.md."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-affa510b4572ee870bd2",
+      "patchHash": "affa510b4572ee870bd27e115ae858d091d20785f524b9a2ef2cd47f610a5a74",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-2381df12ae4609e05bf8",
+      "planHash": "2381df12ae4609e05bf85451f02e934c33f3fc4d9a8cfc0625757610ed22b95a",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-07a868405a66fc75d328"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-45b9f413ab54fe498116"
+      ],
+      "edits": [
+        {
+          "path": "docs/architecture/volume-reduction-plan.yaml",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `docs/architecture/volume-reduction-plan.yaml`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-07a868405a66fc75d328 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/architecture/volume-reduction-plan.yaml.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-07a868405a66fc75d328 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/architecture/volume-reduction-plan.yaml."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-1bc623fd4b4183bc4ac0",
+      "patchHash": "1bc623fd4b4183bc4ac02468a6844871560fdae7fca39d4f459a935b05a4985f",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-2679bf189dde8d94b11a",
+      "planHash": "2679bf189dde8d94b11a04a6c42fb634631ad65e04e5888bb1c9645676ce21a4",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-10dd9d7c5b660f331ff5"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-200164fb613d665c6e18"
+      ],
+      "edits": [
+        {
+          "path": "tests/test_autopilot_os_injector.py",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `tests/test_autopilot_os_injector.py`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-10dd9d7c5b660f331ff5 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: tests/test_autopilot_os_injector.py.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-10dd9d7c5b660f331ff5 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: tests/test_autopilot_os_injector.py."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-0a777c131985fc34f105",
+      "patchHash": "0a777c131985fc34f10533ae8a25913d061c93522b1f1b5489cc327bbc3d1241",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-39c23c2bf3db71bfe669",
+      "planHash": "39c23c2bf3db71bfe66905aa6b714f945a92aaf0c4784524e384a7b942ca73ea",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0ad8cdf8a8b01b62b3c4"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-f865ed0977fd5ceb1a03"
+      ],
+      "edits": [
+        {
+          "path": ".koru/project.json",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `.koru/project.json`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0ad8cdf8a8b01b62b3c4 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: .koru/project.json.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0ad8cdf8a8b01b62b3c4 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .koru/project.json."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-df038000253355c58203",
+      "patchHash": "df038000253355c58203f27cdd56fb1830bfd28c4364c73ccef43810e66c1f5c",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-40c5476248d17346f790",
+      "planHash": "40c5476248d17346f790c74376ef5f54b5c92a8d978a554d001304244ddaa85a",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-066481178aef6218a58b"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-f0782327ecbf9ee3400a"
+      ],
+      "edits": [
+        {
+          "path": "tests/test_provider_portal_screencast.py",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `tests/test_provider_portal_screencast.py`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-066481178aef6218a58b (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: tests/test_provider_portal_screencast.py.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-066481178aef6218a58b (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: tests/test_provider_portal_screencast.py."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-4eddbd16e8657544838d",
+      "patchHash": "4eddbd16e8657544838d2c168961b48f95b6fee8dabd6dd57b30669bf5cbb7da",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-43e2828a5d0829715834",
+      "planHash": "43e2828a5d0829715834d1cad59b3646aeb4c8b7da72f73a0499edbe016ce538",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-040eba6f82854d42d2ff"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-99fc853195216e359ace"
+      ],
+      "edits": [
+        {
+          "path": "docs/llm-tools/costs/install.sh",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `docs/llm-tools/costs/install.sh`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-040eba6f82854d42d2ff (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/llm-tools/costs/install.sh.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-040eba6f82854d42d2ff (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/llm-tools/costs/install.sh."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-51d70a803ff52a7b5ce1",
+      "patchHash": "51d70a803ff52a7b5ce1f843114175428c61606fc81cc1c046bd7cb92385c826",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-442cff85fd50c6022158",
+      "planHash": "442cff85fd50c6022158b0b4c415dae2ac03565f09f4ff7dd6b342f5ef765cc7",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0538a061dd33742b969b"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-31455725de85f5145a52"
+      ],
+      "edits": [
+        {
+          "path": ".planfile/config.yaml",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `.planfile/config.yaml`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0538a061dd33742b969b (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: .planfile/config.yaml.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0538a061dd33742b969b (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .planfile/config.yaml."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-37025f9bf69bc79f8d04",
+      "patchHash": "37025f9bf69bc79f8d04c3cedce8bd6e55f5c8d52042f4a16f1f9b68c9139bb8",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-487a8325a372c2df4767",
+      "planHash": "487a8325a372c2df47679867566217d2e56994a11e0ae68d1a5b2d41de02c3db",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-006eff514b700dd9c8b4"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-26a2103ca45b1f373f14"
+      ],
+      "edits": [
+        {
+          "path": "project/compact_flow.png",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `project/compact_flow.png`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-006eff514b700dd9c8b4 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: project/compact_flow.png.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-006eff514b700dd9c8b4 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/compact_flow.png."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-6236f75b5a66dee7288a",
+      "patchHash": "6236f75b5a66dee7288ad551e7a90ccf4cb51ba9f02e076d0e782c8eea1b933b",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-4b0b34703669553b489b",
+      "planHash": "4b0b34703669553b489b0f603c35dcc03cdf406778a1cf140608d2eeff26d136",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-051669dca564a727b337"
+      ],
+      "recordIds": [
+        "INT-DOC-93c2289e18a75d6db4e3"
+      ],
+      "edits": [
+        {
+          "path": "requirements*.txt",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `requirements*.txt`. Dodać identyfikator ticketu/symbolu albo dostarczyć implementację i ponownie uruchomić linker.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-051669dca564a727b337 (PLANNED_NOT_IMPLEMENTED). Touch only the declared paths: requirements*.txt.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-051669dca564a727b337 (PLANNED_NOT_IMPLEMENTED).",
+        "Touch only the declared paths: requirements*.txt."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-83dbdb6aeb434077eec0",
+      "patchHash": "83dbdb6aeb434077eec09ca421ce3bd37ad27176454d5cc5e24e10e2e529bf2f",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-4baf252f194b325b4427",
+      "planHash": "4baf252f194b325b442756457d23c4e536baac602af1e9c31042afb9a8d977a1",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0af0f4ad8be0fbbb851b"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-e0192cfa36026daec07d"
+      ],
+      "edits": [
+        {
+          "path": ".windsurf/workflows/koru-gate.md",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `.windsurf/workflows/koru-gate.md`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0af0f4ad8be0fbbb851b (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: .windsurf/workflows/koru-gate.md.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0af0f4ad8be0fbbb851b (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .windsurf/workflows/koru-gate.md."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-6499943b25db17682b4d",
+      "patchHash": "6499943b25db17682b4deb6f6f3fe884524ff38bddddf4302cc0ea8521aca458",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-51f27e71ba6a46c5c8cd",
+      "planHash": "51f27e71ba6a46c5c8cd768aa29cac86c4cfc812fcdfd3d1ccd7f8dfd1b87413",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0e285caf252a3ac1675f"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-e5452673cb7f95e89fd6"
+      ],
+      "edits": [
+        {
+          "path": ".planfile/config.yaml",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `.planfile/config.yaml`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0e285caf252a3ac1675f (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: .planfile/config.yaml.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0e285caf252a3ac1675f (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .planfile/config.yaml."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-22516387a4f5333c4079",
+      "patchHash": "22516387a4f5333c4079445c245864fa4a33f96a9b608ad61832fa2bea5439c4",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-57fe3742d83646967dc2",
+      "planHash": "57fe3742d83646967dc2c2865a4f3e1936fae58fd557fd9785ea5a7f12762887",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-136aa32e099a60ac26a6"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-e991c5a3cbc80eacc5f3"
+      ],
+      "edits": [
+        {
+          "path": ".vdisplay/vdisplay-auto-observe-auto-vision-find-cursor.png.context.json",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `.vdisplay/vdisplay-auto-observe-auto-vision-find-cursor.png.context.json`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-136aa32e099a60ac26a6 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: .vdisplay/vdisplay-auto-observe-auto-vision-find-cursor.png.context.json.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-136aa32e099a60ac26a6 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .vdisplay/vdisplay-auto-observe-auto-vision-find-cursor.png.context.json."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-5cffa2e429f6c5ec4eb6",
+      "patchHash": "5cffa2e429f6c5ec4eb60ed213dce3e3bbd7e2c499a7e8bc1238837d01efdb90",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-5949b4928a7fca0473fc",
+      "planHash": "5949b4928a7fca0473fc3ceeec88da5d82bbe5f8784e2f04f79ea0019ad78b7b",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0c2e870747c21f02d0fd"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-960dcb1638305048a01c"
+      ],
+      "edits": [
+        {
+          "path": "testql-testing/scenarios/realtime-health.testql.toon.yaml",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `testql-testing/scenarios/realtime-health.testql.toon.yaml`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0c2e870747c21f02d0fd (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: testql-testing/scenarios/realtime-health.testql.toon.yaml.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0c2e870747c21f02d0fd (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: testql-testing/scenarios/realtime-health.testql.toon.yaml."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-08d6f036000f5552d97c",
+      "patchHash": "08d6f036000f5552d97cc351cfb3591c528f4a739752047fdc35710e8d3d95c2",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-5984311e1b72aeb52605",
+      "planHash": "5984311e1b72aeb526052b314caf4fbfb26b16b67167cdade41df02e25ab516a",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0f0c6166aa2d4b880ec9"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-b3b313a187116ca33f0b"
+      ],
+      "edits": [
+        {
+          "path": "project/compact_flow.png",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `project/compact_flow.png`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0f0c6166aa2d4b880ec9 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: project/compact_flow.png.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0f0c6166aa2d4b880ec9 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/compact_flow.png."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-4ecc13c37c270a55a766",
+      "patchHash": "4ecc13c37c270a55a766a71c1bee54fa94a0cbb20028990cc98049881166d877",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-5b5a2d6d5971f9053d61",
+      "planHash": "5b5a2d6d5971f9053d611cee3d35ecffbd97793e7f32c97bf872282f563f7f19",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-09a0b041d5caea2ab059"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-4c105b287b4475462179"
+      ],
+      "edits": [
+        {
+          "path": "project/compact_flow.png",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `project/compact_flow.png`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-09a0b041d5caea2ab059 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: project/compact_flow.png.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-09a0b041d5caea2ab059 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/compact_flow.png."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-35c0a9f883d5117c00df",
+      "patchHash": "35c0a9f883d5117c00df2831ef3c7a01cda434342f71de04caa834ce8cadcd49",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-5d4d07f898fd829a2d07",
+      "planHash": "5d4d07f898fd829a2d077295269457e3b5f96402b0c4be9899ae2e9282accd5e",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-015c8fb54a512b4d6364"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-bb22854b6b2f7e836137"
+      ],
+      "edits": [
+        {
+          "path": "docs/koru_auto_vs_observe_up.md",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `docs/koru_auto_vs_observe_up.md`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-015c8fb54a512b4d6364 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/koru_auto_vs_observe_up.md.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-015c8fb54a512b4d6364 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/koru_auto_vs_observe_up.md."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-9f83588fa0dd9126680a",
+      "patchHash": "9f83588fa0dd9126680ae795bc0ef7ba23a51cab7b09aa3bcd2c89199bbbe624",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-72da48dfae1759818ae4",
+      "planHash": "72da48dfae1759818ae4b7470eeee4d40fa78d1376ccb5bb1c88587f1167742f",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0067c5596efa659df859"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-b238af8c0b958deb2f63"
+      ],
+      "edits": [
+        {
+          "path": "docs/photo-vql-jetbrains-wayland.md",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `docs/photo-vql-jetbrains-wayland.md`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0067c5596efa659df859 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/photo-vql-jetbrains-wayland.md.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0067c5596efa659df859 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/photo-vql-jetbrains-wayland.md."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-e51d0b74555426a397a1",
+      "patchHash": "e51d0b74555426a397a149912764a1dfd7b6c402547455e834665b9b3b647166",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-7a97cabda92389890255",
+      "planHash": "7a97cabda92389890255d113c382159aabe1f42cc966220e90a9e6eda57ce448",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-12d94ddebfac9d78ada4"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-a204f630e319f04da750"
+      ],
+      "edits": [
+        {
+          "path": "tests/test_autopilot_injector.py",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `tests/test_autopilot_injector.py`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-12d94ddebfac9d78ada4 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: tests/test_autopilot_injector.py.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-12d94ddebfac9d78ada4 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: tests/test_autopilot_injector.py."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-d17b1a0a1370f4001692",
+      "patchHash": "d17b1a0a1370f4001692938c5e5fcf634a3cb3ec1e72ae9808ed07f9abc386c3",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-7c50472f227aceb44ac6",
+      "planHash": "7c50472f227aceb44ac6f299ff312f003a10bd8cf2cf8bd4c88c97afc3b1a63f",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-03f95e5e8042e41e4700"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-7fe5a823a6c995f07183"
+      ],
+      "edits": [
+        {
+          "path": "project/calls.png",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `project/calls.png`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-03f95e5e8042e41e4700 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: project/calls.png.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-03f95e5e8042e41e4700 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/calls.png."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-85e336bf1ba5eb2fcdbe",
+      "patchHash": "85e336bf1ba5eb2fcdbe2dec59e89983946fa70b04153d31eba6ab5789d1bc29",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-8b5ad61423c13ec618c9",
+      "planHash": "8b5ad61423c13ec618c94cf383fe918fc689b722f179c4524f28333a06fd7197",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0b1d0032cc058aacc6b7"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-7782b17c9a35a11b520c"
+      ],
+      "edits": [
+        {
+          "path": "docs/architecture/volume-reduction-plan.yaml",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `docs/architecture/volume-reduction-plan.yaml`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0b1d0032cc058aacc6b7 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/architecture/volume-reduction-plan.yaml.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0b1d0032cc058aacc6b7 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/architecture/volume-reduction-plan.yaml."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-113e6f6b22f36ae79dfc",
+      "patchHash": "113e6f6b22f36ae79dfc2939669c8e00fb9a8752ecd7a03ca3ad5e9682c1794e",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-8cc8de8028a7cc6ecbf3",
+      "planHash": "8cc8de8028a7cc6ecbf3c1fec0fe2b076401fdff387d8dd76c2782d57cf7af2f",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0aab4096788538c3d79b"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-e56d2a857470d4e23c62"
+      ],
+      "edits": [
+        {
+          "path": "docs/autopilot-roadmap.md",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `docs/autopilot-roadmap.md`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0aab4096788538c3d79b (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/autopilot-roadmap.md.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0aab4096788538c3d79b (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/autopilot-roadmap.md."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-448589aaeb3976929bc7",
+      "patchHash": "448589aaeb3976929bc7cc356f0a8d1d4c696b790f5d0fca2cd3e941dfd2e02c",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-9d00cf44081eedce6bbb",
+      "planHash": "9d00cf44081eedce6bbb54632a7e843681c3764c6aad0236bd5e123a1c4ad441",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-038e836332e13c38b11e"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-171ec3f996dcb368e98b"
+      ],
+      "edits": [
+        {
+          "path": "tests/test_autopilot_injector.py",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `tests/test_autopilot_injector.py`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-038e836332e13c38b11e (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: tests/test_autopilot_injector.py.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-038e836332e13c38b11e (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: tests/test_autopilot_injector.py."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-130e9d394cabf692997f",
+      "patchHash": "130e9d394cabf692997f4698a5541dce25f022bf7ff56f40d368d303c773c10a",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-a8c3c2bec08f464c7680",
+      "planHash": "a8c3c2bec08f464c7680658ec0d5b407e8deb9bc22702594c15aa40a1a5c6e75",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-05929ca785067d338471"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-4927d791312966109259"
+      ],
+      "edits": [
+        {
+          "path": "workflows/on-change-gates.md",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `workflows/on-change-gates.md`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-05929ca785067d338471 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: workflows/on-change-gates.md.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-05929ca785067d338471 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: workflows/on-change-gates.md."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-f24abf668494526661b1",
+      "patchHash": "f24abf668494526661b12726198975dffb0d89a5259faf4d2cd7381fa2b0dad6",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-b3d9815edf8ca53d9906",
+      "planHash": "b3d9815edf8ca53d990613193b03411bd6ab7a5aaa2500d79cf8373ef93b31f6",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0053c09f2dc310e6e821"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-b59182d519790d62c246"
+      ],
+      "edits": [
+        {
+          "path": ".tmp/code2llm-plugins/compact_flow.png",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `.tmp/code2llm-plugins/compact_flow.png`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0053c09f2dc310e6e821 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: .tmp/code2llm-plugins/compact_flow.png.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0053c09f2dc310e6e821 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .tmp/code2llm-plugins/compact_flow.png."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-bf73c79292088a3378f6",
+      "patchHash": "bf73c79292088a3378f664bce99b7dab3df335a879de53ed3900cbf9444d0023",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-bbad63ed35219f422d27",
+      "planHash": "bbad63ed35219f422d2758a23bd677d3e565b7e7ba0cc71443801ae0ab4f5917",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0b4e60b33cfa6d0b2be8"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-d4f34103320961afb484"
+      ],
+      "edits": [
+        {
+          "path": "tests/test_provider_portal_screencast.py",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `tests/test_provider_portal_screencast.py`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0b4e60b33cfa6d0b2be8 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: tests/test_provider_portal_screencast.py.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0b4e60b33cfa6d0b2be8 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: tests/test_provider_portal_screencast.py."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-b67db2857ad00da3b213",
+      "patchHash": "b67db2857ad00da3b213849c87e4d3ea079d3734b806908483fb7f93e0df6ec6",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-bd48b0e9430516ad99a7",
+      "planHash": "bd48b0e9430516ad99a70a23198cdc18de1a3592bca8ed09f27d8bb7103afa59",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-113474bdf278a3bb050a"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-081a02e45f006e0fa3d5"
+      ],
+      "edits": [
+        {
+          "path": "docs/autonomy-ide-cursor.md",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `docs/autonomy-ide-cursor.md`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-113474bdf278a3bb050a (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/autonomy-ide-cursor.md.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-113474bdf278a3bb050a (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/autonomy-ide-cursor.md."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-fe8064cacf9a875891b3",
+      "patchHash": "fe8064cacf9a875891b341ed934b715cf2ae4c4e78792fc41110f9f2e1933507",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-c2badc3e24a458f21305",
+      "planHash": "c2badc3e24a458f213056b53633aef2a733aede120f7ae10039d27d22edd1e1b",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-044f790756883ee703a9"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-0e727a4300f17b2272e7"
+      ],
+      "edits": [
+        {
+          "path": "plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt",
+          "action": "modify",
+          "symbols": [
+            "KoruAutopilotService"
+          ],
+          "instruction": "modify `plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Focus on symbols: KoruAutopilotService. Acceptance: Do not introduce new blocking diagnostics. Provide AST evidence for symbols: KoruAutopilotService. Re-run todo2code link+diagnose and clear diagnostic DIAG-044f790756883ee703a9 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Provide AST evidence for symbols: KoruAutopilotService.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-044f790756883ee703a9 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-827636bf46b48faa47a8",
+      "patchHash": "827636bf46b48faa47a8c244b2e555bd9bd9165bd518f8d06dfc10f5e46f77b0",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-c4172ca50580e559a184",
+      "planHash": "c4172ca50580e559a184737eea484ec35b5eadfec895643378b4a0d0b681731f",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-114b7e7b525dc130d50a"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-ea5af7c46ceb25c1c602"
+      ],
+      "edits": [
+        {
+          "path": ".planfile/config.yaml",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `.planfile/config.yaml`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-114b7e7b525dc130d50a (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: .planfile/config.yaml.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-114b7e7b525dc130d50a (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .planfile/config.yaml."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-2aa1816339a1327815fb",
+      "patchHash": "2aa1816339a1327815fb9d61c2045c06806d68d33b41e5a587183b45125495a3",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-c9fbac5cc4456a5cfd06",
+      "planHash": "c9fbac5cc4456a5cfd061d599981bbadcf5585730e0da535a6063c1429b4fcac",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-098ff5af3cad8aca0bfb"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-8c434c99be6eac7fd2e7"
+      ],
+      "edits": [
+        {
+          "path": ".planfile/config.yaml",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `.planfile/config.yaml`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-098ff5af3cad8aca0bfb (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: .planfile/config.yaml.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-098ff5af3cad8aca0bfb (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .planfile/config.yaml."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-3870ac71f338d2e76b34",
+      "patchHash": "3870ac71f338d2e76b3458363403f4cea74997b65570210be27b5915b07ef4b1",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-cb35519ff1d65b42f935",
+      "planHash": "cb35519ff1d65b42f935d6616f0c6b2b660796974c2913711db33c39e2d018bc",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0baa6f38bc8d225ef98c"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-f698c7dce00707e21643"
+      ],
+      "edits": [
+        {
+          "path": "project/compact_flow.png",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `project/compact_flow.png`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0baa6f38bc8d225ef98c (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: project/compact_flow.png.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0baa6f38bc8d225ef98c (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/compact_flow.png."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-7d61bcfeee8f057ea9e6",
+      "patchHash": "7d61bcfeee8f057ea9e691a382314c7b82b5f9a935a64c585e9a745ca5d63658",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-ccf699cd68e4c69a4606",
+      "planHash": "ccf699cd68e4c69a460673486fca6f81b7484eb7588efcb8b1489f6fb3276052",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0c16ba857ca282189441"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-e1091d7b0247085bb871"
+      ],
+      "edits": [
+        {
+          "path": "project/calls.png",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `project/calls.png`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0c16ba857ca282189441 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: project/calls.png.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0c16ba857ca282189441 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/calls.png."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-c360f55671269bf3ef72",
+      "patchHash": "c360f55671269bf3ef72e6f04bc9a3652084ec2ff3d80cc35f3593ac1ff608e7",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-d0630f9a045c7bce33bb",
+      "planHash": "d0630f9a045c7bce33bb02180a216998e14f1d81f5cc1c15b3425c05749fab5c",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-031eb428249aa00186e0"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-03604620c9fad82cfe1e"
+      ],
+      "edits": [
+        {
+          "path": "docs/adr/adr-auto-002-autonomous-decision-llm.md",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `docs/adr/adr-auto-002-autonomous-decision-llm.md`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-031eb428249aa00186e0 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/adr/adr-auto-002-autonomous-decision-llm.md.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-031eb428249aa00186e0 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/adr/adr-auto-002-autonomous-decision-llm.md."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-48982c8efe964e7dcc3a",
+      "patchHash": "48982c8efe964e7dcc3a6cae01331810423df1a2a41c2eb8b12465fb19aba585",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-d11f6fea6de3f955c7fa",
+      "planHash": "d11f6fea6de3f955c7faba84561083c566541e9d28fafa8d3c91a0c24fe437cb",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-092a69e1573a3cd38731"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-c34461bc70b96cca11ca"
+      ],
+      "edits": [
+        {
+          "path": "project/flow.png",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `project/flow.png`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-092a69e1573a3cd38731 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: project/flow.png.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-092a69e1573a3cd38731 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/flow.png."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-b1efb29c065394d7d4a4",
+      "patchHash": "b1efb29c065394d7d4a472d56bf81d6f4550abc51b69b13247310e4afc7d93ef",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-d39ef997a49aad3694f6",
+      "planHash": "d39ef997a49aad3694f6cdcdf304f453a446ff9a6412879dc028fbe2c5a59ea9",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-00437c8f077193d86ba7"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-ac1326f3acfd4659c4d0"
+      ],
+      "edits": [
+        {
+          "path": "docs/pipeline-design.md",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `docs/pipeline-design.md`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-00437c8f077193d86ba7 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/pipeline-design.md.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-00437c8f077193d86ba7 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/pipeline-design.md."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-77f059a0a7e30003b3b0",
+      "patchHash": "77f059a0a7e30003b3b0eadc6aa8270274bc6f2eb0670d4f1746507327919e16",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-d7fda272e7d61f1fb201",
+      "planHash": "d7fda272e7d61f1fb201b83197ece55a10f843b395c2d0f185123b75e0edcee7",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0347e7e472f32501eda2"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-1d8f4361594d5cf0203c"
+      ],
+      "edits": [
+        {
+          "path": "docs/autodiagnostics-auto-repair.md",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `docs/autodiagnostics-auto-repair.md`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0347e7e472f32501eda2 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/autodiagnostics-auto-repair.md.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0347e7e472f32501eda2 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/autodiagnostics-auto-repair.md."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-5a78c01488a530779d12",
+      "patchHash": "5a78c01488a530779d1266a93f606a9632f38bf9abe0aedd3f72f153d0874c0e",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-d8a909cc6ab208abf719",
+      "planHash": "d8a909cc6ab208abf71944b58eb9d5284032dc3db7ecd9c2a5fbf8468c427f3d",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-054ad8529d41e81116eb"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-d8022ee84cee16b0f923"
+      ],
+      "edits": [
+        {
+          "path": "scripts/koru-autoloop.sh",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `scripts/koru-autoloop.sh`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-054ad8529d41e81116eb (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: scripts/koru-autoloop.sh.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-054ad8529d41e81116eb (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: scripts/koru-autoloop.sh."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-838db4248ad9b7025448",
+      "patchHash": "838db4248ad9b702544874a4d971475930a5248093f86e5c2d31d37c8fdb4a9b",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-da78807cf56aa29f6b70",
+      "planHash": "da78807cf56aa29f6b70a1ccfbe9ae4902694a08da69288a0fb4d642fb86fe3a",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-054e1ec37a29e67d976a"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-bce9356482acea8093a6"
+      ],
+      "edits": [
+        {
+          "path": ".koru/project.json",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `.koru/project.json`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-054e1ec37a29e67d976a (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: .koru/project.json.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-054e1ec37a29e67d976a (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .koru/project.json."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-5ec45e5a680d7482e835",
+      "patchHash": "5ec45e5a680d7482e835255f61d508b780c82ede7ded6bbf2e8a192691f045ad",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-daa1d3f694ae5ca159be",
+      "planHash": "daa1d3f694ae5ca159bec08d6a4fee0e0d9d8004a369ebddb55b273bdbae5f2c",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0db2bf8be0d7716eb33e"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-1a3bd4cb9b6e65d7acb7"
+      ],
+      "edits": [
+        {
+          "path": "project/calls.png",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `project/calls.png`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0db2bf8be0d7716eb33e (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: project/calls.png.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0db2bf8be0d7716eb33e (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/calls.png."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-10d4cc52f3fd089c2518",
+      "patchHash": "10d4cc52f3fd089c25186e37ca17577e08fbe9a49a1a107232600dc13a1f7401",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-db9d2dde1ab4057028ea",
+      "planHash": "db9d2dde1ab4057028ea9844b2bad504663b00d662e5b71c203c762fbd888d6e",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0a23399844b57935e321"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-f68195cf68bb35696a95"
+      ],
+      "edits": [
+        {
+          "path": ".planfile/config.yaml",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `.planfile/config.yaml`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0a23399844b57935e321 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: .planfile/config.yaml.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0a23399844b57935e321 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .planfile/config.yaml."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-aaee32eb1f0a7f65d500",
+      "patchHash": "aaee32eb1f0a7f65d500deb0b90da535e228e672f4f8f8a1c9fbeab0439ec6dc",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-dbf66eb0f0e14f53c553",
+      "planHash": "dbf66eb0f0e14f53c553c8b008b7453ea55e7656ef762b189f7107ea2dce14d3",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-00066abd98c3f5946b08"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-7a4c6b6ff10c1a07aead"
+      ],
+      "edits": [
+        {
+          "path": "docs/llm-tools/mdflow",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `docs/llm-tools/mdflow`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-00066abd98c3f5946b08 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/llm-tools/mdflow.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-00066abd98c3f5946b08 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/llm-tools/mdflow."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-50d16f3c535dc21a3e4d",
+      "patchHash": "50d16f3c535dc21a3e4d9f8b872ec12e680a3313bfa79bfcf67580de79374457",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-f043ec8a3d0aee5e4a8e",
+      "planHash": "f043ec8a3d0aee5e4a8ef4fe7c973d51c24b93de8d804247d90404bde0153905",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-03b213947f69d470b02e"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-59833ea06453204fd85a"
+      ],
+      "edits": [
+        {
+          "path": ".planfile/config.yaml",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `.planfile/config.yaml`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-03b213947f69d470b02e (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: .planfile/config.yaml.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-03b213947f69d470b02e (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .planfile/config.yaml."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-c7792f06228673598b55",
+      "patchHash": "c7792f06228673598b556b1c3b65bb28306f48670de8a296a8f7b10e97d3b5bd",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-f4a808e7c57b91c52ca4",
+      "planHash": "f4a808e7c57b91c52ca46a41c2bfce380f42a4758677fd60b08233ec5dae8030",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0cb6729ac51f8fa422e4"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-f4d367f28f9afcd65cb2"
+      ],
+      "edits": [
+        {
+          "path": "docs/autopilot-quickstart.md",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `docs/autopilot-quickstart.md`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0cb6729ac51f8fa422e4 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/autopilot-quickstart.md.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0cb6729ac51f8fa422e4 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/autopilot-quickstart.md."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-a219d31971bec5f8ef62",
+      "patchHash": "a219d31971bec5f8ef62f483c9fead1e71e15b8f680562c4bc2289997557fac6",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-f4c16676a1c37b7f4b73",
+      "planHash": "f4c16676a1c37b7f4b73fed951dd517551a8fcbad14a7e1a41506de7c044c816",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0e6e38e505d08420513e"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-32db45f03496cef0469c"
+      ],
+      "edits": [
+        {
+          "path": ".planfile/config.yaml",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `.planfile/config.yaml`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0e6e38e505d08420513e (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: .planfile/config.yaml.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0e6e38e505d08420513e (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .planfile/config.yaml."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-dd672257a1df904601da",
+      "patchHash": "dd672257a1df904601da07fb777d3247118f294b9f4571c415425d931f029f31",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-f90c146cc318db63d085",
+      "planHash": "f90c146cc318db63d085c7f20836d8287b6bf28b038a69d5a525cb9d8da82df2",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-0383a1367d489fb1926e"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-b59fc82afae9e5f6248c"
+      ],
+      "edits": [
+        {
+          "path": "docs/agent-backends-architecture.md",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `docs/agent-backends-architecture.md`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-0383a1367d489fb1926e (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/agent-backends-architecture.md.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0383a1367d489fb1926e (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/agent-backends-architecture.md."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-20a70dba4bb211d21665",
+      "patchHash": "20a70dba4bb211d216650c3ad53614f89c3fd4eece6df8563e30443bebf15ffa",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-fba755563b046d522741",
+      "planHash": "fba755563b046d5227413bb13a1e4558a7cd56be089fc484e824c300e03d064b",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-080483d7a1eee84c2017"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-8cda167472ad89dda11b"
+      ],
+      "edits": [
+        {
+          "path": "docs/autopilot-quickstart.md",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `docs/autopilot-quickstart.md`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-080483d7a1eee84c2017 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/autopilot-quickstart.md.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-080483d7a1eee84c2017 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/autopilot-quickstart.md."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-source-patch/v1",
+      "id": "SPATCH-3bc137c8023d1f5113ad",
+      "patchHash": "3bc137c8023d1f5113ade2a242442248451a3e5d113068ff383ff45861b01d90",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "planId": "CPLAN-fdef42d4bb7b71ef646c",
+      "planHash": "fdef42d4bb7b71ef646c2cab429f3479f730f7ef3ef0d9137529bfd5051c83d2",
+      "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+      "diagnosticIds": [
+        "DIAG-06c37e0ac14ba6c39e04"
+      ],
+      "recordIds": [
+        "INT-CHANGELOG-a6d7d0491c2ff551bcf4"
+      ],
+      "edits": [
+        {
+          "path": "docs/plans/capture-providers-refactor.md",
+          "action": "modify",
+          "symbols": [],
+          "instruction": "modify `docs/plans/capture-providers-refactor.md`. Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.. Acceptance: Do not introduce new blocking diagnostics. Re-run todo2code link+diagnose and clear diagnostic DIAG-06c37e0ac14ba6c39e04 (CHANGELOG_WITHOUT_IMPLEMENTATION). Touch only the declared paths: docs/plans/capture-providers-refactor.md.",
+          "unifiedDiff": null
+        }
+      ],
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-06c37e0ac14ba6c39e04 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/plans/capture-providers-refactor.md."
+      ],
+      "generation": {
+        "generator": "t2c/code-change-source-patch",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "533b1d53d9382410a05e05b08c10b13cb0ed069336751ded56f7e82e3ccd3d59",
+        "reason": null
+      }
+    }
+  ],
+  "generation": {
+    "generator": "t2c/code-change-source-patch-set",
+    "generatorVersion": "1",
+    "runtimeVersion": "0.5.0",
+    "generatedAt": "2026-07-30T18:26:30.013Z",
+    "requestedMode": "deterministic",
+    "effectiveMode": "deterministic",
+    "degraded": false,
+    "model": null,
+    "provider": null,
+    "responseId": null,
+    "configurationFingerprint": "db678c863f879bfc98c1ea9dfc5fe03a236594592b748bb64a013d04ba95bea8",
+    "reason": null
+  }
+}

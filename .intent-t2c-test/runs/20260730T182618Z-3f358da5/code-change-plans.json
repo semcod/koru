@@ -1,0 +1,3399 @@
+{
+  "schemaVersion": "t2c.code-change-plan-set/v1",
+  "plans": [
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-dbf66eb0f0e14f53c553",
+      "planHash": "dbf66eb0f0e14f53c553c8b008b7453ea55e7656ef762b189f7107ea2dce14d3",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement `docs/llm-tools/mdflow/` — markdown dependency analyzer (extract markpact:ref, generate Mermaid diagrams, validate links).",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: `docs/llm-tools/mdflow/` — markdown dependency analyzer (extract markpact:ref, generate Mermaid diagrams, validate links). Source intent: `docs/llm-tools/mdflow/` — markdown dependency analyzer (extract markpact:ref, generate Mermaid diagrams, validate links). Paths: docs/llm-tools/mdflow.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/llm-tools/mdflow"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "Historical"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-00066abd98c3f5946b08 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/llm-tools/mdflow."
+      ],
+      "changes": [
+        {
+          "path": "docs/llm-tools/mdflow",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-00066abd98c3f5946b08.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/llm-tools/mdflow and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-7a4c6b6ff10c1a07aead"
+        ],
+        "diagnosticIds": [
+          "DIAG-00066abd98c3f5946b08"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-d39ef997a49aad3694f6",
+      "planHash": "d39ef997a49aad3694f6cdcdf304f453a446ff9a6412879dc028fbe2c5a59ea9",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update docs/pipeline-design.md",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/pipeline-design.md Source intent: Update docs/pipeline-design.md Paths: docs/pipeline-design.md.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/pipeline-design.md"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.398"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-00437c8f077193d86ba7 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/pipeline-design.md."
+      ],
+      "changes": [
+        {
+          "path": "docs/pipeline-design.md",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-00437c8f077193d86ba7.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/pipeline-design.md and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-ac1326f3acfd4659c4d0"
+        ],
+        "diagnosticIds": [
+          "DIAG-00437c8f077193d86ba7"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-b3d9815edf8ca53d9906",
+      "planHash": "b3d9815edf8ca53d990613193b03411bd6ab7a5aaa2500d79cf8373ef93b31f6",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update .tmp/code2llm-plugins/compact_flow.png",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .tmp/code2llm-plugins/compact_flow.png Source intent: Update .tmp/code2llm-plugins/compact_flow.png Paths: .tmp/code2llm-plugins/compact_flow.png.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          ".tmp/code2llm-plugins/compact_flow.png"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "Supplemental"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0053c09f2dc310e6e821 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .tmp/code2llm-plugins/compact_flow.png."
+      ],
+      "changes": [
+        {
+          "path": ".tmp/code2llm-plugins/compact_flow.png",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0053c09f2dc310e6e821.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to .tmp/code2llm-plugins/compact_flow.png and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-b59182d519790d62c246"
+        ],
+        "diagnosticIds": [
+          "DIAG-0053c09f2dc310e6e821"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-72da48dfae1759818ae4",
+      "planHash": "72da48dfae1759818ae4b7470eeee4d40fa78d1376ccb5bb1c88587f1167742f",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update docs/photo-vql-jetbrains-wayland.md",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/photo-vql-jetbrains-wayland.md Source intent: Update docs/photo-vql-jetbrains-wayland.md Paths: docs/photo-vql-jetbrains-wayland.md.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/photo-vql-jetbrains-wayland.md"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.334"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0067c5596efa659df859 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/photo-vql-jetbrains-wayland.md."
+      ],
+      "changes": [
+        {
+          "path": "docs/photo-vql-jetbrains-wayland.md",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0067c5596efa659df859.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/photo-vql-jetbrains-wayland.md and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-b238af8c0b958deb2f63"
+        ],
+        "diagnosticIds": [
+          "DIAG-0067c5596efa659df859"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-487a8325a372c2df4767",
+      "planHash": "487a8325a372c2df47679867566217d2e56994a11e0ae68d1a5b2d41de02c3db",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update project/compact_flow.png",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update project/compact_flow.png Source intent: Update project/compact_flow.png Paths: project/compact_flow.png.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "project/compact_flow.png"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.184"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-006eff514b700dd9c8b4 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/compact_flow.png."
+      ],
+      "changes": [
+        {
+          "path": "project/compact_flow.png",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-006eff514b700dd9c8b4.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to project/compact_flow.png and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-26a2103ca45b1f373f14"
+        ],
+        "diagnosticIds": [
+          "DIAG-006eff514b700dd9c8b4"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-5d4d07f898fd829a2d07",
+      "planHash": "5d4d07f898fd829a2d077295269457e3b5f96402b0c4be9899ae2e9282accd5e",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update docs/koru_auto_vs_observe_up.md",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/koru_auto_vs_observe_up.md Source intent: Update docs/koru_auto_vs_observe_up.md Paths: docs/koru_auto_vs_observe_up.md.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/koru_auto_vs_observe_up.md"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.233"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-015c8fb54a512b4d6364 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/koru_auto_vs_observe_up.md."
+      ],
+      "changes": [
+        {
+          "path": "docs/koru_auto_vs_observe_up.md",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-015c8fb54a512b4d6364.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/koru_auto_vs_observe_up.md and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-bb22854b6b2f7e836137"
+        ],
+        "diagnosticIds": [
+          "DIAG-015c8fb54a512b4d6364"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-083e65a70baaff89a6a2",
+      "planHash": "083e65a70baaff89a6a20776ee94a82f4c89c4837e88e9b1951c2c8a20aa176f",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update .vdisplay/2026-06-10T14-32-42Z__local__cli/env.json",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .vdisplay/2026-06-10T14-32-42Z__local__cli/env.json Source intent: Update .vdisplay/2026-06-10T14-32-42Z__local__cli/env.json Paths: .vdisplay/2026-06-10T14-32-42Z__local__cli/env.json.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          ".vdisplay/2026-06-10T14-32-42Z__local__cli/env.json"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.325"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-020c07250a590128943c (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .vdisplay/2026-06-10T14-32-42Z__local__cli/env.json."
+      ],
+      "changes": [
+        {
+          "path": ".vdisplay/2026-06-10T14-32-42Z__local__cli/env.json",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-020c07250a590128943c.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to .vdisplay/2026-06-10T14-32-42Z__local__cli/env.json and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-0e90c54176f454435b41"
+        ],
+        "diagnosticIds": [
+          "DIAG-020c07250a590128943c"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-d0630f9a045c7bce33bb",
+      "planHash": "d0630f9a045c7bce33bb02180a216998e14f1d81f5cc1c15b3425c05749fab5c",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update docs/adr/adr-auto-002-autonomous-decision-llm.md",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/adr/adr-auto-002-autonomous-decision-llm.md Source intent: Update docs/adr/adr-auto-002-autonomous-decision-llm.md Paths: docs/adr/adr-auto-002-autonomous-decision-llm.md. Tickets: AUTO-002.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/adr/adr-auto-002-autonomous-decision-llm.md"
+        ],
+        "symbols": [],
+        "tickets": [
+          "AUTO-002"
+        ],
+        "versions": [
+          "0.1.286"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-031eb428249aa00186e0 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/adr/adr-auto-002-autonomous-decision-llm.md."
+      ],
+      "changes": [
+        {
+          "path": "docs/adr/adr-auto-002-autonomous-decision-llm.md",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-031eb428249aa00186e0.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/adr/adr-auto-002-autonomous-decision-llm.md and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-03604620c9fad82cfe1e"
+        ],
+        "diagnosticIds": [
+          "DIAG-031eb428249aa00186e0"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-d7fda272e7d61f1fb201",
+      "planHash": "d7fda272e7d61f1fb201b83197ece55a10f843b395c2d0f185123b75e0edcee7",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update docs/autodiagnostics-auto-repair.md",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/autodiagnostics-auto-repair.md Source intent: Update docs/autodiagnostics-auto-repair.md Paths: docs/autodiagnostics-auto-repair.md.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/autodiagnostics-auto-repair.md"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.168"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0347e7e472f32501eda2 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/autodiagnostics-auto-repair.md."
+      ],
+      "changes": [
+        {
+          "path": "docs/autodiagnostics-auto-repair.md",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0347e7e472f32501eda2.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/autodiagnostics-auto-repair.md and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-1d8f4361594d5cf0203c"
+        ],
+        "diagnosticIds": [
+          "DIAG-0347e7e472f32501eda2"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-f90c146cc318db63d085",
+      "planHash": "f90c146cc318db63d085c7f20836d8287b6bf28b038a69d5a525cb9d8da82df2",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update docs/agent-backends-architecture.md",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/agent-backends-architecture.md Source intent: Update docs/agent-backends-architecture.md Paths: docs/agent-backends-architecture.md.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/agent-backends-architecture.md"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.320"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0383a1367d489fb1926e (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/agent-backends-architecture.md."
+      ],
+      "changes": [
+        {
+          "path": "docs/agent-backends-architecture.md",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0383a1367d489fb1926e.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/agent-backends-architecture.md and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-b59fc82afae9e5f6248c"
+        ],
+        "diagnosticIds": [
+          "DIAG-0383a1367d489fb1926e"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-9d00cf44081eedce6bbb",
+      "planHash": "9d00cf44081eedce6bbb54632a7e843681c3764c6aad0236bd5e123a1c4ad441",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update tests/test_autopilot_injector.py",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update tests/test_autopilot_injector.py Source intent: Update tests/test_autopilot_injector.py Paths: tests/test_autopilot_injector.py.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "tests/test_autopilot_injector.py"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.112"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-038e836332e13c38b11e (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: tests/test_autopilot_injector.py."
+      ],
+      "changes": [
+        {
+          "path": "tests/test_autopilot_injector.py",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-038e836332e13c38b11e.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to tests/test_autopilot_injector.py and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-171ec3f996dcb368e98b"
+        ],
+        "diagnosticIds": [
+          "DIAG-038e836332e13c38b11e"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-f043ec8a3d0aee5e4a8e",
+      "planHash": "f043ec8a3d0aee5e4a8ef4fe7c973d51c24b93de8d804247d90404bde0153905",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update .planfile/config.yaml",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .planfile/config.yaml Source intent: Update .planfile/config.yaml Paths: .planfile/config.yaml.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          ".planfile/config.yaml"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.230"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-03b213947f69d470b02e (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .planfile/config.yaml."
+      ],
+      "changes": [
+        {
+          "path": ".planfile/config.yaml",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-03b213947f69d470b02e.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to .planfile/config.yaml and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-59833ea06453204fd85a"
+        ],
+        "diagnosticIds": [
+          "DIAG-03b213947f69d470b02e"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-7c50472f227aceb44ac6",
+      "planHash": "7c50472f227aceb44ac6f299ff312f003a10bd8cf2cf8bd4c88c97afc3b1a63f",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update project/calls.png",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update project/calls.png Source intent: Update project/calls.png Paths: project/calls.png.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "project/calls.png"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.134"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-03f95e5e8042e41e4700 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/calls.png."
+      ],
+      "changes": [
+        {
+          "path": "project/calls.png",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-03f95e5e8042e41e4700.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to project/calls.png and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-7fe5a823a6c995f07183"
+        ],
+        "diagnosticIds": [
+          "DIAG-03f95e5e8042e41e4700"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-43e2828a5d0829715834",
+      "planHash": "43e2828a5d0829715834d1cad59b3646aeb4c8b7da72f73a0499edbe016ce538",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update docs/llm-tools/costs/install.sh",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/llm-tools/costs/install.sh Source intent: Update docs/llm-tools/costs/install.sh Paths: docs/llm-tools/costs/install.sh.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/llm-tools/costs/install.sh"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.2"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-040eba6f82854d42d2ff (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/llm-tools/costs/install.sh."
+      ],
+      "changes": [
+        {
+          "path": "docs/llm-tools/costs/install.sh",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-040eba6f82854d42d2ff.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/llm-tools/costs/install.sh and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-99fc853195216e359ace"
+        ],
+        "diagnosticIds": [
+          "DIAG-040eba6f82854d42d2ff"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-c2badc3e24a458f21305",
+      "planHash": "c2badc3e24a458f213056b53633aef2a733aede120f7ae10039d27d22edd1e1b",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt Source intent: Update plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt Paths: plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt. Symbols: KoruAutopilotService.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt"
+        ],
+        "symbols": [
+          "KoruAutopilotService"
+        ],
+        "tickets": [],
+        "versions": [
+          "0.1.256"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Provide AST evidence for symbols: KoruAutopilotService.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-044f790756883ee703a9 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt."
+      ],
+      "changes": [
+        {
+          "path": "plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt",
+          "action": "modify",
+          "symbols": [
+            "KoruAutopilotService"
+          ],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-044f790756883ee703a9.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-0e727a4300f17b2272e7"
+        ],
+        "diagnosticIds": [
+          "DIAG-044f790756883ee703a9"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-08ee81e2474c8e10fc34",
+      "planHash": "08ee81e2474c8e10fc3450af59d2b3def9f5e5c9e73379a5c5b59c4dbf9e1a52",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update .koru/project.json",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .koru/project.json Source intent: Update .koru/project.json Paths: .koru/project.json.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          ".koru/project.json"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.272"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-04f94f9a642f7414f69c (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .koru/project.json."
+      ],
+      "changes": [
+        {
+          "path": ".koru/project.json",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-04f94f9a642f7414f69c.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to .koru/project.json and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-62f03ca2c76efee8d036"
+        ],
+        "diagnosticIds": [
+          "DIAG-04f94f9a642f7414f69c"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-4b0b34703669553b489b",
+      "planHash": "4b0b34703669553b489b0f603c35dcc03cdf406778a1cf140608d2eeff26d136",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Trzeba bumpać dependency (`requirements*.txt`).",
+      "description": "Nie znaleziono powiązanego rekordu Git ani faktu AST dla: Trzeba bumpać dependency (`requirements*.txt`). Source intent: Trzeba bumpać dependency (`requirements*.txt`). Paths: requirements*.txt.",
+      "priority": "P2",
+      "target": {
+        "paths": [
+          "requirements*.txt"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": []
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-051669dca564a727b337 (PLANNED_NOT_IMPLEMENTED).",
+        "Touch only the declared paths: requirements*.txt."
+      ],
+      "changes": [
+        {
+          "path": "requirements*.txt",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Dodać identyfikator ticketu/symbolu albo dostarczyć implementację i ponownie uruchomić linker."
+        }
+      ],
+      "risk": {
+        "level": "low",
+        "reasons": [
+          "Derived from warning diagnostic DIAG-051669dca564a727b337.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to requirements*.txt and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-DOC-93c2289e18a75d6db4e3"
+        ],
+        "diagnosticIds": [
+          "DIAG-051669dca564a727b337"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.72,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-442cff85fd50c6022158",
+      "planHash": "442cff85fd50c6022158b0b4c415dae2ac03565f09f4ff7dd6b342f5ef765cc7",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update .planfile/config.yaml",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .planfile/config.yaml Source intent: Update .planfile/config.yaml Paths: .planfile/config.yaml.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          ".planfile/config.yaml"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.263"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0538a061dd33742b969b (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .planfile/config.yaml."
+      ],
+      "changes": [
+        {
+          "path": ".planfile/config.yaml",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0538a061dd33742b969b.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to .planfile/config.yaml and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-31455725de85f5145a52"
+        ],
+        "diagnosticIds": [
+          "DIAG-0538a061dd33742b969b"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-d8a909cc6ab208abf719",
+      "planHash": "d8a909cc6ab208abf71944b58eb9d5284032dc3db7ecd9c2a5fbf8468c427f3d",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update scripts/koru-autoloop.sh",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update scripts/koru-autoloop.sh Source intent: Update scripts/koru-autoloop.sh Paths: scripts/koru-autoloop.sh.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "scripts/koru-autoloop.sh"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.151"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-054ad8529d41e81116eb (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: scripts/koru-autoloop.sh."
+      ],
+      "changes": [
+        {
+          "path": "scripts/koru-autoloop.sh",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-054ad8529d41e81116eb.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to scripts/koru-autoloop.sh and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-d8022ee84cee16b0f923"
+        ],
+        "diagnosticIds": [
+          "DIAG-054ad8529d41e81116eb"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-da78807cf56aa29f6b70",
+      "planHash": "da78807cf56aa29f6b70a1ccfbe9ae4902694a08da69288a0fb4d642fb86fe3a",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update .koru/project.json",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .koru/project.json Source intent: Update .koru/project.json Paths: .koru/project.json.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          ".koru/project.json"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.276"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-054e1ec37a29e67d976a (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .koru/project.json."
+      ],
+      "changes": [
+        {
+          "path": ".koru/project.json",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-054e1ec37a29e67d976a.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to .koru/project.json and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-bce9356482acea8093a6"
+        ],
+        "diagnosticIds": [
+          "DIAG-054e1ec37a29e67d976a"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-a8c3c2bec08f464c7680",
+      "planHash": "a8c3c2bec08f464c7680658ec0d5b407e8deb9bc22702594c15aa40a1a5c6e75",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update workflows/on-change-gates.md",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update workflows/on-change-gates.md Source intent: Update workflows/on-change-gates.md Paths: workflows/on-change-gates.md.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "workflows/on-change-gates.md"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.11"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-05929ca785067d338471 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: workflows/on-change-gates.md."
+      ],
+      "changes": [
+        {
+          "path": "workflows/on-change-gates.md",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-05929ca785067d338471.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to workflows/on-change-gates.md and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-4927d791312966109259"
+        ],
+        "diagnosticIds": [
+          "DIAG-05929ca785067d338471"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-40c5476248d17346f790",
+      "planHash": "40c5476248d17346f790c74376ef5f54b5c92a8d978a554d001304244ddaa85a",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update tests/test_provider_portal_screencast.py",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update tests/test_provider_portal_screencast.py Source intent: Update tests/test_provider_portal_screencast.py Paths: tests/test_provider_portal_screencast.py.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "tests/test_provider_portal_screencast.py"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.224"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-066481178aef6218a58b (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: tests/test_provider_portal_screencast.py."
+      ],
+      "changes": [
+        {
+          "path": "tests/test_provider_portal_screencast.py",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-066481178aef6218a58b.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to tests/test_provider_portal_screencast.py and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-f0782327ecbf9ee3400a"
+        ],
+        "diagnosticIds": [
+          "DIAG-066481178aef6218a58b"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-fdef42d4bb7b71ef646c",
+      "planHash": "fdef42d4bb7b71ef646c2cab429f3479f730f7ef3ef0d9137529bfd5051c83d2",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update docs/plans/capture-providers-refactor.md",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/plans/capture-providers-refactor.md Source intent: Update docs/plans/capture-providers-refactor.md Paths: docs/plans/capture-providers-refactor.md.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/plans/capture-providers-refactor.md"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.224"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-06c37e0ac14ba6c39e04 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/plans/capture-providers-refactor.md."
+      ],
+      "changes": [
+        {
+          "path": "docs/plans/capture-providers-refactor.md",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-06c37e0ac14ba6c39e04.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/plans/capture-providers-refactor.md and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-a6d7d0491c2ff551bcf4"
+        ],
+        "diagnosticIds": [
+          "DIAG-06c37e0ac14ba6c39e04"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-2381df12ae4609e05bf8",
+      "planHash": "2381df12ae4609e05bf85451f02e934c33f3fc4d9a8cfc0625757610ed22b95a",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update docs/architecture/volume-reduction-plan.yaml",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/architecture/volume-reduction-plan.yaml Source intent: Update docs/architecture/volume-reduction-plan.yaml Paths: docs/architecture/volume-reduction-plan.yaml.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/architecture/volume-reduction-plan.yaml"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.423"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-07a868405a66fc75d328 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/architecture/volume-reduction-plan.yaml."
+      ],
+      "changes": [
+        {
+          "path": "docs/architecture/volume-reduction-plan.yaml",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-07a868405a66fc75d328.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/architecture/volume-reduction-plan.yaml and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-45b9f413ab54fe498116"
+        ],
+        "diagnosticIds": [
+          "DIAG-07a868405a66fc75d328"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-17ffada7fcb74d80fb5e",
+      "planHash": "17ffada7fcb74d80fb5e651181f5653d06ceb81b81cc0adc0e9be28bc8b3ed01",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update docs/refactoring/REFACTORING_PLAN.md",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/refactoring/REFACTORING_PLAN.md Source intent: Update docs/refactoring/REFACTORING_PLAN.md Paths: docs/refactoring/REFACTORING_PLAN.md. Symbols: REFACTORING_PLAN.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/refactoring/REFACTORING_PLAN.md"
+        ],
+        "symbols": [
+          "REFACTORING_PLAN"
+        ],
+        "tickets": [],
+        "versions": [
+          "0.1.318"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Provide AST evidence for symbols: REFACTORING_PLAN.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-07f134838f18a2ef8a21 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/refactoring/REFACTORING_PLAN.md."
+      ],
+      "changes": [
+        {
+          "path": "docs/refactoring/REFACTORING_PLAN.md",
+          "action": "modify",
+          "symbols": [
+            "REFACTORING_PLAN"
+          ],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-07f134838f18a2ef8a21.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/refactoring/REFACTORING_PLAN.md and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-e275b80adb92cca340c0"
+        ],
+        "diagnosticIds": [
+          "DIAG-07f134838f18a2ef8a21"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-fba755563b046d522741",
+      "planHash": "fba755563b046d5227413bb13a1e4558a7cd56be089fc484e824c300e03d064b",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update docs/autopilot-quickstart.md",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/autopilot-quickstart.md Source intent: Update docs/autopilot-quickstart.md Paths: docs/autopilot-quickstart.md.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/autopilot-quickstart.md"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.20"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-080483d7a1eee84c2017 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/autopilot-quickstart.md."
+      ],
+      "changes": [
+        {
+          "path": "docs/autopilot-quickstart.md",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-080483d7a1eee84c2017.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/autopilot-quickstart.md and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-8cda167472ad89dda11b"
+        ],
+        "diagnosticIds": [
+          "DIAG-080483d7a1eee84c2017"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-d11f6fea6de3f955c7fa",
+      "planHash": "d11f6fea6de3f955c7faba84561083c566541e9d28fafa8d3c91a0c24fe437cb",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update project/flow.png",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update project/flow.png Source intent: Update project/flow.png Paths: project/flow.png.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "project/flow.png"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.56"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-092a69e1573a3cd38731 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/flow.png."
+      ],
+      "changes": [
+        {
+          "path": "project/flow.png",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-092a69e1573a3cd38731.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to project/flow.png and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-c34461bc70b96cca11ca"
+        ],
+        "diagnosticIds": [
+          "DIAG-092a69e1573a3cd38731"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-17ef320d9579e8c474cd",
+      "planHash": "17ef320d9579e8c474cda6df98b476687739808cf53bd641d396125b3d827f48",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement **New slash command** `.windsurf/workflows/koru-gate.md` (`/koru-gate`) — read-only manual triad invocation: detect → regix gates → testql smoke → wup status → aggregate decision. Used by the agent before `planfile ticket complete`.",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: **New slash command** `.windsurf/workflows/koru-gate.md` (`/koru-gate`) — read-only manual triad invocation: detect → regix gates → testql smoke → wup status → aggregate decision. Used by the agent before `planfile ticket complete`. Source intent: **New slash command** `.windsurf/workflows/koru-gate.md` (`/koru-gate`) — read-only manual triad invocation: detect → regix gates → testql smoke → wup status → aggregate decision. Used by the agent before `planfile ticket complete`. Paths: .windsurf/workflows/koru-gate.md.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          ".windsurf/workflows/koru-gate.md"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "Historical"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-097fb3e27fe309801be1 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .windsurf/workflows/koru-gate.md."
+      ],
+      "changes": [
+        {
+          "path": ".windsurf/workflows/koru-gate.md",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-097fb3e27fe309801be1.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to .windsurf/workflows/koru-gate.md and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-2f966e1687a9180a828c"
+        ],
+        "diagnosticIds": [
+          "DIAG-097fb3e27fe309801be1"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-c9fbac5cc4456a5cfd06",
+      "planHash": "c9fbac5cc4456a5cfd061d599981bbadcf5585730e0da535a6063c1429b4fcac",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update .planfile/config.yaml",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .planfile/config.yaml Source intent: Update .planfile/config.yaml Paths: .planfile/config.yaml.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          ".planfile/config.yaml"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.165"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-098ff5af3cad8aca0bfb (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .planfile/config.yaml."
+      ],
+      "changes": [
+        {
+          "path": ".planfile/config.yaml",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-098ff5af3cad8aca0bfb.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to .planfile/config.yaml and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-8c434c99be6eac7fd2e7"
+        ],
+        "diagnosticIds": [
+          "DIAG-098ff5af3cad8aca0bfb"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-5b5a2d6d5971f9053d61",
+      "planHash": "5b5a2d6d5971f9053d611cee3d35ecffbd97793e7f32c97bf872282f563f7f19",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update project/compact_flow.png",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update project/compact_flow.png Source intent: Update project/compact_flow.png Paths: project/compact_flow.png.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "project/compact_flow.png"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.303"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-09a0b041d5caea2ab059 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/compact_flow.png."
+      ],
+      "changes": [
+        {
+          "path": "project/compact_flow.png",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-09a0b041d5caea2ab059.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to project/compact_flow.png and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-4c105b287b4475462179"
+        ],
+        "diagnosticIds": [
+          "DIAG-09a0b041d5caea2ab059"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-db9d2dde1ab4057028ea",
+      "planHash": "db9d2dde1ab4057028ea9844b2bad504663b00d662e5b71c203c762fbd888d6e",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update .planfile/config.yaml",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .planfile/config.yaml Source intent: Update .planfile/config.yaml Paths: .planfile/config.yaml.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          ".planfile/config.yaml"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.291"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0a23399844b57935e321 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .planfile/config.yaml."
+      ],
+      "changes": [
+        {
+          "path": ".planfile/config.yaml",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0a23399844b57935e321.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to .planfile/config.yaml and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-f68195cf68bb35696a95"
+        ],
+        "diagnosticIds": [
+          "DIAG-0a23399844b57935e321"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-8cc8de8028a7cc6ecbf3",
+      "planHash": "8cc8de8028a7cc6ecbf3c1fec0fe2b076401fdff387d8dd76c2782d57cf7af2f",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update docs/autopilot-roadmap.md",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/autopilot-roadmap.md Source intent: Update docs/autopilot-roadmap.md Paths: docs/autopilot-roadmap.md.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/autopilot-roadmap.md"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.22"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0aab4096788538c3d79b (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/autopilot-roadmap.md."
+      ],
+      "changes": [
+        {
+          "path": "docs/autopilot-roadmap.md",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0aab4096788538c3d79b.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/autopilot-roadmap.md and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-e56d2a857470d4e23c62"
+        ],
+        "diagnosticIds": [
+          "DIAG-0aab4096788538c3d79b"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-39c23c2bf3db71bfe669",
+      "planHash": "39c23c2bf3db71bfe66905aa6b714f945a92aaf0c4784524e384a7b942ca73ea",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update .koru/project.json",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .koru/project.json Source intent: Update .koru/project.json Paths: .koru/project.json.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          ".koru/project.json"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.336"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0ad8cdf8a8b01b62b3c4 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .koru/project.json."
+      ],
+      "changes": [
+        {
+          "path": ".koru/project.json",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0ad8cdf8a8b01b62b3c4.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to .koru/project.json and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-f865ed0977fd5ceb1a03"
+        ],
+        "diagnosticIds": [
+          "DIAG-0ad8cdf8a8b01b62b3c4"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-4baf252f194b325b4427",
+      "planHash": "4baf252f194b325b442756457d23c4e536baac602af1e9c31042afb9a8d977a1",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update .windsurf/workflows/koru-gate.md",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .windsurf/workflows/koru-gate.md Source intent: Update .windsurf/workflows/koru-gate.md Paths: .windsurf/workflows/koru-gate.md.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          ".windsurf/workflows/koru-gate.md"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.86"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0af0f4ad8be0fbbb851b (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .windsurf/workflows/koru-gate.md."
+      ],
+      "changes": [
+        {
+          "path": ".windsurf/workflows/koru-gate.md",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0af0f4ad8be0fbbb851b.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to .windsurf/workflows/koru-gate.md and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-e0192cfa36026daec07d"
+        ],
+        "diagnosticIds": [
+          "DIAG-0af0f4ad8be0fbbb851b"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-8b5ad61423c13ec618c9",
+      "planHash": "8b5ad61423c13ec618c94cf383fe918fc689b722f179c4524f28333a06fd7197",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update docs/architecture/volume-reduction-plan.yaml",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/architecture/volume-reduction-plan.yaml Source intent: Update docs/architecture/volume-reduction-plan.yaml Paths: docs/architecture/volume-reduction-plan.yaml.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/architecture/volume-reduction-plan.yaml"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.422"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0b1d0032cc058aacc6b7 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/architecture/volume-reduction-plan.yaml."
+      ],
+      "changes": [
+        {
+          "path": "docs/architecture/volume-reduction-plan.yaml",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0b1d0032cc058aacc6b7.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/architecture/volume-reduction-plan.yaml and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-7782b17c9a35a11b520c"
+        ],
+        "diagnosticIds": [
+          "DIAG-0b1d0032cc058aacc6b7"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-bbad63ed35219f422d27",
+      "planHash": "bbad63ed35219f422d2758a23bd677d3e565b7e7ba0cc71443801ae0ab4f5917",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update tests/test_provider_portal_screencast.py",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update tests/test_provider_portal_screencast.py Source intent: Update tests/test_provider_portal_screencast.py Paths: tests/test_provider_portal_screencast.py.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "tests/test_provider_portal_screencast.py"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.221"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0b4e60b33cfa6d0b2be8 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: tests/test_provider_portal_screencast.py."
+      ],
+      "changes": [
+        {
+          "path": "tests/test_provider_portal_screencast.py",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0b4e60b33cfa6d0b2be8.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to tests/test_provider_portal_screencast.py and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-d4f34103320961afb484"
+        ],
+        "diagnosticIds": [
+          "DIAG-0b4e60b33cfa6d0b2be8"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-cb35519ff1d65b42f935",
+      "planHash": "cb35519ff1d65b42f935d6616f0c6b2b660796974c2913711db33c39e2d018bc",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update project/compact_flow.png",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update project/compact_flow.png Source intent: Update project/compact_flow.png Paths: project/compact_flow.png.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "project/compact_flow.png"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.185"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0baa6f38bc8d225ef98c (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/compact_flow.png."
+      ],
+      "changes": [
+        {
+          "path": "project/compact_flow.png",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0baa6f38bc8d225ef98c.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to project/compact_flow.png and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-f698c7dce00707e21643"
+        ],
+        "diagnosticIds": [
+          "DIAG-0baa6f38bc8d225ef98c"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-ccf699cd68e4c69a4606",
+      "planHash": "ccf699cd68e4c69a460673486fca6f81b7484eb7588efcb8b1489f6fb3276052",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update project/calls.png",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update project/calls.png Source intent: Update project/calls.png Paths: project/calls.png.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "project/calls.png"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.188"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0c16ba857ca282189441 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/calls.png."
+      ],
+      "changes": [
+        {
+          "path": "project/calls.png",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0c16ba857ca282189441.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to project/calls.png and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-e1091d7b0247085bb871"
+        ],
+        "diagnosticIds": [
+          "DIAG-0c16ba857ca282189441"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-5949b4928a7fca0473fc",
+      "planHash": "5949b4928a7fca0473fc3ceeec88da5d82bbe5f8784e2f04f79ea0019ad78b7b",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update testql-testing/scenarios/realtime-health.testql.toon.yaml",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update testql-testing/scenarios/realtime-health.testql.toon.yaml Source intent: Update testql-testing/scenarios/realtime-health.testql.toon.yaml Paths: testql-testing/scenarios/realtime-health.testql.toon.yaml.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "testql-testing/scenarios/realtime-health.testql.toon.yaml"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.178"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0c2e870747c21f02d0fd (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: testql-testing/scenarios/realtime-health.testql.toon.yaml."
+      ],
+      "changes": [
+        {
+          "path": "testql-testing/scenarios/realtime-health.testql.toon.yaml",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0c2e870747c21f02d0fd.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to testql-testing/scenarios/realtime-health.testql.toon.yaml and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-960dcb1638305048a01c"
+        ],
+        "diagnosticIds": [
+          "DIAG-0c2e870747c21f02d0fd"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-f4a808e7c57b91c52ca4",
+      "planHash": "f4a808e7c57b91c52ca46a41c2bfce380f42a4758677fd60b08233ec5dae8030",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update docs/autopilot-quickstart.md",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/autopilot-quickstart.md Source intent: Update docs/autopilot-quickstart.md Paths: docs/autopilot-quickstart.md.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/autopilot-quickstart.md"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.22"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0cb6729ac51f8fa422e4 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/autopilot-quickstart.md."
+      ],
+      "changes": [
+        {
+          "path": "docs/autopilot-quickstart.md",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0cb6729ac51f8fa422e4.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/autopilot-quickstart.md and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-f4d367f28f9afcd65cb2"
+        ],
+        "diagnosticIds": [
+          "DIAG-0cb6729ac51f8fa422e4"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-daa1d3f694ae5ca159be",
+      "planHash": "daa1d3f694ae5ca159bec08d6a4fee0e0d9d8004a369ebddb55b273bdbae5f2c",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update project/calls.png",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update project/calls.png Source intent: Update project/calls.png Paths: project/calls.png.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "project/calls.png"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.161"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0db2bf8be0d7716eb33e (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/calls.png."
+      ],
+      "changes": [
+        {
+          "path": "project/calls.png",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0db2bf8be0d7716eb33e.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to project/calls.png and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-1a3bd4cb9b6e65d7acb7"
+        ],
+        "diagnosticIds": [
+          "DIAG-0db2bf8be0d7716eb33e"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-51f27e71ba6a46c5c8cd",
+      "planHash": "51f27e71ba6a46c5c8cd768aa29cac86c4cfc812fcdfd3d1ccd7f8dfd1b87413",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update .planfile/config.yaml",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .planfile/config.yaml Source intent: Update .planfile/config.yaml Paths: .planfile/config.yaml.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          ".planfile/config.yaml"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.300"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0e285caf252a3ac1675f (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .planfile/config.yaml."
+      ],
+      "changes": [
+        {
+          "path": ".planfile/config.yaml",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0e285caf252a3ac1675f.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to .planfile/config.yaml and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-e5452673cb7f95e89fd6"
+        ],
+        "diagnosticIds": [
+          "DIAG-0e285caf252a3ac1675f"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-f4c16676a1c37b7f4b73",
+      "planHash": "f4c16676a1c37b7f4b73fed951dd517551a8fcbad14a7e1a41506de7c044c816",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update .planfile/config.yaml",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .planfile/config.yaml Source intent: Update .planfile/config.yaml Paths: .planfile/config.yaml.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          ".planfile/config.yaml"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.312"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0e6e38e505d08420513e (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .planfile/config.yaml."
+      ],
+      "changes": [
+        {
+          "path": ".planfile/config.yaml",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0e6e38e505d08420513e.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to .planfile/config.yaml and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-32db45f03496cef0469c"
+        ],
+        "diagnosticIds": [
+          "DIAG-0e6e38e505d08420513e"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-5984311e1b72aeb52605",
+      "planHash": "5984311e1b72aeb526052b314caf4fbfb26b16b67167cdade41df02e25ab516a",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update project/compact_flow.png",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update project/compact_flow.png Source intent: Update project/compact_flow.png Paths: project/compact_flow.png.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "project/compact_flow.png"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.131"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-0f0c6166aa2d4b880ec9 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: project/compact_flow.png."
+      ],
+      "changes": [
+        {
+          "path": "project/compact_flow.png",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-0f0c6166aa2d4b880ec9.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to project/compact_flow.png and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-b3b313a187116ca33f0b"
+        ],
+        "diagnosticIds": [
+          "DIAG-0f0c6166aa2d4b880ec9"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-2679bf189dde8d94b11a",
+      "planHash": "2679bf189dde8d94b11a04a6c42fb634631ad65e04e5888bb1c9645676ce21a4",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update tests/test_autopilot_os_injector.py",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update tests/test_autopilot_os_injector.py Source intent: Update tests/test_autopilot_os_injector.py Paths: tests/test_autopilot_os_injector.py.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "tests/test_autopilot_os_injector.py"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.124"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-10dd9d7c5b660f331ff5 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: tests/test_autopilot_os_injector.py."
+      ],
+      "changes": [
+        {
+          "path": "tests/test_autopilot_os_injector.py",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-10dd9d7c5b660f331ff5.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to tests/test_autopilot_os_injector.py and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-200164fb613d665c6e18"
+        ],
+        "diagnosticIds": [
+          "DIAG-10dd9d7c5b660f331ff5"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-bd48b0e9430516ad99a7",
+      "planHash": "bd48b0e9430516ad99a70a23198cdc18de1a3592bca8ed09f27d8bb7103afa59",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update docs/autonomy-ide-cursor.md",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/autonomy-ide-cursor.md Source intent: Update docs/autonomy-ide-cursor.md Paths: docs/autonomy-ide-cursor.md.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/autonomy-ide-cursor.md"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.334"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-113474bdf278a3bb050a (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/autonomy-ide-cursor.md."
+      ],
+      "changes": [
+        {
+          "path": "docs/autonomy-ide-cursor.md",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-113474bdf278a3bb050a.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/autonomy-ide-cursor.md and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-081a02e45f006e0fa3d5"
+        ],
+        "diagnosticIds": [
+          "DIAG-113474bdf278a3bb050a"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-15fa2883d44139c1743b",
+      "planHash": "15fa2883d44139c1743b62cf628761d91e724f8e91dda53ce3922c91261ff339",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement `docs/llm-tools/op3/` — dokumentacja + `install.sh` dla `op3` (layered infra observation: physical/os/runtime/service/endpoint/ business). Companion redeploy/doql dla deeper device snapshots.",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: `docs/llm-tools/op3/` — dokumentacja + `install.sh` dla `op3` (layered infra observation: physical/os/runtime/service/endpoint/ business). Companion redeploy/doql dla deeper device snapshots. Source intent: `docs/llm-tools/op3/` — dokumentacja + `install.sh` dla `op3` (layered infra observation: physical/os/runtime/service/endpoint/ business). Companion redeploy/doql dla deeper device snapshots. Paths: docs/llm-tools/op3, install.sh. Symbols: install.sh, op3.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "docs/llm-tools/op3",
+          "install.sh"
+        ],
+        "symbols": [
+          "install.sh",
+          "op3"
+        ],
+        "tickets": [],
+        "versions": [
+          "Historical"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Provide AST evidence for symbols: install.sh, op3.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-1135249f7438290f32e4 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: docs/llm-tools/op3, install.sh."
+      ],
+      "changes": [
+        {
+          "path": "docs/llm-tools/op3",
+          "action": "modify",
+          "symbols": [
+            "install.sh",
+            "op3"
+          ],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        },
+        {
+          "path": "install.sh",
+          "action": "modify",
+          "symbols": [
+            "install.sh",
+            "op3"
+          ],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-1135249f7438290f32e4.",
+          "Touches 2 declared paths."
+        ]
+      },
+      "rollback": "Revert the proposed changes to docs/llm-tools/op3, install.sh and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-4f34afd331e210049349"
+        ],
+        "diagnosticIds": [
+          "DIAG-1135249f7438290f32e4"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-c4172ca50580e559a184",
+      "planHash": "c4172ca50580e559a184737eea484ec35b5eadfec895643378b4a0d0b681731f",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update .planfile/config.yaml",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .planfile/config.yaml Source intent: Update .planfile/config.yaml Paths: .planfile/config.yaml.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          ".planfile/config.yaml"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.181"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-114b7e7b525dc130d50a (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .planfile/config.yaml."
+      ],
+      "changes": [
+        {
+          "path": ".planfile/config.yaml",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-114b7e7b525dc130d50a.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to .planfile/config.yaml and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-ea5af7c46ceb25c1c602"
+        ],
+        "diagnosticIds": [
+          "DIAG-114b7e7b525dc130d50a"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-7a97cabda92389890255",
+      "planHash": "7a97cabda92389890255d113c382159aabe1f42cc966220e90a9e6eda57ce448",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update tests/test_autopilot_injector.py",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update tests/test_autopilot_injector.py Source intent: Update tests/test_autopilot_injector.py Paths: tests/test_autopilot_injector.py.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          "tests/test_autopilot_injector.py"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.22"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-12d94ddebfac9d78ada4 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: tests/test_autopilot_injector.py."
+      ],
+      "changes": [
+        {
+          "path": "tests/test_autopilot_injector.py",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-12d94ddebfac9d78ada4.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to tests/test_autopilot_injector.py and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-a204f630e319f04da750"
+        ],
+        "diagnosticIds": [
+          "DIAG-12d94ddebfac9d78ada4"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    },
+    {
+      "schemaVersion": "t2c.code-change-plan/v1",
+      "id": "CPLAN-57fe3742d83646967dc2",
+      "planHash": "57fe3742d83646967dc2c2865a4f3e1936fae58fd557fd9785ea5a7f12762887",
+      "status": "proposed",
+      "createdAt": "2026-07-30T18:26:30.013Z",
+      "title": "Implement Update .vdisplay/vdisplay-auto-observe-auto-vision-find-cursor.png.context.json",
+      "description": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .vdisplay/vdisplay-auto-observe-auto-vision-find-cursor.png.context.json Source intent: Update .vdisplay/vdisplay-auto-observe-auto-vision-find-cursor.png.context.json Paths: .vdisplay/vdisplay-auto-observe-auto-vision-find-cursor.png.context.json.",
+      "priority": "P1",
+      "target": {
+        "paths": [
+          ".vdisplay/vdisplay-auto-observe-auto-vision-find-cursor.png.context.json"
+        ],
+        "symbols": [],
+        "tickets": [],
+        "versions": [
+          "0.1.331"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Do not introduce new blocking diagnostics.",
+        "Re-run todo2code link+diagnose and clear diagnostic DIAG-136aa32e099a60ac26a6 (CHANGELOG_WITHOUT_IMPLEMENTATION).",
+        "Touch only the declared paths: .vdisplay/vdisplay-auto-observe-auto-vision-find-cursor.png.context.json."
+      ],
+      "changes": [
+        {
+          "path": ".vdisplay/vdisplay-auto-observe-auto-vision-find-cursor.png.context.json",
+          "action": "modify",
+          "symbols": [],
+          "rationale": "Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu."
+        }
+      ],
+      "risk": {
+        "level": "medium",
+        "reasons": [
+          "Derived from review_required diagnostic DIAG-136aa32e099a60ac26a6.",
+          "Touches 1 declared path."
+        ]
+      },
+      "rollback": "Revert the proposed changes to .vdisplay/vdisplay-auto-observe-auto-vision-find-cursor.png.context.json and re-run todo2code diagnostics.",
+      "evidence": {
+        "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+        "recordIds": [
+          "INT-CHANGELOG-e991c5a3cbc80eacc5f3"
+        ],
+        "diagnosticIds": [
+          "DIAG-136aa32e099a60ac26a6"
+        ],
+        "conclusionIds": [],
+        "proposalIds": []
+      },
+      "confidence": 0.8,
+      "generation": {
+        "generator": "t2c/code-change-plan",
+        "generatorVersion": "1",
+        "runtimeVersion": "0.5.0",
+        "generatedAt": "2026-07-30T18:26:30.013Z",
+        "requestedMode": "deterministic",
+        "effectiveMode": "deterministic",
+        "degraded": false,
+        "model": null,
+        "provider": null,
+        "responseId": null,
+        "configurationFingerprint": "b47f3cb7acfcc10b4e7f1075d004a69b8f2c283f4c043e49263e236b71e7373e",
+        "reason": null
+      }
+    }
+  ],
+  "generatedAt": "2026-07-30T18:26:30.013Z",
+  "graphFingerprint": "8206c794b8fc949c0abe5e5f9ee70290a76825f0f444effd322fda529889267f",
+  "sourceDiagnosticCount": 2144,
+  "generation": {
+    "generator": "t2c/code-change-plan-set",
+    "generatorVersion": "1",
+    "runtimeVersion": "0.5.0",
+    "generatedAt": "2026-07-30T18:26:30.013Z",
+    "requestedMode": "deterministic",
+    "effectiveMode": "deterministic",
+    "degraded": false,
+    "model": null,
+    "provider": null,
+    "responseId": null,
+    "configurationFingerprint": "830a5e4bac3460c366c6a237e16dfa1bfa9a28fa38366d123252dfe3e241d445",
+    "reason": null
+  }
+}

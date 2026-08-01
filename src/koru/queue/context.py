@@ -273,7 +273,13 @@ def _context_nothing_requested(request: dict[str, Any]) -> bool:
 
 
 def _context_files_to_include(project: Path, request: dict[str, Any]) -> list[str]:
-    """Ordered unique relative paths to embed from request inputs."""
+    """Ordered unique relative paths to embed from request inputs.
+
+    Explicit ticket targets must precede convenience context.  The final
+    payload is bounded, so putting README and build metadata first can consume
+    the whole budget while ``included_files`` misleadingly names a source file
+    the model never received.
+    """
     include_project_context = request.get("include_project_context")
     context_files: list[str] = list(request.get("context_files") or [])
     context_globs: list[str] = list(request.get("context_globs") or [])
@@ -287,15 +293,15 @@ def _context_files_to_include(project: Path, request: dict[str, Any]) -> list[st
             seen.add(rel)
             files_to_include.append(rel)
 
-    if include_project_context:
-        for rel in _collect_auto_files(project):
-            _add(rel)
     for rel in ticket_files:
         _add(rel)
     for rel in context_files:
         _add(rel)
     if context_globs:
         for rel in _collect_glob_files(project, context_globs):
+            _add(rel)
+    if include_project_context:
+        for rel in _collect_auto_files(project):
             _add(rel)
     return files_to_include
 
@@ -347,14 +353,16 @@ def build_project_context(
     max_chars: int = int(request.get("max_context_chars") or DEFAULT_MAX_CONTEXT_CHARS)
     sections: list[str] = []
 
-    tree = _read_file_tree(project)
-    if tree:
-        sections.append(f"## Project file tree\n\n```\n{tree}\n```")
-
     file_sections, included_files = _context_file_sections(
         project, _context_files_to_include(project, request)
     )
     sections.extend(file_sections)
+
+    # The tree is useful orientation, but it must not evict explicitly named
+    # source files from a bounded prompt.
+    tree = _read_file_tree(project)
+    if tree:
+        sections.append(f"## Project file tree\n\n```\n{tree}\n```")
 
     if not sections:
         return None
@@ -362,9 +370,12 @@ def build_project_context(
     full_text, truncated, total_chars = _truncate_context_text(
         "\n\n".join(sections), max_chars
     )
+    visible_files = [
+        rel for rel in included_files if f"## {rel}\n" in full_text
+    ]
     return ContextResult(
         text=full_text,
-        included_files=included_files,
+        included_files=visible_files,
         truncated=truncated,
         total_chars=total_chars,
     )

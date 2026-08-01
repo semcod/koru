@@ -177,6 +177,78 @@ def _add_discover_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser
     )
 
 
+def _add_discover_todo2code_parser(
+    sub: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> None:
+    discover = sub.add_parser(
+        "discover-todo2code",
+        help=(
+            "Run todo2code (t2c) pipeline and apply only useful grounded "
+            "code-change plans as planfile tickets."
+        ),
+    )
+    discover.add_argument("--project", type=Path, default=Path.cwd())
+    discover.add_argument("--no-apply", dest="apply_planfile", action="store_false", default=True)
+    discover.add_argument("--source", default="koru-todo2code-discovery")
+    discover.add_argument("--sprint", default="current")
+    discover.add_argument("--limit", type=int, default=10)
+    discover.add_argument("--stale-minutes", type=float, default=60.0)
+    discover.add_argument("--force", action="store_true")
+    discover.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+    )
+
+
+def _add_ticket2dsl_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    parser = sub.add_parser(
+        "ticket2dsl",
+        help=(
+            "Compile open useful planfile tickets into ticket2dsl work units "
+            "(JSON + planfile DSL + intent JSONL)."
+        ),
+    )
+    parser.add_argument("--project", type=Path, default=Path.cwd())
+    parser.add_argument("--sprint", default="current")
+    parser.add_argument("--limit", type=int, default=20)
+    parser.add_argument(
+        "--only-todo2code",
+        action="store_true",
+        help="Only include tickets sourced from todo2code discovery.",
+    )
+    parser.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+    )
+
+
+def _add_code_change_autonomy_parser(
+    sub: argparse._SubParsersAction[argparse.ArgumentParser],
+) -> None:
+    parser = sub.add_parser(
+        "code-change-autonomy",
+        help=(
+            "Run code-change hygiene: archive junk tickets and refresh "
+            "ticket2dsl; source patches still require the manifest transaction."
+        ),
+    )
+    parser.add_argument("--project", type=Path, default=Path.cwd())
+    parser.add_argument("--sprint", default="current")
+    parser.add_argument("--no-hygiene", action="store_true")
+    parser.add_argument("--no-apply", action="store_true")
+    parser.add_argument("--no-ticket2dsl", action="store_true")
+    parser.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+    )
+
+
 def _add_doctor_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     doctor = sub.add_parser(
         "doctor",
@@ -315,6 +387,9 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="action", required=True)
     add_control_parser(sub)
     _add_discover_parser(sub)
+    _add_discover_todo2code_parser(sub)
+    _add_ticket2dsl_parser(sub)
+    _add_code_change_autonomy_parser(sub)
     _add_doctor_parser(sub)
     _add_history_parser(sub)
     _add_reload_parser(sub)
@@ -492,6 +567,95 @@ def action_ide_discover(args: argparse.Namespace) -> int:
     return 0
 
 
+def action_ide_discover_todo2code(args: argparse.Namespace) -> int:
+    from koru.autonomy.todo2code_discovery import (
+        format_todo2code_summary,
+        run_todo2code_discovery,
+    )
+
+    outcome = run_todo2code_discovery(
+        args.project.expanduser().resolve(),
+        apply_planfile=args.apply_planfile,
+        planfile_source=args.source,
+        planfile_sprint=args.sprint,
+        planfile_limit=args.limit,
+        stale_minutes=args.stale_minutes,
+        force=args.force,
+    )
+    if args.output_format == "json":
+        print(json.dumps(outcome.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(format_todo2code_summary(outcome))
+        if outcome.applied_titles:
+            print("applied tickets:")
+            for title in outcome.applied_titles:
+                print(f"  · {title}")
+        if outcome.filtered_out_count:
+            print(f"filtered non-useful plans: {outcome.filtered_out_count}")
+    if outcome.error:
+        return 1
+    if not outcome.ran and not outcome.applied_titles and not outcome.useful_plans_count:
+        return 2
+    return 0
+
+
+def action_ide_ticket2dsl(args: argparse.Namespace) -> int:
+    from koru.autonomy.ticket2dsl import format_ticket2dsl_summary, run_ticket2dsl
+
+    outcome = run_ticket2dsl(
+        args.project.expanduser().resolve(),
+        sprint=args.sprint,
+        max_units=args.limit,
+        only_todo2code=bool(args.only_todo2code),
+    )
+    if args.output_format == "json":
+        print(json.dumps(outcome.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(format_ticket2dsl_summary(outcome))
+        if outcome.ticket_ids:
+            print("work units:")
+            for ticket_id in outcome.ticket_ids:
+                print(f"  · {ticket_id}")
+        if outcome.dsl_path:
+            print(f"planfile dsl: {outcome.dsl_path}")
+    if outcome.error:
+        return 1
+    if not outcome.units_count:
+        return 2
+    return 0
+
+
+def action_ide_code_change_autonomy(args: argparse.Namespace) -> int:
+    from koru.autonomy.code_change_autonomy import (
+        format_autonomy_summary,
+        run_code_change_autonomy,
+    )
+
+    outcome = run_code_change_autonomy(
+        args.project.expanduser().resolve(),
+        sprint=args.sprint,
+        hygiene=not args.no_hygiene,
+        apply_patches=not args.no_apply,
+        ticket2dsl=not args.no_ticket2dsl,
+    )
+    if args.output_format == "json":
+        print(json.dumps(outcome.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(format_autonomy_summary(outcome))
+        if outcome.applied_patches:
+            print("patch results:")
+            for item in outcome.applied_patches:
+                print(f"  · {item}")
+        archived = (outcome.hygiene or {}).get("archived") or []
+        if archived:
+            print("archived junk tickets:")
+            for item in archived[:20]:
+                print(f"  · {item}")
+    if outcome.error:
+        return 1
+    return 0
+
+
 def action_ide_commands(args: argparse.Namespace) -> int:
     import yaml
 
@@ -581,6 +745,12 @@ def ide_main(argv: list[str] | None = None) -> int:
         return action_ide_history(args)
     if args.action == "discover":
         return action_ide_discover(args)
+    if args.action == "discover-todo2code":
+        return action_ide_discover_todo2code(args)
+    if args.action == "ticket2dsl":
+        return action_ide_ticket2dsl(args)
+    if args.action == "code-change-autonomy":
+        return action_ide_code_change_autonomy(args)
     if args.action == "reload":
         return action_ide_reload(args)
     if args.action == "commands":

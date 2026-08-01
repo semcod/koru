@@ -1,4 +1,13 @@
 # Byte-compiled / optimized / DLL files
+.intent-t2c-test/runs/20260730T182618Z-3f358da5/ast.intent.jsonl
+.intent-t2c-test/runs/20260730T182618Z-3f358da5/diagnostics.json
+.intent-t2c-test/runs/20260730T182618Z-3f358da5/intent.graph.json
+.intent/runs/20260730T182849Z-49aa7e70/ast.intent.jsonl
+.intent/runs/20260730T182849Z-49aa7e70/diagnostics.json
+.intent/runs/20260730T182849Z-49aa7e70/intent.graph.json
+.intent/runs/20260730T183137Z-91a5afa3/ast.intent.jsonl
+.intent/runs/20260730T183137Z-91a5afa3/diagnostics.json
+.intent/runs/20260730T183137Z-91a5afa3/intent.graph.json
 .vscode/settings.json
 plugins/koru-autopilot-antigravity/.vscodeignore
 plugins/koru-autopilot-vscodium/.vscodeignore

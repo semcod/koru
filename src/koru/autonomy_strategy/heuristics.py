@@ -44,7 +44,7 @@ def _file_age_seconds(path: Path) -> float | None:
 def _recommendations(available_tools: list[str], has_code2llm_analysis: bool) -> list[str]:
     recs = [
         "Keep planfile as source_of_truth and execute specific tickets before broad discovery.",
-        "When the queue is idle, run scan/code2llm discovery and create focused tickets.",
+        "When the queue is idle, run scan/code2llm/todo2code/ticket2dsl discovery and create focused tickets.",
     ]
     if "code2llm" not in available_tools:
         recs.append("Install or expose code2llm to enable automated whole-project discovery.")

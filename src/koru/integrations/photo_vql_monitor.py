@@ -25,8 +25,29 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from vdisplay.monitors import map_capture_monitor_mismatch
-from vdisplay.monitors import resolve_vdisplay_source_for_ide as _resolve_vdisplay_source_for_ide
+
+def _monitor_api() -> tuple[Any, Any]:
+    """Load the optional, versioned vdisplay monitor API only when needed.
+
+    Queue and headless autonomy commands do not use screen capture.  Importing
+    this integration during CLI startup must therefore not make every Koru
+    command depend on the newest vdisplay package being installed.
+    """
+    try:
+        from vdisplay.monitors import map_capture_monitor_mismatch as map_mismatch
+        from vdisplay.monitors import resolve_vdisplay_source_for_ide as resolve_source
+    except ImportError as exc:
+        raise RuntimeError(
+            "vdisplay monitor support is unavailable; install/update the optional "
+            "vdisplay integration before using photo-VQL capture"
+        ) from exc
+    return map_mismatch, resolve_source
+
+
+def map_capture_monitor_mismatch(map_path: str, *, source: str) -> dict[str, Any] | None:
+    """Delegate monitor mismatch detection to the optional vdisplay package."""
+    map_mismatch, _ = _monitor_api()
+    return map_mismatch(map_path, source=source)
 
 
 def resolve_vdisplay_source_for_ide(
@@ -38,7 +59,8 @@ def resolve_vdisplay_source_for_ide(
     ide_default_source: dict[str, str] | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Resolve the capture monitor, honouring koru's ``KORU_VDISPLAY_SOURCE``."""
-    return _resolve_vdisplay_source_for_ide(
+    _, resolve_source = _monitor_api()
+    return resolve_source(
         ide,
         canonical_ide=canonical_ide,
         desktop_probe=desktop_probe,

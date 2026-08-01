@@ -1437,6 +1437,75 @@ def _scan_metrun_report(project: Path) -> list[Suggestion]:
     ]
 
 
+def _scan_todo2code_plans(project: Path) -> list[Suggestion]:
+    """Useful grounded code-change plans from ``t2c`` artifacts."""
+    try:
+        from koru.autonomy.code_change_usefulness import is_useful_plan, plan_useful_paths
+        from koru.autonomy.todo2code_discovery import (
+            DEFAULT_SOURCE as TODO2CODE_SOURCE,
+            _plan_dedupe_key,
+            _PRIORITY_MAP,
+            find_latest_plans_path,
+        )
+    except Exception:  # noqa: BLE001
+        return []
+
+    plans_path = find_latest_plans_path(project / ".intent")
+    if plans_path is None:
+        return []
+    try:
+        data = json.loads(plans_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, ValueError):
+        return []
+    if not isinstance(data, dict):
+        return []
+    plans = [p for p in (data.get("plans") or []) if isinstance(p, dict)]
+    try:
+        plans_rel = str(plans_path.relative_to(project))
+    except ValueError:
+        plans_rel = str(plans_path)
+
+    suggestions: list[Suggestion] = []
+    for plan in plans:
+        if not is_useful_plan(plan, project=project):
+            continue
+        paths = plan_useful_paths(plan)
+        if not paths:
+            continue
+        title_raw = str(plan.get("title") or "todo2code code-change plan").strip()
+        title = title_raw if len(title_raw) <= 140 else title_raw[:139].rstrip() + "…"
+        description = str(plan.get("description") or title_raw).strip()
+        priority = _PRIORITY_MAP.get(str(plan.get("priority") or "").upper(), "normal")
+        if priority not in {"high", "normal", "low"}:
+            priority = "normal"
+        evidence = plan.get("evidence") if isinstance(plan.get("evidence"), dict) else {}
+        suggestions.append(
+            Suggestion(
+                signal="todo2code_plan",
+                title=f"[todo2code] {title}",
+                description=(
+                    f"{description}\n\n"
+                    f"Source: `{plans_rel}` (plan id {plan.get('id') or 'n/a'}). "
+                    "Implement only declared target paths."
+                ),
+                priority=priority,
+                labels=("todo2code", "code-change", "scan", "useful-code-change"),
+                files=tuple(paths[:12]),
+                source_context={
+                    "signal": "todo2code_code_change_plan",
+                    "dedupe_key": _plan_dedupe_key(plan),
+                    "plan_id": str(plan.get("id") or "").strip() or None,
+                    "plan_hash": str(plan.get("planHash") or "").strip() or None,
+                    "source_tool": TODO2CODE_SOURCE,
+                    "diagnostic_ids": [
+                        str(v) for v in (evidence.get("diagnosticIds") or []) if str(v).strip()
+                    ],
+                },
+            ),
+        )
+    return suggestions
+
+
 def scan_semcod_quality_artifacts(project: Path) -> list[Suggestion]:
     """Quality tickets from semcod-adjacent tool exports."""
     project = project.resolve()
@@ -1453,6 +1522,7 @@ def scan_semcod_quality_artifacts(project: Path) -> list[Suggestion]:
     out.extend(_scan_redsl_report(project))
     out.extend(_scan_metrun_report(project))
     out.extend(_scan_pfix_report(project))
+    out.extend(_scan_todo2code_plans(project))
     return out
 
 

@@ -18,6 +18,8 @@ def test_detect_semcod_tools_covers_core_semcod_extensions(tmp_path: Path) -> No
         "sumr",
         "sumd",
         "code2llm",
+        "todo2code",
+        "ticket2dsl",
         "prefact",
         "pfix",
         "vallm",

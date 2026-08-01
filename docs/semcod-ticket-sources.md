@@ -15,6 +15,8 @@ when the queue is idle.
 | Tool | Role in autonomy | Ticket source | Koru status |
 | --- | --- | --- | --- |
 | `code2llm` | whole-project architecture/refactor discovery | native `--planfile-apply` plus `analysis.toon*` adapter | automated |
+| `todo2code` (`t2c`) | NL/TODO/CHANGELOG → **useful** code-change plans | native idle discovery + path usefulness filter + scan adapter | automated |
+| `ticket2dsl` | open planfile tickets → work-unit DSL for IDE | `.planfile/.koru/ticket2dsl/work-units.{json,planfile.dsl,intent.jsonl}` | automated |
 | `koru scan` | intake from repo signals | native Koru scan tickets | automated |
 | `jscpd` | duplicate-code report | `.jscpd/jscpd-report.json` | artifact adapter |
 | `redup` | duplicate groups, changed-file duplicate groups | `.redup/check.filtered.json`, `.redup/wup-changed.json` | artifact adapter |
@@ -40,9 +42,63 @@ stable JSON/YAML report with one of these keys when work is actionable:
 
 `koru scan --semcod-artifacts --apply` converts those reports into deduplicated
 tickets with labels naming the source tool. Native Planfile generation is still
-preferred when a tool already supports it, especially `code2llm`, but adapters
-keep the rest of the ecosystem useful without forcing every package to import
-Planfile.
+preferred when a tool already supports it, especially `code2llm` and
+`todo2code`, but adapters keep the rest of the ecosystem useful without forcing
+every package to import Planfile.
+
+### Useful code-change chain (todo2code → planfile → ticket2dsl)
+
+Idle discovery order after scan finds nothing:
+
+1. `code2llm` architecture tickets;
+2. `todo2code` / `t2c pipeline` → grounded plans, **filtered** (no venv /
+   site-packages / PNG / analysis dumps / globs), scored, top N → planfile;
+3. `ticket2dsl` compiles open useful tickets into:
+
+```text
+.planfile/.koru/ticket2dsl/work-units.json          # koru.ticket-work-unit-set/v1
+.planfile/.koru/ticket2dsl/work-units.planfile.dsl  # start/show/done ticket scripts
+.planfile/.koru/ticket2dsl/work-units.intent.jsonl  # lightweight intent records
+```
+
+Manual:
+
+```bash
+koru ide discover-todo2code --project . --force --limit 10
+koru ide ticket2dsl --project . --limit 20
+# optional: only todo2code-sourced tickets
+koru ide ticket2dsl --project . --only-todo2code
+```
+
+Env: `KORU_TODO2CODE_ENABLE`, `KORU_TODO2CODE_BIN`, `KORU_TODO2CODE_MAX_TICKETS`,
+`KORU_TODO2CODE_MIN_USEFULNESS` (default 8), `KORU_TODO2CODE_STALE_MINUTES`,
+`KORU_TODO2CODE_LLM_EXECUTOR` (default off), `KORU_TODO2CODE_CONTRACT`
+(required with the LLM executor; names a capability contract from `koru.yaml`),
+`KORU_TICKET2DSL_ENABLE`, `KORU_TICKET2DSL_MAX_UNITS`,
+`KORU_CODE_CHANGE_AUTONOMY` (default on).
+
+### Governance-aware execution
+
+After useful tickets are created, Koru runs the non-authorizing parts of
+**code-change autonomy**:
+
+1. **Hygiene** — auto-`done` junk tickets (venv/PNG/globs) with an audit note.
+2. **Quarantine ready patches** — a full `unifiedDiff` is never self-approved;
+   it must be submitted through the Planfile manifest transaction.
+3. **ticket2dsl** — refresh work-unit DSL for remaining open tickets.
+4. **Queue** — tickets default to `executor.kind=human`. An automatic LLM ticket
+   is created only when the target project explicitly names a capability
+   contract; imported legacy tickets without one are downgraded to human review.
+
+```bash
+koru ide code-change-autonomy --project .
+koru --queue --loop   # drains llm/patch tickets headlessly when API keys exist
+```
+
+todo2code itself also rejects non-implementable paths at plan generation time
+(`isUsefulCodeChangePath` / `isPlannablePath`). Koru additionally protects
+`AGENTS.md`, `POLICY.md`, `CONTRIBUTING.md`, `project/TICKETS.md` and every
+`project/ticket-*` participant/evidence file from autonomous source patches.
 
 `task quality:semcod:planfile` (or `bash scripts/koru-semcod-gates.sh`) now:
 

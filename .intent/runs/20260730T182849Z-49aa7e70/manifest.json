@@ -1,0 +1,262 @@
+{
+  "schemaVersion": "t2c.run/v1",
+  "runId": "20260730T182849Z-49aa7e70",
+  "root": "/home/tom/github/semcod/koru",
+  "createdAt": "2026-07-30T18:29:03.145Z",
+  "graphFingerprint": "628e5d353eceb8937cd18a1769e22fc252688f8afb2eabade24e855fc82e2412",
+  "files": {
+    "nlIntent": ".intent/runs/20260730T182849Z-49aa7e70/nl.intent.jsonl",
+    "gitIntent": ".intent/runs/20260730T182849Z-49aa7e70/git.intent.jsonl",
+    "astIntent": ".intent/runs/20260730T182849Z-49aa7e70/ast.intent.jsonl",
+    "todoIntent": ".intent/runs/20260730T182849Z-49aa7e70/todo.intent.jsonl",
+    "changelogIntent": ".intent/runs/20260730T182849Z-49aa7e70/changelog.intent.jsonl",
+    "documentIntent": ".intent/runs/20260730T182849Z-49aa7e70/document.intent.jsonl",
+    "configurationIntent": ".intent/runs/20260730T182849Z-49aa7e70/configuration.intent.jsonl",
+    "communicationIntent": ".intent/runs/20260730T182849Z-49aa7e70/communication.intent.jsonl",
+    "codeChangePlans": ".intent/runs/20260730T182849Z-49aa7e70/code-change-plans.json",
+    "codeChangeReview": ".intent/runs/20260730T182849Z-49aa7e70/CODE_CHANGE.review.md",
+    "codeChangeReviewAudit": ".intent/runs/20260730T182849Z-49aa7e70/CODE_CHANGE.review.json",
+    "codeChangeSourcePatches": ".intent/runs/20260730T182849Z-49aa7e70/code-change-source-patches.json",
+    "graph": ".intent/runs/20260730T182849Z-49aa7e70/intent.graph.json",
+    "diagnostics": ".intent/runs/20260730T182849Z-49aa7e70/diagnostics.json",
+    "summary": ".intent/runs/20260730T182849Z-49aa7e70/team-summary.md",
+    "summaryConclusions": ".intent/runs/20260730T182849Z-49aa7e70/summary-conclusions.json"
+  },
+  "warnings": [
+    "UNSUPPORTED_AST_FILES: kt=4, kts=2; these source files were discovered but not converted to AST DSL"
+  ],
+  "status": "succeeded",
+  "failure": null,
+  "runtime": {
+    "name": "todo2code",
+    "version": "0.5.0"
+  },
+  "configuration": {
+    "fingerprint": "f6e031d0d14881f697e2db87583c89647b824d1ff781d7c6697c2b2ced0e55b6",
+    "nlMode": "deterministic",
+    "markdownMode": "deterministic",
+    "communicationMode": "deterministic",
+    "gitCommitCount": 10,
+    "maxFileBytes": 524288,
+    "documentConcurrency": 3,
+    "documentChunkChars": 8000,
+    "documentMaxChunks": 12,
+    "documentRecordsPerChunk": 24,
+    "documentTimeoutMs": 45000,
+    "summaryLlm": false,
+    "taskSynthesisMode": "disabled",
+    "includeCommunication": false,
+    "projectDirectory": "project",
+    "communicationTicket": null,
+    "documentPatterns": [
+      "README.md",
+      "docs/**/*.md",
+      "project/**/*.md",
+      "packages/**/MODULE.md"
+    ],
+    "documentExcludes": [
+      "node_modules/**",
+      ".git/**",
+      "dist/**",
+      ".intent/**",
+      "TODO.md",
+      "CHANGELOG.md"
+    ],
+    "adapters": {
+      "python": {
+        "enabled": true,
+        "executable": "python3"
+      },
+      "go": {
+        "enabled": true,
+        "executable": "go"
+      },
+      "java": {
+        "enabled": true,
+        "executable": "java"
+      },
+      "rust": {
+        "enabled": true,
+        "executable": "cargo"
+      },
+      "tensorflow": {
+        "enabled": false,
+        "modelPath": null,
+        "modulePath": "adapters/tensorflow/node_modules/@tensorflow/tfjs-node/dist/index.js",
+        "labels": [
+          "add",
+          "fix",
+          "remove",
+          "refactor",
+          "test",
+          "document",
+          "configure",
+          "analyze",
+          "unknown"
+        ]
+      }
+    },
+    "llm": {
+      "configured": true,
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "nlModel": "openrouter/auto-beta",
+      "markdownModel": "openrouter/auto-beta",
+      "communicationModel": "openrouter/auto-beta",
+      "documentModel": "openrouter/auto-beta",
+      "summaryModel": "openrouter/auto-beta",
+      "taskModel": "openrouter/auto-beta",
+      "timeoutMs": 120000,
+      "maxTokens": 6000,
+      "temperature": 0,
+      "requireStructuredOutput": true,
+      "responseHealing": true
+    }
+  },
+  "stages": {
+    "naturalLanguageExtraction": {
+      "runtimeVersion": "0.5.0",
+      "configuration": {},
+      "status": "skipped",
+      "requestedMode": "disabled",
+      "effectiveMode": "none",
+      "degraded": false,
+      "recordCount": 0,
+      "warningCount": 0,
+      "model": null,
+      "durationMs": 0,
+      "reason": {
+        "code": "STAGE_SKIPPED",
+        "message": "No NL task file was selected"
+      },
+      "responses": []
+    },
+    "markdownExtraction": {
+      "runtimeVersion": "0.5.0",
+      "configuration": {
+        "model": null,
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "timeoutMs": 120000,
+        "maxTokens": 6000,
+        "temperature": 0,
+        "requireStructuredOutput": true,
+        "responseHealing": true
+      },
+      "status": "succeeded",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "recordCount": 5139,
+      "warningCount": 0,
+      "model": null,
+      "durationMs": 199,
+      "reason": null,
+      "responses": []
+    },
+    "documentationExtraction": {
+      "runtimeVersion": "0.5.0",
+      "configuration": {
+        "generator": "t2c/markdown-documentation",
+        "generatorVersion": "1"
+      },
+      "status": "succeeded",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "recordCount": 4611,
+      "warningCount": 0,
+      "model": null,
+      "durationMs": 369,
+      "reason": null,
+      "responses": []
+    },
+    "communicationAnalysis": {
+      "runtimeVersion": "0.5.0",
+      "configuration": {},
+      "status": "skipped",
+      "requestedMode": "disabled",
+      "effectiveMode": "none",
+      "degraded": false,
+      "recordCount": 0,
+      "warningCount": 0,
+      "model": null,
+      "durationMs": 0,
+      "reason": {
+        "code": "STAGE_SKIPPED",
+        "message": "Communication analysis was disabled"
+      },
+      "responses": []
+    },
+    "taskSynthesis": {
+      "runtimeVersion": "0.5.0",
+      "configuration": {},
+      "status": "skipped",
+      "requestedMode": "disabled",
+      "effectiveMode": "none",
+      "degraded": false,
+      "recordCount": 0,
+      "warningCount": 0,
+      "model": null,
+      "durationMs": 0,
+      "reason": {
+        "code": "STAGE_SKIPPED",
+        "message": "Task synthesis was disabled"
+      },
+      "responses": []
+    },
+    "codeChangePlanning": {
+      "runtimeVersion": "0.5.0",
+      "configuration": {
+        "model": null,
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "timeoutMs": 120000,
+        "maxTokens": 6000,
+        "temperature": 0,
+        "requireStructuredOutput": true,
+        "responseHealing": true
+      },
+      "status": "succeeded",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "recordCount": 50,
+      "warningCount": 0,
+      "model": null,
+      "durationMs": 0,
+      "reason": null,
+      "responses": []
+    },
+    "summary": {
+      "runtimeVersion": "0.5.0",
+      "configuration": {
+        "model": null,
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "timeoutMs": 120000,
+        "maxTokens": 6000,
+        "temperature": 0,
+        "requireStructuredOutput": true,
+        "responseHealing": true
+      },
+      "status": "skipped",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "recordCount": 100,
+      "warningCount": 0,
+      "model": null,
+      "durationMs": 18262,
+      "reason": {
+        "code": "LLM_DISABLED",
+        "message": "LLM summary was disabled; generated the deterministic report"
+      },
+      "responses": []
+    }
+  },
+  "llm": {
+    "naturalLanguageExtraction": false,
+    "markdownExtraction": false,
+    "documentationExtraction": false,
+    "communicationEnrichment": false,
+    "taskSynthesis": false,
+    "summary": false
+  }
+}

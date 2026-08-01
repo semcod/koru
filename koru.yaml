@@ -150,6 +150,18 @@ autonomy:
       prefer_general_discovery_when_idle: true
 
 queue:
+  todo2code:
+    verification:
+      # Projects with Dockerfile + Compose are verified inside their declared
+      # runtime. Koru refuses a host fallback when this boundary is missing.
+      runtime: docker
+      compose_file: docker-compose.yml
+      profiles:
+        - verify
+      service: koru-verify
+      commands:
+        - python -m ruff check src tests
+        - python -m pytest tests/ -q -x
   post_run_verify:
     enabled: true
     commands:

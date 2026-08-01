@@ -1,0 +1,2903 @@
+[
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Sprzeczne intencje lub dowody",
+    "detail": "Relacja REL-75e925f11c5c44208002 łączy rekordy o przeciwnej polaryzacji. Następne działanie: Rozstrzygnąć konflikt w kanonicznym tickecie lub decyzji człowieka.",
+    "severity": "blocking",
+    "diagnosticIds": [
+      "DIAG-7530efd689993dca7c74"
+    ],
+    "recordIds": [
+      "INT-DOC-9dde091c9ae778a52430",
+      "INT-DOC-ab02f45db5581e2ffd42"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-7ad255d02f3a9d8a2cb7"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Fix relative-imports issues (ticket-42f3229a) Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-027b549ffdfc23dfb4af"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-7eb56780e91794627339"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-01882196be934a01a458"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update koru.yaml Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-031223e3f5b60c8d97bb"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-3e9b3bb050b3a513bf68"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-06326bc373ce0678583f"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update wup.yaml Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-092b67f771c6fbad026c"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-421e644d45d5db1ec045"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-09a7ad303375c1fd0c92"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .nlp2dsl/environment.doql.less Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0a4875d1a526301830c0"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-46bb36b22cf7aa136bff"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-0c0e2456fe65eeb02ba6"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Fix wildcard-imports issues (ticket-7e65702d) Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-006c6b91fbb7571c0381"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-fda7c2a6a76dbb438077"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-0d8a5308c150f5373d42"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-09f0a8c7f801a7cec49a"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-e39ec2b280ace9886cf6"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-1118f550fe390e5196e2"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/pipeline-design.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-00437c8f077193d86ba7"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-ac1326f3acfd4659c4d0"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-15da3f585b2c3ba3e27f"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/adr/adr-auto-002-autonomous-decision-llm.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-031eb428249aa00186e0"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-03604620c9fad82cfe1e"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-168aa824b003a6ccd9be"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update plugins/koru-autopilot-jetbrains/src/main/kotlin/com/semcod/koru/autopilot/KoruAutopilotService.kt Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-044f790756883ee703a9"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-0e727a4300f17b2272e7"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-17d50d929727a98efecd"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update app.doql.less Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-09bf64da2f4f5a8093cc"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-d401b516531c42f1759f"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-1924c1047200948ad495"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-02fc739a8c42acffec73"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-48d955773978eac4ac46"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-1c37b4ea80fb1209fa08"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0bf8a36599ad9a36963d"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-3021a64c085a2f12e64c"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-1d2f0ffb93fbb35441db"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-031f8ed3be48c1f85559"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-a29ca5ac58492db6e630"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-1fc3683d2d1fe19e869d"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/agent-backends-architecture.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0383a1367d489fb1926e"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-b59fc82afae9e5f6248c"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-21795bf6c9a6b476364b"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update scripts/koru-autoloop.sh Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-054ad8529d41e81116eb"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-d8022ee84cee16b0f923"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-226dc4572ed8e6bbd034"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update uv.lock Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-056a24ea60e630bee007"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-b2a5cce67afe84e24b8b"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-23248caec6ab14a06244"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-07418111ce0b0a7c0ef8"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-243b073e8e1da70f5aa5"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-23f8644c0b5a6620f78c"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update uv.lock Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-003338d5cc527a7f66c2"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-172880d5107069d9b4bb"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-27db97eb6c7b9875bc37"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update project/compact_flow.png Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-006eff514b700dd9c8b4"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-26a2103ca45b1f373f14"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-2916421417d3a4b9b635"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .koru/project.json Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-04f94f9a642f7414f69c"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-62f03ca2c76efee8d036"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-34b1d80b2270c070d22a"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0230d363f31eceb1a7b3"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-de379448bee56cccd175"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-358f889553203dbe4146"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update uv.lock Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0540589dff8bf98bee1b"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-35b5b5162a4d097f1f7e"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-3602408e21d2d846474e"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-007ba4e54556c88f167e"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-8db4d8a42cd4d1db76c5"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-36ba8256bcf230db5cdb"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: ... and 10 more files Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-031b41e4f34d783f46e0"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-b4a50d27577e5b8c09c7"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-393b92cfead7e3404dd8"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0c0431aee3ede0502e31"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-07d9141d1ca02798cfad"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-3a127bb5b1c50ee9d24d"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .nlp2dsl/environment.doql.less Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-02413664e2b7668e2d11"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-7e85951952b3373b4657"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-3d955219ad723aee2070"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update plugins/koru-autopilot-vscode/out/extension.js.map Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-02fe269909e41ff0774b"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-b6ee099fc25f0b8712ec"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-3e694f8d83af47c9116e"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update uv.lock Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0a08e299f9e6df314925"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-9fd9a68d43c361ab2cc2"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-3f0e19959b2ed4f4e9a4"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: `docs/llm-tools/mdflow/` — markdown dependency analyzer (extract markpact:ref, generate Mermaid diagrams, validate links). Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-00066abd98c3f5946b08"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-7a4c6b6ff10c1a07aead"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-45e0bf6786f37476362e"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0b98dd3340fcdc3045f5"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-445dff1583d65ba15810"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-4821cb39ba3f30faeb5f"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update project/flow.png Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-092a69e1573a3cd38731"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-c34461bc70b96cca11ca"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-4873de28d208f5170838"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-09fb2ca48cf77c66f888"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-17a04733e442ad6bfc02"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-489482bed0e858a5a154"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update uv.lock Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-02e233341efe81a4e5a8"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-d37d6a3909f4eed7ad7c"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-48d16f043b73f3a884b2"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/architecture/volume-reduction-plan.yaml Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-07a868405a66fc75d328"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-45b9f413ab54fe498116"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-496839d1f29e052016e8"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Fix unused-imports issues (ticket-ac3e3e72) Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0b80079ac787e3ab925d"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-aeb0c743caf96624af19"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-4b60c264664407d61b57"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-061afe27016b9fa9dcbc"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-20c100c25b4d41737aeb"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-4c9aeec57a21e90133fc"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .nlp2dsl/registry/environment.doql.less Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0a238e40f695969539d5"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-eff16f1965d62585e92e"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-4cdd9852ea8dbbfeed5e"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update tests/test_autopilot_injector.py Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-038e836332e13c38b11e"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-171ec3f996dcb368e98b"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-4de4e304e874036f692c"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update app.doql.less Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0762078ad1fe36c26edf"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-aac791fd2ce8e0a98435"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-4fbe22bd996db47e84ea"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update tests/test_provider_portal_screencast.py Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-066481178aef6218a58b"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-f0782327ecbf9ee3400a"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-531cb7a99105aba26d90"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0baccdbae46a09ee13d5"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-b024dd243b687de1be90"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-53213b47b71b08532f73"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update wup.yaml Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0c29e079a75098f2a26d"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-9aa510aae3afb590bfea"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-5358ea1d4f009547e9e2"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Fix magic-numbers issues (ticket-ad2e997e) Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0536f51c06ced27f4848"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-62f2fa0196f5c94b35f0"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-59cd0b648772ed29c2ba"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update uv.lock Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-053fb33d4c20d376089e"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-43e619da7a32378f06d5"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-5ba29f839a3d6500be54"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Completed DEP-0's validated dependency-boundary inventory and DEP-3's typed, bounded Gillm actuator integration. Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0564316af1dc104e5b48"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-28b688a339ba85fc9fc7"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-5d43a7d3bc5624d02a35"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/plans/capture-providers-refactor.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-06c37e0ac14ba6c39e04"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-a6d7d0491c2ff551bcf4"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-601173eb917faee32bcf"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-057733efc1c3edbb96d7"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-c21ff4c689b44d40749b"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-64bcd343c51714da99fd"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .vdisplay/2026-06-10T14-32-42Z__local__cli/env.json Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-020c07250a590128943c"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-0e90c54176f454435b41"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-678314016a9abe869a1c"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update plugins/koru-autopilot-vscode/out/extension.js.map Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-02cfd9b9b5a455fec8d9"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-b020f19638627a426979"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-6b5789f94d84826b15a0"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/llm-tools/costs/install.sh Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-040eba6f82854d42d2ff"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-99fc853195216e359ace"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-755ed6ccdb47a35fed89"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Fix ai-boilerplate issues (ticket-844c8511) Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-035a8564ca8abf93eedf"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-6b8c66efb834869f26ff"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-756e7c365812161b716e"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update project/compact_flow.png Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0baa6f38bc8d225ef98c"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-f698c7dce00707e21643"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-76e53376abbdbd017383"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update wup.yaml Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-06b949109ac5594c73c5"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-4a56ab126becf6632fae"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-836703bff1f38e5999bf"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update uv.lock Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-08b2a3f2d3a731c8ec61"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-dcd20659e1a879eb87b0"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-877a7d33007763aeb4df"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update project/calls.png Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-03f95e5e8042e41e4700"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-7fe5a823a6c995f07183"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-8a19ba42b7eb608ce8e0"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-001ad94319badd7d6b51"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-1c21db9fd72fe94eaf08"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-8f93ef2a4c933970b594"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: **New slash command** `.windsurf/workflows/koru-gate.md` (`/koru-gate`) — read-only manual triad invocation: detect → regix gates → testql smoke → wup status → aggregate decision. Used by the agent before `planfile ticket complete`. Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-097fb3e27fe309801be1"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-2f966e1687a9180a828c"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-91bea5bfee77ecddbf66"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update tests/test_provider_portal_screencast.py Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0b4e60b33cfa6d0b2be8"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-d4f34103320961afb484"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-97195f1a4ecafd68ca8a"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Fix import-optimization issues (ticket-40aae4d6) Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-003290286ae02472931f"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-929a08c460e0fa7b1dc9"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-a087bc6ef8ba32fe75b5"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/koru_auto_vs_observe_up.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-015c8fb54a512b4d6364"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-bb22854b6b2f7e836137"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-a6c6bffb9050a4a6ba30"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0a7cde6bde2d47907dde"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-45a212b8355dd59b603b"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-a87693ae9842056e2ab0"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update uv.lock Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-053bb7b2f96798619202"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-d587e8f93174c9a8cde9"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-abc21a55432808154ef6"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/photo-vql-jetbrains-wayland.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0067c5596efa659df859"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-b238af8c0b958deb2f63"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-ac926004d3b0f37d58ac"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update app.doql.less Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-005d4ca95e476bee5b4a"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-1102a17f17acafc96d83"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-ad457e98078c3c3085bf"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update project/compact_flow.png Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-09a0b041d5caea2ab059"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-4c105b287b4475462179"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-addaddc120b93eefa92c"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .tmp/code2llm-plugins/compact_flow.png Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0053c09f2dc310e6e821"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-b59182d519790d62c246"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-ade7df4433332af53e40"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .koru/project.json Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-054e1ec37a29e67d976a"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-bce9356482acea8093a6"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-af9f685133b05bb04f4c"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update lucy/go.mod Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-066080cf107128900b1c"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-128520d7fa3c57a0e871"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-b2a22a06b73a970449d8"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update workflows/on-change-gates.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-05929ca785067d338471"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-4927d791312966109259"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-b3722646df753eb9a86e"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update plugins/koru-autopilot-vscode/out/extension.js.map Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-001d57a861a1b8cea206"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-9115107ce898a7e0a15e"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-b9ad4baf7ee29eb18113"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Keep Windsurf autopilot on native chat delivery only, avoiding sidebar/open commands that can close Cascade. Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-092e7d8e4c070796b748"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-325999ddad2dddefeeed"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-bb2c5a16c856c363de32"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Fix string-concat-fstring issues (ticket-8446f655) Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-07b25e9d709dad18b9a1"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-7e5973a57e1c91447da3"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-bb686b6a24f3839e433f"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-043a4d83fe79cef5cde6"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-4ba4c4c0233340f4c46b"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-bc9433da51081eb4545e"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-04858e2c7a69e026ac28"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-f329874bf147f0fccec4"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-bd06668ba3fc44c8870b"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update app.doql.less Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-048cbe18864e399161f1"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-084df0d703926ca5365d"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-bd6bb9c7e80946a812c3"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .pretest.yml Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-00d2534a9f1f275a4a10"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-c71b46961a621fc371ae"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-be6311a30e83f9877175"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/autopilot-quickstart.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-080483d7a1eee84c2017"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-8cda167472ad89dda11b"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-bf9016d730d16ef6a169"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-07819c120fd926b60158"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-eade268385cf05348d9f"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-c2aabe137a8668b1a995"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-04ed19e968094661c9a6"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-e77f3ac1f81f0fa7988e"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-c2d93a22c291d8d4bed1"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update README.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0bf3ef9607776e6018c7"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-5b5abb3e55e7fcd08100"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-c41c1c6fd40bbf037e58"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .planfile/config.yaml Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0a23399844b57935e321"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-f68195cf68bb35696a95"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-c5b01c47d2cf2a049717"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/autodiagnostics-auto-repair.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0347e7e472f32501eda2"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-1d8f4361594d5cf0203c"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-cb1e942ca4c71e3c6cb4"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: ... and 20 more files Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-003e4be23655ead78a77"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-20defee022891aef0346"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-cd81f0a3c69eb0d2c2fb"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update project/calls.png Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0c16ba857ca282189441"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-e1091d7b0247085bb871"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-ceb7a7318e25b6d3a564"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .planfile/config.yaml Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-03b213947f69d470b02e"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-59833ea06453204fd85a"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-d425982e88e9fc170a2d"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Fix wildcard-imports issues (ticket-81357646) Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-06485ca53f90ea08ad4d"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-8741b04cb284c2370b07"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-d76c50dc0434cead0e05"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .koru/project.json Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0ad8cdf8a8b01b62b3c4"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-f865ed0977fd5ceb1a03"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-deefcc3e1992b0793914"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/refactoring/REFACTORING_PLAN.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-07f134838f18a2ef8a21"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-e275b80adb92cca340c0"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-e2aae91b61cb71988ac5"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Fix unused-imports issues (ticket-9e01d7c7) Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0bdefc81ac196b6b5aaf"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-a7cd16e09295324ee751"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-e3639df09d0fd6c0a818"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Queue executor failures now increment Planfile's persisted attempt counter, reopen the ticket while `execution.max_attempts` has budget, and block only after the final allowed attempt. Failed lifecycle transitions fail closed. Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0078dccb2cc1c9b43488"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-e1f215e1d3cffe63b565"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-e5850410448cce75154b"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: ... and 25 more files Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0593c8828e6ba5b303ee"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-f0f3dd2f6a467b67ce4c"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-eb039823989e6fdbda54"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/autopilot-roadmap.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0aab4096788538c3d79b"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-e56d2a857470d4e23c62"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-eb7aad7b718f378f22f8"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update testql-testing/scenarios/realtime-health.testql.toon.yaml Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0c2e870747c21f02d0fd"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-960dcb1638305048a01c"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-ee1af6dfc5a1f3b7acea"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .windsurf/workflows/koru-gate.md Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0af0f4ad8be0fbbb851b"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-e0192cfa36026daec07d"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-efa07e4a658de42789a1"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .planfile/config.yaml Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0538a061dd33742b969b"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-31455725de85f5145a52"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-f01456dbe4dbb7d6235b"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update docs/architecture/volume-reduction-plan.yaml Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-0b1d0032cc058aacc6b7"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-7782b17c9a35a11b520c"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-f332ce97895161370262"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update .planfile/config.yaml Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-098ff5af3cad8aca0bfb"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-8c434c99be6eac7fd2e7"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-f68d9110d00ff1b011b5"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update uv.lock Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-00c603a242eb30a7d3ff"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-3e588c162d6f3b04b66b"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-fc703e357271ef37e448"
+  },
+  {
+    "schemaVersion": "t2c.conclusion/v1",
+    "kind": "risk",
+    "title": "Wpis changelogu bez dowodu implementacji",
+    "detail": "Wpis wydania nie ma powiązanego commita ani faktu AST: Update app.doql.less Następne działanie: Zweryfikować wpis lub dodać jednoznaczne odwołanie do ticketu, commita, pliku albo symbolu.",
+    "severity": "review_required",
+    "diagnosticIds": [
+      "DIAG-018b7b938794e2384016"
+    ],
+    "recordIds": [
+      "INT-CHANGELOG-10ad2321f4c412563962"
+    ],
+    "confidence": 1,
+    "generation": {
+      "generator": "t2c/grounded-summary",
+      "generatorVersion": "1",
+      "runtimeVersion": "0.5.0",
+      "generatedAt": "2026-07-30T18:27:49.481Z",
+      "requestedMode": "deterministic",
+      "effectiveMode": "deterministic",
+      "degraded": false,
+      "model": null,
+      "provider": null,
+      "responseId": null,
+      "configurationFingerprint": "4cc8eebda9406e171af76ffb9945002f748dca7cbe6c81286241bce2e7a22c74",
+      "reason": null
+    },
+    "id": "CONC-fd42b3bf55153dc77d77"
+  }
+]

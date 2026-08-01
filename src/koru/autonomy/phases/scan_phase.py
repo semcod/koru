@@ -446,6 +446,7 @@ def _skip_scan_after_idle_for_duplicate_cooldown(
     )
     cycle_telemetry["scan_after_idle_skipped_duplicate_cooldown"] = True
     discovery: dict[str, Any] | None = None
+    todo2code: dict[str, Any] | None = None
     if include_semcod_artifacts:
         _hp(
             "  idle strategy: detailed scan is in duplicate cooldown; "
@@ -458,7 +459,15 @@ def _skip_scan_after_idle_for_duplicate_cooldown(
             scope_paths=_scan_paths_for_project(project),
         )
         _record_code2llm_discovery_telemetry(state, cycle_telemetry, discovery)
-    if not (discovery and discovery.get("applied")):
+        if not (discovery and discovery.get("applied")):
+            todo2code = _run_todo2code_discovery_after_idle(project, _hp, _emit)
+            _record_todo2code_discovery_telemetry(state, cycle_telemetry, todo2code)
+            if todo2code and (todo2code.get("applied") or todo2code.get("useful_plans_count")):
+                auto = _run_code_change_autonomy_after_idle(project, _hp, _emit)
+                _record_code_change_autonomy_telemetry(state, cycle_telemetry, auto)
+    if not (discovery and discovery.get("applied")) and not (
+        todo2code and todo2code.get("applied")
+    ):
         nxdo_payload = _run_nxdo_discovery_after_idle(project, _hp, _emit)
         _record_nxdo_discovery_telemetry(state, cycle_telemetry, nxdo_payload)
     return True
@@ -487,8 +496,8 @@ def _run_scan_after_idle(
         _hp(
             "  idle strategy: detail→general; first apply concrete scan "
             f"signals{scope_note}, then run "
-            f"{'scoped' if scan_paths else 'whole-project'} code2llm discovery "
-            "if no tickets were created",
+            f"{'scoped' if scan_paths else 'whole-project'} code2llm / "
+            "todo2code / ticket2dsl discovery if no tickets were created",
         )
     _hp(f"+ {scan_cmd} (queue idle → intake scan)")
     idle_scan = run_scan(
@@ -509,6 +518,7 @@ def _run_scan_after_idle(
         _emit,
     )
     discovery: dict[str, Any] | None = None
+    todo2code: dict[str, Any] | None = None
     if include_semcod_artifacts and not idle_scan.applied:
         discovery = _run_code2llm_discovery_after_idle(
             project,
@@ -517,7 +527,17 @@ def _run_scan_after_idle(
             scope_paths=scan_paths,
         )
         _record_code2llm_discovery_telemetry(state, cycle_telemetry, discovery)
-    if not idle_scan.applied and not (discovery and discovery.get("applied")):
+        if not (discovery and discovery.get("applied")):
+            todo2code = _run_todo2code_discovery_after_idle(project, _hp, _emit)
+            _record_todo2code_discovery_telemetry(state, cycle_telemetry, todo2code)
+            if todo2code and (todo2code.get("applied") or todo2code.get("useful_plans_count")):
+                auto = _run_code_change_autonomy_after_idle(project, _hp, _emit)
+                _record_code_change_autonomy_telemetry(state, cycle_telemetry, auto)
+    if (
+        not idle_scan.applied
+        and not (discovery and discovery.get("applied"))
+        and not (todo2code and todo2code.get("applied"))
+    ):
         nxdo_payload = _run_nxdo_discovery_after_idle(project, _hp, _emit)
         _record_nxdo_discovery_telemetry(state, cycle_telemetry, nxdo_payload)
     return idle_scan
@@ -583,7 +603,7 @@ def _run_nxdo_discovery_after_idle(
     _hp: Callable[..., Any],
     _emit: Callable[..., Any],
 ) -> dict[str, Any] | None:
-    """Generate fresh tickets via ``nxdo`` when scan + code2llm found nothing."""
+    """Generate fresh tickets via ``nxdo`` when scan + code2llm + todo2code found nothing."""
     try:
         from koru.autonomy.nxdo_discovery import (
             format_nxdo_summary,
@@ -615,6 +635,82 @@ def _record_nxdo_discovery_telemetry(
     target_repo = str(discovery.get("target_repo") or "").strip()
     if target_repo:
         cycle_telemetry["nxdo_discovery_repo"] = target_repo
+
+
+def _run_todo2code_discovery_after_idle(
+    project: Path,
+    _hp: Callable[..., Any],
+    _emit: Callable[..., Any],
+) -> dict[str, Any] | None:
+    """Run grounded todo2code plans → useful planfile tickets after code2llm found nothing."""
+    try:
+        from koru.autonomy.todo2code_discovery import (
+            format_todo2code_summary,
+            run_todo2code_discovery,
+        )
+    except Exception as exc:  # noqa: BLE001 - optional integration
+        _hp(f"- todo2code discovery unavailable: {exc}")
+        return None
+
+    outcome = run_todo2code_discovery(project)
+    _hp(f"  {format_todo2code_summary(outcome)}")
+    payload = outcome.to_dict()
+    _emit("Todo2codeDiscoveryCompleted", payload)
+    return payload
+
+
+def _record_todo2code_discovery_telemetry(
+    state: AutoloopState,
+    cycle_telemetry: dict[str, Any],
+    discovery: dict[str, Any] | None,
+) -> None:
+    if discovery is None:
+        return
+    applied_count = len(discovery.get("applied", []))
+    state.telemetry_scan_after_idle_tickets_applied += applied_count
+    cycle_telemetry["todo2code_discovery_run"] = bool(discovery.get("ran"))
+    cycle_telemetry["todo2code_discovery_applied"] = applied_count
+    cycle_telemetry["todo2code_discovery_skipped"] = len(discovery.get("skipped", []))
+    cycle_telemetry["todo2code_discovery_plans"] = int(discovery.get("plans_count") or 0)
+    cycle_telemetry["todo2code_discovery_useful"] = int(discovery.get("useful_plans_count") or 0)
+    cycle_telemetry["todo2code_discovery_filtered"] = int(discovery.get("filtered_out_count") or 0)
+
+
+def _run_code_change_autonomy_after_idle(
+    project: Path,
+    _hp: Callable[..., Any],
+    _emit: Callable[..., Any],
+) -> dict[str, Any] | None:
+    """Archive junk tickets and refresh ticket2dsl without applying source patches."""
+    try:
+        from koru.autonomy.code_change_autonomy import (
+            format_autonomy_summary,
+            run_code_change_autonomy,
+        )
+    except Exception as exc:  # noqa: BLE001 - optional integration
+        _hp(f"- code-change autonomy unavailable: {exc}")
+        return None
+
+    outcome = run_code_change_autonomy(project)
+    _hp(f"  {format_autonomy_summary(outcome)}")
+    payload = outcome.to_dict()
+    _emit("CodeChangeAutonomyCompleted", payload)
+    return payload
+
+
+def _record_code_change_autonomy_telemetry(
+    state: AutoloopState,
+    cycle_telemetry: dict[str, Any],
+    discovery: dict[str, Any] | None,
+) -> None:
+    if discovery is None:
+        return
+    cycle_telemetry["code_change_autonomy_run"] = bool(discovery.get("ran"))
+    hygiene = discovery.get("hygiene") if isinstance(discovery.get("hygiene"), dict) else {}
+    cycle_telemetry["ticket_hygiene_archived"] = len(hygiene.get("archived") or [])
+    cycle_telemetry["code_change_patches_applied"] = len(discovery.get("applied_patches") or [])
+    t2d = discovery.get("ticket2dsl") if isinstance(discovery.get("ticket2dsl"), dict) else {}
+    cycle_telemetry["ticket2dsl_units"] = int(t2d.get("units_count") or 0)
 
 
 def _run_code2llm_discovery_after_idle(
@@ -689,14 +785,15 @@ def _format_idle_discovery_toolchain_line(project: Path) -> str:
             "optional semcod tool status unavailable"
         )
     interesting = []
-    for tool_id in ("code2llm", "redup", "testql", "prefact", "metrun"):
+    for tool_id in ("code2llm", "todo2code", "redup", "testql", "prefact", "metrun"):
         tool = tools.get(tool_id)
         if tool is None:
             continue
         interesting.append(f"{tool_id}={tool.via if tool.available else 'missing'}")
     suffix = ", ".join(interesting) if interesting else "no optional tools detected"
     return (
-        "  discovery toolchain: automated sources=koru scan + code2llm; "
+        "  discovery toolchain: automated sources=koru scan + code2llm + "
+        "todo2code + ticket2dsl; "
         f"tool availability: {suffix}; goal/costs stay advisory until "
         "stable report contracts exist"
     )

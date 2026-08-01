@@ -68,6 +68,18 @@ _TOOLS: tuple[tuple[str, str, str, str | None], ...] = (
     ("sumr", "debounced project summary", "sumr generate / scripts/sumr-refresh.sh", "sumr"),
     ("sumd", "LLM-friendly project snapshot", "sumd . / code2llm ./ -f toon", "sumd"),
     ("code2llm", "whole-project LLM analysis and ticket discovery", "code2llm . -f all", None),
+    (
+        "todo2code",
+        "NL/TODO/CHANGELOG → useful code-change plans → planfile tickets",
+        "t2c pipeline . --nl-mode deterministic --no-docs-llm --out .intent",
+        None,
+    ),
+    (
+        "ticket2dsl",
+        "open planfile tickets → grounded work-unit DSL for IDE agents",
+        "koru ide ticket2dsl --project .",
+        None,
+    ),
     ("prefact", "pre-refactor checks", "prefact check", "prefact"),
     ("pfix", "self-healing Python auto-fix", "pfix run", "pfix"),
     ("vallm", "syntax / semantic validation", "vallm validate -f <file>", "vallm"),
@@ -113,6 +125,24 @@ def _config_present(pyproject: dict[str, Any] | None, tool_id: str) -> bool:
     return tool_id in tool_section
 
 
+# Some tools ship under a CLI name different from the registry id.
+_BIN_ALIASES: dict[str, tuple[str, ...]] = {
+    "todo2code": ("t2c", "todo2code"),
+    "ticket2dsl": ("koru",),  # surface via koru; always available with koru
+}
+
+
+def _which_tool(tool_id: str) -> str | None:
+    if tool_id == "ticket2dsl":
+        # Built into koru — report the koru binary when present.
+        return shutil.which("koru")
+    for name in _BIN_ALIASES.get(tool_id, (tool_id,)):
+        found = shutil.which(name)
+        if found:
+            return found
+    return None
+
+
 def detect_semcod_tools(project: Path) -> list[SemcodTool]:
     """Return the registry of known semcod tools and their availability.
 
@@ -124,8 +154,11 @@ def detect_semcod_tools(project: Path) -> list[SemcodTool]:
     pyproject = _read_pyproject(project)
     result: list[SemcodTool] = []
     for tool_id, role, command_hint, module_name in _TOOLS:
-        bin_path = shutil.which(tool_id)
+        bin_path = _which_tool(tool_id)
         has_module = bool(module_name) and find_spec(module_name) is not None
+        # ticket2dsl is a pure koru module — always available in-process.
+        if tool_id == "ticket2dsl":
+            has_module = True
         cfg = _config_present(pyproject, tool_id)
         if bin_path:
             via = "PATH"

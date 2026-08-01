@@ -58,6 +58,7 @@ def _build_ticket_dict(
     executor_mode: str,
     files: list[str],
     now: str,
+    max_attempts: int = 1,
 ) -> dict[str, Any]:
     """Build the complete ticket dictionary."""
     return {
@@ -77,7 +78,7 @@ def _build_ticket_dict(
             "queue": queue_name or "default",
             "state": "ready",
             "attempt": 0,
-            "max_attempts": 1,
+            "max_attempts": max(1, int(max_attempts)),
         },
         "inputs": inputs,
         "outputs": {"artifacts": [], "notes": []},
@@ -113,6 +114,10 @@ def _build_nl_task_record(
     executor_kind = str(scaffold.get("executor_kind") or "human")
     executor_mode = str(scaffold.get("executor_mode") or "interactive")
     files = [str(v) for v in (scaffold.get("files") or []) if str(v).strip()]
+    try:
+        max_attempts = int(scaffold.get("max_attempts") or 1)
+    except (TypeError, ValueError):
+        max_attempts = 1
     ticket = _build_ticket_dict(
         ticket_id,
         name,
@@ -127,5 +132,6 @@ def _build_nl_task_record(
         executor_mode,
         files,
         now,
+        max_attempts=max_attempts,
     )
     return ticket, executor_kind

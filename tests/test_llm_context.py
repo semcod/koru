@@ -220,6 +220,31 @@ class TestBuildProjectContext(unittest.TestCase):
             # text must not exceed max_context_chars (annotation is included in the limit)
             self.assertLessEqual(len(result.text), 200)
 
+    def test_explicit_ticket_file_precedes_large_auto_context(self):
+        """The ticket target must survive truncation caused by convenience files."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "README.md").write_text("background\n" * 10_000, encoding="utf-8")
+            (project / "benchmark.py").write_text(
+                "def run():\n    lsh_min_lines = 30\n", encoding="utf-8"
+            )
+            request = {
+                "prompt": "Fix benchmark.py:2",
+                "include_project_context": True,
+                "ticket_files": ["benchmark.py"],
+                "context_files": ["benchmark.py"],
+                "max_context_chars": 500,
+            }
+            result = build_project_context(project, request)
+
+            self.assertIsNotNone(result)
+            assert result is not None
+            self.assertTrue(result.truncated)
+            self.assertIn("## benchmark.py", result.text)
+            self.assertIn("lsh_min_lines = 30", result.text)
+            self.assertIn("benchmark.py", result.included_files)
+            self.assertEqual(result.included_files[0], "benchmark.py")
+
     def test_default_max_context_chars_is_reasonable(self):
         self.assertEqual(DEFAULT_MAX_CONTEXT_CHARS, 32_000)
 

@@ -32,7 +32,7 @@ DEFAULT_AUTONOMY_STRATEGY: dict[str, Any] = {
         "ide_follow_up": {
             "enabled": True,
             "workflow": "standardized_project_discovery_ticket",
-            "trigger": "no_tickets_after_scan_and_code2llm",
+            "trigger": "no_tickets_after_scan_code2llm_todo2code_ticket2dsl",
             "prompt": (
                 "Co jeszcze zostalo do wykonania? "
                 "zrob z tego nastepne tickety do planfile."
@@ -40,7 +40,7 @@ DEFAULT_AUTONOMY_STRATEGY: dict[str, Any] = {
             "expected_output": "new_planfile_tickets_only",
         },
         "tools": {
-            "automated": ["koru_scan", "code2llm"],
+            "automated": ["koru_scan", "code2llm", "todo2code", "ticket2dsl"],
             "artifact_sources": [
                 "jscpd",
                 "redup",
@@ -52,6 +52,7 @@ DEFAULT_AUTONOMY_STRATEGY: dict[str, Any] = {
                 "redsl",
                 "metrun",
                 "pfix",
+                "todo2code",
             ],
             "advisory": ["goal", "costs"],
         },

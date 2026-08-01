@@ -95,23 +95,41 @@ koru autonomous up \
    przez reczna edycje YAML. Zrodlo ticketow jest oznaczane jako
    `koru-project-discovery`.
 
-6. Jezeli intake scan i `code2llm` nie wygeneruja nowych ticketow,
-  Koru uruchamia **workflow standaryzowany**: auto-tworzy albo reuzywa
-  ticket discovery i dopiero wtedy follow-up do IDE LLM brzmi:
+6. Jezeli intake scan i `code2llm` nie wygeneruja nowych ticketow, Koru
+   uruchamia **todo2code** (`t2c pipeline`) w trybie deterministycznym.
+   Ugruntowane plany z `code-change-plans.json` przechodza filtr uzytecznosci
+   (bez venv/site-packages/PNG/dumpow analizy/globow), sa sortowane po score
+   i trafiaja do planfile jako tickety oczekujace przegladu czlowieka.
+   Komunikacja z `project/ticket-*` jest analizowana, ale chroniona przed
+   autonomiczna edycja. LLM + `patch_mode` wymaga jawnego kontraktu projektu.
+   Recznie:
+
+   ```bash
+   koru ide discover-todo2code --project "$PROJECT" --force --limit 10
+   ```
+
+7. Po todo2code Koru uruchamia bezpieczna czesc **code-change autonomy**:
+
+   - hygiene: auto-`done` smieciowych ticketow (nieimplementowalne sciezki);
+   - promote: tylko po jawnym `KORU_TODO2CODE_LLM_EXECUTOR=1` i kontrakcie;
+   - quarantine: pelny `unifiedDiff` nie jest samodzielnie zatwierdzany i musi
+     przejsc przez transakcje manifestu Planfile;
+   - ticket2dsl: `.planfile/.koru/ticket2dsl/work-units.{json,planfile.dsl,intent.jsonl}`.
+
+   ```bash
+   koru ide code-change-autonomy --project "$PROJECT"
+   koru --queue --loop   # headless LLM+patch gdy sa klucze API
+   ```
+
+8. Jezeli po scan/code2llm/todo2code nadal nie ma ticketow, Koru uruchamia
+  **workflow standaryzowany**: auto-tworzy albo reuzywa ticket discovery i
+  follow-up do IDE LLM:
 
   > Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety do planfile.
 
-  Oczekiwany wynik to lista kolejnych ticketow, nie szeroka implementacja bez
-  ticketu. Ticket discovery jest nosnikiem tego kroku i powinien przejsc
-  standardowy handoff `planfile` (done/input/fail).
-
-7. Koru zapisuje wynik jako zdarzenie `Code2llmDiscoveryCompleted` oraz
-   telemetry:
-
-   - `code2llm_discovery_run`;
-   - `code2llm_discovery_applied`;
-   - `code2llm_discovery_skipped`;
-   - ewentualny blad albo powod pominiecia.
+9. Koru zapisuje zdarzenia `Code2llmDiscoveryCompleted`,
+   `Todo2codeDiscoveryCompleted`, `CodeChangeAutonomyCompleted` oraz telemetry
+   (`*_applied`, `*_filtered`, `ticket_hygiene_archived`, …).
 
 ## Priorytety ticketow
 
@@ -122,11 +140,12 @@ Discovery powinno preferowac prace o wysokim sygnale:
 - wysoka zlozonosc cyklomatyczna;
 - duplikacja kodu;
 - brakujace lub kruche testy;
-- granice architektoniczne, ktore blokuja kolejne refaktory.
+- granice architektoniczne, ktore blokuja kolejne refaktory;
+- planned-not-implemented z konkretnymi sciezkami zrodlowymi (todo2code).
 
 Koru nie powinien wykonywac szerokich edycji bez ticketu. Discovery ma
-zamienic obraz calego projektu na kolejke mniejszych prac, a nie zastapic
-normalny cykl ticket-driven development.
+zamienic obraz calego projektu na kolejke mniejszych prac. Lane todo2code
+jest domyslnie autonomiczny (LLM+patch), a nie human/interactive.
 
 ## Kontrakt z IDE LLM
 
