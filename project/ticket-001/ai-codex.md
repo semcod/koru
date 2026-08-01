@@ -37,3 +37,13 @@ transaction. It also lacks ownership guards for governance ticket files.
 ## Acceptance criteria
 
 See [README.md](README.md).
+
+## Validation conclusion
+
+The integration now consumes deterministic communication records, reads
+declared `governancePaths` from a target `.governance/manifest.json`, fails
+closed when that manifest is malformed, and prevents source patches from
+approving or applying themselves. The target's Docker verification declaration
+is resolved into every configured container command. A real dry discovery run
+produced 12 communication records and no warnings; two actionable source plans
+remained after governance and path validation.

@@ -1,6 +1,7 @@
 # Ticket 001 — governance-aware todo2code integration
 
-- Status: ACTIVE
+- Status: IN_PROGRESS
+- Workflow state: PUBLICATION
 - Owner: unresolved:human
 - Agent: agent:codex
 - Approval: user approved the proposed remediation plan with `tak`
@@ -20,6 +21,14 @@ manifest transaction, and verify using the target project's declared runtime.
 - File-creation plans supported by todo2code remain actionable.
 - Verification honors Docker-first projects and all configured completion gates.
 - Focused tests and the relevant repository verification pass.
+
+## Validation status
+
+- Docker lint and the focused integration suite pass.
+- A real deterministic todo2code run succeeds with project communication
+  enabled and target governance loaded from `project/`.
+- Full-suite Docker validation still exposes unrelated socket timeout and
+  runtime-UID assumptions outside the todo2code integration.
 
 ## Participants
 

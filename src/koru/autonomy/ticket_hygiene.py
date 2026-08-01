@@ -79,7 +79,7 @@ def _ticket_paths(ticket: dict[str, Any]) -> list[str]:
     return [str(p).strip().replace("\\", "/") for p in raw if str(p).strip()]
 
 
-def ticket_is_junk(ticket: dict[str, Any]) -> bool:
+def ticket_is_junk(ticket: dict[str, Any], *, project: Path | None = None) -> bool:
     """True when every declared path is non-implementable (or a bare glob)."""
     paths = _ticket_paths(ticket)
     if not paths:
@@ -88,8 +88,11 @@ def ticket_is_junk(ticket: dict[str, Any]) -> bool:
         source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
         tool = str(source.get("tool") or "")
         return name.startswith("[todo2code]") or "todo2code" in tool
-    useful = useful_paths(paths)
-    return not useful and any(not is_useful_code_change_path(p) or "*" in p for p in paths)
+    useful = useful_paths(paths, project=project)
+    return not useful and any(
+        not is_useful_code_change_path(path, project=project) or "*" in path
+        for path in paths
+    )
 
 
 def _archive_ticket(project: Path, ticket_id: str, *, reason: str, actor: str) -> None:
@@ -162,7 +165,7 @@ def run_ticket_hygiene(
             tool = str(source.get("tool") or "")
             if not (name.startswith("[todo2code]") or "todo2code" in tool):
                 continue
-        if not ticket_is_junk(ticket):
+        if not ticket_is_junk(ticket, project=project):
             outcome.kept.append(ticket_id)
             continue
         paths = _ticket_paths(ticket)

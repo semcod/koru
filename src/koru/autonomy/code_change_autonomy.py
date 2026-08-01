@@ -1,4 +1,4 @@
-"""Autonomous code-change loop: archive junk, apply ready patches, prepare LLM tickets.
+"""Governed code-change loop: archive junk, quarantine patches, prepare tickets.
 
 Designed so ``koru auto`` can prepare the todo2code lane without granting
 itself mutation authority:
@@ -89,7 +89,7 @@ def _find_source_patches(project: Path) -> Path | None:
     return candidates[0] if candidates else None
 
 
-def _patch_is_fully_diffed(patch: dict[str, Any]) -> bool:
+def _patch_is_fully_diffed(patch: dict[str, Any], *, project: Path) -> bool:
     edits = patch.get("edits") if isinstance(patch.get("edits"), list) else []
     if not edits:
         return False
@@ -97,7 +97,7 @@ def _patch_is_fully_diffed(patch: dict[str, Any]) -> bool:
         if not isinstance(edit, dict):
             return False
         path = str(edit.get("path") or "").strip()
-        if not path or not is_useful_code_change_path(path):
+        if not path or not is_useful_code_change_path(path, project=project):
             return False
         if not isinstance(edit.get("unifiedDiff"), str) or not str(edit.get("unifiedDiff")).strip():
             return False
@@ -127,7 +127,7 @@ def apply_ready_source_patches(
         if len(skipped) >= limit:
             break
         patch_id = str(patch.get("id") or "patch")
-        if not _patch_is_fully_diffed(patch):
+        if not _patch_is_fully_diffed(patch, project=project):
             skipped.append(f"{patch_id}: instruction-only (no unifiedDiff)")
             continue
         skipped.append(
@@ -138,7 +138,7 @@ def apply_ready_source_patches(
 
 
 def _promote_todo2code_tickets_to_llm(project: Path, *, sprint: str = "current") -> int:
-    """Rewrite open human todo2code tickets to llm/automatic so the queue can run them."""
+    """Promote tickets only under the target's explicit executor flag and contract."""
     enabled = _config_value("KORU_TODO2CODE_LLM_EXECUTOR", project).lower()
     contract = _config_value("KORU_TODO2CODE_CONTRACT", project)
     if enabled not in {"1", "true", "yes", "on"} or not contract:
@@ -179,7 +179,9 @@ def _promote_todo2code_tickets_to_llm(project: Path, *, sprint: str = "current")
         if kind == "llm" and str(executor.get("mode") or "").lower() == "automatic":
             continue
         files = [str(f) for f in (ticket.get("files") or []) if str(f).strip()]
-        if not files or not all(is_useful_code_change_path(f) for f in files):
+        if not files or not all(
+            is_useful_code_change_path(path, project=project) for path in files
+        ):
             continue
         ticket["executor"] = {"kind": "llm", "mode": "automatic"}
         inputs = dict(ticket.get("inputs") or {})

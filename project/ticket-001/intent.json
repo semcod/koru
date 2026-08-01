@@ -1,0 +1,36 @@
+{
+  "schema": "new-project.intent/v1",
+  "ticket": "ticket-001",
+  "summary": "Harden Koru's todo2code integration against target-owned governance",
+  "allowedPaths": [
+    "CHANGELOG.md",
+    "README.md",
+    "docker-compose.yml",
+    "docs/project-discovery-strategy.md",
+    "docs/semcod-ticket-sources.md",
+    "koru.yaml",
+    "project/TICKETS.md",
+    "project/ticket-001/**",
+    "src/koru/autonomy/**",
+    "src/koru/autonomy_strategy/**",
+    "src/koru/cli_shell.py",
+    "src/koru/ide_doctor_cli.py",
+    "src/koru/queue/context.py",
+    "src/koru/queue/runner.py",
+    "src/koru/queue/ticket_templates.py",
+    "src/koru/queue/todo2code_gate.py",
+    "src/koru/scan.py",
+    "src/koru/semcod_tools.py",
+    "src/koru/task_ticket.py",
+    "tests/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".intent/**",
+    ".intent-t2c-test/**"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ]
+}

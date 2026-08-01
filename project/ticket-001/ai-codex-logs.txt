@@ -23,3 +23,48 @@ $ pytest -q
 $ pytest -q tests/test_autonomous_runtime.py::test_setup_autopilot_daemon_skips_known_unavailable_agent tests/test_volume_reduction_plan.py::TestVolumeReductionPlan::test_current_index_header_is_parseable_and_structural_volume_does_not_regress
 .F                                                                       [100%]
 1 failed, 1 passed in 0.47s
+
+$ docker compose --profile verify build koru-verify
+koru-verify  Built
+
+$ docker compose --profile verify run --rm --entrypoint sh koru-verify -lc '<focused lint and integration tests>'
+All checks passed!
+237 passed, 11 subtests passed in 5.34s
+
+$ docker compose --profile verify run --rm --entrypoint sh koru-verify -lc '<expanded lint and integration tests>'
+All checks passed!
+390 passed, 11 subtests passed in 12.80s
+
+$ docker compose --profile verify run --rm --entrypoint sh koru-verify -lc 'python -m pytest tests/ -q -x'
+1 failed, 865 passed, 1 skipped, 157 deselected, 47 subtests passed
+failure: test_autopilot_daemon.py::test_plugin_hello_then_drive_forwards timed out after a successful plugin_ack
+
+$ docker compose --profile verify run --rm --entrypoint sh koru-verify -lc 'python -m pytest tests/ -q -x --ignore=tests/test_autopilot_daemon.py'
+1 failed, 905 passed, 1 skipped, 157 deselected, 47 subtests passed
+failure: test_autopilot_lane_context.py expected a host socket name without the container runtime UID suffix
+
+$ PYTHONPATH=src python -c '<run_todo2code_discovery apply_planfile=False force=True>'
+todo2code discovery: t2c 104.3s plans=27 useful=3 filtered=24 applied=0 skipped=0
+
+$ jq '.stages.communicationAnalysis' .intent/runs/<run>/manifest.json
+status: succeeded
+requestedMode: deterministic
+effectiveMode: deterministic
+projectDirectory: project
+recordCount: 12
+warningCount: 0
+
+$ re-evaluate todo2code plans after symbol-qualified path guard
+actual-useful-plans 2
+
+$ docker compose --profile verify run --rm --entrypoint sh koru-verify -lc '<path and governance regression tests>'
+All checks passed!
+98 passed in 5.65s
+
+$ docker compose --profile verify run --rm --entrypoint sh koru-verify -lc '<final scoped lint and integration suite>'
+All checks passed!
+393 passed, 11 subtests passed in 11.44s
+
+$ docker compose --profile verify run --rm --entrypoint sh koru-verify -lc '<staged-source lint and transaction suite>'
+All checks passed!
+284 passed, 11 subtests passed in 9.38s

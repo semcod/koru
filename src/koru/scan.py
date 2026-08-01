@@ -1442,10 +1442,12 @@ def _scan_todo2code_plans(project: Path) -> list[Suggestion]:
     try:
         from koru.autonomy.code_change_usefulness import is_useful_plan, plan_useful_paths
         from koru.autonomy.todo2code_discovery import (
-            DEFAULT_SOURCE as TODO2CODE_SOURCE,
-            _plan_dedupe_key,
             _PRIORITY_MAP,
+            _plan_dedupe_key,
             find_latest_plans_path,
+        )
+        from koru.autonomy.todo2code_discovery import (
+            DEFAULT_SOURCE as TODO2CODE_SOURCE,
         )
     except Exception:  # noqa: BLE001
         return []
@@ -1469,7 +1471,7 @@ def _scan_todo2code_plans(project: Path) -> list[Suggestion]:
     for plan in plans:
         if not is_useful_plan(plan, project=project):
             continue
-        paths = plan_useful_paths(plan)
+        paths = plan_useful_paths(plan, project=project)
         if not paths:
             continue
         title_raw = str(plan.get("title") or "todo2code code-change plan").strip()

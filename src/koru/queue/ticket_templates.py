@@ -250,7 +250,7 @@ def hydrate_subactor_repair_ticket(ticket: dict[str, Any]) -> dict[str, Any]:
 
 
 def hydrate_todo2code_ticket(ticket: dict[str, Any], project: Path) -> dict[str, Any]:
-    """Restore the autonomous contract that older planfile schemas discard."""
+    """Hydrate todo2code defaults without manufacturing execution authority."""
     labels = [str(label) for label in (ticket.get("labels") or [])]
     lowered = {label.lower() for label in labels}
     source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}

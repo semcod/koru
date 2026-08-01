@@ -7,7 +7,9 @@ work. Mirrors the hardened ``isPlannablePath`` policy in todo2code.
 
 from __future__ import annotations
 
+import json
 import re
+from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Any
 
@@ -159,6 +161,7 @@ GOVERNANCE_BASENAMES = frozenset(
         "AGENTS.md",
         "POLICY.md",
         "CONTRIBUTING.md",
+        "TODO.md",
         "project.sh",
         "project.bat",
     }
@@ -175,7 +178,25 @@ def normalize_path(value: str) -> str:
     return text
 
 
-def is_governance_owned_path(value: str) -> bool:
+def _declared_governance_patterns(project: Path | None) -> tuple[list[str], bool]:
+    """Return target-owned governance globs and whether its manifest is invalid."""
+    if project is None:
+        return [], False
+    manifest_path = project / ".governance" / "manifest.json"
+    if not manifest_path.is_file():
+        return [], False
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        raw_patterns = manifest["governancePaths"]
+        if not isinstance(raw_patterns, list):
+            raise TypeError("governancePaths must be a list")
+        patterns = [normalize_path(value) for value in raw_patterns if str(value).strip()]
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return [], True
+    return patterns, False
+
+
+def is_governance_owned_path(value: str, *, project: Path | None = None) -> bool:
     """Return whether autonomous source patches must not own *value*.
 
     Ticket directories contain human/agent intent, decisions, logs and evidence.
@@ -188,6 +209,14 @@ def is_governance_owned_path(value: str) -> bool:
     segments = [part for part in normalized.split("/") if part]
     if not segments:
         return False
+    patterns, invalid_manifest = _declared_governance_patterns(project)
+    if invalid_manifest:
+        # A malformed target policy cannot safely authorize any autonomous path.
+        return True
+    if any(fnmatchcase(normalized, pattern) for pattern in patterns):
+        return True
+    if segments[0].lower() == ".governance":
+        return True
     if segments[-1].lower() in _GOVERNANCE_BASENAMES_LOWER:
         return True
     if segments[0].lower() != "project":
@@ -197,12 +226,17 @@ def is_governance_owned_path(value: str) -> bool:
     return len(segments) >= 2 and bool(_TICKET_DIRECTORY_RE.fullmatch(segments[1]))
 
 
-def is_useful_code_change_path(value: str) -> bool:
+def is_useful_code_change_path(value: str, *, project: Path | None = None) -> bool:
     """Return True when a path is a concrete, in-repo implementation target."""
     normalized = normalize_path(value)
     if not normalized or normalized.startswith("/"):
         return False
-    if is_governance_owned_path(normalized):
+    # Symbols and line anchors belong in ``target.symbols``. Accepting a value
+    # such as ``src/module.py::symbol`` as a path can create a literally named,
+    # non-source file instead of modifying the intended module.
+    if ":" in normalized or "\n" in normalized or "\r" in normalized or "\0" in normalized:
+        return False
+    if is_governance_owned_path(normalized, project=project):
         return False
     segments = [part for part in normalized.split("/") if part]
     if not segments or ".." in segments or "*" in segments:
@@ -243,13 +277,21 @@ def is_useful_code_change_path(value: str) -> bool:
     return True
 
 
-def useful_paths(paths: list[str] | tuple[str, ...] | None) -> list[str]:
-    return [path for path in (normalize_path(p) for p in (paths or [])) if is_useful_code_change_path(path)]
+def useful_paths(
+    paths: list[str] | tuple[str, ...] | None,
+    *,
+    project: Path | None = None,
+) -> list[str]:
+    return [
+        path
+        for path in (normalize_path(p) for p in (paths or []))
+        if is_useful_code_change_path(path, project=project)
+    ]
 
 
-def plan_useful_paths(plan: dict[str, Any]) -> list[str]:
+def plan_useful_paths(plan: dict[str, Any], *, project: Path | None = None) -> list[str]:
     target = plan.get("target") if isinstance(plan.get("target"), dict) else {}
-    paths = useful_paths(list(target.get("paths") or []))
+    paths = useful_paths(list(target.get("paths") or []), project=project)
     if paths:
         return paths
     changes = plan.get("changes") if isinstance(plan.get("changes"), list) else []
@@ -258,13 +300,14 @@ def plan_useful_paths(plan: dict[str, Any]) -> list[str]:
             str(change.get("path") or "")
             for change in changes
             if isinstance(change, dict)
-        ]
+        ],
+        project=project,
     )
 
 
 def plan_usefulness_score(plan: dict[str, Any], *, project: Path | None = None) -> float:
     """Higher score = more worth turning into a planfile ticket."""
-    paths = plan_useful_paths(plan)
+    paths = plan_useful_paths(plan, project=project)
     if not paths:
         return -1.0
 
@@ -330,7 +373,7 @@ def is_useful_plan(plan: dict[str, Any], *, project: Path | None = None, min_sco
     # silently widened the authority of the autonomous patch runner.
     if str(risk.get("level") or "").strip().lower() == "high":
         return False
-    paths = plan_useful_paths(plan)
+    paths = plan_useful_paths(plan, project=project)
     changes = plan.get("changes") if isinstance(plan.get("changes"), list) else []
     actions = {
         normalize_path(str(change.get("path") or "")): str(change.get("action") or "modify").lower()

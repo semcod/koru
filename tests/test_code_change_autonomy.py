@@ -8,7 +8,7 @@ from pathlib import Path
 from koru.autonomy import code_change_autonomy as cca
 
 
-def test_patch_is_fully_diffed() -> None:
+def test_patch_is_fully_diffed(tmp_path: Path) -> None:
     assert cca._patch_is_fully_diffed(
         {
             "edits": [
@@ -21,13 +21,16 @@ def test_patch_is_fully_diffed() -> None:
                     ),
                 }
             ]
-        }
+        },
+        project=tmp_path,
     )
     assert not cca._patch_is_fully_diffed(
-        {"edits": [{"path": "src/a.py", "unifiedDiff": None}]}
+        {"edits": [{"path": "src/a.py", "unifiedDiff": None}]},
+        project=tmp_path,
     )
     assert not cca._patch_is_fully_diffed(
-        {"edits": [{"path": ".testvenv/x.py", "unifiedDiff": "x"}]}
+        {"edits": [{"path": ".testvenv/x.py", "unifiedDiff": "x"}]},
+        project=tmp_path,
     )
 
 

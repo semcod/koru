@@ -115,11 +115,11 @@ def _ticket_status(ticket: dict[str, Any]) -> str:
     return str(ticket.get("status") or ticket.get("state") or "").strip().lower()
 
 
-def _ticket_files(ticket: dict[str, Any]) -> list[str]:
+def _ticket_files(ticket: dict[str, Any], *, project: Path) -> list[str]:
     raw = ticket.get("files") or ticket.get("paths") or []
     if isinstance(raw, str):
         raw = [raw]
-    return useful_paths([str(item) for item in raw])
+    return useful_paths([str(item) for item in raw], project=project)
 
 
 def _ticket_is_open(ticket: dict[str, Any]) -> bool:
@@ -178,7 +178,7 @@ def build_work_units(
     for ticket_id, ticket in tickets.items():
         if not _ticket_is_open(ticket):
             continue
-        files = _ticket_files(ticket)
+        files = _ticket_files(ticket, project=project)
         source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
         source_tool = str(source.get("tool") or "")
         name = str(ticket.get("name") or "")
@@ -189,7 +189,7 @@ def build_work_units(
             # and they look like discovery follow-ups — skip empty code-change noise.
             filtered += 1
             continue
-        if not all(is_useful_code_change_path(path) for path in files):
+        if not all(is_useful_code_change_path(path, project=project) for path in files):
             filtered += 1
             continue
         score = _unit_score(ticket, files)
