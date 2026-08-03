@@ -110,6 +110,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Completed DEP-0's validated dependency-boundary inventory and DEP-3's typed,
   bounded Gillm actuator integration.
 
+## [0.1.445] - 2026-08-03
+
+### Docs
+- Update README.md
+
+### Other
+- Update packages/koruide/src/koruide/plugin_version.py
+- Update plugins/koru-autopilot-cursor/package.json
+
 ## [0.1.444] - 2026-08-01
 
 ### Docs
