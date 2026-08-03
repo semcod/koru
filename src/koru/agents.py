@@ -478,6 +478,25 @@ def format_agent_lane_exports(env: dict[str, str]) -> str:
 
 def launch_agent(agent: AgentOption, project: Path, prompt: str) -> int:
     """Launch an agent CLI from the project root after saving the prompt."""
+    # Availability can change after the picker rendered its AgentOption (for
+    # example another autonomous lane can learn that the shared account quota
+    # is exhausted).  Re-check immediately before any subprocess launch so a
+    # stale option can never bypass the machine-global operational block.
+    from koru.agent_availability import get_agent_availability
+
+    availability = get_agent_availability(agent.id)
+    if availability.blocked:
+        print(
+            f"koru agent: not launching {agent.label}; "
+            f"{availability.reason or 'operationally unavailable'} "
+            f"({availability.source or 'registry'})."
+        )
+        print(
+            "koru agent: choose another agent or clear the block after "
+            f"availability is restored: koru agent-availability clear {agent.id}"
+        )
+        return 2
+
     prompt_path = save_agent_prompt(project, prompt)
     if agent.autopilot_backend == "tillm_shell" and is_shell_agent(agent.id):
         if not agent.launchable or not agent.command:

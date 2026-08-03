@@ -8,17 +8,38 @@ from unittest.mock import patch
 
 from koru.agent_availability import block_agent
 from koru.agents import (
+    AgentOption,
     agent_lane_environment,
     autopilot_backend_for_agent_id,
     detect_agent_environment,
     detect_agent_options,
     format_agent_lane_exports,
+    launch_agent,
     normalize_agent_lane_id,
     select_agent,
 )
 
 
 class TestAgentDetection(unittest.TestCase):
+    def test_launch_rechecks_operational_block_after_selection(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            option = AgentOption(
+                id="qoder",
+                label="Qoder",
+                available=True,
+                launchable=True,
+                command="/usr/bin/qoder",
+            )
+            block_agent("qoder", reason="usage_limit_exhausted")
+
+            with patch("subprocess.call") as call:
+                rc = launch_agent(option, project, "do work")
+
+            self.assertEqual(rc, 2)
+            call.assert_not_called()
+            self.assertFalse((project / ".planfile" / ".koru" / "prompts").exists())
+
     def test_operational_block_removes_agent_from_recommendations(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

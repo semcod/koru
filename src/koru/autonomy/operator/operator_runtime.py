@@ -470,6 +470,18 @@ def setup_autopilot_daemon(
     socket_path: Path | None = None
     if not args.enable_autopilot:
         return client, daemon, thread, socket_path
+    if getattr(args, "autopilot_action", "drive") == "off":
+        args.enable_autopilot = False
+        stdio_info(
+            "koru autonomous: autopilot action=off; daemon and plugin startup skipped",
+            fmt=args.emit_events,
+        )
+        activity(
+            "AUTOPILOT",
+            "action off; daemon and plugin startup skipped",
+            fmt=args.emit_events,
+        )
+        return client, daemon, thread, socket_path
 
     # apply_agent_lane_environ is already called in build_and_log_startup_probe
     # so we can read the lane directly from the environment

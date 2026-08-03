@@ -434,6 +434,38 @@ def test_setup_autopilot_daemon_skips_known_unavailable_agent(
     assert any("agent_unavailable" in line and "qoder" in line for line in logs)
 
 
+def test_setup_autopilot_daemon_skips_start_when_action_is_off(
+    tmp_path: Path,
+) -> None:
+    args = SimpleNamespace(
+        enable_autopilot=True,
+        autopilot_action="off",
+        agent_lane="auto",
+        autopilot_ide="cursor",
+        socket=None,
+        emit_events="human",
+    )
+    logs: list[str] = []
+
+    def fail_start(**_kwargs):
+        raise AssertionError("daemon must not start when autopilot action is off")
+
+    client, daemon, thread, socket_path = autonomous_runtime.setup_autopilot_daemon(
+        args,
+        tmp_path,
+        apply_agent_lane_environ=_apply_agent_lane_environ,
+        resolve_autopilot_ide=resolve_autopilot_ide_for_autonomous,
+        resolve_ide_route_fn=resolve_ide_route,
+        default_socket_path=default_socket_path,
+        start_or_reuse_daemon=fail_start,
+        stdio_info=lambda message, **_kwargs: logs.append(message),
+    )
+
+    assert (client, daemon, thread, socket_path) == (None, None, None, None)
+    assert args.enable_autopilot is False
+    assert any("action=off" in line for line in logs)
+
+
 def test_normalize_project_root_from_venv_prefix(tmp_path: Path) -> None:
     (tmp_path / "pyproject.toml").write_text('[project]\nname="x"\n', encoding="utf-8")
     (tmp_path / ".git").mkdir()

@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 
 from koru import autonomous_startup as startup
+from koru.agent_availability import block_agent
 from koru.autonomous import _apply_agent_lane_environ
 from koru.autopilot.ide import RunningIDE
 
@@ -60,6 +61,33 @@ def test_resolve_agent_lane_prefers_focused_ide_over_terminal_hint(
 
     assert lane == "cursor"
     assert source == "focused"
+
+
+def test_resolve_agent_lane_skips_blocked_focused_and_env_lane(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Auto-routing must fall through to a live alternative when a shared
+    account was blocked after its usage limit was exhausted."""
+    block_agent("qoder", reason="usage_limit_exhausted")
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "qoder")
+    running = [
+        RunningIDE(id="qoder", label="Qoder", pid=41, exe="/usr/bin/qoder"),
+        RunningIDE(id="cursor", label="Cursor", pid=42, exe="/usr/bin/cursor"),
+    ]
+    with (
+        patch("koru.autonomous_startup.detect_running_ides", return_value=running),
+        patch("koru.autonomous_startup._focused_agent_lane_from_desktop", return_value="qoder"),
+        patch("koru.autonomous_startup._terminal_agent_lane_from_env", return_value="qoder"),
+    ):
+        lane, source = startup.resolve_agent_lane_id(
+            tmp_path,
+            "auto",
+            resolve_project_lane=lambda _p, lane_id: lane_id,
+        )
+
+    assert lane == "cursor"
+    assert source == "terminal:prefer-cursor-over-qoder"
 
 
 def test_resolve_agent_lane_focus_beats_conflicting_explicit_instance(

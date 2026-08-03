@@ -291,6 +291,8 @@ class TestAgentLaneArtifacts(unittest.TestCase):
             self.assertTrue((rt / "setup-autopilot-host.sh").is_file())
             self.assertTrue(os.access(rt / "run-autonomous.sh", os.X_OK))
             self.assertTrue(os.access(rt / "setup-autopilot-host.sh", os.X_OK))
+            runner = (rt / "run-autonomous.sh").read_text(encoding="utf-8")
+            self.assertIn('source "${_KORU_RT}/shell-env.sh"', runner)
 
     def test_auto_cursor_when_dot_cursor(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

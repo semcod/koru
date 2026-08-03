@@ -8,9 +8,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from koru.autopilot import default_socket_path
-from koru.ide_router import is_headless_environment, resolve_ide_route
-from koru.integrations.photo_vql_monitor import format_wayland_vdisplay_operator_hint
 from koruide.ide import (
     RunningIDE,
     canonical_autopilot_ide_id,
@@ -24,6 +21,10 @@ from koruide.ide import (
     supports_vscode_extension_plugin,
 )
 
+from koru.autopilot import default_socket_path
+from koru.ide_router import is_headless_environment, resolve_ide_route
+from koru.integrations.photo_vql_monitor import format_wayland_vdisplay_operator_hint
+
 _PLUGIN_IDE_LANES = supported_autopilot_ide_ids() - {"auto"}
 _AUTOPILOT_PLUGIN_LANES = ("antigravity", "cursor", "qoder", "windsurf", "vscodium", "vscode")
 # Lanes that have no installable autopilot plugin but often appear in env/terminal
@@ -35,6 +36,21 @@ _STALE_NONPLUGIN_LANES = frozenset({"jetbrains"})
 def supports_autopilot_plugin_ide(ide: str) -> bool:
     """Return ``True`` when ``ide`` has native autopilot plugin support."""
     return supports_vscode_extension_plugin(ide)
+
+
+def _agent_lane_is_blocked(lane: str | None) -> bool:
+    """Return whether the effective provider/IDE lane is operationally blocked.
+
+    Startup auto-routing must consult the same machine-global registry as the
+    final daemon/drive gate.  Explicit CLI selections remain fail-closed later
+    in setup; this helper is for choosing a different *automatic* candidate.
+    """
+    if not lane:
+        return False
+    from koru.agent_availability import get_agent_availability
+
+    agent_id = canonical_autopilot_ide_id(lane) or normalize_ide_id(lane)
+    return bool(agent_id and get_agent_availability(agent_id).blocked)
 
 
 def koru_distribution_version() -> str:
@@ -105,7 +121,12 @@ def _pick_plugin_capable_running(
     running: Sequence[RunningIDE],
 ) -> RunningIDE | None:
     """Best running IDE that can use the VS Code-family autopilot plugin."""
-    candidates = [ide for ide in running if supports_autopilot_plugin_ide(ide.id)]
+    candidates = [
+        ide
+        for ide in running
+        if supports_autopilot_plugin_ide(ide.id)
+        and not _agent_lane_is_blocked(ide.id)
+    ]
     if not candidates:
         return None
     return pick_target(candidates)
@@ -160,6 +181,8 @@ def _resolve_lane_from_explicit(
     """Resolve lane from explicit KORU_AUTOPILOT_INSTANCE env var."""
     if not explicit:
         return None
+    if _agent_lane_is_blocked(explicit):
+        return None
     if _should_terminal_override_explicit(explicit, terminal):
         return terminal, f"terminal:over-{explicit_source}"
     if running is not None:
@@ -176,7 +199,8 @@ def _resolve_lane_from_vscode_terminal(
     """Check if VS Code terminal should be overridden by a running plugin IDE."""
     if terminal != "vscode" or not running:
         return None
-    picked = _startup_facade().pick_target(list(running))
+    candidates = [ide for ide in running if not _agent_lane_is_blocked(ide.id)]
+    picked = _startup_facade().pick_target(candidates)
     if picked is not None and picked.id != terminal and picked.id in _PLUGIN_IDE_LANES:
         return picked.id, f"target:over-terminal:{terminal}"
     return None
@@ -187,7 +211,11 @@ def _resolve_lane_from_terminal(
     running: Sequence[RunningIDE],
 ) -> tuple[str | None, str] | None:
     """Resolve lane from terminal hint with fallback to running IDEs."""
-    if terminal in _PLUGIN_IDE_LANES and supports_autopilot_plugin_ide(terminal):
+    if (
+        terminal in _PLUGIN_IDE_LANES
+        and supports_autopilot_plugin_ide(terminal)
+        and not _agent_lane_is_blocked(terminal)
+    ):
         return terminal, "terminal"
     if terminal == "jetbrains" and running:
         picked = _pick_plugin_capable_running(running)
@@ -196,7 +224,7 @@ def _resolve_lane_from_terminal(
     if not terminal:
         return None
     for alt in _AUTOPILOT_PLUGIN_LANES:
-        if any(ide.id == alt for ide in running):
+        if any(ide.id == alt for ide in running) and not _agent_lane_is_blocked(alt):
             return alt, f"terminal:prefer-{alt}-over-{terminal}"
     return None
 
@@ -205,9 +233,10 @@ def _resolve_lane_from_running(
     running: Sequence[RunningIDE],
 ) -> tuple[str | None, str] | None:
     """Resolve lane from the best detected running IDE."""
-    if not running:
+    candidates = [ide for ide in running if not _agent_lane_is_blocked(ide.id)]
+    if not candidates:
         return None
-    picked = _startup_facade().pick_target(list(running))
+    picked = _startup_facade().pick_target(candidates)
     if picked is None:
         return None
     return picked.id, f"running:{picked.label}"
@@ -261,6 +290,7 @@ def _resolve_lane_from_runtime_hints(
         focused
         and focused in _PLUGIN_IDE_LANES
         and focused_is_running
+        and not _agent_lane_is_blocked(focused)
         and (
             not explicit
             or (not terminal and not _explicit_lane_matches_terminal(explicit, focused))
@@ -340,6 +370,7 @@ def _try_focused_lane(
         focused
         and focused in _PLUGIN_IDE_LANES
         and any(ide.id == focused for ide in running)
+        and not _agent_lane_is_blocked(focused)
         and (
             not explicit
             or (not terminal and not _explicit_lane_matches_terminal(explicit, focused))
