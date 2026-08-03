@@ -23,6 +23,33 @@ DEFAULT_PYTEST_COLLECT_TIMEOUT_SECONDS: float = 15.0
 _PYTEST_COLLECT_COUNT_RE = re.compile(r"(\d+)\s+tests?\s+collected", re.IGNORECASE)
 _PYTEST_NO_TESTS_RE = re.compile(r"no tests ran|collected 0 items", re.IGNORECASE)
 
+_SHELL_BUILTINS = frozenset(
+    {
+        ".",
+        "break",
+        "cd",
+        "command",
+        "continue",
+        "eval",
+        "exec",
+        "exit",
+        "export",
+        "read",
+        "readonly",
+        "return",
+        "set",
+        "shift",
+        "source",
+        "test",
+        "trap",
+        "type",
+        "ulimit",
+        "umask",
+        "unset",
+        "wait",
+    }
+)
+
 
 def check_git_repo(project: Path) -> tuple[str, str]:
     git = project / ".git"
@@ -491,6 +518,20 @@ def check_ci_command(project: Path) -> tuple[str, str]:
         first = shlex.split(policy.ci_command)[0]
     except ValueError as exc:
         return FAIL, f"ci.command unparseable: {exc}"
+    if "\n" in policy.ci_command or first in _SHELL_BUILTINS:
+        shell = shutil.which("bash") or shutil.which("sh")
+        if shell is None:
+            return FAIL, "ci.command is a shell program but no bash/sh is available"
+        syntax = subprocess.run(
+            [shell, "-n", "-c", policy.ci_command],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if syntax.returncode != 0:
+            detail = (syntax.stderr or syntax.stdout or "invalid shell syntax").strip()
+            return FAIL, f"ci.command shell syntax invalid: {detail}"
+        return PASS, f"ci.command shell program syntax valid ({shell})"
     resolved = shutil.which(first)
     if resolved:
         return PASS, f"`{policy.ci_command}` (resolves to {resolved})"

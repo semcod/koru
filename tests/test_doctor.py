@@ -1384,6 +1384,36 @@ class TestCiCommandCheck(unittest.TestCase):
             report = _run(project)
             self.assertEqual(_named(report, "ci_command").status, PASS)
 
+    def test_multiline_shell_builtin_program_passes_syntax_check(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            (project / ".planfile" / ".koru" / "policy.yaml").write_text(
+                "ci:\n  command: |\n    set -u\n    echo verified\n",
+                encoding="utf-8",
+            )
+
+            report = _run(project)
+
+            check = _named(report, "ci_command")
+            self.assertEqual(check.status, PASS)
+            self.assertIn("shell program syntax valid", check.detail)
+
+    def test_invalid_multiline_shell_program_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            (project / ".planfile" / ".koru" / "policy.yaml").write_text(
+                "ci:\n  command: |\n    set -u\n    if true; then\n",
+                encoding="utf-8",
+            )
+
+            report = _run(project)
+
+            check = _named(report, "ci_command")
+            self.assertEqual(check.status, FAIL)
+            self.assertIn("shell syntax invalid", check.detail)
+
 
 class TestPytestCollectProbe(unittest.TestCase):
     """Behaviour of the ``pytest_collect`` doctor probe.
