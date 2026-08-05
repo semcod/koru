@@ -11,8 +11,9 @@ antigravity) so the diagnostic surface remains intact during the migration.
 
 from __future__ import annotations
 
-from koru.ide_adapters.vscode_family import VSCodeFamilyAdapter
 from koruide.ides import get_strategy as _get_ide_strategy
+
+from koru.ide_adapters.vscode_family import VSCodeFamilyAdapter
 
 _VSCODE_PLUGIN_STRATEGY_IDS = (
     "antigravity",

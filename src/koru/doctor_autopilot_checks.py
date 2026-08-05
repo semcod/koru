@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from koruide.socket import default_socket_path
+
 from koru.autonomy.environment import probe_socket_health
 from koru.autopilot.ide import (
     detect_running_ides,
@@ -13,7 +15,6 @@ from koru.autopilot.ide import (
 )
 from koru.autopilot.install_manager import collect_install_manager_report
 from koru.doctor_constants import FAIL, PASS, SKIP, WARN
-from koruide.socket import default_socket_path
 
 
 def _running_autopilot_ide_ids() -> list[str]:

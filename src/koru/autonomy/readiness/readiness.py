@@ -12,6 +12,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+from koruide.daemon.metadata import daemon_metadata_path, read_daemon_metadata
+from koruide.ide import canonical_autopilot_ide_id, detect_terminal_host_ide_id, normalize_ide_id  # noqa: F401
+
 from koru.autonomy.environment import probe_socket_health  # noqa: F401
 from koru.autonomy.heal import remove_stale_socket  # noqa: F401
 
@@ -24,8 +27,6 @@ from koru.doctor_runtime_checks import (
     _koru_path_version_issues,
     _read_koru_source_version,
 )
-from koruide.daemon.metadata import daemon_metadata_path, read_daemon_metadata
-from koruide.ide import canonical_autopilot_ide_id, detect_terminal_host_ide_id, normalize_ide_id  # noqa: F401
 
 Severity = Literal["fail", "warn"]
 
@@ -867,8 +868,9 @@ def _socket_lane_mismatch_issue(
     # in the POSIX /tmp fallback, and a bare IDE id may resolve to its default
     # lane instance (cursor → cursor-main). Compare against the socket names
     # those forms actually produce before declaring a mismatch.
-    from koru.autonomy.operator.operator_runtime import default_autopilot_instance_for_ide
     from koruide.socket import default_socket_path
+
+    from koru.autonomy.operator.operator_runtime import default_autopilot_instance_for_ide
 
     expected_names = {
         default_socket_path(lane).name,

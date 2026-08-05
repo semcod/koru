@@ -7,11 +7,12 @@ import json
 import sys
 from pathlib import Path
 
+from koruide.ide import autopilot_ide_choices
+
 from koru.configurator.features import migrate_project_config, toggle_feature_sections
 from koru.configurator.prompting import configure_project
 from koru.configurator.render import render_shell_exports, render_text_summary
 from koru.configurator.schema import CONFIG_SCHEMA_V2, ConfigureResult, _ConfigureArgs
-from koruide.ide import autopilot_ide_choices
 
 
 def build_configure_parser() -> argparse.ArgumentParser:

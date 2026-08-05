@@ -5,8 +5,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from koru.doctor_constants import PASS, SKIP, WARN
 from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
+
+from koru.doctor_constants import PASS, SKIP, WARN
 
 
 def _read_json_file(path: Path) -> dict[str, object] | None:

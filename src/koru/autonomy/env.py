@@ -18,13 +18,14 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Final
 
-from koru.env_flags import parse_boolish
 from koruide.ide import (
     canonical_autopilot_ide_id,
     detect_terminal_host_ide_id,
     normalize_ide_id,
     supports_vscode_extension_plugin,
 )
+
+from koru.env_flags import parse_boolish
 
 _VALID_TICKET_SOURCES: Final[frozenset[str]] = frozenset({"queue", "scan", "all"})
 

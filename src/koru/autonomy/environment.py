@@ -21,8 +21,9 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from koru.ide_router import is_headless_environment
 from koruide.ide import autopilot_ide_choices, ide_binary_candidates
+
+from koru.ide_router import is_headless_environment
 
 # Canonical IDE ids from koruide (single source); binary aliases such as
 # ``code``/``code-oss`` are handled by ``ide_binary_candidates``.

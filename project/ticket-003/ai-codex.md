@@ -22,8 +22,11 @@ Ruff marks all I001 fixes safe and deterministic.
 
 ## Actual changes
 
-- None; waiting for approval.
+- Human approval received; ticket transitioned to `IN_PROGRESS / EDIT`.
+- Applied Ruff's safe I001 transformations and manually wrapped the single E501
+  shell condition without changing its boolean sequence.
+- Ruff, 105 focused tests, Docker Compose validation and diff checks pass.
 
 ## Blockers
 
-- Human approval is required before modifying runtime files.
+- None during implementation.

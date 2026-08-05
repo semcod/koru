@@ -18,6 +18,8 @@ from __future__ import annotations
 
 def install_koruide_host_hooks() -> None:
     """Install koru's implementations for every koruide host hook."""
+    from koruide import host_hooks
+
     from koru.control_commands import plugin_socket_command
     from koru.integration_ledger import record_integration_action
     from koru.observability_events import (
@@ -28,7 +30,6 @@ def install_koruide_host_hooks() -> None:
         emit_phase,
         emit_verify,
     )
-    from koruide import host_hooks
 
     host_hooks.set_host_hooks(
         record_integration_action=record_integration_action,

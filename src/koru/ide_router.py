@@ -15,8 +15,9 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal
 
-from koru.autonomy.env import env_truthy
 from koruide.ide import normalize_ide_id, supported_autopilot_ide_ids
+
+from koru.autonomy.env import env_truthy
 
 _VALID_AUTOPILOT_IDE = supported_autopilot_ide_ids()
 
