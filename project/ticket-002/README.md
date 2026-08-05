@@ -2,7 +2,7 @@
 
 - **ID**: ticket-002
 - **Owner**: unresolved:human
-- **Status**: PLAN
+- **Status**: BLOCKED
 - **Workflow state**: WAIT_FOR_APPROVAL
 - **Created**: 2026-08-05
 - **Workstream**: governance
@@ -44,3 +44,26 @@ application ticket.
 - Hosted smoke currently fails on 36 pre-existing Ruff findings under
   `src/koru`; the same workflow already fails on unchanged `main@5943447d`.
   Ticket-002 neither hides nor repairs this unrelated SERVICE debt.
+
+## Session authorization
+
+The user approved ticket-002 with the instruction to continue on 2026-08-05.
+This authorizes the declared bootstrap, not protected merge approval.
+
+## Required migration amendment
+
+The first 0.11.0 gate exposed legacy state that check-only adoption cannot
+discover. Completion requires a fresh, narrow approval to:
+
+1. normalize only the metadata spelling in `project/ticket-001/README.md` from
+   legacy `- Status: DONE` to canonical `- **Status**: DONE`, preserving its
+   meaning and content;
+2. align the ticket and target delivery budgets with the already reviewed
+   atomic 19-file bootstrap;
+3. assign `project/governance-check.*` to Koru's governance workstream and map
+   every managed bootstrap target to the existing managed-package component;
+4. mark the adoption correctly as no component-responsibility or persistent
+   application-data movement.
+
+No runtime, test, dependency, generated-analysis or Docker file enters scope.
+The ticket releases its workstream reservation while this amendment waits.

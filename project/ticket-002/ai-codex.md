@@ -25,7 +25,14 @@ changes for new-project 0.11.0 and performs no target writes in check mode.
 
 ## Actual changes
 
-- Governance plan only; runtime and managed package are unchanged.
+- User approval received; ticket transitioned to `IN_PROGRESS / EDIT`.
+- Goal installed the reviewed immutable package and repeated check mode reports
+  it up to date at the exact release SHA.
+- The deterministic gate then failed closed on legacy ticket-001 metadata,
+  mismatched five-versus-nineteen file budgets, two unmapped wrapper paths and
+  an incorrectly declared responsibility/data movement flag.
+- Ticket-002 returned to a non-reserving wait state pending the narrow migration
+  amendment documented in its README.
 
 ## Preflight evidence
 
@@ -37,6 +44,7 @@ changes for new-project 0.11.0 and performs no target writes in check mode.
 
 ## Blockers
 
-- Human approval is required before managed governance files are installed.
 - Full hosted smoke cannot become green without a separate runtime-quality
   ticket or a reviewed CI baseline policy; neither is inferred here.
+- The migration amendment must be approved before editing ticket-001 metadata
+  or widening the exact bootstrap budget/path declarations.

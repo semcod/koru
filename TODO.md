@@ -2,7 +2,8 @@
 
 - [ ] [`ticket-002`](project/ticket-002/README.md) — adopt immutable
   new-project 0.11.0 using Goal before replacing Koru's legacy priority
-  mutation strategy. State: `PLAN / WAIT_FOR_APPROVAL`.
+  mutation strategy. State: `BLOCKED / WAIT_FOR_APPROVAL`; a narrow legacy
+  metadata/budget/ownership migration amendment is documented in the ticket.
 
 <!-- PREFACT:BEGIN — generated block, edits inside will be overwritten -->
 # TODO

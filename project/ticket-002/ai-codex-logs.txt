@@ -14,3 +14,12 @@ PR #14 smoke: FAIL in python -m ruff check src/koru
 findings: 36 existing runtime lint errors; 35 reported auto-fixable
 unchanged main@5943447d CI run 30983866699: FAILURE
 classification: pre-existing SERVICE/health debt outside ticket-002 scope
+2026-08-05 APPROVAL: user requested continuation and approved ticket-002
+transition: PLAN / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
+2026-08-05 goal governance adopt --upgrade: PASS, new-project 0.11.0 at cc9b04673bbd85cb4e35fb683d288ef34be1485f
+2026-08-05 goal governance adopt --check: PASS, up-to-date
+2026-08-05 governance gate: FAIL CLOSED (legacy ticket-001 status syntax, bootstrap budget, wrapper ownership, architecture declaration)
+2026-08-05 focused Koru tests: PASS (105 passed)
+2026-08-05 docker compose config --quiet: PASS
+2026-08-05 Ruff baseline: FAIL (same 36 pre-existing main findings)
+transition: EDIT -> BLOCKED / WAIT_FOR_APPROVAL; workstream reservation released
