@@ -9,3 +9,8 @@ python3 -m json.tool project/ticket-002/intent.json: PASS
 new-project 0.11.0 intent schema validation: PASS
 git diff --check: PASS
 implementation tests: NOT RUN; ticket remains PLAN / WAIT_FOR_APPROVAL
+2026-08-05 hosted draft evidence
+PR #14 smoke: FAIL in python -m ruff check src/koru
+findings: 36 existing runtime lint errors; 35 reported auto-fixable
+unchanged main@5943447d CI run 30983866699: FAILURE
+classification: pre-existing SERVICE/health debt outside ticket-002 scope

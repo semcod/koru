@@ -32,7 +32,11 @@ changes for new-project 0.11.0 and performs no target writes in check mode.
 - Docker client/server: 29.1.3 / 29.1.3.
 - Local Goal governance adapter: available.
 - Check-mode result: 19 CREATE/UPDATE operations required; no target writes.
+- Draft PR smoke reproduces the baseline Ruff failure from current `main`:
+  36 existing findings in runtime files outside this ticket's allowed paths.
 
 ## Blockers
 
 - Human approval is required before managed governance files are installed.
+- Full hosted smoke cannot become green without a separate runtime-quality
+  ticket or a reviewed CI baseline policy; neither is inferred here.

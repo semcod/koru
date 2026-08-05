@@ -5,3 +5,5 @@
 - Created a governance-only plan for immutable new-project 0.11.0 adoption.
 - Recorded Goal check-mode evidence and kept Koru runtime priority changes out
   of the bootstrap ticket.
+- Recorded the pre-existing main-branch Ruff failure as separate SERVICE debt
+  rather than expanding the governance bootstrap into runtime cleanup.

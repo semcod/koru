@@ -41,3 +41,6 @@ application ticket.
   artifacts; runtime code, dependencies and generated analysis stay untouched.
 - Koru's existing priority behavior remains unchanged until a later approved
   application ticket.
+- Hosted smoke currently fails on 36 pre-existing Ruff findings under
+  `src/koru`; the same workflow already fails on unchanged `main@5943447d`.
+  Ticket-002 neither hides nor repairs this unrelated SERVICE debt.
