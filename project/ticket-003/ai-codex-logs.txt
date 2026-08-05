@@ -1,0 +1,8 @@
+2026-08-05 plan preflight
+main: 5943447d586962fef1fd1e80059a9d2ef4e97a6a
+python -m ruff check src/koru --statistics: FAIL
+I001: 35 findings, all reported safe-fixable
+E501: 1 finding in src/koru/init.py
+affected source files: 31
+classification: SERVICE / health
+implementation tests: NOT RUN; WAIT_FOR_APPROVAL
