@@ -31,8 +31,10 @@ changes for new-project 0.11.0 and performs no target writes in check mode.
 - The deterministic gate then failed closed on legacy ticket-001 metadata,
   mismatched five-versus-nineteen file budgets, two unmapped wrapper paths and
   an incorrectly declared responsibility/data movement flag.
-- Ticket-002 returned to a non-reserving wait state pending the narrow migration
-  amendment documented in its README.
+- The approved narrow amendment normalized ticket-001 metadata, aligned the
+  atomic bootstrap budgets and established unambiguous governance ownership.
+- Goal reports the immutable package up to date and all deterministic local
+  validation now passes.
 
 ## Preflight evidence
 
@@ -44,7 +46,5 @@ changes for new-project 0.11.0 and performs no target writes in check mode.
 
 ## Blockers
 
-- Full hosted smoke cannot become green without a separate runtime-quality
-  ticket or a reviewed CI baseline policy; neither is inferred here.
-- The migration amendment must be approved before editing ticket-001 metadata
-  or widening the exact bootstrap budget/path declarations.
+- None. Ticket-003 independently repaired the Ruff baseline before this branch
+  was refreshed from `main`.

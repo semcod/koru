@@ -23,3 +23,14 @@ transition: PLAN / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
 2026-08-05 docker compose config --quiet: PASS
 2026-08-05 Ruff baseline: FAIL (same 36 pre-existing main findings)
 transition: EDIT -> BLOCKED / WAIT_FOR_APPROVAL; workstream reservation released
+2026-08-05 APPROVAL: user approved the narrow migration amendment and autonomous continuation
+transition: BLOCKED / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
+2026-08-05 normalized legacy ticket-001 metadata; no semantic status change
+2026-08-05 aligned atomic bootstrap budget and governance path ownership
+2026-08-05 refreshed from main after ticket-003 DONE
+2026-08-05 goal adoption --upgrade/check: PASS, immutable 0.11.0 up to date
+2026-08-05 governance gate: GOV-PASS (0 errors, 0 warnings)
+2026-08-05 Ruff: PASS
+2026-08-05 focused Koru suite: PASS (105 passed)
+2026-08-05 docker compose config and git diff --check: PASS
+transition: EDIT -> VALIDATION

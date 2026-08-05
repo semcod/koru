@@ -12,6 +12,7 @@
     "project/governance-check.bat",
     "project/new-ticket.sh",
     "project/readme.sh",
+    "project/ticket-001/README.md",
     "project/ticket-002/**",
     "TODO.md",
     "project/TICKETS.md"
@@ -31,7 +32,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "5943447d586962fef1fd1e80059a9d2ef4e97a6a",
+    "acceptedBaseSha": "39012fef964f64b702d2210e38ec2d8196d75cdc",
     "targetBranch": "main",
     "outcome": "Bootstrap Koru with immutable new-project 0.11.0 and its canonical work-classification package",
     "nonGoals": [
@@ -42,8 +43,8 @@
     "complexity": "S",
     "estimatedMinutes": 30,
     "budgets": {
-      "maxImplementationFiles": 5,
-      "maxAffectedComponents": 2,
+      "maxImplementationFiles": 19,
+      "maxAffectedComponents": 1,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
     },
@@ -51,12 +52,11 @@
       "status": "accepted",
       "decision": "Use Goal's immutable adoption adapter with a Koru-specific seed manifest and preserve the analysis generator namespace",
       "components": [
-        {"name": "koru-governance-manifest", "paths": [".governance/manifest.json"]},
         {"name": "managed-governance-package", "paths": [".governance/**", "AGENTS.md", "project.sh", "project.bat", "project/governance-check.*", "project/new-ticket.sh", "project/readme.sh"]}
       ],
-      "responsibilityChanges": true,
+      "responsibilityChanges": false,
       "interfaceChanges": [],
-      "dataChanges": ["Koru gains immutable governance provenance and canonical work-classification artifacts"],
+      "dataChanges": [],
       "ui": {"impact": "none", "states": [], "evidence": []},
       "rollback": "Remove only the ticket-owned bootstrap through a reviewed rollback; never move the release tag"
     },

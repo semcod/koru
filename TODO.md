@@ -2,8 +2,8 @@
 
 - [ ] [`ticket-002`](project/ticket-002/README.md) — adopt immutable
   new-project 0.11.0 using Goal before replacing Koru's legacy priority
-  mutation strategy. State: `BLOCKED / WAIT_FOR_APPROVAL`; a narrow legacy
-  metadata/budget/ownership migration amendment is documented in the ticket.
+  mutation strategy. State: `IN_PROGRESS / VALIDATION`; the approved narrow
+  migration amendment and deterministic checks pass.
 - [x] [`ticket-003`](project/ticket-003/README.md) — restore Koru's current-main
   Ruff gate without suppressions or behavior changes. State: `DONE`;
   classification: `SERVICE / health`.

@@ -2,8 +2,8 @@
 
 - **ID**: ticket-002
 - **Owner**: unresolved:human
-- **Status**: BLOCKED
-- **Workflow state**: WAIT_FOR_APPROVAL
+- **Status**: IN_PROGRESS
+- **Workflow state**: VALIDATION
 - **Created**: 2026-08-05
 - **Workstream**: governance
 
@@ -20,15 +20,16 @@ application ticket.
 
 ## Acceptance criteria
 
-- [ ] AC-01: The human approves the bootstrap scope and exact release SHA.
-- [ ] AC-02: A repository-specific 0.11.0 manifest owns Koru's Python, Docker,
+- [x] AC-01: The human approves the bootstrap scope, exact release SHA and
+  narrow migration amendment.
+- [x] AC-02: A repository-specific 0.11.0 manifest owns Koru's Python, Docker,
   application, integration and governance paths without taking over generated
   `project/README.md`.
-- [ ] AC-03: Goal's check plan matches the reviewed managed package and its
+- [x] AC-03: Goal's check plan matches the reviewed managed package and its
   application creates no files outside intent scope.
-- [ ] AC-04: The lock records published 0.11.0 provenance and manages both
+- [x] AC-04: The lock records published 0.11.0 provenance and manages both
   work-classification files.
-- [ ] AC-05: Governance, focused Koru tests and Docker validation pass.
+- [x] AC-05: Governance, focused Koru tests and Docker validation pass.
 
 ## Participants
 
@@ -66,4 +67,14 @@ discover. Completion requires a fresh, narrow approval to:
    application-data movement.
 
 No runtime, test, dependency, generated-analysis or Docker file enters scope.
-The ticket releases its workstream reservation while this amendment waits.
+The user approved the amendment and autonomous continuation on 2026-08-05, so
+the ticket returned to `IN_PROGRESS / EDIT` and completed local validation.
+
+## Validation evidence
+
+- Goal adoption check: up to date at immutable new-project 0.11.0 SHA
+  `cc9b04673bbd85cb4e35fb683d288ef34be1485f`.
+- Governance gate: PASS with zero errors and warnings.
+- Ruff: PASS.
+- Focused Koru suite: 105 passed.
+- Docker Compose configuration and `git diff --check`: PASS.

@@ -7,3 +7,7 @@
   of the bootstrap ticket.
 - Recorded the pre-existing main-branch Ruff failure as separate SERVICE debt
   rather than expanding the governance bootstrap into runtime cleanup.
+- Applied the approved legacy-metadata, budget, ownership and architecture
+  amendment without changing runtime code.
+- Passed adoption drift check, governance, Ruff, 105 focused tests, Docker
+  Compose validation and diff checks after refreshing from ticket-003.
