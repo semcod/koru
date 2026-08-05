@@ -9,12 +9,13 @@ import socket
 import sqlite3
 from pathlib import Path
 
-from koru.ide_adapters.base import Hypothesis, Remediation, SettingsReport
 from koruide.ides import get_strategy as _get_ide_strategy
 from koruide.plugin_installer import (
     EXTENSION_ID,
     extension_id_for_ide,
 )
+
+from koru.ide_adapters.base import Hypothesis, Remediation, SettingsReport
 
 SOCKET_SETTING_KEY = "koruAutopilot.socketPath"
 PUBLISHER_ID = "semcod"

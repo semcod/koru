@@ -1,5 +1,8 @@
 """Autonomous cycle management for loop execution."""
 
+# Explicit imports for functions needed by tests/external code
+from koruide.ide import detect_terminal_host_ide_id  # noqa: F401
+
 from koru.autonomy.cycle.cycle import *  # noqa: F401, F403
 from koru.autonomy.cycle.cycle_bridge import *  # noqa: F401, F403
 from koru.autonomy.cycle.cycle_chat_activity import *  # noqa: F401, F403
@@ -45,9 +48,6 @@ from koru.autonomy.cycle_queue_scan import (  # noqa: F401
     _handle_scan_after_idle,
 )
 from koru.autonomy.env import plugin_required_for_ide as _plugin_required_for_ide  # noqa: F401
-
-# Explicit imports for functions needed by tests/external code
-from koruide.ide import detect_terminal_host_ide_id  # noqa: F401
 
 __all__ = [
     "DiagnosticResult",  # noqa: F405

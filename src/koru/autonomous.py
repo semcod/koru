@@ -27,6 +27,8 @@ from typing import Any
 
 from gillm.injection import os_injector as _os_injector_module
 from gillm.injection.os_injector import OsInjectorError, inject_with_profile, load_profile
+from koruide.daemon import AutopilotDaemon
+from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 
 from koru import autonomous_cycle as _autonomous_cycle_module
 from koru.autonomous_auto_pipeline import (
@@ -141,8 +143,6 @@ from koru.scan import ScanResult, run_scan
 from koru.stdio_events import default_stdio_format_from_env, write_stdio_event
 from koru.tasks import create_nl_task
 from koru.topology import is_component_enabled, is_pipeline_enabled
-from koruide.daemon import AutopilotDaemon
-from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 
 _ORIGINAL_LOAD_PROFILE = load_profile
 _ORIGINAL_INJECT_WITH_PROFILE = inject_with_profile

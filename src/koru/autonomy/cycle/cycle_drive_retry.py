@@ -4,6 +4,9 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from koruide.ide import normalize_ide_id as _normalize_ide_id
+from koruide.ide import supports_vscode_extension_plugin as _supports_vscode_extension_plugin
+
 from koru.autonomous_drive_retry_policy import _handle_failed_drive_attempt
 from koru.autonomy.cycle.cycle_chat_activity import _inject_reflection_summary_into_prompt
 from koru.autonomy.cycle.cycle_common import _queue_loop_waiting_ticket_label
@@ -37,8 +40,6 @@ from koru.decision_engine import (
 )
 from koru.queue import QueueLoopResult
 from koru.queue import run_process as _run_process
-from koruide.ide import normalize_ide_id as _normalize_ide_id
-from koruide.ide import supports_vscode_extension_plugin as _supports_vscode_extension_plugin
 
 
 def _max_drive_retries() -> int:

@@ -28,8 +28,9 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from koru.ide_runtime import detect_running_ides
 from koruide.ide import normalize_ide_id
+
+from koru.ide_runtime import detect_running_ides
 
 # ---------------------------------------------------------------------------
 # IDE config locations

@@ -7,6 +7,8 @@ import time  # noqa: F401
 from pathlib import Path
 from typing import Any
 
+from koruide.ide import detect_terminal_host_ide_id
+
 from koru.autonomy.cycle.cycle_chat_activity import (
     _autopilot_redrive_cooldown_seconds,
     _extract_needs_input_question,
@@ -136,7 +138,6 @@ from koru.queue.ticket import planfile_command  # noqa: F401
 from koru.scan import ScanResult, run_scan  # noqa: F401
 from koru.stdio_events import write_stdio_event
 from koru.tasks import create_nl_task  # noqa: F401
-from koruide.ide import detect_terminal_host_ide_id
 
 _LEGACY_AUTONOMOUS_CYCLE_EXPORTS = (
     detect_terminal_host_ide_id,

@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from koruide.ide import normalize_ide_id
 
 from koru.autonomous_submit_strategy import (
     should_block_manual_send,
@@ -26,7 +27,6 @@ from koru.autonomy.prompts import DEFAULT_ESCALATION_THRESHOLD
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 from koru.topology import is_component_enabled, is_pipeline_enabled
-from koruide.ide import normalize_ide_id
 
 _MANUAL_SEND_REQUIRED_TELEMETRY_REASON = (
     "previous drive pasted text but submit was not verified; "

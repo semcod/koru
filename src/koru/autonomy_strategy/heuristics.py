@@ -6,8 +6,9 @@ import time
 from pathlib import Path
 from typing import Any
 
-from koru.semcod_tools import detect_semcod_tools
 from koruide.command_catalog import command_catalog_for_llm
+
+from koru.semcod_tools import detect_semcod_tools
 
 
 def build_strategy_heuristics(project: Path) -> dict[str, Any]:

@@ -12,12 +12,12 @@ from pathlib import Path
 from typing import Any, Literal
 
 from gillm.focus import OsStrategy, resolve_active_os_strategy
+from koruide.ides import get_strategy as get_ide_strategy
 
 from koru.environment_profile import (
     EnvironmentProfile,
     resolve_environment_profile,
 )
-from koruide.ides import get_strategy as get_ide_strategy
 from korullm import (
     DriveFailureAssessment,
     LlmStrategy,
