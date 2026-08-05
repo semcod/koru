@@ -11,3 +11,5 @@
   amendment without changing runtime code.
 - Passed adoption drift check, governance, Ruff, 105 focused tests, Docker
   Compose validation and diff checks after refreshing from ticket-003.
+- Received exact-head Validator approval and merged PR #14 as
+  `a5b1529214220d373f294a97f97b3845e3ce6cd8`.

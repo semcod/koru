@@ -34,3 +34,7 @@ transition: BLOCKED / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
 2026-08-05 focused Koru suite: PASS (105 passed)
 2026-08-05 docker compose config and git diff --check: PASS
 transition: EDIT -> VALIDATION
+2026-08-05 hosted smoke: PASS
+2026-08-05 exact-head Validator approval: 11c3bc1e9f8111364ff13f66dc89af42edb8ecfb
+2026-08-05 merged PR #14: a5b1529214220d373f294a97f97b3845e3ce6cd8
+transition: VALIDATION -> DONE

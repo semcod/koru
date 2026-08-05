@@ -1,9 +1,9 @@
 # Governance roadmap
 
-- [ ] [`ticket-002`](project/ticket-002/README.md) — adopt immutable
+- [x] [`ticket-002`](project/ticket-002/README.md) — adopt immutable
   new-project 0.11.0 using Goal before replacing Koru's legacy priority
-  mutation strategy. State: `IN_PROGRESS / VALIDATION`; the approved narrow
-  migration amendment and deterministic checks pass.
+  mutation strategy. State: `DONE`; the approved narrow migration amendment,
+  deterministic checks and exact-head delivery completed.
 - [x] [`ticket-003`](project/ticket-003/README.md) — restore Koru's current-main
   Ruff gate without suppressions or behavior changes. State: `DONE`;
   classification: `SERVICE / health`.
