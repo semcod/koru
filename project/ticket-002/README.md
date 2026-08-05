@@ -2,8 +2,8 @@
 
 - **ID**: ticket-002
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-05
 - **Workstream**: governance
 
@@ -78,3 +78,10 @@ the ticket returned to `IN_PROGRESS / EDIT` and completed local validation.
 - Ruff: PASS.
 - Focused Koru suite: 105 passed.
 - Docker Compose configuration and `git diff --check`: PASS.
+
+## Delivery evidence
+
+- PR: `semcod/koru#14`.
+- Approved head: `11c3bc1e9f8111364ff13f66dc89af42edb8ecfb`.
+- Validator identity: `ifuri-validator-agent[bot]`.
+- Merge commit: `a5b1529214220d373f294a97f97b3845e3ce6cd8`.
