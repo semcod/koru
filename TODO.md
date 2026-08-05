@@ -1,8 +1,8 @@
 # Governance roadmap
 
-- [ ] [`ticket-003`](project/ticket-003/README.md) — restore Koru's current-main
-  Ruff gate without suppressions or behavior changes. State: `IN_PROGRESS /
-  VALIDATION`; classification: `SERVICE / health`.
+- [x] [`ticket-003`](project/ticket-003/README.md) — restore Koru's current-main
+  Ruff gate without suppressions or behavior changes. State: `DONE`;
+  classification: `SERVICE / health`.
 
 <!-- PREFACT:BEGIN — generated block, edits inside will be overwritten -->
 # TODO

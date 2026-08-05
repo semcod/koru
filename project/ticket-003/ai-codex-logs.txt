@@ -13,3 +13,7 @@ transition: PLAN / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
 2026-08-05 docker compose config --quiet: PASS
 2026-08-05 git diff --check: PASS
 transition: EDIT -> VALIDATION
+2026-08-05 hosted smoke: PASS
+2026-08-05 exact-head Validator approval: d22d9f3968ff58a5c36ee1829059d10879572abc
+2026-08-05 merged PR #15: 9ff24d437740a88caf1559aa4510826d025b99cd
+transition: VALIDATION -> DONE

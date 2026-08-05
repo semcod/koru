@@ -2,8 +2,8 @@
 
 - **ID**: ticket-003
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-05
 - **Work classification**: `SERVICE / health`
 
@@ -18,7 +18,7 @@ files and manually wrap the single E501 line without changing runtime behavior.
 - [x] AC-01: Human approves the bounded mechanical baseline repair.
 - [x] AC-02: Ruff reports zero findings under `src/koru`.
 - [x] AC-03: The 105 focused init/autopilot/todo2code tests pass.
-- [ ] AC-04: Koru PR smoke passes on Python 3.12.
+- [x] AC-04: Koru PR smoke passes on Python 3.12.
 
 ## Participants
 
@@ -35,11 +35,19 @@ Docker or generated-analysis behavior may change.
 
 The user approved ticket-003 and autonomous continuation on 2026-08-05.
 
+## Delivery evidence
+
+- PR: `semcod/koru#15`.
+- Approved head: `d22d9f3968ff58a5c36ee1829059d10879572abc`.
+- Validator identity: `ifuri-validator-agent[bot]`.
+- Merge commit: `9ff24d437740a88caf1559aa4510826d025b99cd`.
+
 ## Validation evidence
 
 - `python -m ruff check src/koru`: PASS.
 - Focused init/autopilot/todo2code suite: 105 passed.
 - `docker compose config --quiet`: PASS.
 - `git diff --check`: PASS.
+- Hosted `smoke`: PASS.
 - Reviewed source diff contains import ordering plus one shell-condition wrap;
   no executable statement, API or dependency was added or removed.
