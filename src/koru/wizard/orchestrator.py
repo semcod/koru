@@ -10,6 +10,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from koruide.ide import detect_terminal_host_ide_id, normalize_ide_id
+
 from koru.tasks import create_nl_task
 from koru.wizard.ide import DetectedIDE, discover_installed_ides
 from koru.wizard.ide_install import offer_ide_install
@@ -25,7 +27,6 @@ from koru.wizard.tree import (
     render_ticket_body,
     walk_path,
 )
-from koruide.ide import detect_terminal_host_ide_id, normalize_ide_id
 
 
 @dataclass

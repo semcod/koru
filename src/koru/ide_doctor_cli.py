@@ -8,6 +8,9 @@ import os
 import sys
 from pathlib import Path
 
+from koruide.ide import canonical_autopilot_ide_id, normalize_ide_id
+from koruide.plugin_installer import resolve_target_ide
+
 from koru.autopilot import default_socket_path
 from koru.bounded_contexts.repairs import RepairCommandService, RepairQueryService
 from koru.bounded_contexts.repairs.commands import (
@@ -25,8 +28,6 @@ from koru.ide_adapters.bridge import (
     gc_stale_sockets_for_lane,
 )
 from koru.ide_adapters.registry import get_adapter, supported_adapter_ids
-from koruide.ide import canonical_autopilot_ide_id, normalize_ide_id
-from koruide.plugin_installer import resolve_target_ide
 
 
 def _resolve_ide(raw: str) -> str | None:
@@ -658,7 +659,6 @@ def action_ide_code_change_autonomy(args: argparse.Namespace) -> int:
 
 def action_ide_commands(args: argparse.Namespace) -> int:
     import yaml
-
     from koruide.command_catalog import (
         build_ide_command_catalog,
         command_catalog_for_llm,
@@ -682,7 +682,6 @@ def action_ide_commands(args: argparse.Namespace) -> int:
 
 def action_ide_scenario_schema(args: argparse.Namespace) -> int:
     import yaml
-
     from koruide.command_scenario import ide_command_scenario_schema
 
     payload = ide_command_scenario_schema()
@@ -707,7 +706,6 @@ def action_ide_scenario_prompt(args: argparse.Namespace) -> int:
 
 def action_ide_scenario_validate(args: argparse.Namespace) -> int:
     import yaml
-
     from koruide.command_scenario import validate_ide_command_scenario
 
     raw_text = sys.stdin.read() if args.scenario == "-" else Path(args.scenario).read_text()

@@ -62,8 +62,9 @@ def action_route(args: argparse.Namespace, *, client_factory: Callable) -> int:
         )
         return 2
 
-    from koru.autopilot.lane_context import resolve_lane_context
     from koruide.ide import canonical_autopilot_ide_id
+
+    from koru.autopilot.lane_context import resolve_lane_context
 
     requested = getattr(args, "ide", None) or "auto"
     project = getattr(args, "project", None)

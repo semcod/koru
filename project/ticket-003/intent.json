@@ -1,0 +1,64 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-003",
+  "summary": "Restore Koru's current-main Ruff baseline",
+  "workstream": "application",
+  "allowedPaths": [
+    "src/koru/**",
+    "tests/test_init.py",
+    "tests/test_autopilot_cli.py",
+    "tests/test_todo2code_discovery.py",
+    "tests/test_todo2code_autonomous_gate.py",
+    "project/ticket-003/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    ".governance/**",
+    ".github/**",
+    "project/README.md",
+    "project/ticket-*/user-*.md",
+    "pyproject.toml",
+    "Dockerfile*",
+    "docker-compose.yml",
+    "docs/**"
+  ],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5943447d586962fef1fd1e80059a9d2ef4e97a6a",
+    "targetBranch": "main",
+    "outcome": "Make the existing Koru Ruff smoke gate green without runtime behavior changes",
+    "nonGoals": [
+      "No API, dependency, priority, governance, Docker or generated-analysis changes",
+      "No suppression, ignore rule or CI weakening"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 32,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Apply Ruff's safe I001 transformations and one non-semantic E501 wrap",
+      "components": [
+        {"name": "koru-python-style-baseline", "paths": ["src/koru/**", "tests/**"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the mechanical formatting commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-02", "commands": ["python -m ruff check src/koru"], "evidence": "Zero Ruff findings"},
+      {"criterion": "AC-03", "commands": ["python -m pytest tests/test_init.py tests/test_autopilot_cli.py tests/test_todo2code_discovery.py tests/test_todo2code_autonomous_gate.py -q"], "evidence": "105 focused tests pass"}
+    ]
+  }
+}

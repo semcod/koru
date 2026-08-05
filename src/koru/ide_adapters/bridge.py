@@ -5,13 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from koruide.drive_policy import DrivePolicy as DriveOrchestrator
+from koruide.ide import canonical_autopilot_ide_id, detect_running_ides, normalize_ide_id
+from koruide.ides import get_strategy
+
 from koru.autopilot.client import AutopilotClient
 from koru.ide_adapters import shared
 from koru.ide_adapters.base import BridgeStatus, Hypothesis
 from koru.ide_adapters.registry import get_adapter
-from koruide.drive_policy import DrivePolicy as DriveOrchestrator
-from koruide.ide import canonical_autopilot_ide_id, detect_running_ides, normalize_ide_id
-from koruide.ides import get_strategy
 
 
 def _ide_is_running(ide: str) -> bool:

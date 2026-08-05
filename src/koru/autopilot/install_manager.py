@@ -17,6 +17,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
+from koruide.socket import default_socket_path
+
 from koru.autopilot.client import AutopilotClient
 from koru.autopilot.ide import (
     detect_running_ides,
@@ -48,8 +51,6 @@ from koru.autopilot.plugin_installer import (
     installed_extension_version_for_ide,
 )
 from koru.ide_adapters.ide_reload import new_window_reload_enabled
-from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
-from koruide.socket import default_socket_path
 
 # Legacy aliases preserved for backward compatibility (tests/CLI mocks may
 # monkeypatch the private names on this module).
@@ -1085,6 +1086,8 @@ def _reload_ide_after_plugin_fix(
             ),
         }
     try:
+        from koruide.ide import detect_terminal_host_ide_id
+
         from koru.ide_adapters.ide_reload import (
             apply_temporary_repair_reload_env,
             detached_reload_enabled,
@@ -1092,7 +1095,6 @@ def _reload_ide_after_plugin_fix(
             spawn_detached_ide_reload,
             try_reload_vscode_family_ide,
         )
-        from koruide.ide import detect_terminal_host_ide_id
 
         snapshot = apply_temporary_repair_reload_env(
             same_workspace=_daemon_has_plugin_workspace(daemon, ide, source_root),

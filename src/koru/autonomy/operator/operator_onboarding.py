@@ -21,11 +21,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+from koruide.ide import normalize_ide_id
+
 from koru.wizard.cli import StdinPrompter, run_wizard
 from koru.wizard.ide import DetectedIDE, discover_installed_ides
 from koru.wizard.llx import llx_available
 from koru.wizard.tree import StrategyTree, load_tree
-from koruide.ide import normalize_ide_id
 
 
 @dataclass(frozen=True)

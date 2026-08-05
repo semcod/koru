@@ -7,6 +7,8 @@ import shlex
 from pathlib import Path
 from typing import Any, NamedTuple
 
+from koruide.ide import canonical_autopilot_ide_id, normalize_ide_id
+
 from koru.autopilot.cli_snapshot_lines import _bridge_line as _bridge_line
 from koru.autopilot.cli_snapshot_lines import _calibration_line as _calibration_line
 from koru.autopilot.cli_snapshot_lines import _daemon_detail as _daemon_detail
@@ -27,7 +29,6 @@ from koru.autopilot.cli_snapshot_lines import (
 )
 from koru.autopilot.lane_context import instance_from_socket_path, resolve_lane_context
 from koru.ide_adapters.bridge import evaluate_bridge, format_bridge_text
-from koruide.ide import canonical_autopilot_ide_id, normalize_ide_id
 
 
 def _lane_shell_env(*, project: Path, ide: str, socket_path: str) -> str:
