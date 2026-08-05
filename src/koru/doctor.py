@@ -216,9 +216,12 @@ def _autopilot_stream_socket_paths() -> list[Path]:
     return _autonomous_streams.autopilot_stream_socket_paths(selected)
 
 
-def _autopilot_stream_socket_summary() -> tuple[list[str], int, int]:
+def _autopilot_stream_socket_summary(
+    project: Path | None = None,
+) -> tuple[list[str], int, int]:
     return _autonomous_streams.autopilot_stream_socket_summary(
-        _autopilot_stream_socket_paths()
+        _autopilot_stream_socket_paths(),
+        project=project,
     )
 
 
@@ -232,7 +235,7 @@ _autonomous_stream_issue_codes = _autonomous_streams.autonomous_stream_issue_cod
 def _check_autonomous_service_stream(project: Path) -> tuple[str, str]:
     return _autonomous_streams.check_autonomous_service_stream(
         project,
-        socket_summary=_autopilot_stream_socket_summary,
+        socket_summary=lambda: _autopilot_stream_socket_summary(project),
     )
 
 
@@ -417,7 +420,15 @@ _check_planfile_binary = _project_health.check_planfile_binary
 _check_lane_dependencies = _project_health.check_lane_dependencies
 _check_ecosystem_versions = _project_health.check_ecosystem_versions
 _check_koru_package_version = _project_health.check_koru_package_version
-_check_planfile_cli_version = _project_health.check_planfile_cli_version
+_planfile_version_argv = _project_health.planfile_version_argv
+
+
+def _check_planfile_cli_version(project: Path) -> tuple[str, str]:
+    return _project_health.check_planfile_cli_version(
+        project,
+        argv_resolver=_planfile_version_argv,
+        subprocess_run=subprocess.run,
+    )
 
 
 _check_planfile_config = _project_health.check_planfile_config

@@ -31,7 +31,43 @@ def autopilot_stream_socket_paths(selected: Path) -> list[Path]:
     return sorted(candidates, key=lambda path: str(path))
 
 
-def autopilot_stream_socket_summary(paths: list[Path]) -> tuple[list[str], int, int]:
+def _listening_socket_project(path: Path) -> str | None:
+    """Best-effort project identity reported by a listening daemon."""
+    from collections.abc import Mapping
+
+    from koru.ide_client import build_ide_client
+
+    try:
+        status = build_ide_client(socket_path=path, timeout=0.2).status()
+    except (OSError, RuntimeError, TimeoutError):
+        return None
+    if not isinstance(status, Mapping):
+        return None
+    metadata = status.get("daemon_metadata") or status.get("daemon")
+    if not isinstance(metadata, Mapping):
+        return None
+    project = str(metadata.get("project") or "").strip()
+    return project or None
+
+
+def _socket_matches_project(path: Path, project: Path | None) -> bool:
+    if project is None:
+        return True
+    daemon_project = _listening_socket_project(path)
+    if daemon_project is None:
+        # Unknown ownership stays visible: fail conservatively instead of
+        # hiding an unidentifiable local stream.
+        return True
+    from koru.autonomy.operator.operator_runtime import projects_equivalent
+
+    return projects_equivalent(daemon_project, project)
+
+
+def autopilot_stream_socket_summary(
+    paths: list[Path],
+    *,
+    project: Path | None = None,
+) -> tuple[list[str], int, int]:
     from koru.autonomy.environment import probe_socket_health
 
     summaries: list[str] = []
@@ -39,6 +75,8 @@ def autopilot_stream_socket_summary(paths: list[Path]) -> tuple[list[str], int, 
     stale = 0
     for path in paths:
         health = probe_socket_health(path, connect_timeout=0.15)
+        if health.listening and not _socket_matches_project(path, project):
+            continue
         if health.listening:
             listening += 1
             state = "listening"

@@ -57,6 +57,25 @@ def check_git_repo(project: Path) -> tuple[str, str]:
         return PASS, "initialised"
     if git.is_file():  # worktree pointer
         return PASS, "git worktree"
+    try:
+        nested_repositories = sorted(
+            child.name
+            for child in project.iterdir()
+            if child.is_dir() and (child / ".git").exists()
+        )
+    except OSError:
+        nested_repositories = []
+    if nested_repositories:
+        preview = ",".join(nested_repositories[:5])
+        suffix = (
+            f",+{len(nested_repositories) - 5}"
+            if len(nested_repositories) > 5
+            else ""
+        )
+        return PASS, (
+            f"workspace root with {len(nested_repositories)} nested git repositories "
+            f"({preview}{suffix})"
+        )
     return WARN, "no .git/ — git history is required for CI/CD review"
 
 
@@ -204,12 +223,17 @@ def check_koru_package_version(_project: Path) -> tuple[str, str]:
     return PASS, f"koru {ver}"
 
 
-def check_planfile_cli_version(project: Path) -> tuple[str, str]:
-    argv = planfile_version_argv()
+def check_planfile_cli_version(
+    project: Path,
+    *,
+    argv_resolver: Callable[[], list[str] | None] = planfile_version_argv,
+    subprocess_run: Callable[..., object] = subprocess.run,
+) -> tuple[str, str]:
+    argv = argv_resolver()
     if not argv:
         return SKIP, "no planfile executable"
     try:
-        proc = subprocess.run(
+        proc = subprocess_run(
             argv,
             capture_output=True,
             text=True,

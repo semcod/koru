@@ -204,6 +204,38 @@ class TestAutonomousServiceStreamProbe(unittest.TestCase):
             self.assertIn("orphan_wup_pids=555", check.detail)
             self.assertIn("--replace-existing", check.detail)
 
+    def test_socket_summary_excludes_listener_owned_by_other_project(self) -> None:
+        from koru.doctor_autonomous_streams import autopilot_stream_socket_summary
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "current"
+            foreign = Path(tmp) / "foreign"
+            project.mkdir()
+            foreign.mkdir()
+            current_socket = Path(tmp) / "koru-autopilot-current.sock"
+            foreign_socket = Path(tmp) / "koru-autopilot-foreign.sock"
+            health = SimpleNamespace(listening=True, stale=False)
+
+            def client_for(*, socket_path: Path, timeout: float):
+                del timeout
+                owner = project if socket_path == current_socket else foreign
+                return SimpleNamespace(
+                    status=lambda: {"daemon_metadata": {"project": str(owner)}}
+                )
+
+            with (
+                patch("koru.autonomy.environment.probe_socket_health", return_value=health),
+                patch("koru.ide_client.build_ide_client", side_effect=client_for),
+            ):
+                summaries, listening, stale = autopilot_stream_socket_summary(
+                    [current_socket, foreign_socket],
+                    project=project,
+                )
+
+            self.assertEqual(summaries, ["koru-autopilot-current.sock:listening"])
+            self.assertEqual(listening, 1)
+            self.assertEqual(stale, 0)
+
 
 class TestPlanfileCliVersionProbe(unittest.TestCase):
     def test_parses_version_from_stderr(self) -> None:
@@ -263,6 +295,20 @@ class TestAutonomousEnvironDoctorIntegration(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 _named(report, "gitignore")
 
+    def test_workspace_root_with_nested_git_repositories_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            shutil.rmtree(project / ".git")
+            (project / "service-a" / ".git").mkdir(parents=True)
+            (project / "service-b" / ".git").mkdir(parents=True)
+
+            report = _run(project)
+
+            check = _named(report, "git_repo")
+            self.assertEqual(check.status, PASS)
+            self.assertIn("2 nested git repositories", check.detail)
+
 
 class TestAutopilotDoctorChecks(unittest.TestCase):
     def test_autopilot_checks_skip_when_env_unset(self) -> None:
@@ -300,7 +346,7 @@ class TestAutopilotDoctorChecks(unittest.TestCase):
             self.assertEqual(check.status, WARN)
             self.assertIn("instance_ide_mismatch=true", check.detail)
 
-    def test_autopilot_env_shows_lane_matrix_when_multiple_ides_run(self) -> None:
+    def test_autopilot_env_skips_idle_terminal_hint_when_multiple_ides_run(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             _scaffold(project)
@@ -333,9 +379,9 @@ class TestAutopilotDoctorChecks(unittest.TestCase):
             ):
                 report = _run(project)
             check = _named(report, "autopilot_env")
-            self.assertEqual(check.status, WARN)
-            self.assertIn("explicit_env_required_when_multiple=true", check.detail)
-            self.assertIn("lane_matrix=vscode*:stopped/disconnected,vscodium:running/connected", check.detail)
+            self.assertEqual(check.status, SKIP)
+            self.assertIn("terminal_hint_idle=true", check.detail)
+            self.assertNotIn("lane_matrix=", check.detail)
 
     def test_python_venv_alignment_warns_on_stale_virtual_env(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
