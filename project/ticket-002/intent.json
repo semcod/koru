@@ -1,0 +1,69 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-002",
+  "summary": "Adopt immutable new-project 0.11.0",
+  "workstream": "governance",
+  "allowedPaths": [
+    ".governance/**",
+    "AGENTS.md",
+    "project.sh",
+    "project.bat",
+    "project/governance-check.sh",
+    "project/governance-check.bat",
+    "project/new-ticket.sh",
+    "project/readme.sh",
+    "project/ticket-002/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/README.md",
+    "project/ticket-*/user-*.md",
+    "src/**",
+    "tests/**",
+    "pyproject.toml",
+    "Dockerfile*",
+    "docker-compose.yml",
+    "docs/**"
+  ],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-001"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5943447d586962fef1fd1e80059a9d2ef4e97a6a",
+    "targetBranch": "main",
+    "outcome": "Bootstrap Koru with immutable new-project 0.11.0 and its canonical work-classification package",
+    "nonGoals": [
+      "No Koru queue or priority behavior change",
+      "No source, test, dependency, generated-analysis or Docker configuration change",
+      "No branch-based or moving-tag adoption"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use Goal's immutable adoption adapter with a Koru-specific seed manifest and preserve the analysis generator namespace",
+      "components": [
+        {"name": "koru-governance-manifest", "paths": [".governance/manifest.json"]},
+        {"name": "managed-governance-package", "paths": [".governance/**", "AGENTS.md", "project.sh", "project.bat", "project/governance-check.*", "project/new-ticket.sh", "project/readme.sh"]}
+      ],
+      "responsibilityChanges": true,
+      "interfaceChanges": [],
+      "dataChanges": ["Koru gains immutable governance provenance and canonical work-classification artifacts"],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Remove only the ticket-owned bootstrap through a reviewed rollback; never move the release tag"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-03", "commands": ["goal governance adopt --source-revision cc9b04673bbd85cb4e35fb683d288ef34be1485f --target-root . --check"], "evidence": "Deterministic 19-file bootstrap plan"},
+      {"criterion": "AC-05", "commands": ["./project/governance-check.sh", "pytest focused Koru governance/integration tests", "docker compose config"], "evidence": "Governance, Koru and Docker checks pass"}
+    ]
+  }
+}

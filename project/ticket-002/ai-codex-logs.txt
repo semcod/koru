@@ -1,0 +1,11 @@
+2026-08-05 plan preflight
+docker client/server: 29.1.3 / 29.1.3
+local Goal governance adapter: available
+source revision: cc9b04673bbd85cb4e35fb683d288ef34be1485f
+check result: 18 managed CREATE/UPDATE operations plus manifest.lock creation
+total planned changes: 19
+result: drift detected; exit 1 as expected in check mode; no target writes
+python3 -m json.tool project/ticket-002/intent.json: PASS
+new-project 0.11.0 intent schema validation: PASS
+git diff --check: PASS
+implementation tests: NOT RUN; ticket remains PLAN / WAIT_FOR_APPROVAL
