@@ -1,0 +1,95 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schema": "new-project.governance/v2",
+  "standard": {
+    "id": "wellmanifest/new-project",
+    "version": "0.11.0"
+  },
+  "requiredFiles": [
+    "README.md",
+    "VERSION",
+    "CHANGELOG.md",
+    "TODO.md",
+    "AGENTS.md",
+    "Dockerfile",
+    "project/TICKETS.md",
+    "project/new-ticket.sh",
+    "project/readme.sh"
+  ],
+  "governancePaths": [
+    "TODO.md",
+    "project/TICKETS.md",
+    "project/ticket-*/**"
+  ],
+  "trustedApprovalSources": [
+    "github-review",
+    "github-app-review",
+    "signed-attestation"
+  ],
+  "approvalEvidence": {
+    "schema": "new-project.approval-evidence/v1",
+    "requiredBindings": [
+      "repository",
+      "pullRequest",
+      "headSha",
+      "ticket",
+      "actor"
+    ],
+    "reviewVerificationMethod": "github-api-allowlist",
+    "signedAttestationPredicateType": "https://wellmanifest.dev/attestations/validator/v1"
+  },
+  "ticket": {
+    "root": "project",
+    "directoryPattern": "^ticket-[0-9]{3}$",
+    "requiredFiles": [
+      "README.md",
+      "preprompt.md",
+      "changelog.md",
+      "intent.json"
+    ],
+    "requiredAgentFiles": [
+      "ai-*.md",
+      "ai-*-logs.txt"
+    ],
+    "activeStatuses": ["IN_PROGRESS"],
+    "nonActiveStatuses": ["BACKLOG", "PLAN", "BLOCKED"],
+    "closedStatuses": ["DONE", "CANCELLED"],
+    "implementationStates": ["EDIT", "VALIDATION", "PUBLICATION"],
+    "intentFile": "intent.json"
+  },
+  "docker": {
+    "required": true,
+    "dockerfiles": ["Dockerfile", "Dockerfile.e2e"],
+    "composeFiles": ["compose.yml", "docker-compose.yml", "compose.e2e.yml"]
+  },
+  "coordination": {
+    "mode": "workstreams",
+    "maxActiveTicketsPerWorkstream": 1,
+    "rejectActiveScopeOverlap": true,
+    "workstreams": {
+      "application": {"ownedPaths": ["src/**", "app/**", "lib/**", "test/**", "tests/**"]},
+      "interfaces": {"ownedPaths": ["api/**", "sdk/**", "clients/**"]},
+      "infrastructure": {"ownedPaths": ["Dockerfile*", "compose*.yml", "compose*.yaml", "infra/**", ".github/**"]},
+      "governance": {"ownedPaths": [".governance/**", "AGENTS.md", "README.md", "TODO.md", "goal.yaml", "project/TICKETS.md", "project/governance-check.*", "project/new-ticket.sh", "project/readme.sh", "project/ticket-*/**", "project.sh", "project.bat"]},
+      "integration": {"ownedPaths": ["package.json", "pyproject.toml", "go.mod", "Cargo.toml", "pom.xml", "docs/**"]}
+    },
+    "integration": {
+      "workstream": "integration",
+      "requiredForPaths": ["package.json", "pyproject.toml", "go.mod", "Cargo.toml", "pom.xml"]
+    }
+  },
+  "delivery": {
+    "requiredForImplementation": true,
+    "maxActiveMinutes": 30,
+    "checkpointMinutes": 25,
+    "allowedComplexityClasses": ["XS", "S"],
+    "maxImplementationFiles": 19,
+    "maxAffectedComponents": 1,
+    "maxPublicInterfaceChanges": 0,
+    "maxRuntimeDependencies": 0,
+    "targetBranches": ["main"],
+    "publicInterfacePaths": ["api/**", "sdk/**", "src/public/**"],
+    "dependencyManifestPaths": ["package.json", "pyproject.toml", "go.mod", "Cargo.toml", "pom.xml"]
+  },
+  "stacks": ["python", "docker"]
+}

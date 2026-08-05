@@ -1,10 +1,10 @@
 # Ticket 001 — governance-aware todo2code integration
 
-- Status: DONE
-- Workflow state: DONE
-- Owner: unresolved:human
-- Agent: agent:codex
-- Approval: user approved the proposed remediation plan with `tak`
+- **Status**: DONE
+- **Workflow state**: DONE
+- **Owner**: unresolved:human
+- **Agent**: agent:codex
+- **Approval**: user approved the proposed remediation plan with `tak`
 
 ## Scope
 

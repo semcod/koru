@@ -1,0 +1,36 @@
+2026-08-05 plan preflight
+docker client/server: 29.1.3 / 29.1.3
+local Goal governance adapter: available
+source revision: cc9b04673bbd85cb4e35fb683d288ef34be1485f
+check result: 18 managed CREATE/UPDATE operations plus manifest.lock creation
+total planned changes: 19
+result: drift detected; exit 1 as expected in check mode; no target writes
+python3 -m json.tool project/ticket-002/intent.json: PASS
+new-project 0.11.0 intent schema validation: PASS
+git diff --check: PASS
+implementation tests: NOT RUN; ticket remains PLAN / WAIT_FOR_APPROVAL
+2026-08-05 hosted draft evidence
+PR #14 smoke: FAIL in python -m ruff check src/koru
+findings: 36 existing runtime lint errors; 35 reported auto-fixable
+unchanged main@5943447d CI run 30983866699: FAILURE
+classification: pre-existing SERVICE/health debt outside ticket-002 scope
+2026-08-05 APPROVAL: user requested continuation and approved ticket-002
+transition: PLAN / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
+2026-08-05 goal governance adopt --upgrade: PASS, new-project 0.11.0 at cc9b04673bbd85cb4e35fb683d288ef34be1485f
+2026-08-05 goal governance adopt --check: PASS, up-to-date
+2026-08-05 governance gate: FAIL CLOSED (legacy ticket-001 status syntax, bootstrap budget, wrapper ownership, architecture declaration)
+2026-08-05 focused Koru tests: PASS (105 passed)
+2026-08-05 docker compose config --quiet: PASS
+2026-08-05 Ruff baseline: FAIL (same 36 pre-existing main findings)
+transition: EDIT -> BLOCKED / WAIT_FOR_APPROVAL; workstream reservation released
+2026-08-05 APPROVAL: user approved the narrow migration amendment and autonomous continuation
+transition: BLOCKED / WAIT_FOR_APPROVAL -> IN_PROGRESS / EDIT
+2026-08-05 normalized legacy ticket-001 metadata; no semantic status change
+2026-08-05 aligned atomic bootstrap budget and governance path ownership
+2026-08-05 refreshed from main after ticket-003 DONE
+2026-08-05 goal adoption --upgrade/check: PASS, immutable 0.11.0 up to date
+2026-08-05 governance gate: GOV-PASS (0 errors, 0 warnings)
+2026-08-05 Ruff: PASS
+2026-08-05 focused Koru suite: PASS (105 passed)
+2026-08-05 docker compose config and git diff --check: PASS
+transition: EDIT -> VALIDATION
