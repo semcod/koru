@@ -990,6 +990,68 @@ class TestScanSemcodArtifacts(unittest.TestCase):
             out = scan_semcod_quality_artifacts(project)
             self.assertTrue(any(s.signal == "code2llm_dup" for s in out))
 
+    def test_code2llm_dup_skips_extern_vendored_mirror_twin(self) -> None:
+        """packages/ ↔ extern/... twins must not become a DUP scan ticket."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "project").mkdir()
+            host = project / "packages/backend-shared-py/src/shared/cqrs/http_relay.py"
+            vendored = (
+                project
+                / "extern/oqlos/packages/backend-shared-py/src/shared/cqrs/http_relay.py"
+            )
+            body = b"class HttpInterServiceRelay:\n    pass\n"
+            for path in (host, vendored):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(body)
+            (project / "project" / "planfile-tickets.yaml").write_text(
+                "tickets:\n"
+                "- signal: code2llm_dup\n"
+                "  title: Consolidate duplicate class HttpInterServiceRelay\n"
+                "  files:\n"
+                "  - extern/oqlos/packages/backend-shared-py/src/shared/cqrs/http_relay.py\n"
+                "  - packages/backend-shared-py/src/shared/cqrs/http_relay.py\n",
+                encoding="utf-8",
+            )
+            (project / "project" / "analysis.toon.yaml").write_text(
+                "HEALTH[1]:\n"
+                "  🔴 DUP   1 duplicate class groups\n"
+                "REFACTOR[1]:\n"
+                "  1. rm duplicates  (-1 dup groups)\n"
+                "LAYERS:\n"
+                "  extern/                         CC̄=3.8    ←in:0  →out:0  ×DUP\n"
+                "  │ http_relay                  95L  1C    5m  CC=3      ←0  ×DUP\n"
+                "  packages/                       CC̄=3.2    ←in:0  →out:0  ×DUP\n"
+                "  │ http_relay                  89L  1C    5m  CC=3      ←0  ×DUP\n",
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            self.assertFalse(any(s.signal == "code2llm_dup" for s in out))
+            self.assertFalse(
+                any(
+                    s.signal == "code2llm_refactor" and "duplicate" in s.title.lower()
+                    for s in out
+                ),
+            )
+
+    def test_code2llm_dup_skips_extern_mirror_from_layers_alone(self) -> None:
+        """LAYERS ×DUP under extern/ + packages/ is enough without planfile tickets."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "project").mkdir()
+            (project / "project" / "analysis.toon.yaml").write_text(
+                "HEALTH[1]:\n"
+                "  🔴 DUP   1 duplicate class groups\n"
+                "LAYERS:\n"
+                "  extern/                         CC̄=3.8    ←in:0  →out:0  ×DUP\n"
+                "  │ http_relay                  95L  1C    5m  CC=3      ←0  ×DUP\n"
+                "  packages/                       CC̄=3.2    ←in:0  →out:0  ×DUP\n"
+                "  │ http_relay                  89L  1C    5m  CC=3      ←0  ×DUP\n",
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            self.assertFalse(any(s.signal == "code2llm_dup" for s in out))
+
     def test_code2llm_analysis_emits_cc_ticket(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

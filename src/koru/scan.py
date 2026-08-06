@@ -749,16 +749,170 @@ def _with_source_context(suggestion: Suggestion, context: dict[str, object] | No
     )
 
 
+def _norm_repo_path(path: str) -> str:
+    return path.replace("\\", "/").lstrip("./")
+
+
+def _is_extern_vendored_path(path: str) -> bool:
+    """True for paths under an ``extern/`` vendored tree."""
+    norm = _norm_repo_path(path).lower()
+    return norm == "extern" or norm.startswith("extern/")
+
+
+def _is_extern_mirror_file_group(files: Sequence[str]) -> bool:
+    """True when a dup group is only an ``extern/`` ↔ host (e.g. packages/) twin.
+
+    Requires at least one path under ``extern/`` and at least one outside it,
+    and every non-extern path must be a suffix of some extern path (deployment
+    mirror layout: ``extern/oqlos/packages/...`` ↔ ``packages/...``).
+    """
+    if len(files) < 2:
+        return False
+    normalized = [_norm_repo_path(f) for f in files]
+    extern = [p for p in normalized if _is_extern_vendored_path(p)]
+    other = [p for p in normalized if not _is_extern_vendored_path(p)]
+    if not extern or not other:
+        return False
+    for host in other:
+        host_l = host.lower()
+        if not any(
+            e.lower().endswith("/" + host_l) or e.lower().endswith(host_l) for e in extern
+        ):
+            return False
+    return True
+
+
+_TOON_LAYER_ROOT_RE = re.compile(r"^  (?P<root>\S+/)\s+")
+_TOON_LAYER_DUP_MODULE_RE = re.compile(
+    r"^\s*│\s+(?P<module>\S+)\s+\d+L\s+\d+C\s+\d+m\s+CC=.*×DUP\s*$",
+)
+
+
+def _layers_dup_modules_are_extern_mirrors(text: str) -> bool | None:
+    """Inspect LAYERS ``×DUP`` rows.
+
+    Returns ``True`` when every ×DUP-marked module appears under both an
+    ``extern/`` layer root and a non-extern root (vendored mirror). Returns
+    ``None`` when the text has no module-level ×DUP markers.
+    """
+    current_root: str | None = None
+    module_roots: dict[str, set[str]] = {}
+    in_layers = False
+    for line in text.splitlines():
+        if line.startswith("LAYERS"):
+            in_layers = True
+            continue
+        if in_layers and line.startswith(
+            ("HEALTH", "REFACTOR", "PIPELINES", "COUPLING", "EXTERNAL", "HUB", "SMELL"),
+        ):
+            break
+        if not in_layers:
+            continue
+        if "│" not in line:
+            root_m = _TOON_LAYER_ROOT_RE.match(line)
+            if root_m:
+                current_root = root_m.group("root")
+            continue
+        mod_m = _TOON_LAYER_DUP_MODULE_RE.match(line)
+        if mod_m and current_root:
+            module_roots.setdefault(mod_m.group("module"), set()).add(current_root)
+    if not module_roots:
+        return None
+    for roots in module_roots.values():
+        has_extern = any(_is_extern_vendored_path(r) for r in roots)
+        has_other = any(not _is_extern_vendored_path(r) for r in roots)
+        if not (has_extern and has_other):
+            return False
+    return True
+
+
+def _planfile_dup_groups_are_extern_mirrors(project: Path) -> bool | None:
+    """Return whether every ``code2llm_dup`` planfile ticket is an extern mirror.
+
+    ``None`` when no such tickets exist (caller should fall back to LAYERS).
+    """
+    candidates = (
+        project / "project" / "planfile-tickets.yaml",
+        project / "planfile-tickets.yaml",
+    )
+    payload = _load_yaml_mapping(candidates)
+    if payload is None:
+        return None
+    groups: list[tuple[str, ...]] = []
+    for ticket in payload.get("tickets") or []:
+        if not isinstance(ticket, dict) or ticket.get("signal") != "code2llm_dup":
+            continue
+        files = tuple(str(f) for f in (ticket.get("files") or []) if f)
+        if files:
+            groups.append(files)
+    if not groups:
+        return None
+    return all(_is_extern_mirror_file_group(files) for files in groups)
+
+
+def _files_byte_identical(project: Path, files: Sequence[str]) -> bool:
+    """True when all existing files share one digest; missing files do not force drift."""
+    digests: set[str] = set()
+    seen = 0
+    for rel in files:
+        path = project / rel
+        try:
+            digests.add(hashlib.sha256(path.read_bytes()).hexdigest())
+            seen += 1
+        except OSError:
+            continue
+    if seen == 0:
+        return True
+    return len(digests) == 1
+
+
+def _should_skip_code2llm_dup_ticket(
+    text: str,
+    *,
+    project: Path | None = None,
+) -> bool:
+    """Skip aggregate DUP tickets that only reflect intentional ``extern/`` mirrors."""
+    if project is not None:
+        plan = _planfile_dup_groups_are_extern_mirrors(project)
+        if plan is True:
+            # Prefer byte-identity when the twin files are still on disk.
+            candidates = (
+                project / "project" / "planfile-tickets.yaml",
+                project / "planfile-tickets.yaml",
+            )
+            payload = _load_yaml_mapping(candidates)
+            for ticket in (payload or {}).get("tickets") or []:
+                if not isinstance(ticket, dict) or ticket.get("signal") != "code2llm_dup":
+                    continue
+                files = [str(f) for f in (ticket.get("files") or []) if f]
+                if files and not _files_byte_identical(project, files):
+                    # Content drifted — still actionable despite extern layout.
+                    return False
+            return True
+        if plan is False:
+            return False
+    layers = _layers_dup_modules_are_extern_mirrors(text)
+    return layers is True
+
+
+def _is_rm_duplicates_refactor(desc: str, note: str) -> bool:
+    blob = f"{desc} {note}".lower()
+    return "duplicate" in blob or "dup group" in blob or "dup groups" in blob
+
+
 def _parse_dup_suggestions(
     text: str,
     rel: str,
     *,
     source_context: dict[str, object] | None = None,
+    project: Path | None = None,
 ) -> list[Suggestion]:
     """Parse duplication suggestions from analysis text."""
     suggestions: list[Suggestion] = []
     dup_match = _TOON_DUP_RE.search(text)
     if dup_match:
+        if _should_skip_code2llm_dup_ticket(text, project=project):
+            return []
         count = int(dup_match.group("count"))
         suggestions.append(
             _with_source_context(
@@ -869,6 +1023,7 @@ def _parse_refactor_suggestions(
     rel: str,
     *,
     source_context: dict[str, object] | None = None,
+    skip_duplicate_items: bool = False,
 ) -> list[Suggestion]:
     """Parse refactor item suggestions from analysis text."""
     suggestions: list[Suggestion] = []
@@ -886,6 +1041,8 @@ def _parse_refactor_suggestions(
             continue
         desc = rm.group("desc").strip()
         note = rm.group("note").strip()
+        if skip_duplicate_items and _is_rm_duplicates_refactor(desc, note):
+            continue
         suggestions.append(
             _with_source_context(
                 Suggestion(
@@ -987,8 +1144,16 @@ def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
         return []
 
     source_context = _code2llm_source_context(project, path, rel)
+    skip_mirror_dups = _should_skip_code2llm_dup_ticket(text, project=project)
     suggestions: list[Suggestion] = []
-    suggestions.extend(_parse_dup_suggestions(text, rel, source_context=source_context))
+    suggestions.extend(
+        _parse_dup_suggestions(
+            text,
+            rel,
+            source_context=source_context,
+            project=project,
+        ),
+    )
     suggestions.extend(_parse_god_module_suggestions(text, rel, source_context=source_context))
     suggestions.extend(
         _parse_high_cc_suggestions(
@@ -998,7 +1163,14 @@ def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
             locations=_code2llm_cc_locations(project),
         ),
     )
-    suggestions.extend(_parse_refactor_suggestions(text, rel, source_context=source_context))
+    suggestions.extend(
+        _parse_refactor_suggestions(
+            text,
+            rel,
+            source_context=source_context,
+            skip_duplicate_items=skip_mirror_dups,
+        ),
+    )
     suggestions.extend(_parse_layer_hotspot_suggestions(text, rel, source_context=source_context))
     return suggestions
 
