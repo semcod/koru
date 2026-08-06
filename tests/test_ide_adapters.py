@@ -164,6 +164,37 @@ def test_extension_activated_in_exthost(tmp_path: Path, monkeypatch: pytest.Monk
     assert shared.extension_activated_in_exthost("cursor") is True
 
 
+def test_extension_activated_prefers_classic_userdata_over_agents(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Classic --user-data-dir activation must win over Agents ~/.config/Cursor."""
+    classic = tmp_path / "classic"
+    agents = tmp_path / "AgentsCursor"
+    classic_log = classic / "logs" / "20260524T120000" / "window1" / "exthost"
+    agents_log = agents / "logs" / "20260524T190000" / "window1" / "exthost"
+    classic_log.mkdir(parents=True)
+    agents_log.mkdir(parents=True)
+    (classic_log / "exthost.log").write_text(
+        "ExtensionService#_doActivateExtension semcod.koru-autopilot-cursor\n",
+        encoding="utf-8",
+    )
+    (agents_log / "exthost.log").write_text(
+        "Extension activated success: vscode.git\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CURSOR_CLASSIC_USER_DATA_DIR", str(classic))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
+    (tmp_path / "xdg").mkdir()
+    # Ensure strategy path resolution is used (not a monkeypatched home).
+    from koruide.ides.cursor import CursorStrategy
+
+    assert CursorStrategy().config_home() == classic
+    assert shared.config_home_for_ide("cursor") == classic
+    assert shared.extension_activated_in_exthost("cursor") is True
+    assert shared.inactive_extension_hypothesis("cursor") is None
+
+
 def test_extension_reload_required_lines_use_actual_ide_label() -> None:
     lines = shared.extension_reload_required_lines("vscodium", label="VSCodium")
 

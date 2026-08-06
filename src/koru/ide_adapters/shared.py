@@ -227,11 +227,8 @@ def vscode_core_version(ide: str) -> str | None:
     return None
 
 
-def latest_ide_exthost_session(ide: str) -> Path | None:
-    """Return the newest log session that has a real IDE window exthost (not CLI-only)."""
-    home = config_home_for_ide(ide)
-    if home is None:
-        return None
+def _latest_exthost_session_in_home(home: Path) -> Path | None:
+    """Newest window-exthost session under ``home/logs`` (skip CLI-only sessions)."""
     logs_root = home / "logs"
     if not logs_root.is_dir():
         return None
@@ -242,12 +239,28 @@ def latest_ide_exthost_session(ide: str) -> Path | None:
     return None
 
 
+def latest_ide_exthost_session(ide: str) -> Path | None:
+    """Return the newest log session that has a real IDE window exthost (not CLI-only).
+
+    Uses :func:`config_home_for_ide`, which for Cursor prefers classic
+    ``--user-data-dir`` when known (env / koru settings / c2004 default path).
+    """
+    home = config_home_for_ide(ide)
+    if home is None:
+        return None
+    return _latest_exthost_session_in_home(home)
+
+
 def extension_activated_in_exthost(ide: str, extension_id: str | None = None) -> bool | None:
     """Whether the per-IDE extension activated in the **current** IDE session's extension host.
 
     Only the newest session with ``window*/exthost/exthost.log`` is checked so a
     stale activation from an older Cursor/VS Code run does not mask a VSIX that was
     installed after the IDE started (requires Reload Window).
+
+    For Cursor, :func:`config_home_for_ide` resolves classic userdata when present
+    so doctor does not false-negative against Agents/glass logs under
+    ``~/.config/Cursor``.
     """
     session = latest_ide_exthost_session(ide)
     if session is None:

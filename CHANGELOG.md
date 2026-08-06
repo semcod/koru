@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.458] - 2026-08-06
+
+### Fixed
+- ``koru ide doctor --ide cursor`` prefers classic Cursor ``--user-data-dir`` when
+  known (``CURSOR_CLASSIC_USER_DATA_DIR`` / ``KORU_CURSOR_USER_DATA_DIR``,
+  ``.koru/config.json`` ``ides.cursor.user_data_dir``, or existing
+  ``/tmp/cursor-classic-c2004-userdata``) so ``extension.not_activated`` is not
+  false-negative against Agents/glass logs under ``~/.config/Cursor``.
+
 ## [0.1.457] - 2026-08-06
 
 ### Fixed

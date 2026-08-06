@@ -7,6 +7,7 @@ IDEs' modules — that isolation is the whole point of the per-IDE split.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -59,8 +60,48 @@ def test_cursor_config_home_uses_xdg(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    # No classic userdata override — fall back to XDG Cursor folder.
+    monkeypatch.setattr(
+        "koruide.ides.cursor.resolve_cursor_user_data_dirs",
+        lambda **_kwargs: [],
+    )
     home = cursor.config_home()
     assert home == tmp_path / "Cursor"
+
+
+def test_cursor_config_home_prefers_classic_user_data_env(
+    cursor: IdeStrategy,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    classic = tmp_path / "classic-userdata"
+    classic.mkdir()
+    agents = tmp_path / "config"
+    agents.mkdir()
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(agents))
+    monkeypatch.setenv("CURSOR_CLASSIC_USER_DATA_DIR", str(classic))
+    assert cursor.config_home() == classic
+
+
+def test_cursor_config_home_reads_koru_settings(
+    cursor: IdeStrategy,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    classic = tmp_path / "from-settings"
+    classic.mkdir()
+    project = tmp_path / "proj"
+    (project / ".koru").mkdir(parents=True)
+    (project / ".koru" / "config.json").write_text(
+        json.dumps({"ides": {"cursor": {"user_data_dir": str(classic)}}}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
+    monkeypatch.delenv("CURSOR_CLASSIC_USER_DATA_DIR", raising=False)
+    monkeypatch.delenv("KORU_CURSOR_USER_DATA_DIR", raising=False)
+    monkeypatch.setenv("KORU_PROJECT", str(project))
+    monkeypatch.chdir(project)
+    assert cursor.config_home() == classic
 
 
 def test_cursor_user_settings_path(
@@ -69,6 +110,10 @@ def test_cursor_user_settings_path(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.setattr(
+        "koruide.ides.cursor.resolve_cursor_user_data_dirs",
+        lambda **_kwargs: [],
+    )
     assert cursor.user_settings_path() == tmp_path / "Cursor" / "User" / "settings.json"
 
 
@@ -90,6 +135,10 @@ def test_cursor_state_vscdb_path(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.setattr(
+        "koruide.ides.cursor.resolve_cursor_user_data_dirs",
+        lambda **_kwargs: [],
+    )
     expected = tmp_path / "Cursor" / "User" / "globalStorage" / "state.vscdb"
     assert cursor.state_vscdb_path() == expected
 
@@ -127,6 +176,10 @@ def test_shared_layer_uses_cursor_strategy(
 ) -> None:
     """``koru.ide_adapters.shared`` must delegate Cursor paths to the strategy."""
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.setattr(
+        "koruide.ides.cursor.resolve_cursor_user_data_dirs",
+        lambda **_kwargs: [],
+    )
     from koru.ide_adapters import shared
 
     assert shared.config_home_for_ide("cursor") == tmp_path / "Cursor"
