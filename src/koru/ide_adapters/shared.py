@@ -457,6 +457,11 @@ def untrusted_publisher_hypothesis(ide: str) -> Hypothesis | None:
     trusted = publisher_trusted(ide)
     if trusted is not False:
         return None
+    # If exthost already activated the extension, missing trustedPublishers in
+    # state.vscdb is not blocking (classic userdata may lack the key while the
+    # VSIX still loads from --extensions-dir).
+    if extension_activated_in_exthost(ide) is True:
+        return None
     core = vscode_core_version(ide) or "?"
     return Hypothesis(
         id=f"{ide}.trustedPublishers.missing",

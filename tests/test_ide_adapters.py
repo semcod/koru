@@ -37,10 +37,19 @@ def test_publisher_trusted_reads_vscdb(tmp_path: Path, monkeypatch: pytest.Monke
 def test_untrusted_publisher_hypothesis(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(shared, "publisher_trusted", lambda _ide: False)
     monkeypatch.setattr(shared, "vscode_core_version", lambda _ide: "1.105.1")
+    monkeypatch.setattr(shared, "extension_activated_in_exthost", lambda _ide: False)
     hyp = shared.untrusted_publisher_hypothesis("cursor")
     assert hyp is not None
     assert hyp.id == "cursor.trustedPublishers.missing"
     assert hyp.confidence >= 0.9
+
+
+def test_untrusted_publisher_hypothesis_skipped_when_activated(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(shared, "publisher_trusted", lambda _ide: False)
+    monkeypatch.setattr(shared, "extension_activated_in_exthost", lambda _ide: True)
+    assert shared.untrusted_publisher_hypothesis("cursor") is None
 
 
 def test_apply_safe_fixes_adds_trusted_publisher_while_ide_runs(

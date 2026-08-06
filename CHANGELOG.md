@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.459] - 2026-08-06
+
+### Fixed
+- ``koru ide doctor`` skips ``trustedPublishers.missing`` when classic Cursor
+  exthost already activated the Koru VSIX (state.vscdb may lack ``semcod`` while
+  the extension still loads from ``--extensions-dir``).
+
 ## [0.1.458] - 2026-08-06
 
 ### Fixed
