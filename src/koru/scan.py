@@ -905,6 +905,32 @@ def _parse_refactor_suggestions(
     return suggestions
 
 
+_LAYER_NON_CODE_SUFFIXES = (
+    ".md",
+    ".markdown",
+    ".rst",
+    ".txt",
+    ".adoc",
+    ".html",
+    ".htm",
+)
+
+
+def _is_non_code_layer_module(
+    module: str,
+    *,
+    classes: int,
+    methods: int,
+    cc: float,
+) -> bool:
+    """Skip docs/data LAYERS rows that are not split-worthy code modules."""
+    name = module.strip().lower()
+    if any(name.endswith(suffix) for suffix in _LAYER_NON_CODE_SUFFIXES):
+        return True
+    # Pure prose/data dumps: huge LOC but no structure (e.g. README.md).
+    return classes == 0 and methods == 0 and cc <= 0
+
+
 def _parse_layer_hotspot_suggestions(
     text: str,
     rel: str,
@@ -923,6 +949,8 @@ def _parse_layer_hotspot_suggestions(
         classes = int(m.group("classes"))
         methods = int(m.group("methods"))
         cc = float(m.group("cc"))
+        if _is_non_code_layer_module(module, classes=classes, methods=methods, cc=cc):
+            continue
         if loc < 500 and cc < 12:
             continue
         priority = "high" if loc >= 800 or cc >= 14 else "normal"
