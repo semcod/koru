@@ -405,6 +405,21 @@ def test_ide_doctor_uses_env_instance_when_arg_missing(
     assert socket == tmp_path / "koru-autopilot-cursor-main.sock"
 
 
+def test_ide_doctor_treats_auto_instance_as_selected_ide(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """Taskfile ``INSTANCE=auto`` must not rewrite settings to the bare socket."""
+    monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "auto")
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
+    args = type("Args", (), {"socket": None, "instance": None, "project": None})()
+
+    socket = _resolve_socket(args, "cursor")
+
+    assert socket == tmp_path / "koru-autopilot-cursor.sock"
+
+
 def test_ide_doctor_inferrs_instance_from_workspace_socket_when_env_missing(
     tmp_path: Path,
     monkeypatch,

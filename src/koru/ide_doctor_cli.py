@@ -71,8 +71,13 @@ def _resolve_socket(args: argparse.Namespace, ide: str) -> Path:
     project_arg = getattr(args, "project", None)
     project = Path(project_arg).expanduser().resolve() if project_arg is not None else None
     env_instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+    # Taskfiles often export INSTANCE=auto (lane TBD). That must not force the
+    # bare ``koru-autopilot.sock`` when doctor already selected a concrete IDE.
+    if env_instance.lower() == "auto":
+        env_instance = ""
     inferred_instance = _infer_instance_from_settings(project, ide)
-    instance = (args.instance or env_instance or inferred_instance or ide or "").strip()
+    raw_instance = (args.instance or env_instance or inferred_instance or ide or "").strip()
+    instance = "" if raw_instance.lower() == "auto" else raw_instance
     if not instance:
         return default_socket_path()
     previous = os.environ.get("KORU_AUTOPILOT_INSTANCE")
