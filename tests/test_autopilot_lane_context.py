@@ -58,6 +58,26 @@ def test_resolve_client_socket_path_uses_cursor_main_not_cursor(
     assert path.name == "koru-autopilot-cursor-main.sock"
 
 
+def test_resolve_client_socket_path_treats_auto_instance_as_selected_ide(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Taskfile ``INSTANCE=auto`` must not pin drive/status to the bare socket."""
+    monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
+    monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "auto")
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
+    monkeypatch.setattr(lc, "user_settings_path", lambda _ide: tmp_path / "missing.json")
+    monkeypatch.setattr(lc, "_live_daemon_instance", lambda **_kw: None)
+    monkeypatch.setattr(lc, "_supervisor_active_lane", lambda: None)
+
+    from types import SimpleNamespace
+
+    args = SimpleNamespace(socket=None, ide="cursor", project=tmp_path)
+    path = lc.resolve_client_socket_path(args, project=tmp_path)
+
+    assert path == tmp_path / "koru-autopilot-cursor.sock"
+
+
 def test_autopilot_env_command_prints_exports(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

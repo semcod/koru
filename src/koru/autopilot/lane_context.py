@@ -289,7 +289,10 @@ def resolve_client_socket_path(
     if env_socket:
         return Path(env_socket).expanduser().resolve()
 
-    if (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip():
+    # Taskfiles often export INSTANCE=auto (lane TBD). That must not force the
+    # bare ``koru-autopilot.sock`` when --ide already selected a concrete lane.
+    env_instance = (os.environ.get("KORU_AUTOPILOT_INSTANCE") or "").strip()
+    if env_instance and env_instance.lower() != "auto":
         return default_socket_path()
 
     ctx = resolve_lane_context(

@@ -296,11 +296,18 @@ tasks:
       - '{{.PYTHON}} -m koru.cli init-ide --project . --ide all'
 
   koru:operator:plugin-probe:
-    desc: Check autopilot daemon/plugin install, live version, and socket status
+    desc: Check autopilot daemon/plugin install, live version, and socket status (IDE=cursor|auto; INSTANCE follows IDE unless already set)
     cmds:
-      - '{{.PYTHON}} -m koru.cli autopilot manage --ide "{{.IDE}}"'
+      - |
+        set -euo pipefail
+        IDE="{{.IDE}}"
+        case "${KORU_AUTOPILOT_INSTANCE:-}" in
+          ""|auto) export KORU_AUTOPILOT_INSTANCE="$IDE" ;;
+        esac
+        export KORU_AUTOPILOT_IDE="$IDE"
+        {{.PYTHON}} -m koru.cli autopilot manage --ide "$IDE"
     vars:
-      IDE: '{{.IDE | default "auto"}}'
+      IDE: '{{.IDE | default "cursor"}}'
 
   koru:operator:setup-host:
     desc: Probe host injector dependencies for autopilot
