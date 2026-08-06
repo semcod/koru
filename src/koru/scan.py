@@ -967,6 +967,36 @@ def _parse_god_module_suggestions(
     return suggestions
 
 
+# Node/JS CFG noise and test-runner hooks that code2llm sometimes ranks as
+# "high CC methods" — never useful as autonomous tickets.
+_CC_NOISE_SYMBOLS = frozenset(
+    {
+        "__dirname",
+        "__filename",
+        "describe",
+        "it",
+        "test",
+        "beforeEach",
+        "afterEach",
+        "beforeAll",
+        "afterAll",
+    }
+)
+# SCREAMING_SNAKE constants (e.g. APP_SHELL_CSS, CANVAS_WIDTH) mis-attributed as methods.
+_CC_CONSTANT_NAME_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$")
+
+
+def _is_noise_cc_symbol(func: str) -> bool:
+    """Skip CC suggestions that are constants or runtime/test scaffolding."""
+    name = func.strip()
+    if not name:
+        return True
+    bare = name.rsplit(".", 1)[-1]
+    if bare in _CC_NOISE_SYMBOLS or name in _CC_NOISE_SYMBOLS:
+        return True
+    return bool(_CC_CONSTANT_NAME_RE.fullmatch(bare))
+
+
 def _parse_high_cc_suggestions(
     text: str,
     rel: str,
@@ -984,6 +1014,8 @@ def _parse_high_cc_suggestions(
         if func in cc_seen:
             continue
         cc_seen.add(func)
+        if _is_noise_cc_symbol(func):
+            continue
 
         # Point the ticket at the code to edit when the location is known and
         # unambiguous. Several functions share a bare name (``value``,

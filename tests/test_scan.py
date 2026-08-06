@@ -1063,6 +1063,25 @@ class TestScanSemcodArtifacts(unittest.TestCase):
             out = scan_semcod_quality_artifacts(project)
             self.assertTrue(any(s.signal == "code2llm_cc" for s in out))
 
+    def test_code2llm_cc_skips_constants_and_node_builtins(self) -> None:
+        """SCREAMING_SNAKE / __dirname noise must not become scan tickets."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "project").mkdir()
+            (project / "project" / "analysis.toon.yaml").write_text(
+                "HEALTH[5]:\n"
+                "  🟡 CC    APP_SHELL_CSS CC=25 (limit:15)\n"
+                "  🟡 CC    CANVAS_WIDTH CC=24 (limit:15)\n"
+                "  🟡 CC    __dirname CC=35 (limit:15)\n"
+                "  🟡 CC    describe CC=22 (limit:15)\n"
+                "  🟡 CC    ensureHuiTestSession CC=22 (limit:15)\n",
+                encoding="utf-8",
+            )
+            out = scan_semcod_quality_artifacts(project)
+            cc = [s for s in out if s.signal == "code2llm_cc"]
+            self.assertEqual(len(cc), 1)
+            self.assertIn("ensureHuiTestSession", cc[0].title)
+
     def test_code2llm_analysis_emits_refactor_items(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
