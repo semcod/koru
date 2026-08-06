@@ -110,6 +110,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Completed DEP-0's validated dependency-boundary inventory and DEP-3's typed,
   bounded Gillm actuator integration.
 
+## [0.1.453] - 2026-08-06
+
+### Docs
+- Update README.md
+
+### Other
+- Update uv.lock
+
 ## [0.1.452] - 2026-08-06
 
 ### Fixed
