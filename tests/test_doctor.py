@@ -413,6 +413,33 @@ class TestAutopilotDoctorChecks(unittest.TestCase):
             self.assertEqual(check.status, PASS)
             self.assertIn("virtual_env_unset=true", check.detail)
 
+    def test_autopilot_plugin_bundle_lock_matches_package_when_consistent(self) -> None:
+        """package-lock root version must match package.json / EXPECTED."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            plugin = project / "plugins" / "koru-autopilot-vscode"
+            plugin.mkdir(parents=True)
+            from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION as expected
+            (plugin / "package.json").write_text(
+                json.dumps({"version": expected}),
+                encoding="utf-8",
+            )
+            (plugin / "package-lock.json").write_text(
+                json.dumps({"version": expected, "packages": {"": {"version": expected}}}),
+                encoding="utf-8",
+            )
+            # create expected vsix placeholders so missing-vsix does not dominate
+            asset_dir = project / "src" / "koru" / "assets" / "koru-autopilot-vscode"
+            asset_dir.mkdir(parents=True)
+            (asset_dir / f"koru-autopilot-{expected}.vsix").write_bytes(b"x")
+            (plugin / f"koru-autopilot-{expected}.vsix").write_bytes(b"x")
+            report = _run(project)
+            check = _named(report, "autopilot_plugin_bundle")
+            self.assertEqual(check.status, PASS)
+            self.assertNotIn("lock_version_mismatch", check.detail)
+            self.assertNotIn("lock_root_version_mismatch", check.detail)
+
     def test_autopilot_plugin_bundle_warns_on_expected_version_drift(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
