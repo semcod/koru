@@ -1,4 +1,4 @@
-# Ticket 004: Require Goal 2.1.292 version-carrier fix
+# Ticket 004: Harden the Goal-based Koru release
 
 - **ID**: ticket-004
 - **Owner**: unresolved:human
@@ -14,6 +14,13 @@ canonical dependency declarations and refresh the lockfile. Version 2.1.292
 includes the synchronized-version transition boundary fix and detects only
 writable Python version declarations, including conventional version modules.
 
+After 0.1.459 publication, verify the actual public wheel rather than only the
+source checkout. That smoke exposed an undeclared runtime dependency:
+`koru --version` imports `Draft202012Validator` through
+`koru.proposal_envelope`, but `jsonschema` was present only in development
+groups. Declare the existing requirement in canonical runtime metadata and
+publish the Goal-selected corrective release 0.1.460.
+
 ## Acceptance criteria
 
 - [x] AC-01: The user explicitly requested testing, publication and updating
@@ -23,11 +30,18 @@ writable Python version declarations, including conventional version modules.
 - [x] AC-03: `uv.lock` resolves Goal 2.1.292 from the public index and passes
   `uv lock --check`.
 - [x] AC-04: Dependency-focused validation and repository governance pass.
-- [ ] AC-05: Goal recognizes the complete existing 0.1.459 prebump without an
+- [x] AC-05: Goal recognizes the complete existing 0.1.459 prebump without an
   additional bump and the protected release PR passes hosted smoke and
   exact-head validation.
-- [ ] AC-06: Goal publishes Koru 0.1.459 only from merged `main`, and a fresh
-  public-index environment resolves that exact version.
+- [x] AC-06: Goal publishes Koru 0.1.459 only from merged `main`; public-index
+  metadata/import resolve 0.1.459 and the public-wheel CLI smoke records the
+  missing `jsonschema` dependency instead of hiding it.
+- [x] AC-07: `jsonschema>=4.0,<5.0` is a canonical runtime requirement in both
+  `app.doql.less` and `pyproject.toml`, and the uv lock remains current.
+- [x] AC-08: A wheel built from the corrective release installs into an
+  isolated environment and `koru --version` returns the selected version.
+- [ ] AC-09: Hosted smoke and exact-head validation pass before Goal publishes
+  0.1.460 from protected merged `main`.
 
 ## Delivery evidence
 
@@ -42,12 +56,22 @@ writable Python version declarations, including conventional version modules.
 - `tests/test_dev_sync.py`: 4 passed.
 - `tests/test_dependency_boundary_inventory.py`: 8 passed, 735 subtests.
 - Repository governance: 0 errors, 0 warnings; hosted `smoke`: PASS.
+- Corrective wheel SHA-256:
+  `4313b1856bb05c8d36f9129b5fd126e883d1893f0ee99f8477394a91470df707`.
+- Isolated corrective wheel: `koru --version` -> `koru 0.1.460`; package
+  metadata/module -> 0.1.460; installed `jsonschema` -> 4.26.0.
+- DoQL validation: 0 errors, 2 pre-existing compatibility warnings.
+- Goal critical Python gate: 253 passed, 2 deprecation warnings.
+- All five Node plugin workspaces: compile and tests PASS after the canonical
+  `npm install` lock strategy; npm audit reports 0 vulnerabilities.
 
 ## Risk boundary
 
-This is a development-tool floor and lock refresh only. It does not add a new
-runtime dependency, change Koru APIs, alter queue/autonomy behavior or modify
-generated analysis snapshots.
+The follow-up makes one already-imported library explicit in runtime metadata;
+it changes neither Koru APIs nor queue/autonomy behavior. The dependency is
+bounded below the next major version, and the repository policy permits only
+this one runtime dependency in the delivery slice. Generated analysis
+snapshots remain out of scope.
 
 ## Session authorization
 
@@ -57,8 +81,10 @@ accepted intent.
 
 The same user request explicitly includes testing and publication. Goal
 2.1.292 revealed an existing complete 0.1.459 prebump and unreleased package
-source after v0.1.456; publishing that already-selected version is therefore
-part of this integration completion, not a second version increment.
+source after v0.1.456; publishing that already-selected version was part of
+this integration completion. Because the immutable 0.1.459 public wheel then
+failed its isolated CLI smoke, the same authorization covers the minimal
+metadata correction and corrective 0.1.460 publication.
 
 ## Participants
 

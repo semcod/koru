@@ -1,7 +1,7 @@
 {
   "schema": "new-project.intent/v2",
   "ticket": "ticket-004",
-  "summary": "Require Goal 2.1.292 and publish the existing Koru 0.1.459 prebump",
+  "summary": "Require Goal 2.1.292 and publish a verified Koru runtime dependency repair",
   "workstream": "integration",
   "allowedPaths": [
     "pyproject.toml",
@@ -30,13 +30,13 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "9b5b3d6c60b302aff1748d6afae9ec9a4b1b47df",
+    "acceptedBaseSha": "e129da6408a97c9a7d6ed41f37b369ac436fc2a0",
     "targetBranch": "main",
-    "outcome": "Koru requires Goal 2.1.292 and publishes its already-prebumped 0.1.459 package from protected merged main",
+    "outcome": "Koru requires Goal 2.1.292 and publishes a corrective 0.1.460 whose public wheel can run the Koru CLI with complete runtime metadata",
     "nonGoals": [
-      "No new runtime dependency or public interface change",
+      "No public interface or runtime-code change",
       "No Koru runtime, test, Docker, CI or generated-analysis change",
-      "No additional version bump beyond the existing synchronized 0.1.459 carriers"
+      "No dependency change beyond declaring the already-imported jsonschema runtime requirement"
     ],
     "complexity": "S",
     "estimatedMinutes": 30,
@@ -44,11 +44,11 @@
       "maxImplementationFiles": 8,
       "maxAffectedComponents": 1,
       "maxPublicInterfaceChanges": 0,
-      "maxRuntimeDependencies": 0
+      "maxRuntimeDependencies": 1
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Synchronize the Goal floor, preserve the existing 0.1.459 prebump, and publish only after protected merge",
+      "decision": "Keep the Goal floor synchronized, declare jsonschema as the one audited runtime requirement, and publish corrective 0.1.460 only after protected merge and isolated-wheel validation",
       "components": [
         {
           "name": "development-toolchain-release",
@@ -69,7 +69,7 @@
       "ui": {"impact": "none", "states": [], "evidence": []},
       "rollback": "Revert before registry publication; published artifacts are immutable"
     },
-    "runtimeDependencies": [],
+    "runtimeDependencies": ["jsonschema>=4.0,<5.0"],
     "validation": [
       {
         "criterion": "AC-03",
@@ -92,7 +92,22 @@
           "goal -a --delivery-mode publish-only --force-publish",
           "uv run --isolated --no-project --with koru==0.1.459 python -c ..."
         ],
-        "evidence": "Public index resolves Koru 0.1.459 after protected merge"
+        "evidence": "Public index resolves Koru 0.1.459 after protected merge and exposes the missing runtime metadata in the CLI smoke"
+      },
+      {
+        "criterion": "AC-07",
+        "commands": ["uv lock", "uv lock --check", "uv tree --locked --package koru"],
+        "evidence": "Canonical runtime declarations and lock contain jsonschema>=4.0,<5.0"
+      },
+      {
+        "criterion": "AC-08",
+        "commands": ["uv build --wheel", "uv run --isolated --no-project --with ./dist/koru-0.1.460-py3-none-any.whl koru --version"],
+        "evidence": "The built wheel installs with runtime dependencies and its real entry point reports 0.1.460"
+      },
+      {
+        "criterion": "AC-09",
+        "commands": ["goal -a --no-publish --delivery-mode pull-request", "goal -a --delivery-mode publish-only --force-publish"],
+        "evidence": "Exact-head gates precede publication from merged main"
       }
     ]
   }

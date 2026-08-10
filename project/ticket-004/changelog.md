@@ -10,3 +10,6 @@
   lock to public Goal 2.1.292.
 - Passed dependency-focused, governance, hosted smoke and exact-head gates;
   merged validated PR #19.
+- Published Koru 0.1.459, reproduced its missing-`jsonschema` CLI failure from
+  the public wheel, and declared the imported package as a bounded runtime
+  dependency for corrective release 0.1.460.
