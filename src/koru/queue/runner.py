@@ -635,7 +635,7 @@ def _compute_verification_error(
         verification_error = f"[evidence_incomplete] {gap}"
     # `branch` and `artifact` deliver the result outside the working tree on
     # purpose, so an unchanged workspace is the expected outcome there — the
-    # branch ref or patch file is the evidence, not the files on disk.
+    # patch file or branch is the evidence, not the files on disk.
     delivered_outside_workspace = use_patch_mode and promotion_mode(ticket) in {
         PROMOTION_BRANCH,
         PROMOTION_ARTIFACT,
