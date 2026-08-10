@@ -7,6 +7,9 @@
 - [x] [`ticket-003`](project/ticket-003/README.md) — restore Koru's current-main
   Ruff gate without suppressions or behavior changes. State: `DONE`;
   classification: `SERVICE / health`.
+- [ ] [`ticket-005`](project/ticket-005/README.md) — assign Koru's canonical
+  development DSL and uv lockfile to the integration workstream. State:
+  `IN_PROGRESS / EDIT`; classification: `SERVICE / governance`.
 
 <!-- PREFACT:BEGIN — generated block, edits inside will be overwritten -->
 # TODO

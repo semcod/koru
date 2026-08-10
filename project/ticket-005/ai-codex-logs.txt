@@ -1,0 +1,3 @@
+2026-08-10 user authorization: autonomous bounded dependency maintenance
+2026-08-10 manifest ownership: app.doql.less and uv.lock -> integration
+2026-08-10 manifest sha256: 911bb4de37bc02c01a4f5337e3318ff0620419e02b83213c4129841c8c78a14c

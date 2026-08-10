@@ -1,0 +1,60 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-005",
+  "summary": "Assign development DSL and lockfile ownership",
+  "workstream": "governance",
+  "allowedPaths": [
+    ".governance/manifest.json",
+    ".governance/manifest.lock.json",
+    "project/ticket-005/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    "src/**",
+    "tests/**",
+    ".github/**",
+    "pyproject.toml",
+    "app.doql.less",
+    "uv.lock"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e3bcacc1cf636441249493d663c4281979b5493d",
+    "targetBranch": "main",
+    "outcome": "Koru integration owns its canonical development DSL and deterministic lockfile",
+    "nonGoals": [
+      "No dependency value or runtime change",
+      "No source, test, CI, Docker or public interface change"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extend the integration workstream with the two existing synchronized toolchain files",
+      "components": [
+        {"name": "repository-governance", "paths": [".governance/manifest.json", ".governance/manifest.lock.json"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the manifest ownership entries and restore the prior locked digest"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-03", "commands": ["sha256sum .governance/manifest.json", "./project/governance-check.sh"], "evidence": "Locked digest matches and governance passes"},
+      {"criterion": "AC-04", "commands": ["git diff --check"], "evidence": "Only governance and ticket metadata change"}
+    ]
+  }
+}
