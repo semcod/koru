@@ -2,8 +2,8 @@
 
 - **ID**: ticket-004
 - **Owner**: unresolved:human
-- **Status**: PLAN
-- **Workflow state**: WAIT_FOR_APPROVAL
+- **Status**: IN_PROGRESS
+- **Workflow state**: EDIT
 - **Created**: 2026-08-10
 - **Work classification**: `SERVICE / integration`
 
