@@ -18,7 +18,7 @@
   "conflictsWith": [],
   "integrationTicket": "ticket-004",
   "delivery": {
-    "acceptedBaseSha": "afd0b9f465cf7ee4a49edd80ffb25c846aa70e0e",
+    "acceptedBaseSha": "3ab09e9f4e0f7824d81a07085891af8128a8856b",
     "targetBranch": "main",
     "outcome": "Goal uses literal carriers, immutable governance routes release metadata through integration, and a bounded release repair may declare one audited runtime dependency",
     "nonGoals": [

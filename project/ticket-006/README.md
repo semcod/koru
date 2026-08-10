@@ -23,17 +23,33 @@ published runtime metadata.
 
 - [x] AC-01: The user authorized autonomous Goal refactoring, testing and
   publication without a repeated confirmation for each bounded change.
-- [ ] AC-02: `goal.yaml` lists only the literal VERSION, Python metadata and
+- [x] AC-02: `goal.yaml` lists only the literal VERSION, Python metadata and
   package.json carriers and otherwise remains byte-for-byte unchanged.
-- [ ] AC-03: Goal recognizes the existing synchronized 0.1.459 prebump without
+- [x] AC-03: Goal recognizes the existing synchronized 0.1.459 prebump without
   an unreadable-carrier error or a second bump.
-- [ ] AC-04: Repository governance, hosted smoke and exact-head validation pass.
-- [ ] AC-05: Goal-generated README, changelog and package-lock metadata remains
-  synchronized with the existing 0.1.459 carriers.
-- [ ] AC-06: Immutable governance metadata assigns VERSION, CHANGELOG and the
+- [x] AC-04: Repository governance, hosted smoke and exact-head validation pass.
+- [x] AC-05: Goal-generated README, changelog and package-lock metadata remains
+  synchronized with the selected release carriers through corrective 0.1.460.
+- [x] AC-06: Immutable governance metadata assigns VERSION, CHANGELOG and the
   npm lockfile to integration and records the exact customized manifest hash.
 - [x] AC-07: The repository delivery budget permits at most one explicitly
   declared runtime dependency; all other delivery limits remain unchanged.
+
+## Delivery evidence
+
+- Carrier/ownership PR: `semcod/koru#20`; approved exact head:
+  `c1e58deb4a362c97d36cff96a5631f275e1fda70`; validator run:
+  `31391957454`; merge commit:
+  `afd0b9f465cf7ee4a49edd80ffb25c846aa70e0e`.
+- Runtime-budget PR: `semcod/koru#21`; approved exact head:
+  `1e063dfbbb2a9cbbb1d024cf2ceb1fcfa5a96a1e`; validator run:
+  `31393429259`; merge commit:
+  `e129da6408a97c9a7d6ed41f37b369ac436fc2a0`.
+- Customized manifest SHA-256:
+  `1e5f7ac1056a57a810c26647d47ceccafadbe20f8b5dd937d7d9828281aa3681`.
+- Goal 2.1.292 reports `already-bumped -> 0.1.460`; governance reports
+  0 errors and 0 warnings. Goal-generated release metadata was split across
+  its governance and integration owners before protected delivery.
 
 ## Risk boundary
 
