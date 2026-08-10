@@ -23,7 +23,11 @@ so deterministic dependency maintenance fails closed on the other two.
 
 - Added `app.doql.less` and `uv.lock` to integration ownership and routing.
 - Updated the manifest lock to the exact customized manifest digest.
+- Passed governance with 0 errors and 0 warnings, hosted smoke and exact-head
+  validator run 31387825764.
+- Merged validated PR #18 as
+  `ec58ffe7ebc917b4aa5acfc3eb6060734671e608`.
 
 ## Blockers
 
-- None.
+- None; all acceptance criteria are complete.

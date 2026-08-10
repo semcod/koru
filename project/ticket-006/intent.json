@@ -1,0 +1,77 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-006",
+  "summary": "Align Goal with Koru's literal version carriers",
+  "workstream": "governance",
+  "allowedPaths": [
+    "goal.yaml",
+    "README.md",
+    ".governance/manifest.json",
+    ".governance/manifest.lock.json",
+    "project/ticket-006/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": "ticket-004",
+  "delivery": {
+    "acceptedBaseSha": "9b5b3d6c60b302aff1748d6afae9ec9a4b1b47df",
+    "targetBranch": "main",
+    "outcome": "Goal uses literal carriers and immutable governance routes standard release metadata through integration for Koru 0.1.459",
+    "nonGoals": [
+      "No runtime, additional package version bump, dependency, CI, Docker or public interface change",
+      "No rewrite of custom Goal comments or publishing settings"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Remove the dynamic selector, assign unowned release carriers to integration, and preserve immutable governance",
+      "components": [
+        {"name": "release-governance", "paths": ["goal.yaml", "README.md", ".governance/manifest.json", ".governance/manifest.lock.json"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Restore the selector only if Koru returns to a literal assignment in that module"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["git diff -- goal.yaml"],
+        "evidence": "Exactly one configured selector is removed"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["goal check-versions"],
+        "evidence": "Goal recognizes complete 0.1.459 prebump"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["./project/governance-check.sh", "git diff --check"],
+        "evidence": "Governance and exact diff pass"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["goal -a --no-publish --delivery-mode pull-request"],
+        "evidence": "Goal synchronizes only governed 0.1.459 release metadata"
+      },
+      {
+        "criterion": "AC-06",
+        "commands": ["sha256sum .governance/manifest.json", "./project/governance-check.sh"],
+        "evidence": "Release carriers are routed to integration and the lock matches"
+      }
+    ]
+  }
+}
