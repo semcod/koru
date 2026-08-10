@@ -10,18 +10,18 @@
 - [x] [`ticket-005`](project/ticket-005/README.md) — assign Koru's canonical
   development DSL and uv lockfile to the integration workstream. State:
   `DONE`; classification: `SERVICE / governance`.
-- [ ] [`ticket-004`](project/ticket-004/README.md) — require published Goal
+- [x] [`ticket-004`](project/ticket-004/README.md) — require published Goal
   2.1.292 across the development-tool declarations and lockfile. State:
-  `IN_PROGRESS / EDIT`; dependency update is merged and the detected existing
-  Koru 0.1.459 prebump now awaits protected publication; classification:
+  `DONE`; corrective Koru 0.1.460 is published and verified from the public
+  index with complete runtime metadata; classification:
   `SERVICE / integration`.
-- [ ] [`ticket-006`](project/ticket-006/README.md) — remove the obsolete
+- [x] [`ticket-006`](project/ticket-006/README.md) — remove the obsolete
   non-literal Koru version carrier from Goal configuration without rewriting
-  custom settings. State: `IN_PROGRESS / EDIT`; classification:
+  custom settings. State: `DONE`; classification:
   `SERVICE / governance`.
-- [ ] [`ticket-007`](project/ticket-007/README.md) — execute the freshly built
+- [x] [`ticket-007`](project/ticket-007/README.md) — execute the freshly built
   wheel CLI with published dependencies in an isolated environment. State:
-  `IN_PROGRESS / EDIT`; classification: `SERVICE / health`.
+  `DONE`; classification: `SERVICE / health`.
 
 <!-- PREFACT:BEGIN — generated block, edits inside will be overwritten -->
 # TODO

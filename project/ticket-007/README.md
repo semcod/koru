@@ -2,8 +2,8 @@
 
 - **ID**: ticket-007
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-10
 - **Work classification**: `SERVICE / health`
 
@@ -22,7 +22,7 @@ metadata. This permanently covers the class of defect found in public Koru
   current checkout.
 - [x] AC-03: The isolated wheel environment resolves published dependencies
   and `koru --version` reports the version from `pyproject.toml`.
-- [ ] AC-04: Focused tests, repository governance, hosted smoke and exact-head
+- [x] AC-04: Focused tests, repository governance, hosted smoke and exact-head
   validation pass before merge.
 
 ## Risk boundary
@@ -40,6 +40,14 @@ dependency metadata, public interface, CI configuration or release version.
 - Validator run 31394808302 correctly rejected the initial patch because the
   required uv boundary used an optional skip primitive. The corrective diff now treats a
   missing uv executable as a hard failure in both wheel distribution tests.
+- Initial PR `semcod/koru#23` was merged despite a validator
+  `CHANGES_REQUESTED` review, exposing a repository protection gap; merge:
+  `f3435a3c99bb9f7f1087e38918dbe8255224ff5f`.
+- Corrective PR: `semcod/koru#24`; approved exact head:
+  `90a6a97529753f379593df3574528ad80c167be3`; validator run:
+  `31395677350`; merge commit:
+  `5206f00a18a986566cb6c5acf497be0a9b26c5b3`.
+- Corrective hosted smoke, distribution suite and exact-head validation: PASS.
 
 ## Session authorization
 
