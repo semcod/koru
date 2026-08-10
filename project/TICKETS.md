@@ -6,3 +6,4 @@
 | [ticket-002](ticket-002/README.md) | DONE | Adopt immutable new-project 0.11.0 governance and work-classification package | [ai-codex.md](ticket-002/ai-codex.md) |
 | [ticket-003](ticket-003/README.md) | DONE | Restore the current-main Ruff baseline before governance adoption | [ai-codex.md](ticket-003/ai-codex.md) |
 | [ticket-005](ticket-005/README.md) | IN_PROGRESS | Assign development DSL and lockfile ownership | [ai-codex.md](ticket-005/ai-codex.md) |
+| [ticket-004](ticket-004/README.md) | IN_PROGRESS | Require Goal 2.1.292 version-carrier fix | [ai-codex.md](ticket-004/ai-codex.md) |

@@ -1,0 +1,62 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-004",
+  "summary": "Require Goal 2.1.292 version-carrier fix",
+  "workstream": "integration",
+  "allowedPaths": [
+    "pyproject.toml",
+    "app.doql.less",
+    "uv.lock",
+    "project/ticket-004/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    ".governance/**",
+    ".github/**",
+    "project/ticket-*/user-*.md",
+    "src/**",
+    "tests/**",
+    "docs/**",
+    "SUMD.md",
+    "project/*.toon.yaml"
+  ],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e3bcacc1cf636441249493d663c4281979b5493d",
+    "targetBranch": "main",
+    "outcome": "Koru consistently requires and locks the published Goal 2.1.292 version-carrier fix",
+    "nonGoals": [
+      "No new runtime dependency or public interface change",
+      "No Koru runtime, test, Docker, CI, governance or generated-analysis change"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Synchronize the existing Goal development-tool floor and deterministic uv resolution",
+      "components": [
+        {"name": "development-toolchain", "paths": ["pyproject.toml", "app.doql.less", "uv.lock"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the dependency-floor and lockfile commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-03", "commands": ["uv lock --check", "uv tree --locked --package goal"], "evidence": "Lock is current and resolves Goal 2.1.292"},
+      {"criterion": "AC-04", "commands": ["./project/governance-check.sh", "python -m pytest tests/test_dev_sync.py -q"], "evidence": "Governance and dependency-tool tests pass"}
+    ]
+  }
+}
