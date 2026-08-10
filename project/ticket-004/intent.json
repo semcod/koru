@@ -30,7 +30,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "e129da6408a97c9a7d6ed41f37b369ac436fc2a0",
+    "acceptedBaseSha": "5206f00a18a986566cb6c5acf497be0a9b26c5b3",
     "targetBranch": "main",
     "outcome": "Koru requires Goal 2.1.292 and publishes a corrective 0.1.460 whose public wheel can run the Koru CLI with complete runtime metadata",
     "nonGoals": [
