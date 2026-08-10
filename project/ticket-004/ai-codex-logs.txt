@@ -4,3 +4,14 @@
 2026-08-10 governance: 0 errors, 0 warnings; hosted smoke passed
 2026-08-10 validator: run 31388422059 approved exact head 340a4fe8ef7f443412133c28cb00d107c5e75633
 2026-08-10 merge: PR #19 -> 9b5b3d6c60b302aff1748d6afae9ec9a4b1b47df
+2026-08-10 public Koru 0.1.459 metadata/module version: 0.1.459
+2026-08-10 public Koru 0.1.459 CLI: FAIL ModuleNotFoundError jsonschema
+2026-08-10 root cause: proposal_envelope imports Draft202012Validator while jsonschema was development-only
+2026-08-10 corrective runtime constraint: jsonschema>=4.0,<5.0
+2026-08-10 Goal decision: normal-bump 0.1.459 -> 0.1.460, then already-bumped 0.1.460
+2026-08-10 DoQL validation: 0 errors, 2 compatibility warnings
+2026-08-10 corrective wheel CLI: koru 0.1.460; jsonschema 4.26.0
+2026-08-10 corrective wheel sha256: 4313b1856bb05c8d36f9129b5fd126e883d1893f0ee99f8477394a91470df707
+2026-08-10 Goal critical Python gate: 253 passed, 2 deprecation warnings
+2026-08-10 Node workspace gate: 5/5 compile and test PASS; npm audit 0 vulnerabilities
+2026-08-10 governance-check: PASS (0 errors, 0 warnings)

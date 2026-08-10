@@ -28,6 +28,11 @@ checkout.
 - Delivered exact head `340a4fe8ef7f443412133c28cb00d107c5e75633`
   through validated PR #19 and merged it as
   `9b5b3d6c60b302aff1748d6afae9ec9a4b1b47df`.
+- Published 0.1.459 from protected main, then tested the public wheel in an
+  isolated environment. Package metadata/import passed, while the real CLI
+  exposed its undeclared `jsonschema` runtime requirement.
+- Added that existing import requirement to the canonical DSL and Python
+  runtime metadata with a `<5.0` major bound for corrective release 0.1.460.
 
 ## Blockers
 
