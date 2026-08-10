@@ -71,11 +71,11 @@
       "interfaces": {"ownedPaths": ["api/**", "sdk/**", "clients/**"]},
       "infrastructure": {"ownedPaths": ["Dockerfile*", "compose*.yml", "compose*.yaml", "infra/**", ".github/**"]},
       "governance": {"ownedPaths": [".governance/**", "AGENTS.md", "README.md", "TODO.md", "goal.yaml", "project/TICKETS.md", "project/governance-check.*", "project/new-ticket.sh", "project/readme.sh", "project/ticket-*/**", "project.sh", "project.bat"]},
-      "integration": {"ownedPaths": ["package.json", "pyproject.toml", "go.mod", "Cargo.toml", "pom.xml", "docs/**"]}
+      "integration": {"ownedPaths": ["package.json", "pyproject.toml", "app.doql.less", "uv.lock", "go.mod", "Cargo.toml", "pom.xml", "docs/**"]}
     },
     "integration": {
       "workstream": "integration",
-      "requiredForPaths": ["package.json", "pyproject.toml", "go.mod", "Cargo.toml", "pom.xml"]
+      "requiredForPaths": ["package.json", "pyproject.toml", "app.doql.less", "uv.lock", "go.mod", "Cargo.toml", "pom.xml"]
     }
   },
   "delivery": {
