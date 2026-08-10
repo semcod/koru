@@ -2,8 +2,8 @@
 
 - **ID**: ticket-006
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-10
 - **Work classification**: `SERVICE / governance`
 
@@ -50,6 +50,10 @@ published runtime metadata.
 - Goal 2.1.292 reports `already-bumped -> 0.1.460`; governance reports
   0 errors and 0 warnings. Goal-generated release metadata was split across
   its governance and integration owners before protected delivery.
+- Publication-README PR: `semcod/koru#26`; approved exact head:
+  `0fd5f4d1e8a86ad6de8c5be4905e8c5f27197a9a`; validator run:
+  `31397206202`; merge commit:
+  `2491fc48b080bdefc84a243f4281cbfa5c34fb89`.
 
 ## Risk boundary
 

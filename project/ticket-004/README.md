@@ -2,8 +2,8 @@
 
 - **ID**: ticket-004
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-10
 - **Work classification**: `SERVICE / integration`
 
@@ -74,6 +74,12 @@ publish the Goal-selected corrective release 0.1.460.
   `923b2298acadbe37c2a92904168102afdceabe4d88b899acd9891ba01ac14a8d`;
   sdist SHA-256:
   `dc63cb18fda189fbb4c1f78f65105ee1e548a3195efe940d1bccab7c9bb0c78b`.
+- Public-index no-cache verification: `koru --version` -> `koru 0.1.460`;
+  package metadata/module -> 0.1.460; installed `jsonschema` -> 4.26.0.
+- Publication-changelog PR: `semcod/koru#25`; approved exact head:
+  `345a280e7f0f16d02bba5158147bf0747260c8f6`; validator run:
+  `31396711627`; merge commit:
+  `3ab09e9f4e0f7824d81a07085891af8128a8856b`.
 
 ## Risk boundary
 
