@@ -854,7 +854,7 @@ wheels = [
 
 [[package]]
 name = "goal"
-version = "2.1.284"
+version = "2.1.292"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -864,9 +864,9 @@ dependencies = [
     { name = "tomlkit" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bf/ed/3ef5beaa56627e95a66269adcfce7c219fff1948b93fc6f2f209fb0cea66/goal-2.1.284.tar.gz", hash = "sha256:61d47e6b68ba499fefad17b3df4bc4b6647da9db80a5dbc0918165c81d3f8ab1", size = 334328, upload-time = "2026-07-23T19:42:09.372Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8e/9a/f23829fd92adf14cf479967985f5eaa811f2928291ccc538637057e04c75/goal-2.1.292.tar.gz", hash = "sha256:47d8c210e61833b693d1d95fd9600890bfe64b0a1035caa466771388007ce7a5", size = 355247, upload-time = "2026-08-10T12:16:10.557Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/09/30/8155e85057ef3a8871f04db2a14b10d2216c0af68957f36f0417c2b44821/goal-2.1.284-py3-none-any.whl", hash = "sha256:d00dab399a774d07da902e1ef42ad5282e513e65410bace0c3185b555f365777", size = 309816, upload-time = "2026-07-23T19:42:07.494Z" },
+    { url = "https://files.pythonhosted.org/packages/a9/83/1cb98c1b7972b11eedeaab11066d51b1d856469ea3eea36d433accd5ab71/goal-2.1.292-py3-none-any.whl", hash = "sha256:001a381085482fe80dacae1ab5fdd519e173d3cc866e1846988bfc7117b71137", size = 327596, upload-time = "2026-08-10T12:16:08.582Z" },
 ]
 
 [[package]]
@@ -1672,8 +1672,8 @@ requires-dist = [
     { name = "gillm", editable = "../gillm" },
     { name = "gillm", marker = "extra == 'all'", editable = "../gillm" },
     { name = "gillm", marker = "extra == 'dev'", editable = "../gillm" },
-    { name = "goal", marker = "extra == 'all'", specifier = ">=2.1.264" },
-    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.264" },
+    { name = "goal", marker = "extra == 'all'", specifier = ">=2.1.292" },
+    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.292" },
     { name = "httpx", marker = "extra == 'all'", specifier = ">=0.27,<1.0" },
     { name = "httpx", marker = "extra == 'api'", specifier = ">=0.27,<1.0" },
     { name = "httpx", marker = "extra == 'imgl'", specifier = ">=0.27,<1.0" },
@@ -1785,7 +1785,7 @@ dev = [
     { name = "costs", specifier = ">=0.1.53" },
     { name = "cryptography", specifier = ">=42.0,<50.0" },
     { name = "fastapi", specifier = ">=0.115" },
-    { name = "goal", specifier = ">=2.1.264" },
+    { name = "goal", specifier = ">=2.1.292" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "httpx2", specifier = ">=2,<3" },
     { name = "hypothesis", specifier = ">=6.112,<7.0" },

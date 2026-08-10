@@ -11,7 +11,7 @@
   development DSL and uv lockfile to the integration workstream. State:
   `IN_PROGRESS / EDIT`; classification: `SERVICE / governance`.
 - [ ] [`ticket-004`](project/ticket-004/README.md) — require published Goal
-  2.1.291 across the development-tool declarations and lockfile. State:
+  2.1.292 across the development-tool declarations and lockfile. State:
   `IN_PROGRESS / EDIT`; classification: `SERVICE / integration`.
 
 <!-- PREFACT:BEGIN — generated block, edits inside will be overwritten -->

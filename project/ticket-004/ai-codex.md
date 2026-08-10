@@ -8,7 +8,7 @@ ticket: ticket-004
 
 ## Understanding
 
-The published Goal 2.1.291 fix must become Koru's minimum development-tool
+The published Goal 2.1.292 fix must become Koru's minimum development-tool
 version without touching runtime behavior or the user's dirty primary
 checkout.
 

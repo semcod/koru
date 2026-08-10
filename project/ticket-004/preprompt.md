@@ -1,7 +1,7 @@
 # Ticket preprompt
 
 - **Task ID**: ticket-004
-- **Task title**: Require Goal 2.1.291 release-boundary fix
+- **Task title**: Require Goal 2.1.292 version-carrier fix
 - **Created**: 2026-08-10T11:38:29Z
 
 Keep executable implementation outside this governance/evidence directory.
