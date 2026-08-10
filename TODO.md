@@ -19,6 +19,9 @@
   non-literal Koru version carrier from Goal configuration without rewriting
   custom settings. State: `IN_PROGRESS / EDIT`; classification:
   `SERVICE / governance`.
+- [ ] [`ticket-007`](project/ticket-007/README.md) — execute the freshly built
+  wheel CLI with published dependencies in an isolated environment. State:
+  `IN_PROGRESS / EDIT`; classification: `SERVICE / health`.
 
 <!-- PREFACT:BEGIN — generated block, edits inside will be overwritten -->
 # TODO

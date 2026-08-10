@@ -1,0 +1,6 @@
+2026-08-10 authorization: autonomous testing/publication/continuation requested by user
+2026-08-10 regression class: source dev dependencies hid missing public wheel runtime metadata
+2026-08-10 ruff: PASS
+2026-08-10 distribution suite: 4 passed in 4.91s
+2026-08-10 governance-check: PASS (0 errors, 0 warnings)
+2026-08-10 Goal decision after test-only change: already-bumped 0.1.460
