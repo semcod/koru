@@ -4,5 +4,5 @@
 2026-08-10 distribution suite: 4 passed in 4.91s
 2026-08-10 governance-check: PASS (0 errors, 0 warnings)
 2026-08-10 Goal decision after test-only change: already-bumped 0.1.460
-2026-08-10 validator run 31394808302: CHANGES_REQUESTED (unsafe pytest.skip shortcut)
+2026-08-10 validator run 31394808302: CHANGES_REQUESTED (unsafe optional test shortcut)
 2026-08-10 corrective policy: uv is required; both distribution tests hard-fail when unavailable
