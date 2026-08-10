@@ -1,0 +1,11 @@
+2026-08-10 authorization: autonomous dependency updates, testing and publication requested by user
+2026-08-10 accepted base: 418c6e9f411654f358fa542977feb67f29e904f2
+2026-08-10 scope: Goal development metadata only; no runtime dependency or source change
+2026-08-10 scaffolder repair: canonical ticket-index markers restored after legacy index rejection
+2026-08-10 delivery classification: S because the 20-minute estimate exceeds the governance XS limit of 10 minutes
+2026-08-10 dependency sync: all TOML/DoQL Goal floors and uv.lock resolve 2.1.293
+2026-08-10 focused tests: 12 passed, including 735 dependency inventory subtests
+2026-08-10 critical tests: 253 passed, 2 pre-existing deprecation warnings
+2026-08-10 DoQL validation: 0 errors, 2 pre-existing compatibility warnings
+2026-08-10 Docker smoke: production image PASS; offline koru 0.1.460 / goal 2.1.293
+2026-08-10 version decision: Goal preserves public Koru 0.1.460 (no-release)

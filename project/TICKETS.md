@@ -1,11 +1,17 @@
-# Project tickets
+# Ticket index (`project/`)
 
-| Ticket | Status | Scope | Agent |
-| --- | --- | --- | --- |
-| [ticket-001](ticket-001/README.md) | DONE | Harden Koru's todo2code integration against repository governance | [ai-codex.md](ticket-001/ai-codex.md) |
-| [ticket-002](ticket-002/README.md) | DONE | Adopt immutable new-project 0.11.0 governance and work-classification package | [ai-codex.md](ticket-002/ai-codex.md) |
-| [ticket-003](ticket-003/README.md) | DONE | Restore the current-main Ruff baseline before governance adoption | [ai-codex.md](ticket-003/ai-codex.md) |
-| [ticket-005](ticket-005/README.md) | DONE | Assign development DSL and lockfile ownership | [ai-codex.md](ticket-005/ai-codex.md) |
-| [ticket-004](ticket-004/README.md) | DONE | Require Goal 2.1.292 and publish verified Koru 0.1.460 | [ai-codex.md](ticket-004/ai-codex.md) |
-| [ticket-006](ticket-006/README.md) | DONE | Align Goal with Koru's literal version carriers | [ai-codex.md](ticket-006/ai-codex.md) |
-| [ticket-007](ticket-007/README.md) | DONE | Verify the installed wheel CLI in isolation | [ai-codex.md](ticket-007/ai-codex.md) |
+This file indexes governance tickets without taking ownership of generated
+project analysis or human-owned ticket inputs.
+
+<!-- AUTO:TICKET_INDEX:START -->
+| Ticket ID | Spec | Preprompt | Human input | Agent plans | Agent logs | Changelog |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **ticket-001** | [`README.md`](./ticket-001/README.md) | [`preprompt.md`](./ticket-001/preprompt.md) | - |  [`ai-codex.md`](./ticket-001/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-001/ai-codex-logs.txt) | [`changelog.md`](./ticket-001/changelog.md) |
+| **ticket-002** | [`README.md`](./ticket-002/README.md) | [`preprompt.md`](./ticket-002/preprompt.md) | - |  [`ai-codex.md`](./ticket-002/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-002/ai-codex-logs.txt) | [`changelog.md`](./ticket-002/changelog.md) |
+| **ticket-003** | [`README.md`](./ticket-003/README.md) | [`preprompt.md`](./ticket-003/preprompt.md) | - |  [`ai-codex.md`](./ticket-003/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-003/ai-codex-logs.txt) | [`changelog.md`](./ticket-003/changelog.md) |
+| **ticket-004** | [`README.md`](./ticket-004/README.md) | [`preprompt.md`](./ticket-004/preprompt.md) | - |  [`ai-codex.md`](./ticket-004/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-004/ai-codex-logs.txt) | [`changelog.md`](./ticket-004/changelog.md) |
+| **ticket-005** | [`README.md`](./ticket-005/README.md) | [`preprompt.md`](./ticket-005/preprompt.md) | - |  [`ai-codex.md`](./ticket-005/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-005/ai-codex-logs.txt) | [`changelog.md`](./ticket-005/changelog.md) |
+| **ticket-006** | [`README.md`](./ticket-006/README.md) | [`preprompt.md`](./ticket-006/preprompt.md) | - |  [`ai-codex.md`](./ticket-006/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-006/ai-codex-logs.txt) | [`changelog.md`](./ticket-006/changelog.md) |
+| **ticket-007** | [`README.md`](./ticket-007/README.md) | [`preprompt.md`](./ticket-007/preprompt.md) | - |  [`ai-codex.md`](./ticket-007/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-007/ai-codex-logs.txt) | [`changelog.md`](./ticket-007/changelog.md) |
+| **ticket-008** | [`README.md`](./ticket-008/README.md) | [`preprompt.md`](./ticket-008/preprompt.md) | - |  [`ai-codex.md`](./ticket-008/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-008/ai-codex-logs.txt) | [`changelog.md`](./ticket-008/changelog.md) |
+<!-- AUTO:TICKET_INDEX:END -->
