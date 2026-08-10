@@ -1,12 +1,16 @@
 {
   "schema": "new-project.intent/v2",
   "ticket": "ticket-004",
-  "summary": "Require Goal 2.1.292 version-carrier fix",
+  "summary": "Require Goal 2.1.292 and publish the existing Koru 0.1.459 prebump",
   "workstream": "integration",
   "allowedPaths": [
     "pyproject.toml",
     "app.doql.less",
     "uv.lock",
+    "VERSION",
+    "CHANGELOG.md",
+    "package.json",
+    "package-lock.json",
     "project/ticket-004/**",
     "TODO.md",
     "project/TICKETS.md"
@@ -22,41 +26,74 @@
     "project/*.toon.yaml"
   ],
   "stacks": ["python"],
-  "dependsOn": [],
+  "dependsOn": ["ticket-005"],
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "e3bcacc1cf636441249493d663c4281979b5493d",
+    "acceptedBaseSha": "9b5b3d6c60b302aff1748d6afae9ec9a4b1b47df",
     "targetBranch": "main",
-    "outcome": "Koru consistently requires and locks the published Goal 2.1.292 version-carrier fix",
+    "outcome": "Koru requires Goal 2.1.292 and publishes its already-prebumped 0.1.459 package from protected merged main",
     "nonGoals": [
       "No new runtime dependency or public interface change",
-      "No Koru runtime, test, Docker, CI, governance or generated-analysis change"
+      "No Koru runtime, test, Docker, CI or generated-analysis change",
+      "No additional version bump beyond the existing synchronized 0.1.459 carriers"
     ],
-    "complexity": "XS",
-    "estimatedMinutes": 20,
+    "complexity": "S",
+    "estimatedMinutes": 30,
     "budgets": {
-      "maxImplementationFiles": 3,
+      "maxImplementationFiles": 8,
       "maxAffectedComponents": 1,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Synchronize the existing Goal development-tool floor and deterministic uv resolution",
+      "decision": "Synchronize the Goal floor, preserve the existing 0.1.459 prebump, and publish only after protected merge",
       "components": [
-        {"name": "development-toolchain", "paths": ["pyproject.toml", "app.doql.less", "uv.lock"]}
+        {
+          "name": "development-toolchain-release",
+          "paths": [
+            "pyproject.toml",
+            "app.doql.less",
+            "uv.lock",
+            "VERSION",
+            "CHANGELOG.md",
+            "package.json",
+            "package-lock.json"
+          ]
+        }
       ],
       "responsibilityChanges": false,
       "interfaceChanges": [],
       "dataChanges": [],
       "ui": {"impact": "none", "states": [], "evidence": []},
-      "rollback": "Revert the dependency-floor and lockfile commit"
+      "rollback": "Revert before registry publication; published artifacts are immutable"
     },
     "runtimeDependencies": [],
     "validation": [
-      {"criterion": "AC-03", "commands": ["uv lock --check", "uv tree --locked --package goal"], "evidence": "Lock is current and resolves Goal 2.1.292"},
-      {"criterion": "AC-04", "commands": ["./project/governance-check.sh", "python -m pytest tests/test_dev_sync.py -q"], "evidence": "Governance and dependency-tool tests pass"}
+      {
+        "criterion": "AC-03",
+        "commands": ["uv lock --check", "uv tree --locked --package goal"],
+        "evidence": "Lock is current and resolves Goal 2.1.292"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["./project/governance-check.sh", "python -m pytest tests/test_dev_sync.py -q"],
+        "evidence": "Governance and dependency-tool tests pass"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["goal check-versions", "goal -a --no-publish --delivery-mode pull-request"],
+        "evidence": "Existing 0.1.459 prebump is preserved and exact-head gates pass"
+      },
+      {
+        "criterion": "AC-06",
+        "commands": [
+          "goal -a --delivery-mode publish-only --force-publish",
+          "uv run --isolated --no-project --with koru==0.1.459 python -c ..."
+        ],
+        "evidence": "Public index resolves Koru 0.1.459 after protected merge"
+      }
     ]
   }
 }

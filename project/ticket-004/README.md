@@ -2,8 +2,8 @@
 
 - **ID**: ticket-004
 - **Owner**: unresolved:human
-- **Status**: DONE
-- **Workflow state**: DONE
+- **Status**: IN_PROGRESS
+- **Workflow state**: EDIT
 - **Created**: 2026-08-10
 - **Work classification**: `SERVICE / integration`
 
@@ -23,6 +23,11 @@ writable Python version declarations, including conventional version modules.
 - [x] AC-03: `uv.lock` resolves Goal 2.1.292 from the public index and passes
   `uv lock --check`.
 - [x] AC-04: Dependency-focused validation and repository governance pass.
+- [ ] AC-05: Goal recognizes the complete existing 0.1.459 prebump without an
+  additional bump and the protected release PR passes hosted smoke and
+  exact-head validation.
+- [ ] AC-06: Goal publishes Koru 0.1.459 only from merged `main`, and a fresh
+  public-index environment resolves that exact version.
 
 ## Delivery evidence
 
@@ -49,6 +54,11 @@ generated analysis snapshots.
 The user authorized this concrete dependency update and autonomous execution
 on 2026-08-10. No fresh confirmation is required for the bounded paths in the
 accepted intent.
+
+The same user request explicitly includes testing and publication. Goal
+2.1.292 revealed an existing complete 0.1.459 prebump and unreleased package
+source after v0.1.456; publishing that already-selected version is therefore
+part of this integration completion, not a second version increment.
 
 ## Participants
 

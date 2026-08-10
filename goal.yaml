@@ -24,7 +24,6 @@ versioning:
   - VERSION
   - pyproject.toml:version
   - package.json:version
-  - src/koru/__init__.py:__version__
   bump_rules:
     patch: 10
     minor: 50
