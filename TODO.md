@@ -10,6 +10,9 @@
 - [ ] [`ticket-005`](project/ticket-005/README.md) — assign Koru's canonical
   development DSL and uv lockfile to the integration workstream. State:
   `IN_PROGRESS / EDIT`; classification: `SERVICE / governance`.
+- [ ] [`ticket-004`](project/ticket-004/README.md) — require published Goal
+  2.1.291 across the development-tool declarations and lockfile. State:
+  `PLAN / WAIT_FOR_APPROVAL`; classification: `SERVICE / integration`.
 
 <!-- PREFACT:BEGIN — generated block, edits inside will be overwritten -->
 # TODO
