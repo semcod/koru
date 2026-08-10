@@ -37,6 +37,9 @@ dependency metadata, public interface, CI configuration or release version.
 - Repository governance: 0 errors, 0 warnings.
 - Goal 2.1.292: `already-bumped -> 0.1.460`; the test-only follow-up does not
   request another release increment.
+- Validator run 31394808302 correctly rejected the initial patch because the
+  required uv boundary used `pytest.skip`. The corrective diff now treats a
+  missing uv executable as a hard failure in both wheel distribution tests.
 
 ## Session authorization
 
