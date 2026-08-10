@@ -40,7 +40,7 @@ publish the Goal-selected corrective release 0.1.460.
   `app.doql.less` and `pyproject.toml`, and the uv lock remains current.
 - [x] AC-08: A wheel built from the corrective release installs into an
   isolated environment and `koru --version` returns the selected version.
-- [ ] AC-09: Hosted smoke and exact-head validation pass before Goal publishes
+- [x] AC-09: Hosted smoke and exact-head validation pass before Goal publishes
   0.1.460 from protected merged `main`.
 
 ## Delivery evidence
@@ -64,6 +64,16 @@ publish the Goal-selected corrective release 0.1.460.
 - Goal critical Python gate: 253 passed, 2 deprecation warnings.
 - All five Node plugin workspaces: compile and tests PASS after the canonical
   `npm install` lock strategy; npm audit reports 0 vulnerabilities.
+- Corrective PR: `semcod/koru#22`; approved exact head:
+  `a8dacd1a4a87140344c898ef9014ab2fe077f67c`; validator run:
+  `31394251198`; merge commit:
+  `a43963a29599cbbd731d8dcc072ad6a643bf67ba`.
+- Goal 2.1.292 publish-only gate: 253 Python tests passed and all five Node
+  workspaces passed before upload from merged `main`.
+- Public release: `koru==0.1.460`; wheel SHA-256:
+  `923b2298acadbe37c2a92904168102afdceabe4d88b899acd9891ba01ac14a8d`;
+  sdist SHA-256:
+  `dc63cb18fda189fbb4c1f78f65105ee1e548a3195efe940d1bccab7c9bb0c78b`.
 
 ## Risk boundary
 
