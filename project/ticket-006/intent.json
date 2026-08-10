@@ -1,7 +1,7 @@
 {
   "schema": "new-project.intent/v2",
   "ticket": "ticket-006",
-  "summary": "Align Goal with Koru's literal version carriers",
+  "summary": "Align Goal release carriers and permit one audited runtime dependency",
   "workstream": "governance",
   "allowedPaths": [
     "goal.yaml",
@@ -18,11 +18,12 @@
   "conflictsWith": [],
   "integrationTicket": "ticket-004",
   "delivery": {
-    "acceptedBaseSha": "9b5b3d6c60b302aff1748d6afae9ec9a4b1b47df",
+    "acceptedBaseSha": "afd0b9f465cf7ee4a49edd80ffb25c846aa70e0e",
     "targetBranch": "main",
-    "outcome": "Goal uses literal carriers and immutable governance routes standard release metadata through integration for Koru 0.1.459",
+    "outcome": "Goal uses literal carriers, immutable governance routes release metadata through integration, and a bounded release repair may declare one audited runtime dependency",
     "nonGoals": [
-      "No runtime, additional package version bump, dependency, CI, Docker or public interface change",
+      "No runtime-code, package version, CI, Docker or public interface change in this governance slice",
+      "No allowance for more than one runtime dependency per bounded delivery",
       "No rewrite of custom Goal comments or publishing settings"
     ],
     "complexity": "S",
@@ -35,7 +36,7 @@
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Remove the dynamic selector, assign unowned release carriers to integration, and preserve immutable governance",
+      "decision": "Remove the dynamic selector, assign unowned release carriers to integration, and raise the per-delivery runtime dependency ceiling from zero to one for an audited installed-wheel repair",
       "components": [
         {"name": "release-governance", "paths": ["goal.yaml", "README.md", ".governance/manifest.json", ".governance/manifest.lock.json"]}
       ],

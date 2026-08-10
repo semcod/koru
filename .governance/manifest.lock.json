@@ -5,7 +5,7 @@
     ".governance/governance_check.py": "aabd710d8c273faa59e6fd26b6d5d9c04f55b084cb9fd3df3c26c5ba0cbc56ea",
     ".governance/intent.schema.json": "d618a2c7ef4b4a24fbf95d516bf8c8231836e7752b28f0450cc96f02f07b6780",
     ".governance/lock.schema.json": "fc6f1143ef713c993b61270dd2d7545a52cb0b8501aadb188e6d0152a208b207",
-    ".governance/manifest.json": "d6bf6573d0ebdf24048ecccad348e4792e6e4027496a61f22677e18ff2fa0654",
+    ".governance/manifest.json": "1e5f7ac1056a57a810c26647d47ceccafadbe20f8b5dd937d7d9828281aa3681",
     ".governance/manifest.schema.json": "d48f258e3397ac2d8c5010e5ccdeef9eaf87b0b015d56798d11d5916c5f70a18",
     ".governance/package-manifest.json": "d9d7052c51f0df5d92260b1f97fb0f7e1f77bd9b890a095daea5a1ea625b4ab3",
     ".governance/stack-profiles.json": "6fa3f8f44e50cfd0539413a85092817d3fab4e82fe376405f1e443120724dff2",
