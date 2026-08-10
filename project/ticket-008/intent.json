@@ -1,0 +1,92 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-008",
+  "summary": "Require published Goal 2.1.293 across Koru development metadata",
+  "workstream": "integration",
+  "allowedPaths": [
+    "pyproject.toml",
+    "app.doql.less",
+    "uv.lock",
+    "project/ticket-008/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    ".governance/**",
+    ".github/**",
+    "project/ticket-*/user-*.md",
+    "src/**",
+    "tests/**",
+    "docs/**",
+    "VERSION",
+    "CHANGELOG.md",
+    "package.json",
+    "package-lock.json",
+    "goal.yaml",
+    "SUMD.md",
+    "project/*.toon.yaml"
+  ],
+  "stacks": ["python"],
+  "dependsOn": ["ticket-004", "ticket-005"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "418c6e9f411654f358fa542977feb67f29e904f2",
+    "targetBranch": "main",
+    "outcome": "Koru consistently requires and locks the published Goal 2.1.293 development tool",
+    "nonGoals": [
+      "No Koru runtime, public interface, Docker or CI change",
+      "No runtime dependency or generated analysis change",
+      "No Koru version bump unless Goal proves it is required"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep the Goal floor synchronized in TOML, DoQL and the uv lock while preserving Koru runtime behavior",
+      "components": [
+        {
+          "name": "development-toolchain",
+          "paths": ["pyproject.toml", "app.doql.less", "uv.lock"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the dependency-only commit before merge"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": ["uv lock --check", "uv tree --locked --package goal"],
+        "evidence": "The frozen lock resolves public Goal 2.1.293"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python -m pytest tests/test_dev_sync.py -q",
+          "python -m pytest tests/test_dependency_boundary_inventory.py -q",
+          "./project/governance-check.sh",
+          "git diff --check"
+        ],
+        "evidence": "Dependency synchronization and governance are green"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "goal --config goal.yaml check-versions",
+          "goal -a --config goal.yaml --delivery-mode pull-request --no-publish"
+        ],
+        "evidence": "Goal preserves a valid existing bump and exact-head gates precede merge"
+      }
+    ]
+  }
+}

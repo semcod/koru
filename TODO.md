@@ -22,6 +22,9 @@
 - [x] [`ticket-007`](project/ticket-007/README.md) — execute the freshly built
   wheel CLI with published dependencies in an isolated environment. State:
   `DONE`; classification: `SERVICE / health`.
+- [ ] [`ticket-008`](project/ticket-008/README.md) — require published Goal
+  2.1.293 across canonical development metadata and the uv lockfile. State:
+  `IN_PROGRESS`; classification: `SERVICE / integration`.
 
 <!-- PREFACT:BEGIN — generated block, edits inside will be overwritten -->
 # TODO
