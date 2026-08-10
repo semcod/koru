@@ -2,8 +2,8 @@
 
 - **ID**: ticket-008
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-10
 - **Work classification**: `SERVICE / integration`
 
@@ -23,7 +23,7 @@ registry-aware version state proves that a new release is required.
 - [x] AC-03: `uv.lock` resolves the public Goal 2.1.293 artifact and remains
   frozen/current.
 - [x] AC-04: Dependency-focused tests and repository governance pass.
-- [ ] AC-05: Goal makes a registry-aware Koru version decision and creates a
+- [x] AC-05: Goal makes a registry-aware Koru version decision and creates a
   pull request whose exact head passes hosted and validator gates before
   merge.
 
@@ -48,6 +48,17 @@ ticket index are updated only for this ticket.
 - Repository governance and `git diff --check`: PASS.
 - Goal registry comparison preserves Koru 0.1.460 with a `no-release`
   decision; no artificial application-version bump is required.
+
+## Delivery evidence
+
+- Pull request: `semcod/koru#28`.
+- Approved exact head: `ef673a4a0df23aafb542d904ca98acbe07f7cace`.
+- Hosted smoke run: `31436115837`; PASS.
+- Validator run: `31436230404`; approval identity:
+  `ifuri-validator-agent[bot]`.
+- Merge commit: `e0cfec0bc10c7f0240857ef69ea66d76e47bb5ba`.
+- No Koru release was created because Goal selected `no-release` and retained
+  the already-public 0.1.460 version.
 
 ## Session authorization
 

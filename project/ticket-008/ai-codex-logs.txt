@@ -9,3 +9,6 @@
 2026-08-10 DoQL validation: 0 errors, 2 pre-existing compatibility warnings
 2026-08-10 Docker smoke: production image PASS; offline koru 0.1.460 / goal 2.1.293
 2026-08-10 version decision: Goal preserves public Koru 0.1.460 (no-release)
+2026-08-10 hosted smoke: run 31436115837 PASS on exact head ef673a4a0df2
+2026-08-10 validator: run 31436230404 approved exact head as ifuri-validator-agent[bot]
+2026-08-10 delivery: PR #28 merged as e0cfec0bc10c; no release required

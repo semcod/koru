@@ -32,6 +32,8 @@ unchanged.
 - Confirmed through Goal's registry comparison that Koru 0.1.460 remains the
   correct version and no release bump is needed for this toolchain-only
   change.
+- Delivered PR #28 only after hosted smoke and the dedicated validator bot
+  approved its exact head, then merged it as `e0cfec0bc10c`.
 
 ## Blockers
 
