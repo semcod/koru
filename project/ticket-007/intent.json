@@ -1,0 +1,59 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-007",
+  "summary": "Verify the installed wheel CLI in isolation",
+  "workstream": "application",
+  "allowedPaths": ["tests/test_distribution_namespace_ownership.py", "project/ticket-007/**", "TODO.md", "project/TICKETS.md"],
+  "forbiddenPaths": ["project/ticket-*/user-*.md", "src/**", ".github/**", ".governance/**", "pyproject.toml", "uv.lock", "package.json", "package-lock.json", "app.doql.less"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": "ticket-004",
+  "delivery": {
+    "acceptedBaseSha": "a43963a29599cbbd731d8dcc072ad6a643bf67ba",
+    "targetBranch": "main",
+    "outcome": "Koru CI exercises the installed wheel CLI with only published runtime metadata",
+    "nonGoals": [
+      "No runtime source, dependency, version, CI, Docker or public interface change",
+      "No broad distribution-suite refactor"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use uv isolated/no-project execution against the freshly built wheel and compare CLI output with canonical Python metadata",
+      "components": [
+        {"name": "distribution-regression-test", "paths": ["tests/test_distribution_namespace_ownership.py"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the single test if uv removes the isolated wheel execution interface"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["python -m pytest tests/test_distribution_namespace_ownership.py -q"],
+        "evidence": "The distribution test builds exactly one wheel"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["python -m pytest tests/test_distribution_namespace_ownership.py -q"],
+        "evidence": "The freshly built wheel installs in isolation and its CLI reports the canonical version"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["./project/governance-check.sh", "git diff --check"],
+        "evidence": "Governance and exact diff pass"
+      }
+    ]
+  }
+}

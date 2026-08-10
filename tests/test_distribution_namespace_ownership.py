@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
+import tomllib
 import zipfile
 from pathlib import Path
 
@@ -80,3 +82,42 @@ def test_built_wheel_contains_no_foreign_dependency_namespace(tmp_path: Path) ->
         assert not any(member == namespace or member.startswith(f"{namespace}/") for member in members)
     for module in REMOVED_RUNTIME_MODULES:
         assert module not in members, f"stale build artifact leaked into wheel: {module}"
+
+
+def test_built_wheel_cli_runs_with_declared_runtime_dependencies(tmp_path: Path) -> None:
+    uv = shutil.which("uv")
+    if uv is None:
+        pytest.skip("uv is required for the installed-wheel CLI smoke test")
+
+    subprocess.run(
+        [uv, "build", "--wheel", "--out-dir", str(tmp_path)],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    wheels = list(tmp_path.glob("*.whl"))
+    assert len(wheels) == 1
+
+    isolated_env = dict(os.environ)
+    isolated_env.pop("VIRTUAL_ENV", None)
+    isolated_env["UV_NO_PROGRESS"] = "1"
+    result = subprocess.run(
+        [
+            uv,
+            "run",
+            "--isolated",
+            "--no-project",
+            "--with",
+            str(wheels[0]),
+            "koru",
+            "--version",
+        ],
+        cwd=tmp_path,
+        env=isolated_env,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    version = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+    assert result.stdout.strip() == f"koru {version}"
