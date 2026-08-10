@@ -6,3 +6,5 @@
 - No human participant identity or content was generated.
 - Scoped an isolated installed-wheel CLI regression for the 0.1.459 missing
   runtime-dependency defect.
+- Replaced optional uv skips with explicit hard requirements after exact-head
+  validator feedback.

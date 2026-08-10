@@ -11,8 +11,6 @@ import tomllib
 import zipfile
 from pathlib import Path
 
-import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
 FOREIGN_NAMESPACES = ("env2llm", "imgl", "nlp2imgl")
 REMOVED_RUNTIME_MODULES = (
@@ -64,8 +62,7 @@ print(json.dumps(resolved, sort_keys=True))
 
 def test_built_wheel_contains_no_foreign_dependency_namespace(tmp_path: Path) -> None:
     uv = shutil.which("uv")
-    if uv is None:
-        pytest.skip("uv is required for the wheel ownership smoke test")
+    assert uv is not None, "uv is required for the wheel ownership smoke test"
 
     subprocess.run(
         [uv, "build", "--wheel", "--out-dir", str(tmp_path)],
@@ -86,8 +83,7 @@ def test_built_wheel_contains_no_foreign_dependency_namespace(tmp_path: Path) ->
 
 def test_built_wheel_cli_runs_with_declared_runtime_dependencies(tmp_path: Path) -> None:
     uv = shutil.which("uv")
-    if uv is None:
-        pytest.skip("uv is required for the installed-wheel CLI smoke test")
+    assert uv is not None, "uv is required for the installed-wheel CLI smoke test"
 
     subprocess.run(
         [uv, "build", "--wheel", "--out-dir", str(tmp_path)],

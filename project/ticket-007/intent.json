@@ -10,7 +10,7 @@
   "conflictsWith": [],
   "integrationTicket": "ticket-004",
   "delivery": {
-    "acceptedBaseSha": "a43963a29599cbbd731d8dcc072ad6a643bf67ba",
+    "acceptedBaseSha": "f3435a3c99bb9f7f1087e38918dbe8255224ff5f",
     "targetBranch": "main",
     "outcome": "Koru CI exercises the installed wheel CLI with only published runtime metadata",
     "nonGoals": [
