@@ -14,3 +14,5 @@
   entered `VALIDATION` for exact-head hosted delivery.
 - Preserved Koru 0.1.460 after Goal selected `no-release` for this
   development-tool-only change.
+- Passed hosted smoke and dedicated exact-head validator approval, merged PR
+  #28 and completed the ticket without publishing an unchanged Koru version.
