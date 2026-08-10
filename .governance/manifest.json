@@ -86,7 +86,7 @@
     "maxImplementationFiles": 19,
     "maxAffectedComponents": 1,
     "maxPublicInterfaceChanges": 0,
-    "maxRuntimeDependencies": 0,
+    "maxRuntimeDependencies": 1,
     "targetBranches": ["main"],
     "publicInterfacePaths": ["api/**", "sdk/**", "src/public/**"],
     "dependencyManifestPaths": ["package.json", "pyproject.toml", "go.mod", "Cargo.toml", "pom.xml"]

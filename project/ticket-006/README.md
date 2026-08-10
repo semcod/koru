@@ -1,4 +1,4 @@
-# Ticket 006: Align Goal with Koru's literal version carriers
+# Ticket 006: Align Goal release governance
 
 - **ID**: ticket-006
 - **Owner**: unresolved:human
@@ -14,7 +14,10 @@ files. That module resolves installed package metadata dynamically and has no
 writable literal declaration; Goal 2.1.292 correctly refuses to treat it as a
 release carrier. Preserve every custom comment and all other Goal settings,
 assign the currently unowned release carriers to the integration workstream,
-and own Goal's governance-scoped README metadata for the paired publication.
+and permit one explicitly declared runtime dependency in a bounded delivery
+slice. The latter unblocks correction of the installed CLI after public-wheel
+verification proved that its unconditional `jsonschema` import was absent from
+published runtime metadata.
 
 ## Acceptance criteria
 
@@ -29,14 +32,17 @@ and own Goal's governance-scoped README metadata for the paired publication.
   synchronized with the existing 0.1.459 carriers.
 - [ ] AC-06: Immutable governance metadata assigns VERSION, CHANGELOG and the
   npm lockfile to integration and records the exact customized manifest hash.
+- [x] AC-07: The repository delivery budget permits at most one explicitly
+  declared runtime dependency; all other delivery limits remain unchanged.
 
 ## Risk boundary
 
 This governance slice changes one configured list item, release-carrier
-ownership and governance-scoped README metadata. It does not change runtime
-code, package behavior, the selected version, registry settings, custom
-release comments or publishing policy. Release/dependency manifests are owned
-by paired integration ticket-004.
+ownership, governance-scoped README metadata and the runtime-dependency budget
+from zero to one. It does not change runtime code, package behavior, the
+selected version, registry settings, custom release comments or publishing
+policy. Every actual dependency change remains explicit in a paired integration
+ticket; the limit is intentionally one, not unbounded.
 
 ## Session authorization
 

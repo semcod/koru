@@ -1,4 +1,6 @@
 2026-08-10 Goal 2.1.292 rejected src/koru/__init__.py:__version__ because no literal selector exists
 2026-08-10 configured carriers after repair: VERSION, pyproject.toml:version, package.json:version
 2026-08-10 manifest ownership: VERSION, CHANGELOG.md, package-lock.json -> integration
-2026-08-10 manifest sha256: d6bf6573d0ebdf24048ecccad348e4792e6e4027496a61f22677e18ff2fa0654
+2026-08-10 manifest sha256 after bounded dependency-policy repair: 1e5f7ac1056a57a810c26647d47ceccafadbe20f8b5dd937d7d9828281aa3681
+2026-08-10 governance-check: PASS (0 errors, 0 warnings)
+2026-08-10 Goal dry-run pinned 0.1.459 -> 0.1.459; no release bump requested for governance-only delivery

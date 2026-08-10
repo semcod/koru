@@ -7,3 +7,5 @@
   custom Goal settings and comments.
 - Assigned previously unowned release carriers to the integration workstream
   and synchronized the immutable governance digest.
+- Raised the bounded runtime-dependency delivery allowance from zero to one
+  after isolated PyPI CLI verification exposed an undeclared dependency.

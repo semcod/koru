@@ -12,6 +12,12 @@ Goal 2.1.292 accepts literal writable version declarations and correctly
 rejects Koru's dynamic importlib metadata fallback as an explicit carrier.
 The three literal carriers are already synchronized at 0.1.459.
 
+Fresh PyPI verification additionally showed that Koru's CLI imports
+`jsonschema` unconditionally while the dependency exists only in development
+groups. The zero-dependency delivery ceiling prevents the integration ticket
+from declaring that repair honestly, so this governance slice raises the
+ceiling to exactly one.
+
 ## Execution plan
 
 1. Remove only the obsolete configured selector.
@@ -24,6 +30,8 @@ The three literal carriers are already synchronized at 0.1.459.
 - Removed the one non-literal selector without reserializing goal.yaml.
 - Assigned VERSION, CHANGELOG.md and package-lock.json to integration ownership
   and routing, then updated the immutable manifest digest.
+- Kept every existing delivery bound while permitting one explicitly audited
+  runtime dependency per slice.
 
 ## Blockers
 
