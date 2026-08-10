@@ -22,8 +22,13 @@ checkout.
 ## Actual changes
 
 - Governance plan prepared in an isolated worktree from `origin/main`.
+- Raised every canonical Goal development-tool floor to 2.1.292 and refreshed
+  the deterministic uv lock from the public index.
+- Passed lock, import, dependency-boundary, dev-sync and governance checks.
+- Delivered exact head `340a4fe8ef7f443412133c28cb00d107c5e75633`
+  through validated PR #19 and merged it as
+  `9b5b3d6c60b302aff1748d6afae9ec9a4b1b47df`.
 
 ## Blockers
 
-- None. The user's explicit dependency-update request is recorded as session
-  authorization; protected delivery validation remains mandatory.
+- None; all acceptance criteria and protected delivery validation are complete.

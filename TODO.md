@@ -7,12 +7,12 @@
 - [x] [`ticket-003`](project/ticket-003/README.md) — restore Koru's current-main
   Ruff gate without suppressions or behavior changes. State: `DONE`;
   classification: `SERVICE / health`.
-- [ ] [`ticket-005`](project/ticket-005/README.md) — assign Koru's canonical
+- [x] [`ticket-005`](project/ticket-005/README.md) — assign Koru's canonical
   development DSL and uv lockfile to the integration workstream. State:
-  `IN_PROGRESS / EDIT`; classification: `SERVICE / governance`.
-- [ ] [`ticket-004`](project/ticket-004/README.md) — require published Goal
+  `DONE`; classification: `SERVICE / governance`.
+- [x] [`ticket-004`](project/ticket-004/README.md) — require published Goal
   2.1.292 across the development-tool declarations and lockfile. State:
-  `IN_PROGRESS / EDIT`; classification: `SERVICE / integration`.
+  `DONE`; classification: `SERVICE / integration`.
 
 <!-- PREFACT:BEGIN — generated block, edits inside will be overwritten -->
 # TODO

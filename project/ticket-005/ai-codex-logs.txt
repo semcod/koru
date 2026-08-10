@@ -1,3 +1,6 @@
 2026-08-10 user authorization: autonomous bounded dependency maintenance
 2026-08-10 manifest ownership: app.doql.less and uv.lock -> integration
 2026-08-10 manifest sha256: 911bb4de37bc02c01a4f5337e3318ff0620419e02b83213c4129841c8c78a14c
+2026-08-10 governance: 0 errors, 0 warnings; hosted smoke passed
+2026-08-10 validator: run 31387825764 approved exact head 9ebe4f5dd72740008e5ced1824ece60a428f21e0
+2026-08-10 merge: PR #18 -> ec58ffe7ebc917b4aa5acfc3eb6060734671e608
