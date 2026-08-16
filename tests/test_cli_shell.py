@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import io
 import json
+import sys
 from pathlib import Path
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -28,27 +30,27 @@ def project(tmp_path: Path) -> Path:
 
 def test_shell_settings_defaults(project: Path) -> None:
     settings = shell_settings(load_config(project))
-    assert settings["llm_model"] == "qwen/qwen3-coder-next"
+    assert settings["llm_model"] == "cursor/grok-4.6[xhigh]"
     assert settings["drain_batch"] == 10
 
 
 def test_enabled_integrations_defaults(project: Path) -> None:
     enabled = enabled_integrations(load_config(project))
-    assert "openrouter" in enabled
+    assert "cursor" in enabled
     assert "planfile_queue" in enabled
     assert "qoder_chat" not in enabled
 
 
 def test_save_and_reload_config(project: Path) -> None:
     config = load_config(project)
-    config[SHELL_SECTION] = {"llm_model": "qwen/qwen3-coder-plus", "drain_batch": 3}
+    config[SHELL_SECTION] = {"llm_model": "cursor/grok-4.6[xhigh]", "drain_batch": 3}
     config[INTEGRATIONS_SECTION] = {"enabled": ["openrouter", "qoder_chat"]}
     save_config(project, config)
 
     reloaded = load_config(project)
-    assert shell_settings(reloaded)["llm_model"] == "qwen/qwen3-coder-plus"
+    assert shell_settings(reloaded)["llm_model"] == "cursor/grok-4.6[xhigh]"
     assert shell_settings(reloaded)["drain_batch"] == 3
-    assert enabled_integrations(reloaded) == {"openrouter", "qoder_chat"}
+    assert enabled_integrations(reloaded) == {"cursor", "qoder_chat"}
     # file is the shared `koru configure` store
     assert json.loads((project / ".koru" / "config.json").read_text())[SHELL_SECTION]
 
@@ -85,22 +87,26 @@ def test_catalog_keys_unique() -> None:
     assert len(keys) == len(set(keys))
 
 
-def test_probe_openrouter_missing_key(project: Path, monkeypatch) -> None:
+def test_probe_cursor_missing_transport(project: Path, monkeypatch) -> None:
     from koru.cli_shell import probe_integration
 
-    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
-    ok, detail = probe_integration(project, "openrouter")
+    monkeypatch.setitem(sys.modules, "subllm", None)
+    ok, detail = probe_integration(project, "cursor")
     assert ok is False
-    assert "OPENROUTER_API_KEY" in detail
+    assert "subllm" in detail
 
 
-def test_probe_openrouter_key_from_dotenv(project: Path, monkeypatch) -> None:
+def test_probe_cursor_route(project: Path, monkeypatch) -> None:
     from koru.cli_shell import probe_integration
 
-    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
-    (project / ".env").write_text("OPENROUTER_API_KEY=sk-or-test\n")
-    ok, detail = probe_integration(project, "openrouter")
+    subllm = ModuleType("subllm")
+    subllm.merged_environment = lambda *, cwd: {"CURSOR_API_KEY": "test"}
+    subllm.resolve = lambda *args, **kwargs: SimpleNamespace(wire_model="grok-4.6")
+    monkeypatch.setitem(sys.modules, "subllm", subllm)
+
+    ok, detail = probe_integration(project, "cursor")
     assert ok is True
+    assert detail == "grok-4.6 via Cursor SDK"
 
 
 def test_probe_unknown_binary(project: Path) -> None:
@@ -119,11 +125,11 @@ def test_integration_save_reports_probe_results(project: Path, monkeypatch, caps
     monkeypatch.setattr("sys.stdin.isatty", lambda: False, raising=False)
     monkeypatch.setattr(
         "koru.cli_shell.probe_integration",
-        lambda _p, key: (key == "openrouter", "detail"),
+        lambda _p, key: (key == "cursor", "detail"),
     )
     assert _dispatch(ctx, "/integration") is True
     out = capsys.readouterr().out
-    assert "✓" in out and "openrouter: detail" in out
+    assert "✓" in out and "cursor: detail" in out
     assert "✗" in out and "planfile_queue: detail" in out
     assert "fix: install planfile" in out
 

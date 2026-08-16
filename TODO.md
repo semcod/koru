@@ -25,6 +25,11 @@
 - [x] [`ticket-008`](project/ticket-008/README.md) — require published Goal
   2.1.293 across canonical development metadata and the uv lockfile. State:
   `DONE`; classification: `SERVICE / integration`.
+- [ ] [`ticket-009`](project/ticket-009/README.md) — replace Koru's OpenRouter
+  planning and GPT-4o Mini queue defaults with strict SubLLM Cursor Grok 4.6
+  xhigh routes, and remove Koru-imposed token/context/cost caps while retaining
+  operational safety controls. State: `IN_PROGRESS`; classification:
+  `SERVICE / application`.
 
 <!-- PREFACT:BEGIN — generated block, edits inside will be overwritten -->
 # TODO

@@ -1,0 +1,10 @@
+2026-08-16T21:55:00Z workspace=. base=29ec7c0965c588097f8cd951550a943c6960ed67
+2026-08-16T21:55:01Z subllm route=koru-agent/planning-assistant provider=cursor model=grok-4.6 params=effort:xhigh,fast:false
+2026-08-16T21:55:02Z subllm route=koru-agent/queue-executor provider=cursor model=grok-4.6 params=effort:xhigh,fast:false
+2026-08-16T21:55:03Z live queue smoke status=finished duration_ms=6462 total_tokens=3685 reasoning_tokens=102 valid_unified_diff=true target_bound=true
+2026-08-16T21:55:04Z live planning smoke status=finished duration_ms=8943 total_tokens=3552 reasoning_tokens=213 valid_json=true exact_keys=true
+2026-08-16T21:55:05Z affected-tests=242 passed
+2026-08-16T21:55:06Z full-suite=3586 passed,25 skipped,159 deselected,939 subtests,3 failed
+2026-08-16T21:55:07Z full-suite-related-failure fixed; two baseline failures remain in test_pyproject_metadata and test_volume_reduction_plan
+2026-08-16T21:55:08Z affected-ruff=passed full-ruff=32 pre-existing import-order failures outside ticket scope
+2026-08-16T21:55:09Z governance=passed diff-check=passed

@@ -59,15 +59,12 @@ DEFAULT_AUTONOMY_STRATEGY: dict[str, Any] = {
     },
     "planning_assistant": {
         "enabled": True,
-        "provider_order": ["openrouter", "ide_llm"],
-        "openrouter": {
-            "model": "openrouter/qwen/qwen3-coder-next",
-            "api_key_env": "OPENROUTER_API_KEY",
-            "mode": "prompt_or_explicit_call",
-        },
-        "ide_llm": {
-            "mode": "prepared_prompt",
-            "target": "active_autopilot_lane",
+        "provider_order": ["subllm_cursor"],
+        "subllm_cursor": {
+            "application": "koru-agent",
+            "function": "planning-assistant",
+            "mode": "cursor_sdk",
+            "fail_closed": True,
         },
         "editable_sections": [
             "autonomy.strategy",

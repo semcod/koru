@@ -87,7 +87,7 @@ class Todo2codeAutonomousGateTest(unittest.TestCase):
                 ]],
             )
 
-    def test_hydration_adds_gate_caps_and_retry_model(self) -> None:
+    def test_hydration_removes_legacy_model_and_token_caps(self) -> None:
         ticket = {
             "labels": ["todo2code"],
             "files": ["src/a.py"],
@@ -110,8 +110,8 @@ class Todo2codeAutonomousGateTest(unittest.TestCase):
             binary.write_text("", encoding="utf-8")
             hydrated = hydrate_todo2code_ticket(ticket, Path(tmp))
 
-        self.assertEqual(hydrated["inputs"]["llm_model"], "openrouter/strong/model")
-        self.assertEqual(hydrated["inputs"]["llm_max_tokens"], 4000)
+        self.assertNotIn("llm_model", hydrated["inputs"])
+        self.assertNotIn("llm_max_tokens", hydrated["inputs"])
         self.assertEqual(hydrated["inputs"]["llm_timeout_seconds"], 300)
         self.assertTrue(hydrated["inputs"]["patch_mode"])
         self.assertIn("koru.queue.todo2code_gate", hydrated["inputs"]["verify_command"])

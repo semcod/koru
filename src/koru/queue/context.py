@@ -8,7 +8,7 @@ Opt-in contract (ticket ``inputs`` fields):
   include_project_context: true   – auto-include file tree + common project files
   context_files: [path, ...]      – explicit file list (relative to project root)
   context_globs: ["src/**/*.py"]  – glob patterns (relative to project root)
-  max_context_chars: 32000        – hard cap; default is DEFAULT_MAX_CONTEXT_CHARS
+  max_context_chars: 32000        – optional explicit per-ticket cap
 
 Security defaults:
   - Secrets, credentials, private keys, .env files are *always* excluded.
@@ -27,6 +27,8 @@ from typing import Any
 
 _logger = logging.getLogger(__name__)
 
+# Compatibility constant for callers that display the former default. Context
+# assembly no longer applies it unless a ticket explicitly supplies a cap.
 DEFAULT_MAX_CONTEXT_CHARS: int = 32_000
 
 # --- Security exclusions (always applied, non-negotiable) -------------------
@@ -350,7 +352,6 @@ def build_project_context(
         return None
 
     project = project.resolve()
-    max_chars: int = int(request.get("max_context_chars") or DEFAULT_MAX_CONTEXT_CHARS)
     sections: list[str] = []
 
     file_sections, included_files = _context_file_sections(
@@ -367,9 +368,14 @@ def build_project_context(
     if not sections:
         return None
 
-    full_text, truncated, total_chars = _truncate_context_text(
-        "\n\n".join(sections), max_chars
-    )
+    full_text = "\n\n".join(sections)
+    max_chars = request.get("max_context_chars")
+    if max_chars is None:
+        truncated, total_chars = False, 0
+    else:
+        full_text, truncated, total_chars = _truncate_context_text(
+            full_text, int(max_chars)
+        )
     visible_files = [
         rel for rel in included_files if f"## {rel}\n" in full_text
     ]

@@ -100,7 +100,7 @@ def _planning_chat_reflection_enabled() -> bool:
     raw = os.environ.get("KORU_PLANNING_LLM", "1").strip().lower()
     if raw in {"0", "false", "no", "off"}:
         return False
-    return bool(os.environ.get("OPENROUTER_API_KEY", "").strip())
+    return True
 
 
 def _chat_reflection_enabled() -> bool:

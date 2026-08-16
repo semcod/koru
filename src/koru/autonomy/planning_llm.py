@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from koru.autonomy.verification_engine import Evidence, Verdict
-from koru.autonomy_strategy.openrouter import call_openrouter_json
+from koru.llm.cursor_transport import run_cursor_llm
 
 from .planning_llm_budget import BudgetTracker, get_budget_tracker
 from .planning_llm_parsing import (
@@ -24,8 +26,6 @@ from .planning_llm_prompts import (
 )
 from .planning_llm_runtime import (
     LlmResponse,
-    api_key,
-    model_name,
     planning_llm_enabled,
     request_timeout,
 )
@@ -37,38 +37,43 @@ from .planning_llm_types import (
     TicketPriority,
 )
 
+# Backward-compatible injection seam for older tests/extensions. The bound
+# transport is Cursor SDK; no OpenRouter request is made.
+call_openrouter_json = run_cursor_llm
 
-def _call_openrouter(
+
+def _call_planning_llm(
     prompt: str,
     *,
     system_prompt: str,
     response_json: bool = True,
 ) -> LlmResponse:
-    """Call OpenRouter with budget guard and fallback."""
+    """Call the strict SubLLM Cursor planning route."""
     del response_json
     if not planning_llm_enabled():
         return LlmResponse(ok=False, content="", error="planning LLM disabled")
-    key = api_key()
-    if not key:
-        return LlmResponse(ok=False, content="", error="OPENROUTER_API_KEY not set")
-    budget = get_budget_tracker()
-    if not budget.within_budget():
-        return LlmResponse(ok=False, content="", error="over budget")
-
-    model = model_name()
-    resp = call_openrouter_json(
+    result = call_openrouter_json(
         prompt,
+        Path.cwd(),
+        route_function="planning-assistant",
         system_prompt=system_prompt,
-        model=model,
-        api_key=key,
         timeout_seconds=request_timeout(),
     )
-    cost = 0.0
-    budget.record(cost)
-
-    if not resp.ok:
-        return LlmResponse(ok=False, content="", error=resp.error, model=model)
-    return LlmResponse(ok=True, content=resp.content, model=model, cost_usd=cost)
+    get_budget_tracker().record(0.0)
+    if result.returncode != 0:
+        return LlmResponse(
+            ok=False,
+            content="",
+            error=result.stderr,
+            model=result.model,
+            usage=result.usage,
+        )
+    return LlmResponse(
+        ok=True,
+        content=result.stdout,
+        model=result.model,
+        usage=result.usage,
+    )
 
 
 def evaluate_drive_result(
@@ -79,7 +84,7 @@ def evaluate_drive_result(
     driven_prompt: str = "",
     heuristic_verdict: Verdict | None = None,
 ) -> LlmEvaluation | None:
-    resp = _call_openrouter(
+    resp = _call_planning_llm(
         build_evaluate_drive_result_prompt(
             evidence,
             ticket_id=ticket_id,
@@ -104,7 +109,7 @@ def generate_better_prompt(
     last_verdict_reason: str = "",
     evidence_summary: str = "",
 ) -> str | None:
-    resp = _call_openrouter(
+    resp = _call_planning_llm(
         build_generate_better_prompt_prompt(
             ticket_id=ticket_id,
             ticket_title=ticket_title,
@@ -130,7 +135,7 @@ def plan_next_action(
     last_verdict: dict[str, object] | None = None,
     last_action_plan: dict[str, object] | None = None,
 ) -> LlmActionAdvice | None:
-    resp = _call_openrouter(
+    resp = _call_planning_llm(
         build_plan_next_action_prompt(
             queue_status=queue_status,
             waiting_tickets=waiting_tickets,
@@ -156,7 +161,7 @@ def reflect_on_chat(
 ) -> LlmReflection | None:
     if not chat_events:
         return None
-    resp = _call_openrouter(
+    resp = _call_planning_llm(
         build_reflect_on_chat_prompt(
             ticket_id=ticket_id,
             ticket_title=ticket_title,
@@ -179,7 +184,7 @@ def propose_strategy_tuning(
 ) -> StrategyTuning | None:
     if not recent_decisions:
         return None
-    resp = _call_openrouter(
+    resp = _call_planning_llm(
         build_propose_strategy_tuning_prompt(
             current_strategy_yaml=current_strategy_yaml,
             recent_decisions=recent_decisions,
@@ -202,7 +207,7 @@ def prioritize_tickets(
 ) -> TicketPriority | None:
     if len(tickets) < 2:
         return None
-    resp = _call_openrouter(
+    resp = _call_planning_llm(
         build_prioritize_tickets_prompt(
             tickets=tickets,
             test_status=test_status,
@@ -224,7 +229,7 @@ __all__ = [
     "LlmResponse",
     "StrategyTuning",
     "TicketPriority",
-    "_call_openrouter",
+    "_call_planning_llm",
     "evaluate_drive_result",
     "generate_better_prompt",
     "get_budget_tracker",

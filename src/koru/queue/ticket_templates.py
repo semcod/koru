@@ -260,25 +260,11 @@ def hydrate_todo2code_ticket(ticket: dict[str, Any], project: Path) -> dict[str,
 
     out = dict(ticket)
     inputs = dict(ticket.get("inputs") or {})
-    execution = ticket.get("execution") if isinstance(ticket.get("execution"), dict) else {}
-    try:
-        attempt = int(execution.get("attempt") or 0)
-    except (TypeError, ValueError):
-        attempt = 0
-
-    primary = os.environ.get(
-        "KORU_TODO2CODE_LLM_MODEL",
-        "openrouter/anthropic/claude-opus-5",
-    )
-    fallback = os.environ.get(
-        "KORU_TODO2CODE_LLM_FALLBACK_MODEL",
-        "openrouter/qwen/qwen3-coder-next",
-    )
-    inputs["llm_model"] = fallback if attempt > 0 else str(inputs.get("llm_model") or primary)
-    inputs.setdefault("llm_max_tokens", int(os.environ.get("KORU_TODO2CODE_LLM_MAX_TOKENS", "4000")))
+    inputs.pop("llm_model", None)
+    inputs.pop("llm_max_tokens", None)
     inputs.setdefault("llm_timeout_seconds", 300)
     inputs.setdefault("include_project_context", True)
-    inputs.setdefault("context_files", list(ticket.get("files") or [])[:12])
+    inputs.setdefault("context_files", list(ticket.get("files") or []))
     inputs["expect_files_changed"] = True
     inputs["patch_mode"] = True
     inputs.setdefault("promotion_mode", "branch")

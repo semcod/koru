@@ -1,0 +1,93 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-009",
+  "summary": "Route Koru LLM work through Cursor Grok 4.6 xhigh",
+  "workstream": "application",
+  "allowedPaths": [
+    "src/koru/llm/**",
+    "src/koru/autonomy/planning_llm.py",
+    "src/koru/autonomy/planning_llm_budget.py",
+    "src/koru/autonomy/code_change_autonomy.py",
+    "src/koru/autonomy/todo2code_discovery.py",
+    "src/koru/autonomy/cycle/cycle_chat_activity.py",
+    "src/koru/autonomy/configuration/config_cli_config.py",
+    "src/koru/autonomy_strategy/openrouter.py",
+    "src/koru/autonomy_strategy/defaults.py",
+    "src/koru/cli_shell.py",
+    "src/koru/cli_strategy.py",
+    "src/koru/queue/context.py",
+    "src/koru/queue/runners.py",
+    "src/koru/queue/ticket.py",
+    "src/koru/queue/ticket_templates.py",
+    "tests/test_cursor_llm.py",
+    "tests/test_llm_context.py",
+    "tests/test_planfile_queue.py",
+    "tests/test_planning_llm.py",
+    "tests/test_todo2code_autonomous_gate.py",
+    "tests/test_cli_shell.py",
+    "project/ticket-009/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    ".governance/**",
+    ".github/**",
+    "project/ticket-*/user-*.md",
+    "pyproject.toml",
+    "uv.lock",
+    "VERSION",
+    "CHANGELOG.md",
+    "goal.yaml",
+    "docs/**"
+  ],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "29ec7c0965c588097f8cd951550a943c6960ed67",
+    "targetBranch": "main",
+    "outcome": "Koru uses only Cursor Grok 4.6 xhigh for planning and queue LLM work without Koru token or cost caps",
+    "nonGoals": [
+      "No dependency or lockfile change in the application workstream",
+      "No automatic project publication implementation",
+      "No removal of provider limits, timeouts, retries, verification or patch isolation"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 19,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Resolve strict SubLLM Cursor routes and execute them through a single Cursor SDK transport adapter",
+      "components": [
+        {
+          "name": "llm-runtime",
+          "paths": ["src/koru/**", "tests/**"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert ticket-009 before the dependency integration ticket is merged"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python -m pytest tests/test_cursor_llm.py tests/test_planning_llm.py tests/test_planfile_queue.py tests/test_llm_context.py -q",
+          "python -m ruff check src/koru/llm src/koru/autonomy/planning_llm.py src/koru/queue/runners.py tests/test_cursor_llm.py",
+          "./project/governance-check.sh",
+          "git diff --check"
+        ],
+        "evidence": "Strict route selection, removed Koru request caps and retained safety controls pass"
+      }
+    ]
+  }
+}

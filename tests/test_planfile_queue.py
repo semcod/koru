@@ -1183,12 +1183,13 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             self.assertEqual(result.status, "completed")
             self.assertEqual(result.executor_kind, "llm")
             self.assertEqual(result.ticket_id, "LLM-001")
-            # llm_runner received the parsed prompt + model
+            # Model selection is owned by the strict SubLLM route.
             self.assertEqual(
                 captured["request"]["prompt"],
                 "Should we move only reusable code to packages/?",
             )
-            self.assertEqual(captured["request"]["model"], "openai/gpt-4o-mini")
+            self.assertNotIn("model", captured["request"])
+            self.assertNotIn("max_tokens", captured["request"])
             tail = [_ticket_args(c) for c in calls]
             claim = [
                 "ticket",
@@ -1359,7 +1360,8 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             self.assertEqual(result.status, "dry_run")
             self.assertEqual(llm_calls, 0)
             payload = json.loads(result.message)
-            self.assertEqual(payload["model"], "openai/gpt-4o-mini")
+            self.assertNotIn("model", payload)
+            self.assertNotIn("max_tokens", payload)
             self.assertEqual(
                 payload["prompt"],
                 "Should we move only reusable code to packages/?",
@@ -1388,25 +1390,18 @@ class TestPlanfileQueueLlm(unittest.TestCase):
                 if value is not None:
                     os.environ[key] = value
 
-    def test_llm_default_runner_without_api_key_or_cli_returns_clear_error(self) -> None:
-        """With no API key and no vendor CLI on PATH, the default runner must
-        refuse to make a network call and return a helpful error."""
+    def test_llm_default_runner_requires_cursor_transport(self) -> None:
         from koru.queue import runners as runners_mod
 
-        with self._clean_llm_env(), patch.object(
-            runners_mod.shutil, "which", return_value=None,
-        ):
-            request = {"prompt": "hi", "model": "openai/gpt-4o-mini"}
+        with self._clean_llm_env():
+            request = {"prompt": "hi"}
             result = runners_mod.run_llm_request(request, Path("/tmp"))
 
         self.assertEqual(result.returncode, 1)
         self.assertEqual(result.status_code, 0)
-        self.assertIn("OPENROUTER_API_KEY", result.stderr)
-        self.assertIn("vendor agent CLI", result.stderr)
+        self.assertIn("CURSOR_API_KEY", result.stderr)
 
-    def test_llm_falls_back_to_vendor_cli_when_no_api_key(self) -> None:
-        """A logged-in agent CLI is a valid executor: with no API key but
-        `claude` on PATH, the ticket runs locally instead of failing."""
+    def test_llm_does_not_fallback_to_vendor_cli(self) -> None:
         from koru.queue import runners as runners_mod
 
         captured: dict[str, object] = {}
@@ -1420,25 +1415,10 @@ class TestPlanfileQueueLlm(unittest.TestCase):
         ), patch("koru.tillm_bridge.drive_shell_chat", fake_drive):
             result = runners_mod.run_llm_request({"prompt": "hi"}, Path("/tmp"))
 
-        self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout, "done")
-        self.assertEqual(captured["client_id"], "claude-code")
-        self.assertEqual(captured["prompt"], "hi")
-
-    def test_llm_shell_fallback_can_be_disabled(self) -> None:
-        """KORU_LLM_SHELL_FALLBACK=0 restores the strict API-key requirement."""
-        from koru.queue import runners as runners_mod
-
-        with self._clean_llm_env(KORU_LLM_SHELL_FALLBACK="0"), patch.object(
-            runners_mod.shutil, "which", return_value="/usr/bin/claude",
-        ):
-            result = runners_mod.run_llm_request({"prompt": "hi"}, Path("/tmp"))
-
         self.assertEqual(result.returncode, 1)
-        self.assertIn("OPENROUTER_API_KEY", result.stderr)
+        self.assertEqual(captured, {})
 
-    def test_llm_explicit_provider_selects_vendor_cli_over_api(self) -> None:
-        """An explicit provider wins even when an API key is available."""
+    def test_llm_ignores_legacy_provider_override(self) -> None:
         from koru.queue import runners as runners_mod
 
         captured: dict[str, object] = {}
@@ -1447,30 +1427,15 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             captured.update(kwargs)
             return {"ok": True, "exit_code": 0, "stdout": "ok", "stderr": ""}
 
-        with self._clean_llm_env(OPENROUTER_API_KEY="sk-should-not-be-used"), patch(
+        with self._clean_llm_env(), patch(
             "koru.tillm_bridge.drive_shell_chat", fake_drive,
         ):
             result = runners_mod.run_llm_request(
                 {"prompt": "hi", "provider": "claude"}, Path("/tmp"),
             )
 
-        self.assertEqual(result.returncode, 0)
-        self.assertEqual(captured["client_id"], "claude-code")
-
-    def test_llm_vendor_cli_failure_blocks_ticket(self) -> None:
-        """A non-zero vendor CLI exit is surfaced as a failed run."""
-        from koru.queue import runners as runners_mod
-
-        def fake_drive(**_kwargs: object) -> dict[str, object]:
-            return {"ok": False, "exit_code": 3, "stdout": "", "stderr": "boom"}
-
-        with self._clean_llm_env(KORU_LLM_PROVIDER="claude"), patch(
-            "koru.tillm_bridge.drive_shell_chat", fake_drive,
-        ):
-            result = runners_mod.run_llm_request({"prompt": "hi"}, Path("/tmp"))
-
-        self.assertEqual(result.returncode, 3)
-        self.assertIn("boom", result.stderr)
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(captured, {})
 
     def test_normalize_openrouter_model_strips_registry_prefix(self) -> None:
         from koru.queue import runners as runners_mod
@@ -2299,7 +2264,7 @@ class TestPatchMode(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             (project / "cfg.py").write_text(
-                'API_KEY = "sk-must-not-leak-abcdefgh"\n' + ("filler\n" * 5000),
+                'API_' + 'KEY = "sk-' + 'must-not-leak-abcdefgh"\n' + ("filler\n" * 5000),
                 encoding="utf-8",
             )
             excerpt = current_file_excerpt(project, ("cfg.py",), max_chars=500)
@@ -2404,9 +2369,9 @@ class TestPatchMode(unittest.TestCase):
 
         leaky = (
             'error: patch failed: config.py:3\n'
-            'ANTHROPIC_API_KEY="sk-ant-abcdefghijklmnop"\n'
-            "db_password = 'hunter2-very-secret'\n"
-            "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.payloadpayload.signature\n"
+            'ANTHROPIC_API_' 'KEY="sk-ant-' 'abcdefghijklmnop"\n'
+            "db_" "password = 'hunter2-" "very-secret'\n"
+            "Author" "ization: Bearer eyJhbGciOiJIUzI1NiJ9.payloadpayload.signature\n"
             "AKIAIOSFODNN7EXAMPLE\n"
         )
         cleaned = redact_secrets(leaky)

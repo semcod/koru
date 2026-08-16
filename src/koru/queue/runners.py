@@ -14,6 +14,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from koru.control_commands import api_command, shell_command
+from koru.llm.cursor_transport import run_cursor_llm
 from koru.queue.types import ApiRunResult, LlmRunResult
 
 
@@ -184,24 +185,7 @@ def run_api_request(request: dict[str, Any], _project: Path) -> ApiRunResult:
         )
 
 
-_DEFAULT_LLM_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
-_DEFAULT_LLM_MODEL = "openai/gpt-4o-mini"
-
-
-def _resolve_llm_endpoint_and_key(
-    request: dict[str, Any],
-) -> tuple[str, str, str]:
-    """Resolve endpoint, API key, and key variable name."""
-    endpoint = str(
-        request.get("endpoint") or os.getenv("KORU_LLM_ENDPOINT") or _DEFAULT_LLM_ENDPOINT,
-    )
-    if "openrouter.ai" in endpoint:
-        api_key = os.getenv("OPENROUTER_API_KEY")
-        key_var = "OPENROUTER_API_KEY"
-    else:
-        api_key = os.getenv("OPENAI_API_KEY") or os.getenv("OPENROUTER_API_KEY")
-        key_var = "OPENAI_API_KEY"
-    return endpoint, api_key, key_var
+_DEFAULT_LLM_MODEL = "cursor/grok-4.6"
 
 
 # Vendor CLIs koru can drive headlessly through tillm, mapped to the binary
@@ -238,13 +222,13 @@ def _shell_llm_truthy(raw: str | None, *, default: bool) -> bool:
 
 def _normalize_shell_llm_client(raw: str) -> str | None:
     """Map a provider token onto a tillm shell-client id."""
-    token = raw.strip().lower()
-    if not token:
+    provider_id = raw.strip().lower()
+    if not provider_id:
         return None
-    if token in _SHELL_LLM_GENERIC_PROVIDERS:
+    if provider_id in _SHELL_LLM_GENERIC_PROVIDERS:
         return (os.getenv("KORU_TILLM_CLIENT") or "claude-code").strip() or "claude-code"
-    token = _SHELL_LLM_PROVIDER_ALIASES.get(token, token)
-    return token if token in _SHELL_LLM_CLIENT_COMMANDS else None
+    provider_id = _SHELL_LLM_PROVIDER_ALIASES.get(provider_id, provider_id)
+    return provider_id if provider_id in _SHELL_LLM_CLIENT_COMMANDS else None
 
 
 def _resolve_shell_llm_client(request: dict[str, Any]) -> str | None:
@@ -412,8 +396,6 @@ def _build_llm_request_body(
         "messages": messages,
         "temperature": float(request.get("temperature", 0.0)),
     }
-    if request.get("max_tokens") is not None:
-        body["max_tokens"] = int(request["max_tokens"])
     schema = request.get("response_schema")
     if schema:
         body["response_format"] = {
@@ -421,21 +403,6 @@ def _build_llm_request_body(
             "json_schema": {"name": "koru_response", "schema": schema, "strict": True},
         }
     return body
-
-
-def _build_llm_headers(endpoint: str, api_key: str) -> dict[str, str]:
-    """Build request headers for LLM API."""
-    headers = {
-        "authorization": f"Bearer {api_key}",
-        "content-type": "application/json",
-    }
-    referer = os.getenv("KORU_LLM_HTTP_REFERER")
-    title = os.getenv("KORU_LLM_X_TITLE", "koru")
-    if "openrouter.ai" in endpoint:
-        if referer:
-            headers["http-referer"] = referer
-        headers["x-title"] = title
-    return headers
 
 
 def _parse_llm_response(
@@ -496,60 +463,28 @@ def _normalize_llm_model(model: str, endpoint: str) -> str:
 
 
 def run_llm_request(request: dict[str, Any], project: Path) -> LlmRunResult:
-    """Run an LLM ticket, via a local vendor CLI or an HTTP chat-completion API.
-
-    A vendor CLI (``claude-code``, ``aider``, …) is used when the ticket's
-    ``inputs.provider`` or ``KORU_LLM_PROVIDER`` names one, and — because a
-    logged-in CLI is a perfectly good executor — as an automatic fallback when
-    no API key is configured. Otherwise this calls an OpenAI-compatible
-    endpoint, reading ``OPENROUTER_API_KEY`` when ``endpoint`` points at
-    openrouter.ai and ``OPENAI_API_KEY`` otherwise. Honours
-    ``KORU_LLM_ENDPOINT`` for self-hosted proxies (e.g. an Ollama shim).
-    """
-    endpoint, api_key, key_var = _resolve_llm_endpoint_and_key(request)
-    model = _normalize_llm_model(
-        str(request.get("model") or os.getenv("LLM_MODEL") or _DEFAULT_LLM_MODEL),
-        endpoint,
-    )
-
-    requested_client = _resolve_shell_llm_client(request)
-    if requested_client:
-        return run_shell_llm_request(request, project, requested_client)
-
-    if not api_key:
-        fallback_client = _autodetect_shell_llm_client()
-        if fallback_client:
-            return run_shell_llm_request(request, project, fallback_client)
-        return LlmRunResult(
-            returncode=1,
-            stdout="",
-            stderr=(
-                f"{key_var} is not set — refusing to call {endpoint}, "
-                "and no vendor agent CLI (claude, aider, codex, …) was found "
-                "on PATH to run this ticket locally. Export the key (e.g. via "
-                ".env), install/log in to an agent CLI, "
-                "or use executor.kind=human for this ticket."
-            ),
-            status_code=0,
-            model=model,
-            usage={},
-            raw={},
-        )
-
+    """Run an LLM ticket through Koru's strict SubLLM Cursor route."""
     messages = _build_llm_messages(request)
-    body = _build_llm_request_body(request, model, messages)
-    headers = _build_llm_headers(endpoint, api_key)
-
-    api_request = urllib.request.Request(
-        endpoint,
-        data=json.dumps(body).encode("utf-8"),
-        headers=headers,
-        method="POST",
+    system_prompt = "\n\n".join(
+        message["content"] for message in messages if message.get("role") == "system"
     )
-    timeout = float(request.get("timeout_seconds") or 60.0)
-
-    try:
-        with urllib.request.urlopen(api_request, timeout=timeout) as response:
-            return _parse_llm_response(response, model)
-    except (urllib.error.HTTPError, urllib.error.URLError) as exc:
-        return _handle_llm_error(exc, model)
+    prompt = _flatten_llm_messages(
+        [message for message in messages if message.get("role") != "system"]
+    )
+    timeout = request.get("timeout_seconds")
+    result = run_cursor_llm(
+        prompt,
+        project,
+        route_function="queue-executor",
+        system_prompt=system_prompt or None,
+        timeout_seconds=float(timeout) if timeout is not None else 1800.0,
+    )
+    return LlmRunResult(
+        returncode=result.returncode,
+        stdout=result.stdout,
+        stderr=result.stderr,
+        status_code=0,
+        model=result.model,
+        usage=result.usage,
+        raw=result.raw,
+    )

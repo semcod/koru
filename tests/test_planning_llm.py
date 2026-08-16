@@ -17,7 +17,7 @@ from koru.autonomy.planning_llm import (
     LlmResponse,  # noqa: F401
     StrategyTuning,
     TicketPriority,
-    _call_openrouter,
+    _call_planning_llm,
     evaluate_drive_result,
     generate_better_prompt,
     get_budget_tracker,
@@ -61,14 +61,25 @@ def _make_evidence(
     )
 
 
-def _fake_openrouter_response(content: dict, ok: bool = True):
-    """Build an OpenRouterStrategyResponse-like object."""
+def _fake_cursor_response(content: dict, ok: bool = True):
+    """Build a CursorLlmResult-like object."""
     @dataclass(frozen=True)
     class FakeResp:
-        ok: bool
-        content: str
-        error: str = ""
-    return FakeResp(ok=ok, content=json.dumps(content) if ok else "", error="" if ok else "fail")
+        returncode: int
+        stdout: str
+        stderr: str = ""
+        model: str = "grok-4.6"
+        usage: dict | None = None
+
+    return FakeResp(
+        returncode=0 if ok else 1,
+        stdout=json.dumps(content) if ok else "",
+        stderr="" if ok else "fail",
+        usage={},
+    )
+
+
+_fake_openrouter_response = _fake_cursor_response
 
 
 # ---------------------------------------------------------------------------
@@ -83,24 +94,22 @@ class TestBudgetTracker:
         assert bt.within_budget()
 
     def test_record_spend(self):
-        bt = BudgetTracker(budget_per_cycle_usd=0.05)
+        bt = BudgetTracker()
         bt.record(0.02)
         assert bt.spent_usd == 0.02
         assert bt.calls == 1
         assert bt.within_budget()
 
-    def test_over_cycle_budget(self):
-        bt = BudgetTracker(budget_per_cycle_usd=0.01)
-        bt.record(0.01)
-        assert bt.over_cycle_budget()
-        assert not bt.within_budget()
+    def test_spend_never_blocks_calls(self):
+        bt = BudgetTracker()
+        bt.record(1_000_000.0)
+        assert bt.within_budget()
 
     def test_reset_cycle(self):
-        bt = BudgetTracker(budget_per_cycle_usd=0.01)
+        bt = BudgetTracker()
         bt.record(0.01)
-        assert bt.over_cycle_budget()
         bt.reset_cycle()
-        assert not bt.over_cycle_budget()
+        assert bt.spent_usd == 0.0
         assert bt.within_budget()
 
     def test_to_dict(self):
@@ -111,50 +120,35 @@ class TestBudgetTracker:
 
 
 # ---------------------------------------------------------------------------
-# _call_openrouter
+# _call_planning_llm
 # ---------------------------------------------------------------------------
 
-class TestCallOpenrouter:
+class TestCallPlanningLlm:
     def test_disabled_returns_error(self, monkeypatch):
         monkeypatch.setenv("KORU_PLANNING_LLM", "off")
-        resp = _call_openrouter("test", system_prompt="test")
+        resp = _call_planning_llm("test", system_prompt="test")
         assert not resp.ok
         assert "disabled" in resp.error
 
-    def test_no_api_key_returns_error(self, monkeypatch):
+    def test_cursor_route_error_is_returned(self, monkeypatch):
         monkeypatch.setenv("KORU_PLANNING_LLM", "1")
-        monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
-        resp = _call_openrouter("test", system_prompt="test")
+        failed = _fake_cursor_response({}, ok=False)
+        with patch("koru.autonomy.planning_llm.call_openrouter_json", return_value=failed):
+            resp = _call_planning_llm("test", system_prompt="test")
         assert not resp.ok
-        assert "API_KEY" in resp.error
-
-    def test_over_budget_returns_error(self, monkeypatch):
-        monkeypatch.setenv("KORU_PLANNING_LLM", "1")
-        monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
-        tracker = get_budget_tracker()
-        old_budget = tracker.budget_per_cycle_usd
-        tracker.budget_per_cycle_usd = 0.001
-        tracker.spent_usd = 0.001
-        try:
-            resp = _call_openrouter("test", system_prompt="test")
-            assert not resp.ok
-            assert "budget" in resp.error
-        finally:
-            tracker.budget_per_cycle_usd = old_budget
-            tracker.reset_cycle()
+        assert "fail" in resp.error
 
     def test_successful_call(self, monkeypatch):
         monkeypatch.setenv("KORU_PLANNING_LLM", "1")
-        monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
         tracker = get_budget_tracker()
         tracker.reset_cycle()
 
-        fake_resp = _fake_openrouter_response({"result": "ok"})
+        fake_resp = _fake_cursor_response({"result": "ok"})
         with patch(
             "koru.autonomy.planning_llm.call_openrouter_json",
             return_value=fake_resp,
         ) as mock_call:
-            resp = _call_openrouter("test prompt", system_prompt="sys")
+            resp = _call_planning_llm("test prompt", system_prompt="sys")
             assert resp.ok
             assert '"result"' in resp.content
             mock_call.assert_called_once()
@@ -208,9 +202,11 @@ class TestEvaluateDriveResult:
 
         @dataclass(frozen=True)
         class BadResp:
-            ok: bool = True
-            content: str = "not valid json {{"
-            error: str = ""
+            returncode: int = 0
+            stdout: str = "not valid json {{"
+            stderr: str = ""
+            model: str = "grok-4.6"
+            usage: dict | None = None
 
         with patch("koru.autonomy.planning_llm.call_openrouter_json", return_value=BadResp()):
             result = evaluate_drive_result(_make_evidence(), ticket_id="T-1")

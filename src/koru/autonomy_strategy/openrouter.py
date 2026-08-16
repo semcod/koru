@@ -21,7 +21,7 @@ else:
     def should_use_fallback():
         return False
     def get_llm_config():
-        return {"primary": {"model": "openrouter/qwen/qwen3-coder-next"}}
+        return {"primary": {"model": "openrouter/x-ai/grok-4.6"}}
 
 OPENROUTER_CHAT_COMPLETIONS_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -37,7 +37,7 @@ def call_openrouter_json(
     prompt: str,
     *,
     system_prompt: str = "Return only valid JSON.",
-    model: str = "qwen/qwen3-coder-next",
+    model: str = "x-ai/grok-4.6",
     api_key: str | None = None,
     timeout_seconds: float = 30.0,
 ) -> OpenRouterStrategyResponse:
@@ -85,7 +85,7 @@ def call_openrouter_json(
 def ask_openrouter_for_strategy_patch(
     prompt: str,
     *,
-    model: str = "qwen/qwen3-coder-next",
+    model: str = "x-ai/grok-4.6",
     api_key: str | None = None,
     timeout_seconds: float = 30.0,
 ) -> OpenRouterStrategyResponse:

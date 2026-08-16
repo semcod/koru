@@ -122,7 +122,7 @@ def ticket_command(ticket: dict) -> str | None:
 
 
 def ticket_llm_request(ticket: dict) -> dict[str, Any] | None:
-    """Translate an executor.kind=llm ticket into an LLM HTTP call spec.
+    """Translate an executor.kind=llm ticket into a strict Cursor call spec.
 
     Returns None when the ticket lacks the minimum signal (a prompt to
     send), so the caller can fall back to ``planfile ticket block``
@@ -134,20 +134,15 @@ def ticket_llm_request(ticket: dict) -> dict[str, Any] | None:
       context_files           – explicit list of file paths relative to the
         project root to include verbatim.
       context_globs           – glob patterns relative to the project root.
-      max_context_chars       – hard cap on assembled context size
-        (default 32 000 characters).
+      max_context_chars       – optional explicit cap on assembled context.
     """
     inputs = ticket.get("inputs") or {}
-    executor = ticket.get("executor") or {}
     prompt = inputs.get("prompt") or ticket.get("description") or ticket.get("name")
     if not prompt:
         return None
     request: dict[str, Any] = {
-        "endpoint": inputs.get("llm_endpoint") or executor.get("handler"),
-        "model": inputs.get("llm_model"),
         "prompt": str(prompt),
         "system_prompt": inputs.get("system_prompt"),
-        "max_tokens": inputs.get("llm_max_tokens"),
         "temperature": inputs.get("llm_temperature", 0.0),
         "response_schema": inputs.get("response_schema"),
         # Only an explicit per-ticket timeout is passed through; each runner

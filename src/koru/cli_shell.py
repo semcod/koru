@@ -39,8 +39,8 @@ SHELL_SECTION = "shell"
 INTEGRATIONS_SECTION = "integrations"
 
 DEFAULT_SHELL_CONFIG: dict[str, object] = {
-    "llm_model": "qwen/qwen3-coder-next",
-    "llm_endpoint": "https://openrouter.ai/api/v1/chat/completions",
+    "llm_model": "cursor/grok-4.6[xhigh]",
+    "llm_endpoint": "subllm://koru-agent/planning-assistant",
     "queue_actor": "koru-shell",
     "drain_batch": 10,
     "auto_drain": False,
@@ -58,9 +58,9 @@ class Integration:
 
 INTEGRATION_CATALOG: tuple[Integration, ...] = (
     Integration(
-        "openrouter", "OpenRouter LLM",
-        "executor.kind=llm tickets + shell prompts via API", True,
-        "add OPENROUTER_API_KEY to .env (https://openrouter.ai/keys)",
+        "cursor", "Cursor Grok 4.6 xhigh",
+        "executor.kind=llm tickets + shell prompts via SubLLM", True,
+        "configure CURSOR_API_KEY in subactor/subllm/.env",
     ),
     Integration(
         "qoder_chat", "Qoder / IDE chat",
@@ -131,7 +131,11 @@ def enabled_integrations(config: dict) -> set[str]:
     section = config.get(INTEGRATIONS_SECTION) or {}
     stored = section.get("enabled")
     if isinstance(stored, list):
-        return {str(item) for item in stored}
+        enabled = {str(item) for item in stored}
+        if "openrouter" in enabled:
+            enabled.remove("openrouter")
+            enabled.add("cursor")
+        return enabled
     return {item.key for item in INTEGRATION_CATALOG if item.default}
 
 
@@ -280,43 +284,19 @@ def _open_tickets(project: Path) -> list[dict]:
     return tickets if isinstance(tickets, list) else []
 
 
-def _api_key(project: Path) -> str:
-    env_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
-    if env_key:
-        return env_key
-    try:
-        for line in (project / ".env").read_text().splitlines():
-            if line.startswith("OPENROUTER_API_KEY="):
-                return line.split("=", 1)[1].strip()
-    except OSError:
-        pass
-    return ""
-
-
 def _ask_llm(project: Path, settings: dict, prompt: str) -> str:
-    key = _api_key(project)
-    if not key:
-        return f"{RED}OPENROUTER_API_KEY not set (env or .env) — /config to review settings.{RESET}"
-    body = {
-        "model": settings["llm_model"],
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.0,
-    }
-    req = urllib.request.Request(
-        str(settings["llm_endpoint"]),
-        data=json.dumps(body).encode(),
-        headers={
-            "authorization": f"Bearer {key}",
-            "content-type": "application/json",
-            "x-title": "koru-shell",
-        },
+    del settings
+    from koru.llm.cursor_transport import run_cursor_llm
+
+    result = run_cursor_llm(
+        prompt,
+        project,
+        route_function="planning-assistant",
+        timeout_seconds=180.0,
     )
-    try:
-        with urllib.request.urlopen(req, timeout=180) as resp:
-            payload = json.loads(resp.read().decode("utf-8", errors="replace"))
-        return payload["choices"][0]["message"]["content"]
-    except Exception as exc:
-        return f"{RED}LLM call failed: {exc}{RESET}"
+    if result.returncode != 0:
+        return f"{RED}LLM call failed: {result.stderr}{RESET}"
+    return result.stdout
 
 
 # ── integration probes ───────────────────────────────────────────────────────
@@ -360,8 +340,19 @@ def _probe_vdisplay(_project: Path) -> tuple[bool, str]:
 
 def probe_integration(project: Path, key: str) -> tuple[bool, str]:
     """Live availability check → (ok, one-line detail)."""
-    if key == "openrouter":
-        return (True, "API key present") if _api_key(project) else (False, "OPENROUTER_API_KEY missing")
+    if key == "cursor":
+        try:
+            from subllm import merged_environment, resolve
+
+            route = resolve(
+                "koru-agent",
+                "queue-executor",
+                provider="cursor",
+                environ=merged_environment(cwd=project),
+            )
+            return True, f"{route.wire_model} via Cursor SDK"
+        except Exception as exc:  # noqa: BLE001 - rendered as integration health
+            return False, str(exc)
     if key == "qoder_chat":
         return _probe_qoder_chat(project)
     if key == "planfile_queue":
@@ -475,8 +466,8 @@ def _cmd_tickets(ctx: "ShellContext", _arg: str) -> None:  # noqa: UP037
 
 
 def _cmd_drain(ctx: "ShellContext", arg: str) -> None:  # noqa: UP037
-    if "openrouter" not in enabled_integrations(ctx.config):
-        print(f"{YELLOW}openrouter integration is disabled — enable it via /integration{RESET}")
+    if "cursor" not in enabled_integrations(ctx.config):
+        print(f"{YELLOW}cursor integration is disabled — enable it via /integration{RESET}")
         return
     settings = shell_settings(ctx.config)
     batch = arg.strip() or str(settings["drain_batch"])
@@ -593,8 +584,8 @@ def _maybe_auto_drain(ctx: ShellContext) -> bool:
     settings = shell_settings(ctx.config)
     if not settings.get("auto_drain"):
         return False
-    if "openrouter" not in enabled_integrations(ctx.config):
-        print(f"{DIM}auto_drain on, but openrouter integration is disabled — skipping{RESET}")
+    if "cursor" not in enabled_integrations(ctx.config):
+        print(f"{DIM}auto_drain on, but cursor integration is disabled — skipping{RESET}")
         return False
     if not _open_tickets(ctx.project):
         print(f"{DIM}auto_drain on, queue empty — nothing to do{RESET}")

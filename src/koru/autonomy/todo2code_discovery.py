@@ -22,10 +22,6 @@ Environment knobs (``os.environ`` first, then project ``.env``):
 - ``KORU_TODO2CODE_TIMEOUT_SECONDS``: subprocess timeout (default 900).
 - ``KORU_TODO2CODE_OUT``: pipeline output directory under the project
   (default ``.intent``).
-- ``KORU_TODO2CODE_LLM_MODEL``: first-attempt code model (default Claude Opus
-  5); retries use ``KORU_TODO2CODE_LLM_FALLBACK_MODEL``.
-- ``KORU_TODO2CODE_LLM_MAX_TOKENS``: response ceiling restored by Koru when an
-  older Planfile schema drops queue-only inputs (default 4000).
 - ``KORU_TODO2CODE_LLM_EXECUTOR``: request autonomous LLM execution (default
   off). It is honored only together with ``KORU_TODO2CODE_CONTRACT``.
 - ``KORU_TODO2CODE_CONTRACT``: capability contract defined by the target
@@ -469,14 +465,6 @@ def _ticket_text(plan: dict[str, Any], *, plans_rel: str) -> str:
     return "\n".join(lines)
 
 
-def _default_llm_model(project: Path | None = None) -> str:
-    for key in ("KORU_TODO2CODE_LLM_MODEL", "LLM_MODEL", "KORU_LLM_MODEL"):
-        value = _config_value(key, project)
-        if value:
-            return value
-    return "openrouter/anthropic/claude-opus-5"
-
-
 def _ticket_scaffold(
     plan: dict[str, Any],
     *,
@@ -493,11 +481,12 @@ def _ticket_scaffold(
     contract = _config_value("KORU_TODO2CODE_CONTRACT", project)
     use_llm = _env_flag("KORU_TODO2CODE_LLM_EXECUTOR", False, project) and bool(contract)
     inputs: dict[str, Any] = {
-        "llm_model": _default_llm_model(project),
-        "llm_max_tokens": _env_int("KORU_TODO2CODE_LLM_MAX_TOKENS", 4000, project),
+        # Preserved for older Planfile readers; hydration and ticket request
+        # translation remove this metadata before the Cursor SDK call.
+        "llm_max_tokens": 4000,
         "llm_timeout_seconds": 300,
         "include_project_context": True,
-        "context_files": paths[:12],
+        "context_files": paths,
         "expect_files_changed": True,
         "patch_mode": True,
         "promotion_mode": "branch",

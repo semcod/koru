@@ -33,7 +33,7 @@ def strategy_main(argv: list[str]) -> int:
     )
     parser.add_argument(
         "--model",
-        default="qwen/qwen3-coder-next",
+        default="x-ai/grok-4.6",
         help="OpenRouter model for --ask-openrouter.",
     )
     args = parser.parse_args(argv)

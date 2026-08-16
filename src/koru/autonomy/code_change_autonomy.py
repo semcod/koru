@@ -157,11 +157,6 @@ def _promote_todo2code_tickets_to_llm(project: Path, *, sprint: str = "current")
     if not isinstance(tickets, dict):
         return 0
 
-    model = (
-        os.environ.get("KORU_TODO2CODE_LLM_MODEL")
-        or os.environ.get("LLM_MODEL")
-        or "openrouter/qwen/qwen3-coder-next"
-    )
     changed = 0
     for ticket in tickets.values():
         if not isinstance(ticket, dict):
@@ -185,9 +180,10 @@ def _promote_todo2code_tickets_to_llm(project: Path, *, sprint: str = "current")
             continue
         ticket["executor"] = {"kind": "llm", "mode": "automatic"}
         inputs = dict(ticket.get("inputs") or {})
-        inputs.setdefault("llm_model", model)
+        inputs.pop("llm_model", None)
+        inputs.pop("llm_max_tokens", None)
         inputs.setdefault("include_project_context", True)
-        inputs.setdefault("context_files", files[:12])
+        inputs.setdefault("context_files", files)
         inputs["patch_mode"] = True
         inputs.setdefault("max_patch_attempts", 3)
         inputs.setdefault("risk_class", "R1")
