@@ -249,6 +249,25 @@ def test_redup_gate_command_uses_supported_cli_shape(tmp_path: Path) -> None:
     ]
 
 
+def test_vallm_and_sumr_gate_commands_use_supported_cli_shapes(tmp_path: Path) -> None:
+    gate_commands = mcp_server._gate_commands(tmp_path)
+
+    assert gate_commands["vallm"] == [
+        sys.executable,
+        "-m",
+        "vallm",
+        "batch",
+        "-r",
+        "--format",
+        "json",
+        str(tmp_path),
+    ]
+    assert gate_commands["sumr"][0] == sys.executable
+    assert gate_commands["sumr"][1] == "-c"
+    assert "main_sumr" in gate_commands["sumr"][2]
+    assert gate_commands["sumr"][3] == str(tmp_path)
+
+
 def test_job_store_is_ephemeral_across_imports(tmp_path: Path) -> None:
     """Demonstrate that job store is in-memory and lost across module reloads."""
     # Create a job in the current module state

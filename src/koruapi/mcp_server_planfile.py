@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from koru.queue.koru_queue_argv import build_koru_queue_argv
+from koru.quality_gate_commands import sumr_scan_command, vallm_batch_command
 from koru.redup_integration import redup_check_command
 
 try:
@@ -698,8 +699,8 @@ def _gate_commands(project: Path) -> dict[str, list[str]]:
     return {
         "regix": ["regix", "gates", "--workdir", str(project)],
         "redup": redup_check_command(project),
-        "vallm": ["vallm", str(project)],
-        "sumr": ["sumr", str(project)],
+        "vallm": vallm_batch_command(project),
+        "sumr": sumr_scan_command(project),
         "testql": [
             "testql",
             "suite",

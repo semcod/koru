@@ -1,0 +1,70 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-010",
+  "summary": "Fix MCP quality-gate CLI adapters for vallm and sumr",
+  "workstream": "application",
+  "allowedPaths": [
+    "project/ticket-010/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/quality_gate_commands.py",
+    "src/koruapi/mcp_server_planfile.py",
+    "tests/test_mcp_server.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".governance/**",
+    "pyproject.toml",
+    "VERSION",
+    "CHANGELOG.md"
+  ],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2f89e57b259e3efe22745a2e664fb1ae679007b3",
+    "targetBranch": "main",
+    "outcome": "MCP quality gates invoke vallm batch and sumr through the active interpreter instead of invalid bare CLI argv shapes.",
+    "nonGoals": [
+      "No gate policy redesign",
+      "No dependency pin changes",
+      "No redup command shape changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Centralize vallm/sumr argv builders and wire them into MCP _gate_commands.",
+      "components": [
+        {
+          "name": "mcp-quality-gates",
+          "paths": [
+            "src/koru/quality_gate_commands.py",
+            "src/koruapi/mcp_server_planfile.py",
+            "tests/test_mcp_server.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Restore bare vallm/sumr argv shapes in _gate_commands."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["pytest -q tests/test_mcp_server.py"],
+        "evidence": "project/ticket-010/ai-gpt-5.6-sol-logs.txt"
+      }
+    ]
+  }
+}
