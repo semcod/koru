@@ -6,8 +6,9 @@ import os
 import unittest
 from unittest import mock
 
-from korullm import list_llm_strategy_ids, resolve_active_llm_strategy
 from korullm.strategies.ide_chat import IdeChatStrategy
+
+from korullm import list_llm_strategy_ids, resolve_active_llm_strategy
 
 
 class RegistryTests(unittest.TestCase):
@@ -98,7 +99,7 @@ class CodexStrategyTests(unittest.TestCase):
         with (
             mock.patch.dict(os.environ, {}, clear=True),
             mock.patch(
-                "korullm.strategies.codex.shell_agent_available",
+                "korullm.strategies.codex.shutil.which",
                 return_value=True,
             ) as check,
         ):

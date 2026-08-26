@@ -5,8 +5,8 @@ import time
 from dataclasses import dataclass
 from types import ModuleType, SimpleNamespace
 
-from koru.llm.cursor_transport import run_cursor_llm
 from koru.queue.context import build_project_context
+from korullm import run_cursor_llm
 
 
 @dataclass(frozen=True)

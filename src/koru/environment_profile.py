@@ -180,7 +180,7 @@ def resolve_ide_environment(ide: str | None = "auto") -> IdeEnvironment:
 
 
 def resolve_llm_environment() -> LlmEnvironment:
-    from korullm.strategies.registry import resolve_llm_strategy_from_environment
+    from korullm import resolve_llm_strategy_from_environment
 
     _strategy, resolved = resolve_llm_strategy_from_environment()
     return LlmEnvironment(

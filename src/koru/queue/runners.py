@@ -14,8 +14,8 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from koru.control_commands import api_command, shell_command
-from koru.llm.cursor_transport import run_cursor_llm
 from koru.queue.types import ApiRunResult, LlmRunResult
+from korullm import run_cursor_llm
 
 
 def _planfile_env() -> dict[str, str]:

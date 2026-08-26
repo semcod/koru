@@ -286,7 +286,7 @@ def _open_tickets(project: Path) -> list[dict]:
 
 def _ask_llm(project: Path, settings: dict, prompt: str) -> str:
     del settings
-    from koru.llm.cursor_transport import run_cursor_llm
+    from korullm import run_cursor_llm
 
     result = run_cursor_llm(
         prompt,
@@ -341,18 +341,9 @@ def _probe_vdisplay(_project: Path) -> tuple[bool, str]:
 def probe_integration(project: Path, key: str) -> tuple[bool, str]:
     """Live availability check → (ok, one-line detail)."""
     if key == "cursor":
-        try:
-            from subllm import merged_environment, resolve
+        from korullm import probe_subllm_route
 
-            route = resolve(
-                "koru-agent",
-                "queue-executor",
-                provider="cursor",
-                environ=merged_environment(cwd=project),
-            )
-            return True, f"{route.wire_model} via Cursor SDK"
-        except Exception as exc:  # noqa: BLE001 - rendered as integration health
-            return False, str(exc)
+        return probe_subllm_route(project, "queue-executor", provider="cursor")
     if key == "qoder_chat":
         return _probe_qoder_chat(project)
     if key == "planfile_queue":

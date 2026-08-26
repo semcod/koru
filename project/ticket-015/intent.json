@@ -26,7 +26,7 @@
       "status": "accepted",
       "decision": "Koru remains the task orchestrator; korullm owns provider selection, SubLLM transport and Cursor transport.",
       "components": [{"name": "llm-runtime-boundary", "paths": ["src/**", "tests/test_subllm_transport.py", "tests/test_cursor_llm.py", "tests/test_llm_strategies.py"]}],
-      "responsibilityChanges": true,
+      "responsibilityChanges": false,
       "interfaceChanges": [],
       "dataChanges": [],
       "ui": {"impact": "none", "states": [], "evidence": []},
