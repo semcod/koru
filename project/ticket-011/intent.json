@@ -14,13 +14,15 @@
     "src/koru/autonomy/planning_llm_budget.py",
     "tests/test_subllm_transport.py"
   ],
-  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
   "stacks": [],
   "dependsOn": [],
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "66fd06a7114d0f02a26ae7d035cd118559148531",
+    "acceptedBaseSha": "aeca07cca8b547eb0e578848d783a502df5eb940",
     "targetBranch": "main",
     "outcome": "Route Koru autonomous planning and strategy calls through the public SubLLM policy without forcing a provider locally",
     "nonGoals": [
@@ -55,7 +57,11 @@
       "responsibilityChanges": false,
       "interfaceChanges": [],
       "dataChanges": [],
-      "ui": {"impact": "none", "states": [], "evidence": []},
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
       "rollback": "Revert the transport and facade wiring commit; no persisted data or credential material is changed"
     },
     "runtimeDependencies": [],
