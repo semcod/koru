@@ -13,7 +13,7 @@ def planning_llm_enabled() -> bool:
 
 
 def api_key() -> str:
-    return os.environ.get("OPENROUTER_API_KEY", "").strip()
+    return os.environ.get("ZAI_API_KEY", "").strip()
 
 
 def model_name() -> str:

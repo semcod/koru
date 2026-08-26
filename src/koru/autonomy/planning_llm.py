@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from koru.autonomy.verification_engine import Evidence, Verdict
-from koru.llm.cursor_transport import run_cursor_llm
+from koru.llm.subllm_transport import run_subllm
 
 from .planning_llm_budget import BudgetTracker, get_budget_tracker
 from .planning_llm_parsing import (
@@ -38,8 +38,8 @@ from .planning_llm_types import (
 )
 
 # Backward-compatible injection seam for older tests/extensions. The bound
-# transport is Cursor SDK; no OpenRouter request is made.
-call_openrouter_json = run_cursor_llm
+# transport is selected by SubLLM policy; no provider is forced locally.
+call_openrouter_json = run_subllm
 
 
 def _call_planning_llm(
@@ -48,7 +48,7 @@ def _call_planning_llm(
     system_prompt: str,
     response_json: bool = True,
 ) -> LlmResponse:
-    """Call the strict SubLLM Cursor planning route."""
+    """Call the strict provider-neutral SubLLM planning route."""
     del response_json
     if not planning_llm_enabled():
         return LlmResponse(ok=False, content="", error="planning LLM disabled")
