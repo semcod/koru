@@ -28,32 +28,10 @@ def _error(message: str, *, model: str = "zai/glm-5.3") -> SubLlmResult:
     )
 
 
-def _runtime() -> tuple[Callable[..., Any], Callable[..., Any], Callable[..., Any]]:
-    from litellm import completion
-    from subllm import merged_environment, resolve
+def _runtime() -> tuple[Callable[..., Any], Callable[..., Any]]:
+    from subllm import complete, merged_environment
 
-    return completion, merged_environment, resolve
-
-
-def _usage_dict(response: Any) -> dict[str, Any]:
-    usage = getattr(response, "usage", None)
-    if usage is None:
-        return {}
-    if hasattr(usage, "model_dump"):
-        return dict(usage.model_dump())
-    if isinstance(usage, Mapping):
-        return dict(usage)
-    return {}
-
-
-def _content(response: Any) -> str:
-    choices = getattr(response, "choices", None) or []
-    if not choices:
-        return ""
-    message = getattr(choices[0], "message", None)
-    if message is None:
-        return ""
-    return str(getattr(message, "content", "") or "")
+    return complete, merged_environment
 
 
 def run_subllm_messages(
@@ -64,13 +42,13 @@ def run_subllm_messages(
     timeout_seconds: float | None = None,
     credential_override: str | None = None,
 ) -> SubLlmResult:
-    """Resolve a Koru route through SubLLM and execute it with LiteLLM."""
+    """Resolve and execute a Koru route through public SubLLM."""
     try:
-        completion, merged_environment, resolve = _runtime()
+        complete, merged_environment = _runtime()
     except ImportError as exc:
         return _error(
             "SubLLM transport is unavailable; install "
-            "'subactor-subllm>=1.3.1' before running Koru LLM work "
+            "'subactor-subllm>=1.4.0' before running Koru LLM work "
             f"({exc})"
         )
 
@@ -79,24 +57,24 @@ def run_subllm_messages(
         if credential_override:
             environment = dict(environment)
             environment["ZAI_API_KEY"] = credential_override
-        route = resolve(
+        completion_kwargs: dict[str, Any] = {
+            "environ": environment,
+        }
+        if timeout_seconds is not None:
+            completion_kwargs["timeout_seconds"] = timeout_seconds
+        response = complete(
             "koru-agent",
             route_function,
-            environ=environment,
-        )
-        kwargs = route.litellm_kwargs()
-        response = completion(
-            **kwargs,
-            messages=[dict(message) for message in messages],
-            timeout=timeout_seconds,
+            [dict(message) for message in messages],
+            **completion_kwargs,
         )
     except Exception as exc:  # noqa: BLE001 - transport failures become queue evidence
         return _error(
             f"SubLLM refused or failed Koru route koru-agent/{route_function}: {exc}"
         )
 
-    content = _content(response)
-    model = str(route.litellm_model)
+    content = str(response.content or "")
+    model = f"{response.provider}/{response.model}"
     if not content:
         return _error("SubLLM returned no assistant content", model=model)
     return SubLlmResult(
@@ -104,13 +82,13 @@ def run_subllm_messages(
         stdout=content,
         stderr="",
         model=model,
-        usage=_usage_dict(response),
+        usage=dict(response.usage),
         raw={
-            "provider": route.provider,
-            "model": route.wire_model,
-            "application": route.application,
-            "function": route.function,
-            "transport": route.transport,
+            "provider": response.provider,
+            "model": response.model,
+            "application": "koru-agent",
+            "function": route_function,
+            "transport": "subllm.complete",
         },
     )
 
