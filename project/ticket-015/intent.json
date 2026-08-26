@@ -3,7 +3,7 @@
   "ticket": "ticket-015",
   "summary": "Move Koru LLM runtime modules to korullm",
   "workstream": "application",
-  "allowedPaths": ["project/ticket-015/**", "src/**", "tests/test_subllm_transport.py", "tests/test_cursor_llm.py", "tests/test_llm_strategies.py", "TODO.md", "project/TICKETS.md"],
+  "allowedPaths": ["project/ticket-015/**", "src/**", "tests/test_subllm_transport.py", "tests/test_cursor_llm.py", "tests/test_llm_strategies.py", "tests/test_cli_shell.py", "TODO.md", "project/TICKETS.md"],
   "forbiddenPaths": ["project/ticket-*/user-*.md"],
   "stacks": [],
   "dependsOn": [],
@@ -25,7 +25,7 @@
     "architecture": {
       "status": "accepted",
       "decision": "Koru remains the task orchestrator; korullm owns provider selection, SubLLM transport and Cursor transport.",
-      "components": [{"name": "llm-runtime-boundary", "paths": ["src/**", "tests/test_subllm_transport.py", "tests/test_cursor_llm.py", "tests/test_llm_strategies.py"]}],
+      "components": [{"name": "llm-runtime-boundary", "paths": ["src/**", "tests/test_subllm_transport.py", "tests/test_cursor_llm.py", "tests/test_llm_strategies.py", "tests/test_cli_shell.py"]}],
       "responsibilityChanges": false,
       "interfaceChanges": [],
       "dataChanges": [],

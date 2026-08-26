@@ -13,8 +13,9 @@ Move the LLM boundary out of Koru after ticket-014 declares the published
 
 ## Acceptance criteria
 
-- [ ] AC-01: Koru imports provider routing only from korullm.
-- [ ] AC-02: Focused LLM tests pass against the public package.
+- [x] AC-01: Koru imports provider routing only from korullm.
+- [x] AC-02: Focused LLM tests pass against the public package source and the
+  current SubLLM transport contract.
 
 ## Participants
 

@@ -30,13 +30,13 @@ def project(tmp_path: Path) -> Path:
 
 def test_shell_settings_defaults(project: Path) -> None:
     settings = shell_settings(load_config(project))
-    assert settings["llm_model"] == "cursor/grok-4.6[xhigh]"
+    assert settings["llm_model"] == "subllm policy (Z.AI → Cursor → OpenRouter)"
     assert settings["drain_batch"] == 10
 
 
 def test_enabled_integrations_defaults(project: Path) -> None:
     enabled = enabled_integrations(load_config(project))
-    assert "cursor" in enabled
+    assert "subllm" in enabled
     assert "planfile_queue" in enabled
     assert "qoder_chat" not in enabled
 
@@ -50,7 +50,7 @@ def test_save_and_reload_config(project: Path) -> None:
     reloaded = load_config(project)
     assert shell_settings(reloaded)["llm_model"] == "cursor/grok-4.6[xhigh]"
     assert shell_settings(reloaded)["drain_batch"] == 3
-    assert enabled_integrations(reloaded) == {"cursor", "qoder_chat"}
+    assert enabled_integrations(reloaded) == {"subllm", "qoder_chat"}
     # file is the shared `koru configure` store
     assert json.loads((project / ".koru" / "config.json").read_text())[SHELL_SECTION]
 
@@ -87,16 +87,16 @@ def test_catalog_keys_unique() -> None:
     assert len(keys) == len(set(keys))
 
 
-def test_probe_cursor_missing_transport(project: Path, monkeypatch) -> None:
+def test_probe_subllm_missing_transport(project: Path, monkeypatch) -> None:
     from koru.cli_shell import probe_integration
 
     monkeypatch.setitem(sys.modules, "subllm", None)
-    ok, detail = probe_integration(project, "cursor")
+    ok, detail = probe_integration(project, "subllm")
     assert ok is False
     assert "subllm" in detail
 
 
-def test_probe_cursor_route(project: Path, monkeypatch) -> None:
+def test_probe_subllm_route(project: Path, monkeypatch) -> None:
     from koru.cli_shell import probe_integration
 
     subllm = ModuleType("subllm")
@@ -104,9 +104,9 @@ def test_probe_cursor_route(project: Path, monkeypatch) -> None:
     subllm.resolve = lambda *args, **kwargs: SimpleNamespace(wire_model="grok-4.6")
     monkeypatch.setitem(sys.modules, "subllm", subllm)
 
-    ok, detail = probe_integration(project, "cursor")
+    ok, detail = probe_integration(project, "subllm")
     assert ok is True
-    assert detail == "grok-4.6 via Cursor SDK"
+    assert detail == "grok-4.6 via SubLLM"
 
 
 def test_probe_unknown_binary(project: Path) -> None:
@@ -125,11 +125,11 @@ def test_integration_save_reports_probe_results(project: Path, monkeypatch, caps
     monkeypatch.setattr("sys.stdin.isatty", lambda: False, raising=False)
     monkeypatch.setattr(
         "koru.cli_shell.probe_integration",
-        lambda _p, key: (key == "cursor", "detail"),
+        lambda _p, key: (key == "subllm", "detail"),
     )
     assert _dispatch(ctx, "/integration") is True
     out = capsys.readouterr().out
-    assert "✓" in out and "cursor: detail" in out
+    assert "✓" in out and "subllm: detail" in out
     assert "✗" in out and "planfile_queue: detail" in out
     assert "fix: install planfile" in out
 
