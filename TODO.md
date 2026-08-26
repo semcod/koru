@@ -34,6 +34,10 @@
 <!-- PREFACT:BEGIN — generated block, edits inside will be overwritten -->
 # TODO
 
+- [ ] [`ticket-012`](project/ticket-012/README.md) - pin public SubLLM 1.4 as
+  a reproducible Koru runtime dependency. Status: `IN_PROGRESS / PUBLICATION`;
+  workstream: `integration`.
+
 - [ ] [`ticket-011`](project/ticket-011/README.md) - route autonomous planning
   and strategy LLM calls through public SubLLM policy with direct Z.AI GLM 5.3
   as the current first candidate. Status: `IN_PROGRESS / PUBLICATION`; workstream:

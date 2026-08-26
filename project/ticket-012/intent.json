@@ -1,0 +1,61 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-012",
+  "summary": "Pin public SubLLM runtime for Koru",
+  "workstream": "integration",
+  "allowedPaths": [
+    "project/ticket-012/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "pyproject.toml",
+    "uv.lock"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "813c23cc57902ea3b831e79d93094414baa2f5f1",
+    "targetBranch": "main",
+    "outcome": "Make the merged Koru SubLLM policy resolution reproducible in clean installations",
+    "nonGoals": [
+      "Change provider or model policy inside Koru",
+      "Remove interactive IDE and shell backends",
+      "Store or expose credential values"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 1
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Install public SubLLM as the single new Koru core policy dependency",
+      "components": [
+        {"name": "dependency-contract", "paths": ["pyproject.toml", "uv.lock"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the dependency and lockfile commit; no persisted state changes"
+    },
+    "runtimeDependencies": ["subactor-subllm>=1.4.0,<2.0"],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["uv lock --no-sources", "uv run --no-sources python -c \"import subllm\""],
+        "evidence": "project/ticket-012/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["./project/governance-check.sh", "git diff --check"],
+        "evidence": "project/ticket-012/ai-codex-logs.txt"
+      }
+    ]
+  }
+}

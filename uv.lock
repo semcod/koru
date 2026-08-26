@@ -799,34 +799,15 @@ wheels = [
 [[package]]
 name = "gillm"
 version = "0.1.24"
-source = { editable = "../gillm" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyyaml" },
     { name = "rich" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "cli2gillm", marker = "extra == 'control'", editable = "../gillm/packages/cli2gillm" },
-    { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.20" },
-    { name = "dsl2gillm", marker = "extra == 'control'", editable = "../gillm/packages/dsl2gillm" },
-    { name = "dsl2gillm", marker = "extra == 'dev'", editable = "../gillm/packages/dsl2gillm" },
-    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
-    { name = "mcp2gillm", marker = "extra == 'control'", editable = "../gillm/packages/mcp2gillm" },
-    { name = "mss", marker = "extra == 'capture'", specifier = ">=9.0" },
-    { name = "nlp2gillm", marker = "extra == 'control'", editable = "../gillm/packages/nlp2gillm" },
-    { name = "nlp2gillm", marker = "extra == 'dev'", editable = "../gillm/packages/nlp2gillm" },
-    { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "rest2gillm", marker = "extra == 'control'", editable = "../gillm/packages/rest2gillm" },
-    { name = "rest2gillm", marker = "extra == 'dev'", editable = "../gillm/packages/rest2gillm" },
-    { name = "rich", specifier = ">=13.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4" },
-    { name = "uri2gillm", marker = "extra == 'control'", editable = "../gillm/packages/uri2gillm" },
-    { name = "uri2gillm", marker = "extra == 'dev'", editable = "../gillm/packages/uri2gillm" },
+sdist = { url = "https://files.pythonhosted.org/packages/8c/83/c197ac61d1da4be95605319636d49c1968d07d8f3ad89d6d7703fb40333d/gillm-0.1.24.tar.gz", hash = "sha256:103d6c3d62dd3ad5818d4d3a7989fbf8c7455c51ee2394de96cc3a7f0ef36c0c", size = 69034, upload-time = "2026-07-19T20:57:10.426Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9d/e1/b9201508aafebc8d950f99deeee5336a26521f51ca6a17ae737245cb1822/gillm-0.1.24-py3-none-any.whl", hash = "sha256:e16b37222dcafa6884b796278699f4dfab1d0b4bca1eabcc93512a17fa2766b3", size = 66373, upload-time = "2026-07-19T20:57:08.938Z" },
 ]
-provides-extras = ["capture", "control", "dev"]
 
 [[package]]
 name = "gitdb"
@@ -1447,6 +1428,7 @@ dependencies = [
     { name = "jsonschema" },
     { name = "pyyaml" },
     { name = "rich" },
+    { name = "subactor-subllm" },
     { name = "tillm" },
 ]
 
@@ -1670,9 +1652,9 @@ requires-dist = [
     { name = "fastapi", marker = "extra == 'api'", specifier = ">=0.115,<1.0" },
     { name = "fullm", marker = "extra == 'all'", specifier = ">=0.1.22" },
     { name = "fullm", marker = "extra == 'fullm'", specifier = ">=0.1.22" },
-    { name = "gillm", editable = "../gillm" },
-    { name = "gillm", marker = "extra == 'all'", editable = "../gillm" },
-    { name = "gillm", marker = "extra == 'dev'", editable = "../gillm" },
+    { name = "gillm", specifier = ">=0.1.24" },
+    { name = "gillm", marker = "extra == 'all'", specifier = ">=0.1.24" },
+    { name = "gillm", marker = "extra == 'dev'", specifier = ">=0.1.24" },
     { name = "goal", marker = "extra == 'all'", specifier = ">=2.1.293" },
     { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.293" },
     { name = "httpx", marker = "extra == 'all'", specifier = ">=0.27,<1.0" },
@@ -1712,10 +1694,10 @@ requires-dist = [
     { name = "opentelemetry-sdk", marker = "extra == 'obs'", specifier = ">=1.28,<2.0" },
     { name = "pfix", marker = "extra == 'all'", specifier = ">=0.1.60" },
     { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
-    { name = "planfile", marker = "extra == 'all'", editable = "../planfile" },
-    { name = "planfile", marker = "extra == 'desktop'", editable = "../planfile" },
-    { name = "planfile", marker = "extra == 'dev'", editable = "../planfile" },
-    { name = "planfile", marker = "extra == 'planfile'", editable = "../planfile" },
+    { name = "planfile", marker = "extra == 'all'", specifier = ">=0.1.117" },
+    { name = "planfile", marker = "extra == 'desktop'", specifier = ">=0.1.117" },
+    { name = "planfile", marker = "extra == 'dev'", specifier = ">=0.1.117" },
+    { name = "planfile", marker = "extra == 'planfile'", specifier = ">=0.1.117" },
     { name = "playwright", marker = "extra == 'all'", specifier = ">=1.40,<2.0" },
     { name = "playwright", marker = "extra == 'browser'", specifier = ">=1.40,<2.0" },
     { name = "pre-commit", marker = "extra == 'all'", specifier = ">=3.8,<5.0" },
@@ -1748,6 +1730,7 @@ requires-dist = [
     { name = "sentry-sdk", marker = "extra == 'obs'", specifier = ">=2.18,<3.0" },
     { name = "structlog", marker = "extra == 'all'", specifier = ">=24.4,<26.0" },
     { name = "structlog", marker = "extra == 'obs'", specifier = ">=24.4,<26.0" },
+    { name = "subactor-subllm", specifier = ">=1.4.0,<2.0" },
     { name = "tagi", marker = "extra == 'all'", specifier = ">=0.49.0" },
     { name = "tagi", marker = "extra == 'dev'", specifier = ">=0.49.0" },
     { name = "testql", marker = "extra == 'all'", specifier = ">=1.2.64" },
@@ -1756,18 +1739,18 @@ requires-dist = [
     { name = "testql", marker = "extra == 'testql'", specifier = ">=1.2.64" },
     { name = "tiktoken", marker = "extra == 'agent'", specifier = ">=0.8,<1.0" },
     { name = "tiktoken", marker = "extra == 'all'", specifier = ">=0.8,<1.0" },
-    { name = "tillm", editable = "../tillm" },
-    { name = "tillm", marker = "extra == 'all'", editable = "../tillm" },
-    { name = "tillm", marker = "extra == 'tillm'", editable = "../tillm" },
+    { name = "tillm", specifier = ">=0.1.35" },
+    { name = "tillm", marker = "extra == 'all'", specifier = ">=0.1.35" },
+    { name = "tillm", marker = "extra == 'tillm'", specifier = ">=0.1.35" },
     { name = "types-pyyaml", marker = "extra == 'all'", specifier = ">=6.0,<7.0" },
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0,<7.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30,<1.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'api'", specifier = ">=0.30,<1.0" },
-    { name = "vdisplay", marker = "extra == 'all'", editable = "../../wronai/vdisplay" },
-    { name = "vdisplay", marker = "extra == 'dev'", editable = "../../wronai/vdisplay" },
-    { name = "vdisplay", marker = "extra == 'observe'", editable = "../../wronai/vdisplay" },
-    { name = "vdisplay", marker = "extra == 'vdisplay'", editable = "../../wronai/vdisplay" },
-    { name = "vdisplay", marker = "extra == 'vision'", editable = "../../wronai/vdisplay" },
+    { name = "vdisplay", marker = "extra == 'all'", specifier = ">=0.1.58" },
+    { name = "vdisplay", marker = "extra == 'dev'", specifier = ">=0.1.58" },
+    { name = "vdisplay", marker = "extra == 'observe'", specifier = ">=0.1.58" },
+    { name = "vdisplay", marker = "extra == 'vdisplay'", specifier = ">=0.1.58" },
+    { name = "vdisplay", marker = "extra == 'vision'", specifier = ">=0.1.58" },
     { name = "websockets", marker = "extra == 'all'", specifier = ">=12.0,<17.0" },
     { name = "websockets", marker = "extra == 'mesh'", specifier = ">=12.0,<17.0" },
     { name = "websockets", marker = "extra == 'observe'", specifier = ">=12.0,<17.0" },
@@ -1796,7 +1779,7 @@ dev = [
     { name = "mypy", specifier = ">=1.11,<3.0" },
     { name = "pfix", specifier = ">=0.1.60" },
     { name = "pillow", specifier = ">=10.0" },
-    { name = "planfile", editable = "../planfile" },
+    { name = "planfile", specifier = ">=0.1.117" },
     { name = "pre-commit", specifier = ">=3.8,<5.0" },
     { name = "protobuf", specifier = ">=5.0" },
     { name = "pyright", specifier = ">=1.1.390,<2.0" },
@@ -1809,7 +1792,7 @@ dev = [
     { name = "ruff", specifier = ">=0.11,<0.16" },
     { name = "tagi", specifier = ">=0.49.0" },
     { name = "types-pyyaml", specifier = ">=6.0,<7.0" },
-    { name = "vdisplay", editable = "../../wronai/vdisplay" },
+    { name = "vdisplay", specifier = ">=0.1.58" },
 ]
 
 [[package]]
@@ -2815,7 +2798,7 @@ wheels = [
 [[package]]
 name = "planfile"
 version = "0.1.123"
-source = { editable = "../planfile" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "filelock" },
     { name = "httpx" },
@@ -2828,51 +2811,10 @@ dependencies = [
     { name = "rich" },
     { name = "typer" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "anthropic", marker = "extra == 'all'", specifier = ">=0.25" },
-    { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=0.25" },
-    { name = "black", marker = "extra == 'dev'", specifier = ">=23.0" },
-    { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.20" },
-    { name = "fastapi", marker = "extra == 'all'", specifier = ">=0.111" },
-    { name = "fastapi", marker = "extra == 'api'", specifier = ">=0.111" },
-    { name = "fastapi", marker = "extra == 'dev'", specifier = ">=0.111" },
-    { name = "filelock", specifier = ">=3.0" },
-    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
-    { name = "httpx", specifier = ">=0.27" },
-    { name = "isort", marker = "extra == 'dev'", specifier = ">=5.12" },
-    { name = "jira", marker = "extra == 'all'", specifier = ">=3.5" },
-    { name = "jira", marker = "extra == 'jira'", specifier = ">=3.5" },
-    { name = "litellm", marker = "extra == 'all'", specifier = ">=1.40" },
-    { name = "litellm", marker = "extra == 'litellm'", specifier = ">=1.40" },
-    { name = "llx", marker = "extra == 'all'", specifier = ">=0.1.75" },
-    { name = "llx", marker = "extra == 'llx'", specifier = ">=0.1.75" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
-    { name = "openai", marker = "extra == 'all'", specifier = ">=1.0" },
-    { name = "openai", marker = "extra == 'openai'", specifier = ">=1.0" },
-    { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
-    { name = "pydantic", specifier = ">=2.0" },
-    { name = "pydantic-settings", specifier = ">=2.0" },
-    { name = "pygithub", specifier = ">=2.0" },
-    { name = "pygithub", marker = "extra == 'all'", specifier = ">=2.0" },
-    { name = "pygithub", marker = "extra == 'github'", specifier = ">=2.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
-    { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.0" },
-    { name = "python-dotenv", specifier = ">=1.0" },
-    { name = "python-gitlab", marker = "extra == 'all'", specifier = ">=4.0" },
-    { name = "python-gitlab", marker = "extra == 'gitlab'", specifier = ">=4.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "requests", specifier = ">=2.31" },
-    { name = "rich", specifier = ">=13.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
-    { name = "typer", specifier = ">=0.12" },
-    { name = "uvicorn", extras = ["standard"], marker = "extra == 'all'", specifier = ">=0.30" },
-    { name = "uvicorn", extras = ["standard"], marker = "extra == 'api'", specifier = ">=0.30" },
-    { name = "uvicorn", extras = ["standard"], marker = "extra == 'dev'", specifier = ">=0.30" },
+sdist = { url = "https://files.pythonhosted.org/packages/43/1d/1f02d79d8540ac34f37825bf3d7d3258367ea1f2ac69409318080145e2af/planfile-0.1.123.tar.gz", hash = "sha256:47e5ca5a262f8a2a5a86edbce31b65b27e4e5d2fe44d568754fae3724e85552e", size = 332574, upload-time = "2026-07-23T22:46:12.945Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d9/b2/91fa458a86546d4d76c34acbe0b915db3c85e311f3d823f621202203afef/planfile-0.1.123-py3-none-any.whl", hash = "sha256:93785a156da3048924f0283371138eb9254c67717bd6960e7c11b87c629f7607", size = 305956, upload-time = "2026-07-23T22:46:10.876Z" },
 ]
-provides-extras = ["github", "jira", "gitlab", "api", "litellm", "openai", "anthropic", "llx", "all", "dev"]
 
 [[package]]
 name = "platformdirs"
@@ -3823,6 +3765,15 @@ wheels = [
 ]
 
 [[package]]
+name = "subactor-subllm"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/01/df/c61817560dbf849e82b677f5b1b754ed4803659479e9ea343ede0c6103a4/subactor_subllm-1.4.0.tar.gz", hash = "sha256:9e6c3ca0facdfdae75b54b6a7788044076c128a0d09f996ccdc6b305c35c8051", size = 36705, upload-time = "2026-08-26T06:56:01.924Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/91/51/c09c2866e65ea6a11d43356fac70a3be6e4bb8e66ad61cffb4e7657ae959/subactor_subllm-1.4.0-py3-none-any.whl", hash = "sha256:93b47383827405c12d74ec308b3cfdfb1e96a889af5039194372d8e880f187b4", size = 33446, upload-time = "2026-08-26T06:56:00.484Z" },
+]
+
+[[package]]
 name = "tagi"
 version = "0.49.10"
 source = { registry = "https://pypi.org/simple" }
@@ -3920,23 +3871,11 @@ wheels = [
 [[package]]
 name = "tillm"
 version = "0.1.44"
-source = { editable = "../tillm" }
-
-[package.metadata]
-requires-dist = [
-    { name = "build", marker = "extra == 'dev'", specifier = ">=1.0,<2.0" },
-    { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.20" },
-    { name = "env2llm", marker = "extra == 'dev'", specifier = ">=0.1.12" },
-    { name = "env2llm", marker = "extra == 'env'", specifier = ">=0.1.12" },
-    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
-    { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
-    { name = "planfile", marker = "extra == 'planfile'", specifier = ">=0.1.117" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0,<10.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11,<0.16" },
-    { name = "testql", marker = "python_full_version < '3.14' and extra == 'dev'", specifier = ">=1.2.64" },
-    { name = "twine", marker = "extra == 'dev'", specifier = ">=6.0,<7.0" },
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/98/d4/f4e046727e0593ac18a5ae3bc87638b4a44c3f22905d895a2bbdf4197c20/tillm-0.1.44.tar.gz", hash = "sha256:989890a0646ceb24752de968a465580212a33fdd514e14a3119b30f06e4e2984", size = 72188, upload-time = "2026-07-19T12:50:50.694Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e1/34/91ccebf4939d16dde395653dbbff686c83d2a56cf231feebc3c6db65e0b3/tillm-0.1.44-py3-none-any.whl", hash = "sha256:b0c05720511d2208de79211d31d99bc11d85dd39cd0871ef7098a8df7830d6c0", size = 58578, upload-time = "2026-07-19T12:50:49.239Z" },
 ]
-provides-extras = ["env", "planfile", "dev"]
 
 [[package]]
 name = "tinycss2"
@@ -4209,77 +4148,10 @@ wheels = [
 [[package]]
 name = "vdisplay"
 version = "0.1.58"
-source = { editable = "../../wronai/vdisplay" }
-
-[package.metadata]
-requires-dist = [
-    { name = "comtypes", marker = "extra == 'windows'", specifier = ">=1.4.0" },
-    { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.20" },
-    { name = "dbus-python", marker = "extra == 'portal'", specifier = ">=1.3" },
-    { name = "dsl2vdisplay", marker = "extra == 'auto'", editable = "../../wronai/vdisplay/packages/dsl2vdisplay" },
-    { name = "dsl2vdisplay", marker = "extra == 'control'", editable = "../../wronai/vdisplay/packages/dsl2vdisplay" },
-    { name = "dsl2vdisplay", marker = "extra == 'dev'", editable = "../../wronai/vdisplay/packages/dsl2vdisplay" },
-    { name = "evdev", marker = "extra == 'uinput'", specifier = ">=1.6" },
-    { name = "fastapi", marker = "extra == 'agent'", specifier = ">=0.110" },
-    { name = "fastapi", marker = "extra == 'dev'", specifier = ">=0.110" },
-    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.0" },
-    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27" },
-    { name = "img2nl", extras = ["analyze"], marker = "extra == 'img2nl'" },
-    { name = "img2vql", marker = "sys_platform == 'linux' and extra == 'observe'", editable = "../../oqlos/vql/packages/img2vql" },
-    { name = "img2vql", marker = "sys_platform == 'linux' and extra == 'vql'", editable = "../../oqlos/vql/packages/img2vql" },
-    { name = "imgl", marker = "extra == 'auto'", editable = "../imgl" },
-    { name = "imgl", marker = "extra == 'imgl'", editable = "../imgl" },
-    { name = "imgl", marker = "extra == 'observe'", editable = "../imgl" },
-    { name = "jsonschema", marker = "extra == 'dev'", specifier = ">=4.0" },
-    { name = "nlp2vdisplay", marker = "extra == 'control'", editable = "../../wronai/vdisplay/packages/nlp2vdisplay" },
-    { name = "numpy", marker = "extra == 'dev'", specifier = ">=1.24" },
-    { name = "numpy", marker = "extra == 'vision'", specifier = ">=1.24" },
-    { name = "opencv-python", marker = "extra == 'vision'", specifier = ">=4.8" },
-    { name = "pexpect", marker = "extra == 'terminal'", specifier = ">=4.9" },
-    { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
-    { name = "pillow", marker = "extra == 'dev'", specifier = ">=10.0" },
-    { name = "pillow", marker = "extra == 'pillow'", specifier = ">=10.0" },
-    { name = "pillow", marker = "extra == 'sampler'", specifier = ">=10.0" },
-    { name = "pillow", marker = "extra == 'vision'", specifier = ">=10.0" },
-    { name = "planfile", marker = "extra == 'auto'", specifier = ">=0.1.117" },
-    { name = "playwright", marker = "extra == 'browser'", specifier = ">=1.40" },
-    { name = "playwright", marker = "extra == 'e2e'", specifier = ">=1.40" },
-    { name = "pydantic", marker = "extra == 'core'", specifier = ">=2" },
-    { name = "pydantic", marker = "extra == 'dev'", specifier = ">=2" },
-    { name = "pygobject", marker = "extra == 'portal'", specifier = ">=3.42" },
-    { name = "pyobjc-framework-applicationservices", marker = "extra == 'macos'", specifier = ">=10.0" },
-    { name = "pyobjc-framework-cocoa", marker = "extra == 'macos'", specifier = ">=10.0" },
-    { name = "pyte", marker = "extra == 'terminal'", specifier = ">=0.8.1" },
-    { name = "pytesseract", marker = "extra == 'vision'", specifier = ">=0.3.10" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
-    { name = "pytest", marker = "extra == 'e2e'", specifier = ">=8.0" },
-    { name = "pyyaml", marker = "extra == 'auto'", specifier = ">=6.0" },
-    { name = "sqlmodel", marker = "extra == 'agent'", specifier = ">=0.0.22" },
-    { name = "sqlmodel", marker = "extra == 'dev'", specifier = ">=0.0.22" },
-    { name = "structlog", marker = "extra == 'core'", specifier = ">=24.0" },
-    { name = "tenacity", marker = "extra == 'core'", specifier = ">=8.0" },
-    { name = "uvicorn", marker = "extra == 'agent'", specifier = ">=0.27" },
-    { name = "uvicorn", marker = "extra == 'dev'", specifier = ">=0.27" },
-    { name = "vdisplay-agent", marker = "extra == 'agent'", editable = "../../wronai/vdisplay/packages/vdisplay-agent" },
-    { name = "vdisplay-agent", marker = "extra == 'dev'", editable = "../../wronai/vdisplay/packages/vdisplay-agent" },
-    { name = "vql", marker = "extra == 'observe'", editable = "../../oqlos/vql" },
-    { name = "vql", marker = "extra == 'vql'", editable = "../../oqlos/vql" },
-    { name = "wcwidth", marker = "extra == 'terminal'", specifier = ">=0.2.13" },
-]
-provides-extras = ["linux", "windows", "macos", "pillow", "sampler", "dev", "core", "control", "auto", "browser", "e2e", "vision", "terminal", "uinput", "portal", "agent", "img2nl", "imgl", "vql", "observe"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "dsl2vdisplay", editable = "../../wronai/vdisplay/packages/dsl2vdisplay" },
-    { name = "fastapi", specifier = ">=0.110" },
-    { name = "httpx", specifier = ">=0.27" },
-    { name = "jsonschema", specifier = ">=4.0" },
-    { name = "numpy", specifier = ">=1.24" },
-    { name = "pillow", specifier = ">=10.0" },
-    { name = "pytest", specifier = ">=8.0" },
-    { name = "sqlmodel", specifier = ">=0.0.22" },
-    { name = "uvicorn", specifier = ">=0.27" },
-    { name = "vdisplay-agent", editable = "../../wronai/vdisplay/packages/vdisplay-agent" },
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/3b/28/f6eb1185781e380fd7c195783bf71e870a86ba6a89c014c4eb16f6463e09/vdisplay-0.1.58.tar.gz", hash = "sha256:a9341fb73339d67b1efd74f956d2f8a553e84c38cd2b811e51b7e739e5609666", size = 505922, upload-time = "2026-07-19T20:05:51.604Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5f/d2/b89bb85ca55ee0528f549440bb6bafee943d59bb0ef12145f5c0da67b319/vdisplay-0.1.58-py3-none-any.whl", hash = "sha256:01a0f6169d173832d44cef56fd40146c2b0d96ff145af0c64ee57b5a1c9f9c36", size = 478303, upload-time = "2026-07-19T20:05:49.625Z" },
 ]
 
 [[package]]
