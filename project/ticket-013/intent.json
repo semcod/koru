@@ -1,0 +1,61 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-013",
+  "summary": "Close merged SubLLM migration tickets",
+  "workstream": "governance",
+  "allowedPaths": [
+    "project/ticket-011/README.md",
+    "project/ticket-012/README.md",
+    "project/ticket-013/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "642a6c40823c1208beb97da78fc0dfe75edc7d6a",
+    "targetBranch": "main",
+    "outcome": "Close the two SubLLM migration tickets after their protected merges",
+    "nonGoals": ["Change runtime code", "Change dependency policy"],
+    "complexity": "XS",
+    "estimatedMinutes": 5,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Apply a governance-only post-merge reconciliation",
+      "components": [
+        {
+          "name": "repository-governance",
+          "paths": [
+            "project/ticket-011/README.md",
+            "project/ticket-012/README.md",
+            "project/ticket-013/**",
+            "TODO.md",
+            "project/TICKETS.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the governance-only reconciliation commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": ["./project/governance-check.sh", "git diff --check"],
+        "evidence": "project/ticket-013/ai-codex-logs.txt"
+      }
+    ]
+  }
+}
