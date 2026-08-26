@@ -1,0 +1,11 @@
+2026-08-26T09:06:00+02:00
+uv lock --no-sources
+Resolved 239 packages; added subactor-subllm v1.4.0.
+
+2026-08-26T09:06:00+02:00
+uv run --no-sources python -m pytest -q tests/test_subllm_transport.py tests/test_planning_llm.py
+39 passed in 0.64s
+
+2026-08-26T09:07:00+02:00
+./project/governance-check.sh
+GOV-PASS: passed (0 errors, 0 warnings)
