@@ -1,0 +1,42 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-015",
+  "summary": "Move Koru LLM runtime modules to korullm",
+  "workstream": "application",
+  "allowedPaths": ["project/ticket-015/**", "src/**", "tests/test_subllm_transport.py", "tests/test_cursor_llm.py", "tests/test_llm_strategies.py", "TODO.md", "project/TICKETS.md"],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": "ticket-014",
+  "delivery": {
+    "acceptedBaseSha": "83f8024f20095e6f1347183f17d5b9f13af55936",
+    "targetBranch": "main",
+    "outcome": "Use published korullm for all Koru LLM routing and remove duplicate local transports and strategies.",
+    "nonGoals": ["Change SubLLM provider policy", "Change application task behavior"],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 19,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Koru remains the task orchestrator; korullm owns provider selection, SubLLM transport and Cursor transport.",
+      "components": [{"name": "llm-runtime-boundary", "paths": ["src/**", "tests/test_subllm_transport.py", "tests/test_cursor_llm.py", "tests/test_llm_strategies.py"]}],
+      "responsibilityChanges": true,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Restore the removed local modules and imports from the previous revision."
+    },
+    "runtimeDependencies": [],
+    "validation": [{
+      "criterion": "AC-01",
+      "commands": ["pytest focused LLM boundary suite", "ruff check", "git diff --check"],
+      "evidence": "Focused transport, strategy and decision engine tests pass against the published package."
+    }]
+  }
+}
