@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from koru.llm import subllm_transport
+from korullm import subllm as subllm_transport
 
 
 def test_run_subllm_uses_policy_route_without_forcing_provider(monkeypatch) -> None:

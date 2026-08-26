@@ -14,8 +14,8 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from koru.control_commands import api_command, shell_command
-from koru.llm.cursor_transport import run_cursor_llm
 from koru.queue.types import ApiRunResult, LlmRunResult
+from korullm import run_subllm_messages
 
 
 def _planfile_env() -> dict[str, str]:
@@ -463,20 +463,13 @@ def _normalize_llm_model(model: str, endpoint: str) -> str:
 
 
 def run_llm_request(request: dict[str, Any], project: Path) -> LlmRunResult:
-    """Run an LLM ticket through Koru's strict SubLLM Cursor route."""
+    """Run an LLM ticket through the centrally configured SubLLM route."""
     messages = _build_llm_messages(request)
-    system_prompt = "\n\n".join(
-        message["content"] for message in messages if message.get("role") == "system"
-    )
-    prompt = _flatten_llm_messages(
-        [message for message in messages if message.get("role") != "system"]
-    )
     timeout = request.get("timeout_seconds")
-    result = run_cursor_llm(
-        prompt,
+    result = run_subllm_messages(
+        messages,
         project,
         route_function="queue-executor",
-        system_prompt=system_prompt or None,
         timeout_seconds=float(timeout) if timeout is not None else 1800.0,
     )
     return LlmRunResult(

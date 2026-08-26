@@ -2,8 +2,8 @@
 
 Launch with ``koru shell``. Slash commands drive koru the way Claude Code is
 driven: ``/config`` opens an interactive settings editor, ``/integration``
-shows a checkbox picker of integrations, plain text is sent to the configured
-LLM lane (OpenRouter). Settings persist in ``.koru/config.json`` next to the
+shows a checkbox picker of integrations, plain text is sent through the
+centrally configured SubLLM route. Settings persist in ``.koru/config.json`` next to the
 existing ``koru configure`` schema.
 
 No third-party dependencies: ANSI rendering + termios arrow-key widgets, with
@@ -39,7 +39,7 @@ SHELL_SECTION = "shell"
 INTEGRATIONS_SECTION = "integrations"
 
 DEFAULT_SHELL_CONFIG: dict[str, object] = {
-    "llm_model": "cursor/grok-4.6[xhigh]",
+    "llm_model": "subllm policy (Z.AI → Cursor → OpenRouter)",
     "llm_endpoint": "subllm://koru-agent/planning-assistant",
     "queue_actor": "koru-shell",
     "drain_batch": 10,
@@ -58,9 +58,9 @@ class Integration:
 
 INTEGRATION_CATALOG: tuple[Integration, ...] = (
     Integration(
-        "cursor", "Cursor Grok 4.6 xhigh",
-        "executor.kind=llm tickets + shell prompts via SubLLM", True,
-        "configure CURSOR_API_KEY in subactor/subllm/.env",
+        "subllm", "SubLLM policy chain",
+        "executor.kind=llm tickets + shell prompts via central SubLLM", True,
+        "configure ZAI_API_KEY, CURSOR_API_KEY or OPENROUTER_API_KEY in subactor/subllm/.env",
     ),
     Integration(
         "qoder_chat", "Qoder / IDE chat",
@@ -132,9 +132,10 @@ def enabled_integrations(config: dict) -> set[str]:
     stored = section.get("enabled")
     if isinstance(stored, list):
         enabled = {str(item) for item in stored}
-        if "openrouter" in enabled:
-            enabled.remove("openrouter")
-            enabled.add("cursor")
+        if {"openrouter", "cursor"} & enabled:
+            enabled.discard("openrouter")
+            enabled.discard("cursor")
+            enabled.add("subllm")
         return enabled
     return {item.key for item in INTEGRATION_CATALOG if item.default}
 
@@ -286,9 +287,9 @@ def _open_tickets(project: Path) -> list[dict]:
 
 def _ask_llm(project: Path, settings: dict, prompt: str) -> str:
     del settings
-    from koru.llm.cursor_transport import run_cursor_llm
+    from korullm import run_subllm
 
-    result = run_cursor_llm(
+    result = run_subllm(
         prompt,
         project,
         route_function="planning-assistant",
@@ -340,19 +341,10 @@ def _probe_vdisplay(_project: Path) -> tuple[bool, str]:
 
 def probe_integration(project: Path, key: str) -> tuple[bool, str]:
     """Live availability check → (ok, one-line detail)."""
-    if key == "cursor":
-        try:
-            from subllm import merged_environment, resolve
+    if key in {"subllm", "cursor"}:
+        from korullm import probe_subllm_route
 
-            route = resolve(
-                "koru-agent",
-                "queue-executor",
-                provider="cursor",
-                environ=merged_environment(cwd=project),
-            )
-            return True, f"{route.wire_model} via Cursor SDK"
-        except Exception as exc:  # noqa: BLE001 - rendered as integration health
-            return False, str(exc)
+        return probe_subllm_route(project, route_function="queue-executor")
     if key == "qoder_chat":
         return _probe_qoder_chat(project)
     if key == "planfile_queue":
@@ -466,8 +458,8 @@ def _cmd_tickets(ctx: "ShellContext", _arg: str) -> None:  # noqa: UP037
 
 
 def _cmd_drain(ctx: "ShellContext", arg: str) -> None:  # noqa: UP037
-    if "cursor" not in enabled_integrations(ctx.config):
-        print(f"{YELLOW}cursor integration is disabled — enable it via /integration{RESET}")
+    if "subllm" not in enabled_integrations(ctx.config):
+        print(f"{YELLOW}SubLLM integration is disabled — enable it via /integration{RESET}")
         return
     settings = shell_settings(ctx.config)
     batch = arg.strip() or str(settings["drain_batch"])
@@ -584,8 +576,8 @@ def _maybe_auto_drain(ctx: ShellContext) -> bool:
     settings = shell_settings(ctx.config)
     if not settings.get("auto_drain"):
         return False
-    if "cursor" not in enabled_integrations(ctx.config):
-        print(f"{DIM}auto_drain on, but cursor integration is disabled — skipping{RESET}")
+    if "subllm" not in enabled_integrations(ctx.config):
+        print(f"{DIM}auto_drain on, but SubLLM integration is disabled — skipping{RESET}")
         return False
     if not _open_tickets(ctx.project):
         print(f"{DIM}auto_drain on, queue empty — nothing to do{RESET}")

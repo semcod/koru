@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from koru.llm.subllm_transport import run_subllm, run_subllm_messages
+from korullm import run_subllm, run_subllm_messages
 
 
 @dataclass(frozen=True)

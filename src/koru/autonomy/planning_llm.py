@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from koru.autonomy.verification_engine import Evidence, Verdict
-from koru.llm.subllm_transport import run_subllm
+from korullm import run_subllm
 
 from .planning_llm_budget import BudgetTracker, get_budget_tracker
 from .planning_llm_parsing import (
