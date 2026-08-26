@@ -1,0 +1,10 @@
+2026-08-26T09:15:00+02:00
+SESSION_EXECUTION_AUTHORIZATION: active user request approved autonomous migration and publication.
+semcod/koru#31: MERGED at 2026-08-26T07:03:12Z, exact head b2e1b2ad4da31feafacc8459426a40dbe7a995ab.
+semcod/koru#32: MERGED at 2026-08-26T07:13:47Z, exact head ba3a0057e3fc9339572f1853222f2345d3c256c3.
+
+2026-08-26T09:16:00+02:00
+./project/governance-check.sh
+GOV-PASS: passed (0 errors, 0 warnings)
+git diff --check
+PASS
