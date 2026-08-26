@@ -1,0 +1,42 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-014",
+  "summary": "Extract LLM boundary to published korullm package",
+  "workstream": "integration",
+  "allowedPaths": ["project/ticket-014/**", "pyproject.toml", "uv.lock", "TODO.md", "project/TICKETS.md"],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "befd0420f1aa7c48cb9a9da8cee3681b9d998521",
+    "targetBranch": "main",
+    "outcome": "Make the public korullm package the declared Koru LLM dependency.",
+    "nonGoals": ["Delete Koru compatibility modules", "Change runtime LLM behavior"],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 1
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Replace the direct SubLLM dependency with korullm while retaining SubLLM transitively.",
+      "components": [{"name": "python-package-metadata", "paths": ["pyproject.toml", "uv.lock"]}],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Restore subactor-subllm as the direct dependency."
+    },
+    "runtimeDependencies": ["korullm>=0.1.0,<2.0"],
+    "validation": [{
+      "criterion": "AC-01",
+      "commands": ["uv lock --no-sources", "git diff --check"],
+      "evidence": "uv.lock pins the public korullm 0.1.0 wheel and source archive."
+    }]
+  }
+}
