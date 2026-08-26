@@ -1,29 +1,11 @@
-"""Optional OpenRouter caller for strategy-planning prompts."""
+"""Compatibility facade for policy-resolved SubLLM strategy calls."""
 
 from __future__ import annotations
 
-import json
-import os
-import sys
-import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
-# Add shared configuration to path
-shared_config_path = Path(__file__).parent.parent.parent.parent.parent / "shared" / "openrouter_config.py"
-if shared_config_path.exists():
-    sys.path.insert(0, str(shared_config_path.parent))
-    from openrouter_config import get_llm_config, get_openrouter_headers, should_use_fallback
-else:
-    # Fallback if shared config is not available
-    def get_openrouter_headers():
-        return {}
-    def should_use_fallback():
-        return False
-    def get_llm_config():
-        return {"primary": {"model": "openrouter/x-ai/grok-4.6"}}
-
-OPENROUTER_CHAT_COMPLETIONS_URL = "https://openrouter.ai/api/v1/chat/completions"
+from koru.llm.subllm_transport import run_subllm, run_subllm_messages
 
 
 @dataclass(frozen=True)
@@ -41,45 +23,25 @@ def call_openrouter_json(
     api_key: str | None = None,
     timeout_seconds: float = 30.0,
 ) -> OpenRouterStrategyResponse:
-    """Low-level OpenRouter chat completion returning raw assistant text."""
-    key = api_key or os.environ.get("OPENROUTER_API_KEY", "").strip()
-    if not key:
-        return OpenRouterStrategyResponse(
-            ok=False,
-            content="",
-            error="OPENROUTER_API_KEY is not set",
-        )
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt},
-        ],
-    }
-    req = urllib.request.Request(
-        OPENROUTER_CHAT_COMPLETIONS_URL,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {key}",
-            "Content-Type": "application/json",
-            **get_openrouter_headers(),
-        },
-        method="POST",
+    """Resolve the Koru planning route through SubLLM.
+
+    The historical function name is retained for callers. ``model`` is ignored
+    deliberately: model authority belongs to the versioned SubLLM policy.
+    """
+    del model
+    result = run_subllm(
+        prompt,
+        Path.cwd(),
+        route_function="planning-assistant",
+        system_prompt=system_prompt,
+        timeout_seconds=timeout_seconds,
+        credential_override=api_key,
     )
-    try:
-        with urllib.request.urlopen(req, timeout=timeout_seconds) as resp:  # noqa: S310
-            data = json.loads(resp.read().decode("utf-8"))
-    except OSError as exc:
-        return OpenRouterStrategyResponse(ok=False, content="", error=str(exc))
-    try:
-        content = str(data["choices"][0]["message"]["content"])
-    except (KeyError, IndexError, TypeError) as exc:
-        return OpenRouterStrategyResponse(
-            ok=False,
-            content="",
-            error=f"unexpected OpenRouter response: {exc}",
-        )
-    return OpenRouterStrategyResponse(ok=True, content=content)
+    return OpenRouterStrategyResponse(
+        ok=result.returncode == 0,
+        content=result.stdout,
+        error=result.stderr,
+    )
 
 
 def ask_openrouter_for_strategy_patch(
@@ -89,7 +51,7 @@ def ask_openrouter_for_strategy_patch(
     api_key: str | None = None,
     timeout_seconds: float = 30.0,
 ) -> OpenRouterStrategyResponse:
-    """Call OpenRouter explicitly; never used by default autonomous cycles."""
+    """Call the centrally governed SubLLM planning route."""
     return call_openrouter_json(
         prompt,
         system_prompt="Return only reviewable YAML or unified diff output.",
@@ -108,19 +70,8 @@ def call_openrouter_vision(
     api_key: str | None = None,
     timeout_seconds: float = 60.0,
 ) -> OpenRouterStrategyResponse:
-    """Call OpenRouter with vision (image + text). For models that support image_url content."""
-    key = api_key or os.environ.get("OPENROUTER_API_KEY", "").strip()
-    if not key:
-        return OpenRouterStrategyResponse(
-            ok=False,
-            content="",
-            error="OPENROUTER_API_KEY is not set",
-        )
-    if model is None:
-        model = os.environ.get("LLM_MODEL", "google/gemini-flash-1.5")
-    # Normalize: some .env use "openrouter/..." prefix (for registry); OR API expects "provider/model"
-    if isinstance(model, str) and model.startswith("openrouter/"):
-        model = model.split("/", 1)[1]
+    """Call the SubLLM route with image and text content."""
+    del model
     messages = [
         {"role": "system", "content": system_prompt},
         {
@@ -131,34 +82,18 @@ def call_openrouter_vision(
             ],
         },
     ]
-    payload = {
-        "model": model,
-        "messages": messages,
-    }
-    req = urllib.request.Request(
-        OPENROUTER_CHAT_COMPLETIONS_URL,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {key}",
-            "Content-Type": "application/json",
-            **get_openrouter_headers(),
-        },
-        method="POST",
+    result = run_subllm_messages(
+        messages,
+        Path.cwd(),
+        route_function="planning-assistant",
+        timeout_seconds=timeout_seconds,
+        credential_override=api_key,
     )
-    try:
-        with urllib.request.urlopen(req, timeout=timeout_seconds) as resp:  # noqa: S310
-            data = json.loads(resp.read().decode("utf-8"))
-    except OSError as exc:
-        return OpenRouterStrategyResponse(ok=False, content="", error=str(exc))
-    try:
-        content = str(data["choices"][0]["message"]["content"])
-    except (KeyError, IndexError, TypeError) as exc:
-        return OpenRouterStrategyResponse(
-            ok=False,
-            content="",
-            error=f"unexpected OpenRouter response: {exc}",
-        )
-    return OpenRouterStrategyResponse(ok=True, content=content)
+    return OpenRouterStrategyResponse(
+        ok=result.returncode == 0,
+        content=result.stdout,
+        error=result.stderr,
+    )
 
 
 __all__ = [

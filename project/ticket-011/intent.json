@@ -1,0 +1,87 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-011",
+  "summary": "Route Koru autonomous LLM calls through SubLLM",
+  "workstream": "application",
+  "allowedPaths": [
+    "project/ticket-011/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/llm/subllm_transport.py",
+    "src/koru/autonomy_strategy/openrouter.py",
+    "src/koru/autonomy/planning_llm.py",
+    "src/koru/autonomy/planning_llm_runtime.py",
+    "src/koru/autonomy/planning_llm_budget.py",
+    "tests/test_subllm_transport.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "66fd06a7114d0f02a26ae7d035cd118559148531",
+    "targetBranch": "main",
+    "outcome": "Route Koru autonomous planning and strategy calls through the public SubLLM policy without forcing a provider locally",
+    "nonGoals": [
+      "Remove interactive IDE or shell agent backends",
+      "Change SubLLM's centrally versioned provider policy",
+      "Store or expose credential values"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 6,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add one provider-neutral transport and preserve historical OpenRouter function names as compatibility facades",
+      "components": [
+        {
+          "name": "koru-llm-routing",
+          "paths": [
+            "src/koru/llm/subllm_transport.py",
+            "src/koru/autonomy_strategy/openrouter.py",
+            "src/koru/autonomy/planning_llm.py",
+            "src/koru/autonomy/planning_llm_runtime.py",
+            "src/koru/autonomy/planning_llm_budget.py",
+            "tests/test_subllm_transport.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the transport and facade wiring commit; no persisted data or credential material is changed"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_subllm_transport.py tests/test_planning_llm.py tests/test_command_picker.py"
+        ],
+        "evidence": "project/ticket-011/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_subllm_transport.py"
+        ],
+        "evidence": "project/ticket-011/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "./project/governance-check.sh",
+          "git diff --check"
+        ],
+        "evidence": "project/ticket-011/ai-codex-logs.txt"
+      }
+    ]
+  }
+}
