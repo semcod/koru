@@ -1,0 +1,42 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-016",
+  "summary": "Stabilize Ruff korullm import classification",
+  "workstream": "integration",
+  "allowedPaths": ["project/ticket-014/README.md", "project/ticket-016/**", "pyproject.toml", "TODO.md", "project/TICKETS.md"],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "83f8024f20095e6f1347183f17d5b9f13af55936",
+    "targetBranch": "main",
+    "outcome": "Classify the public korullm package consistently for Ruff in local editable installs and CI.",
+    "nonGoals": ["Change runtime LLM behavior", "Change provider policy", "Reformat unrelated modules"],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Declare the koru, koruide, gillm and korullm import sections explicitly in Ruff rather than relying on environment-specific package discovery.",
+      "components": [{"name": "lint-import-boundary", "paths": ["pyproject.toml"]}],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Remove the explicit Ruff isort classification block."
+    },
+    "runtimeDependencies": [],
+    "validation": [{
+      "criterion": "AC-01",
+      "commands": ["ruff check src/koru", "git diff --check"],
+      "evidence": "The same import section check passes locally and in GitHub Actions."
+    }]
+  }
+}

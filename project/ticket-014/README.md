@@ -2,8 +2,8 @@
 
 - **ID**: ticket-014
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-26
 
 ## Goal and scope
@@ -13,7 +13,7 @@ module extraction is intentionally delivered in its dependent application ticket
 
 ## Acceptance criteria
 
-- [ ] AC-01: The lock resolves `korullm==0.1.0` from PyPI.
+- [x] AC-01: The lock resolves `korullm==0.1.0` from PyPI.
 
 ## Participants
 

@@ -328,6 +328,12 @@ line-length = 120
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.ruff.lint.isort]
+# Koru and its extracted runtime boundary form one local import layer. Explicit
+# classification keeps editable installs and CI from sorting them differently.
+known-first-party = ["koru", "korullm"]
+known-third-party = ["gillm", "koruide"]
+
 [tool.pfix]
 # Self-healing Python configuration
 model = "openrouter/deep/deep-v4-pro"
