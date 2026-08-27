@@ -18,12 +18,14 @@ def build_koru_queue_argv(
     max_steps: int | None = None,
     actor: str | None = None,
     queue_name: str | None = None,
+    ticket_id: str | None = None,
 ) -> list[str]:
     """Build argv for a single-shot ``koru --queue`` run (no ``--loop``).
 
     *mode* ``\"dry\"`` appends ``--dry-run``.  *max_steps*, when set, becomes
     ``--max-iterations`` (same flag the CLI accepts; harmless for non-loop).
     Optional *actor* / *queue_name* mirror ``koru --queue`` CLI flags.
+    *ticket_id* constrains the single-shot run to that exact open ticket.
     """
     cmd: list[str] = [
         sys.executable,
@@ -37,6 +39,8 @@ def build_koru_queue_argv(
         cmd.extend(["--actor", actor])
     if queue_name:
         cmd.extend(["--queue-name", queue_name])
+    if ticket_id:
+        cmd.extend(["--ticket", ticket_id])
     if mode == "dry":
         cmd.append("--dry-run")
     if max_steps:

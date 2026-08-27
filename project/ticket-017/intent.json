@@ -1,0 +1,100 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-017",
+  "summary": "Make MCP ticket execution target-safe and preflighted",
+  "workstream": "application",
+  "allowedPaths": [
+    "project/ticket-015/README.md",
+    "project/ticket-015/changelog.md",
+    "project/ticket-017/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli_parser.py",
+    "src/koru/queue_cli_helpers.py",
+    "src/koru/queue/koru_queue_argv.py",
+    "src/koru/queue/runner.py",
+    "src/koru/queue/runners.py",
+    "src/koru/queue/ticket.py",
+    "src/koru/bounded_contexts/planfile_queue/application.py",
+    "src/koru/bounded_contexts/planfile_queue/commands/__init__.py",
+    "src/koruapi/mcp_server_planfile.py",
+    "tests/test_koru_queue_argv.py",
+    "tests/test_mcp_server.py",
+    "tests/test_planfile_queue.py",
+    "tests/test_queue_cli_helpers.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".governance/**",
+    ".github/**",
+    "pyproject.toml",
+    "uv.lock",
+    "VERSION",
+    "CHANGELOG.md",
+    "goal.yaml",
+    "docs/**"
+  ],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d4a7ecfddd4208a65af835afc1f47b2ac2e9358d",
+    "targetBranch": "main",
+    "outcome": "MCP executes only its requested Planfile ticket and probes the central SubLLM route before lifecycle mutation.",
+    "nonGoals": [
+      "No provider-policy change",
+      "No dependency or lockfile changes",
+      "No queue-priority redesign",
+      "No quality-gate policy changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 13,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Carry the required MCP ticket id through the single-queue command and probe the public korullm route before Planfile claim/start.",
+      "components": [
+        {
+          "name": "planfile-queue-execution-boundary",
+          "paths": [
+            "src/koru/cli_parser.py",
+            "src/koru/queue_cli_helpers.py",
+            "src/koru/queue/**",
+            "src/koru/bounded_contexts/planfile_queue/**",
+            "src/koruapi/mcp_server_planfile.py",
+            "tests/test_koru_queue_argv.py",
+            "tests/test_mcp_server.py",
+            "tests/test_planfile_queue.py",
+            "tests/test_queue_cli_helpers.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert ticket-017 and retain untargeted single-queue behavior."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_mcp_server.py tests/test_koru_queue_argv.py tests/test_planfile_queue.py tests/test_cqrs_planfile_queue_context.py tests/test_queue_cli_helpers.py",
+          "python -m ruff check src/koru/cli_parser.py src/koru/queue_cli_helpers.py src/koru/queue src/koru/bounded_contexts/planfile_queue src/koruapi/mcp_server_planfile.py tests/test_mcp_server.py tests/test_koru_queue_argv.py tests/test_planfile_queue.py tests/test_queue_cli_helpers.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "docker compose -f docker-compose.yml config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "project/ticket-017/ai-gpt-5.6-sol-logs.txt"
+      }
+    ]
+  }
+}

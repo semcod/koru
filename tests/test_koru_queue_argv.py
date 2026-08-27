@@ -18,6 +18,12 @@ def test_build_queue_argv_apply_minimal(tmp_path: Path) -> None:
 
 
 def test_build_queue_argv_dry_and_max_steps(tmp_path: Path) -> None:
-    argv = build_koru_queue_argv(tmp_path, mode="dry", max_steps=3)
+    argv = build_koru_queue_argv(
+        tmp_path,
+        mode="dry",
+        max_steps=3,
+        ticket_id="PLF-123",
+    )
     assert "--dry-run" in argv
     assert argv[argv.index("--max-iterations") + 1] == "3"
+    assert argv[argv.index("--ticket") + 1] == "PLF-123"

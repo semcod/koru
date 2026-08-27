@@ -10,8 +10,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from koru.queue.koru_queue_argv import build_koru_queue_argv
 from koru.quality_gate_commands import sumr_scan_command, vallm_batch_command
+from koru.queue.koru_queue_argv import build_koru_queue_argv
 from koru.redup_integration import redup_check_command
 
 try:
@@ -488,6 +488,7 @@ def _run_ticket_queue_args(project: Path, arguments: dict[str, Any]) -> list[str
         max_steps=arguments.get("max_steps"),
         actor=actor if isinstance(actor, str) and actor.strip() else None,
         queue_name=queue_name if isinstance(queue_name, str) and queue_name.strip() else None,
+        ticket_id=str(arguments["ticket_id"]),
     )
 
 
@@ -587,11 +588,7 @@ def _run_ticket_completed_response(
         "job_id": job_id,
         "logs": logs,
     }
-    if is_success:
-        response["note"] = (
-            "Queue execution is best-effort; current koru queue mode runs next runnable ticket."
-        )
-    else:
+    if not is_success:
         response["exit_code"] = result.returncode
     return response
 

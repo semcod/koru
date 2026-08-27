@@ -318,6 +318,122 @@ class TestPlanfileCommand(unittest.TestCase):
 
 
 class TestPlanfileQueue(unittest.TestCase):
+    def test_exact_target_executes_requested_open_ticket(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            tickets = [
+                {
+                    "id": "PLF-FIRST",
+                    "name": "Higher priority task",
+                    "status": "open",
+                    "priority": "critical",
+                    "executor": {"kind": "shell", "handler": "echo first"},
+                },
+                {
+                    "id": "PLF-TARGET",
+                    "name": "Requested task",
+                    "status": "open",
+                    "priority": "normal",
+                    "executor": {"kind": "shell", "handler": "echo target"},
+                },
+            ]
+            planfile_calls: list[list[str]] = []
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                planfile_calls.append(command)
+                if _ticket_args(command)[:5] == [
+                    "ticket",
+                    "list",
+                    "--status",
+                    "open",
+                    "--format",
+                ]:
+                    return _ok(json.dumps(tickets))
+                return _ok()
+
+            def shell_runner(command: str, _project: Path) -> SimpleNamespace:
+                self.assertEqual(command, "echo target")
+                return SimpleNamespace(returncode=0, stdout="target\n", stderr="")
+
+            result = run_next_planfile_task(
+                project=project,
+                target_ticket_id="PLF-TARGET",
+                planfile_runner=planfile_runner,
+                shell_runner=shell_runner,
+            )
+
+            self.assertEqual(result.status, "completed")
+            self.assertEqual(result.ticket_id, "PLF-TARGET")
+            lifecycle = [_ticket_args(call) for call in planfile_calls]
+            self.assertNotIn(["ticket", "start", "PLF-FIRST"], lifecycle)
+            self.assertIn(["ticket", "start", "PLF-TARGET"], lifecycle)
+
+    def test_missing_exact_target_does_not_run_next_ticket(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = {
+                "id": "PLF-NEXT",
+                "name": "Next task",
+                "status": "open",
+                "executor": {"kind": "shell", "handler": "echo next"},
+            }
+            planfile_calls: list[list[str]] = []
+            shell_calls: list[str] = []
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                planfile_calls.append(command)
+                return _ok(json.dumps([ticket]))
+
+            def shell_runner(command: str, _project: Path) -> SimpleNamespace:
+                shell_calls.append(command)
+                return _ok()
+
+            result = run_next_planfile_task(
+                project=project,
+                target_ticket_id="PLF-MISSING",
+                planfile_runner=planfile_runner,
+                shell_runner=shell_runner,
+            )
+
+            self.assertEqual(result.status, "target_not_runnable")
+            self.assertEqual(result.ticket_id, "PLF-MISSING")
+            self.assertEqual(shell_calls, [])
+            self.assertEqual(len(planfile_calls), 1)
+
+    def test_llm_preflight_failure_precedes_ticket_lifecycle(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            project = Path(tmp_dir)
+            ticket = {
+                "id": "PLF-LLM",
+                "name": "Refactor safely",
+                "status": "open",
+                "executor": {"kind": "llm"},
+                "inputs": {"prompt": "Refactor the declared module"},
+            }
+            planfile_calls: list[list[str]] = []
+
+            def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
+                planfile_calls.append(command)
+                return _ok(json.dumps([ticket]))
+
+            with patch(
+                "koru.queue.runner.preflight_llm_request",
+                return_value=(False, "SubLLM route unavailable"),
+            ):
+                result = run_next_planfile_task(
+                    project=project,
+                    target_ticket_id="PLF-LLM",
+                    planfile_runner=planfile_runner,
+                )
+
+            self.assertEqual(result.status, "infrastructure_error")
+            self.assertEqual(result.ticket_id, "PLF-LLM")
+            lifecycle = [_ticket_args(call) for call in planfile_calls]
+            self.assertEqual(
+                lifecycle,
+                [["ticket", "list", "--status", "open", "--format", "json"]],
+            )
+
     def test_shell_ticket_runs_lifecycle_commands(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)
@@ -1390,7 +1506,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
                 if value is not None:
                     os.environ[key] = value
 
-    def test_llm_default_runner_requires_cursor_transport(self) -> None:
+    def test_llm_default_runner_requires_central_subllm_transport(self) -> None:
         from koru.queue import runners as runners_mod
 
         with self._clean_llm_env():
@@ -1399,7 +1515,10 @@ class TestPlanfileQueueLlm(unittest.TestCase):
 
         self.assertEqual(result.returncode, 1)
         self.assertEqual(result.status_code, 0)
-        self.assertIn("CURSOR_API_KEY", result.stderr)
+        self.assertTrue(
+            "SubLLM transport is unavailable" in result.stderr
+            or "SubLLM refused or failed" in result.stderr,
+        )
 
     def test_llm_does_not_fallback_to_vendor_cli(self) -> None:
         from koru.queue import runners as runners_mod
@@ -1469,6 +1588,7 @@ class TestQueueEditVerification(unittest.TestCase):
 
         self.assertTrue(_ticket_expects_edits(self._ticket()))
         self.assertTrue(_ticket_expects_edits(self._ticket(labels=["todo2code", "code-change"])))
+        self.assertTrue(_ticket_expects_edits(self._ticket(labels=[], executor={"mode": "patch"})))
         self.assertFalse(_ticket_expects_edits(self._ticket(labels=["deploy"])))
 
     def test_explicit_flag_overrides_label_heuristic(self) -> None:
