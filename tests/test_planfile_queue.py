@@ -1588,6 +1588,7 @@ class TestQueueEditVerification(unittest.TestCase):
 
         self.assertTrue(_ticket_expects_edits(self._ticket()))
         self.assertTrue(_ticket_expects_edits(self._ticket(labels=["todo2code", "code-change"])))
+        self.assertTrue(_ticket_expects_edits(self._ticket(labels=[], executor={"mode": "patch"})))
         self.assertFalse(_ticket_expects_edits(self._ticket(labels=["deploy"])))
 
     def test_explicit_flag_overrides_label_heuristic(self) -> None:

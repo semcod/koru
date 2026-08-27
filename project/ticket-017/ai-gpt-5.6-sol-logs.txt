@@ -20,3 +20,16 @@
   unchanged, ticket remained open with attempt=0.
 - Full model-driven refactor was not attempted because the approved SubLLM
   policy has no valid credential; the preflight correctly prevented mutation.
+
+2026-08-27 controlled patch-lane evidence
+- Initial controlled ticket without a refactor label exposed a false close:
+  executor.mode=patch was ignored and source hashes stayed unchanged.
+- After treating mode=patch as edit-expecting, Koru entered the transaction
+  lane and safely refused a baseline-invalid verification command without
+  promoting changes.
+- With checkout verification and a baseline-safe conditional for the new test,
+  Koru applied the patch, ran the gate, and completed exact ticket PLF-2216.
+- Source SHA-256 changed from 3b6a4a9e... to 10dfdc38..., the declared test
+  file was created, and an independent rerun passed 36 tests.
+- Scoped Redup MCP reported 5 remaining groups/93 recoverable lines and no
+  longer proposed the three bounded-window query bodies that were extracted.

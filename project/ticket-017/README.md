@@ -2,8 +2,8 @@
 
 - **ID**: ticket-017
 - **Owner**: unresolved:human
-- **Status**: DONE
-- **Workflow state**: DONE
+- **Status**: IN_PROGRESS
+- **Workflow state**: VALIDATION
 - **Created**: 2026-08-27
 
 ## Goal and scope
@@ -36,6 +36,9 @@ alter quality-gate policy.
   attempt or block/fail the ticket.
 - [x] AC-05: Focused regression tests, Ruff, governance, Docker configuration,
   and diff checks pass.
+- [x] AC-06: A preserved `executor.mode: patch` marks the ticket as edit-
+  expecting even when Planfile omitted custom inputs and no refactor label was
+  supplied; a controlled c2004 patch is applied, verified, and delivered.
 
 ## Session authorization
 

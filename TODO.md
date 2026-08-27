@@ -1,8 +1,8 @@
 # Governance roadmap
 
-- [x] [`ticket-017`](project/ticket-017/README.md) — make MCP ticket execution
+- [ ] [`ticket-017`](project/ticket-017/README.md) — make MCP ticket execution
   exact-target and preflight the central SubLLM route before Planfile lifecycle
-  mutation. State: `DONE`; classification:
+  mutation. State: `IN_PROGRESS / VALIDATION`; classification:
   `SERVICE / application`.
 - [x] [`ticket-002`](project/ticket-002/README.md) — adopt immutable
   new-project 0.11.0 using Goal before replacing Koru's legacy priority

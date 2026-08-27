@@ -40,6 +40,8 @@ only needs to call that boundary before lifecycle mutation.
 - Removed misleading MCP best-effort success reporting.
 - Added regression coverage for argv, MCP, CLI wiring, exact selection, and
   preflight lifecycle ordering.
+- Treated preserved `executor.mode: patch` as a durable edit expectation when
+  Planfile omits custom input flags and no refactor label is present.
 - Reconciled already-merged ticket-015 from `IN_PROGRESS` to `DONE` so the
   application workstream accurately reflects repository state.
 

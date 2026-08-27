@@ -10,3 +10,7 @@
 - Added truthful infrastructure/target failure reporting and regression tests.
 - Closed the ticket after focused tests, Ruff, governance, Docker, MCP, and
   isolated c2004 validation passed.
+- Reopened after the controlled c2004 run exposed that preserved
+  `executor.mode: patch` was ignored when deciding whether edits were required.
+- Made executor patch mode a durable edit expectation and validated successful
+  apply/verify delivery on controlled c2004 ticket PLF-2216.

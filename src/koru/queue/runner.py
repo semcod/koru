@@ -277,6 +277,9 @@ def _ticket_expects_edits(ticket: dict) -> bool:
     inputs = ticket.get("inputs") or {}
     if "expect_files_changed" in inputs:
         return bool(inputs["expect_files_changed"])
+    executor = ticket.get("executor") or {}
+    if str(executor.get("mode") or "").lower() == "patch":
+        return True
     labels = {str(label).lower() for label in (ticket.get("labels") or [])}
     return bool(labels & {"refactor", "todo2code", "code-change"})
 
