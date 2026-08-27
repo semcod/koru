@@ -14,3 +14,5 @@
   `executor.mode: patch` was ignored when deciding whether edits were required.
 - Made executor patch mode a durable edit expectation and validated successful
   apply/verify delivery on controlled c2004 ticket PLF-2216.
+- Closed the ticket after the controlled patch lane and independent tests
+  confirmed delivery.
