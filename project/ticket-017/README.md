@@ -2,8 +2,8 @@
 
 - **ID**: ticket-017
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-27
 
 ## Goal and scope

@@ -8,3 +8,5 @@
 - Enforced exact MCP ticket execution through the locked queue boundary.
 - Added central SubLLM preflight before Planfile lifecycle mutation.
 - Added truthful infrastructure/target failure reporting and regression tests.
+- Closed the ticket after focused tests, Ruff, governance, Docker, MCP, and
+  isolated c2004 validation passed.
