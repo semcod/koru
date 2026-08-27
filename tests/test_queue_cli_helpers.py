@@ -27,6 +27,40 @@ def test_single_task_ticket_lists():
     assert single_task_ticket_lists(result) == (["PLF-1"], [], [])
 
 
+def test_single_queue_mode_threads_exact_ticket_target(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_run_next(**kwargs):  # noqa: ANN003, ANN202
+        captured.update(kwargs)
+        return QueueRunResult(status="dry_run", ticket_id="PLF-123", executor_kind="shell")
+
+    monkeypatch.setattr(helpers, "run_next_planfile_task", fake_run_next)
+    monkeypatch.setattr(helpers, "queue_local_manager_session", Mock(return_value=None))
+    monkeypatch.setattr(helpers, "emit_management_event", Mock())
+    args = SimpleNamespace(
+        loop=False,
+        queue_name="default",
+        project=".",
+        actor="koru-shell",
+        dry_run=True,
+        interactive=False,
+        ticket="PLF-123",
+    )
+
+    rc = helpers.run_queue_single_mode(
+        args,
+        run_log=None,
+        planfile_runner=Mock(),
+        shell_runner=Mock(),
+        api_runner=Mock(),
+        llm_runner=Mock(),
+        prompt_runner=Mock(),
+    )
+
+    assert rc == 0
+    assert captured["target_ticket_id"] == "PLF-123"
+
+
 def test_emit_queue_run_started_does_not_raise() -> None:
     from koru.queue_cli_helpers import emit_queue_run_started
 

@@ -18,6 +18,7 @@ class RunNextPlanfileTaskCommand:
     actor: str = "koru-shell"
     dry_run: bool = False
     queue_name: str | None = None
+    target_ticket_id: str | None = None
     interactive: bool = False
     planfile_runner: Callable[[list[str], Path], CommandResult] = run_process
     shell_runner: Callable[[str, Path], CommandResult] = run_shell_command

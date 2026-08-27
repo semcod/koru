@@ -68,7 +68,12 @@ def ticket_matches_queue(ticket: dict[str, Any], queue_name: str | None) -> bool
     return ticket_queue_name(ticket) == queue_name
 
 
-def parse_next_ticket(stdout: str, *, queue_name: str | None = None) -> dict | None:
+def parse_next_ticket(
+    stdout: str,
+    *,
+    queue_name: str | None = None,
+    ticket_id: str | None = None,
+) -> dict | None:
     """Pick the first runnable ticket from planfile output.
 
     Accepts both a single-object payload (legacy ``ticket next``) and
@@ -83,7 +88,8 @@ def parse_next_ticket(stdout: str, *, queue_name: str | None = None) -> dict | N
     except json.JSONDecodeError:
         payload = json.loads(stripped, strict=False)
     if isinstance(payload, dict):
-        return payload if ticket_matches_queue(payload, queue_name) else None
+        matches_target = ticket_id is None or str(payload.get("id") or "") == ticket_id
+        return payload if matches_target and ticket_matches_queue(payload, queue_name) else None
     if isinstance(payload, list):
         # planfile ticket list returns oldest-first; sort by priority
         # then treat the first entry whose status is open / ready / todo as runnable.
@@ -96,6 +102,7 @@ def parse_next_ticket(stdout: str, *, queue_name: str | None = None) -> dict | N
             for entry in payload
             if isinstance(entry, dict)
             and entry.get("status") in runnable_states
+            and (ticket_id is None or str(entry.get("id") or "") == ticket_id)
             and ticket_matches_queue(entry, queue_name)
         ]
 

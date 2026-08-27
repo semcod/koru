@@ -1,0 +1,22 @@
+2026-08-27 planning evidence
+- Reproduced MCP target mismatch: a nonexistent requested id launched the next
+  open Planfile ticket while the response echoed the requested id.
+- Reproduced LLM infrastructure failure after lifecycle mutation on the stale
+  installed Koru runtime.
+- Refreshed to origin/main d4a7ecf after governance detected target movement.
+- Current main uses korullm.run_subllm_messages and exposes the non-model
+  korullm.probe_subllm_route preflight.
+- User explicitly approved the bounded safety scope and autonomous execution.
+
+2026-08-27 validation evidence
+- Focused pytest: 113 passed, 15 deselected.
+- Ruff: all selected source and test paths passed.
+- Governance: GOV-PASS, 0 errors, 0 warnings.
+- Docker compose and docker-compose.yml configurations validated.
+- c2004 exact-target test: PLF-NIE-ISTNIEJE returned target_not_runnable and
+  exit code 1; MCP returned failed with the same requested id.
+- c2004 LLM preflight test: PLF-2213 returned infrastructure_error because
+  CURSOR_API_KEY is unavailable; Planfile SHA-256 and source SHA-256 were
+  unchanged, ticket remained open with attempt=0.
+- Full model-driven refactor was not attempted because the approved SubLLM
+  policy has no valid credential; the preflight correctly prevented mutation.

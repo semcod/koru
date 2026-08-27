@@ -107,7 +107,7 @@ def test_tool_validate_ide_command_scenario() -> None:
     assert payload["validation"]["normalized"]["ide"] == "windsurf"
 
 
-def test_run_ticket_invokes_queue_mode_without_ticket_flag(monkeypatch, tmp_path: Path) -> None:
+def test_run_ticket_invokes_queue_mode_with_exact_ticket(monkeypatch, tmp_path: Path) -> None:
     called: dict[str, list[str]] = {}
 
     def _fake_popen(cmd, **kwargs):
@@ -143,7 +143,8 @@ def test_run_ticket_invokes_queue_mode_without_ticket_flag(monkeypatch, tmp_path
     assert "cmd" in called
     assert "--queue" in called["cmd"]
     assert "--dry-run" in called["cmd"]
-    assert "--ticket" not in called["cmd"]
+    assert called["cmd"][called["cmd"].index("--ticket") + 1] == "PLF-123"
+    assert "note" not in result
 
 
 def test_run_ticket_timeout_updates_job_status(monkeypatch, tmp_path: Path) -> None:

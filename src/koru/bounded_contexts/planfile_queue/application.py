@@ -75,6 +75,7 @@ class PlanfileQueueCommandService(CqrsService):
             actor=command.actor,
             dry_run=command.dry_run,
             queue_name=command.queue_name,
+            target_ticket_id=command.target_ticket_id,
             interactive=command.interactive,
             planfile_runner=command.planfile_runner,
             shell_runner=command.shell_runner,

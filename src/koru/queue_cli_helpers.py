@@ -30,6 +30,8 @@ QUEUE_STATUS_MARKERS: dict[str, str] = {
     "dry_run": "?",
     "unsupported_executor": "!",
     "planfile_error": "!",
+    "target_not_runnable": "!",
+    "infrastructure_error": "!",
 }
 
 SUCCESS_QUEUE_STATUSES = frozenset({"completed", "idle", "waiting_input", "dry_run"})
@@ -133,6 +135,9 @@ def run_queue_loop_mode(
     llm_runner: Callable[..., Any],
     prompt_runner: Callable[..., Any],
 ) -> int:
+    if getattr(args, "ticket", None):
+        print("koru queue: --ticket targets one task and cannot be combined with --loop")
+        return 2
     manager = queue_local_manager_session(args)
     early_exit = queue_manager_start(args, manager)
     if early_exit is not None:
@@ -236,6 +241,7 @@ def run_queue_single_mode(
         actor=args.actor,
         dry_run=args.dry_run,
         queue_name=args.queue_name,
+        target_ticket_id=getattr(args, "ticket", None),
         interactive=args.interactive,
         planfile_runner=planfile_runner,
         shell_runner=shell_runner,

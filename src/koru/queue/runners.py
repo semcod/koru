@@ -15,7 +15,7 @@ from urllib.parse import parse_qs, urlparse
 
 from koru.control_commands import api_command, shell_command
 from koru.queue.types import ApiRunResult, LlmRunResult
-from korullm import run_subllm_messages
+from korullm import probe_subllm_route, run_subllm_messages
 
 
 def _planfile_env() -> dict[str, str]:
@@ -481,3 +481,8 @@ def run_llm_request(request: dict[str, Any], project: Path) -> LlmRunResult:
         usage=result.usage,
         raw=result.raw,
     )
+
+
+def preflight_llm_request(project: Path) -> tuple[bool, str]:
+    """Probe Koru's central queue route without invoking a model."""
+    return probe_subllm_route(project, route_function="queue-executor")

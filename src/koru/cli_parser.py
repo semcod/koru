@@ -232,8 +232,8 @@ def _add_doctor_and_context_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--ticket",
         default=None,
-        help="Target a specific ticket id (e.g. PLF-074) for --context. "
-        "Default is the next runnable ticket from the queue.",
+        help="Target a specific ticket id (e.g. PLF-074) for --context or a "
+        "single --queue run. Default is the next runnable ticket from the queue.",
     )
     parser.add_argument(
         "--format",

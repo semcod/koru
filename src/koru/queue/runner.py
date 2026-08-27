@@ -26,6 +26,7 @@ from koru.queue.planfile_sdk import planfile_lifecycle_command
 from koru.queue.planfile_ticket_note import append_shell_evidence_note
 from koru.queue.runners import (
     _DEFAULT_LLM_MODEL,
+    preflight_llm_request,
     run_api_request,
     run_llm_request,
     run_process,
@@ -469,6 +470,7 @@ def _next_ticket_or_result(
     project: Path,
     planfile_runner: Callable[[list[str], Path], CommandResult],
     queue_name: str | None = None,
+    target_ticket_id: str | None = None,
 ) -> tuple[dict[str, Any] | None, QueueRunResult | None]:
     next_result = planfile_command(
         project,
@@ -493,8 +495,21 @@ def _next_ticket_or_result(
             stderr=next_result.stderr,
         )
 
-    ticket = parse_next_ticket(next_result.stdout, queue_name=queue_name)
+    ticket = parse_next_ticket(
+        next_result.stdout,
+        queue_name=queue_name,
+        ticket_id=target_ticket_id,
+    )
     if ticket is None:
+        if target_ticket_id is not None:
+            message = f"Requested ticket {target_ticket_id} is not open in the selected queue"
+            return None, QueueRunResult(
+                status="target_not_runnable",
+                ticket_id=target_ticket_id,
+                message=message,
+                exit_code=1,
+                stderr=message,
+            )
         return None, QueueRunResult(status="idle", message="No runnable ticket found")
     return ticket, None
 
@@ -651,6 +666,7 @@ def _run_next_planfile_task_impl(
     actor: str = "koru-shell",
     dry_run: bool = False,
     queue_name: str | None = None,
+    target_ticket_id: str | None = None,
     interactive: bool = False,
     planfile_runner: Callable[[list[str], Path], CommandResult] = run_process,
     shell_runner: Callable[[str, Path], CommandResult] = run_shell_command,
@@ -680,6 +696,7 @@ def _run_next_planfile_task_impl(
             project,
             planfile_runner,
             queue_name=queue_name,
+            target_ticket_id=target_ticket_id,
         )
         if early_result is not None:
             return early_result
@@ -719,6 +736,19 @@ def _run_next_planfile_task_impl(
 
         if dry_run:
             return _handle_dry_run(ticket_id, executor_kind, resolved_action)
+
+        if executor_kind == "llm" and llm_runner is run_llm_request:
+            available, preflight_message = preflight_llm_request(project)
+            if not available:
+                message = preflight_message or "Central SubLLM route preflight failed"
+                return QueueRunResult(
+                    status="infrastructure_error",
+                    ticket_id=ticket_id,
+                    executor_kind=executor_kind,
+                    message=message,
+                    exit_code=1,
+                    stderr=message,
+                )
 
         claimed = _claim_and_start(project, ticket_id, actor, planfile_runner)
         if claimed:
@@ -810,6 +840,7 @@ def run_next_planfile_task(
     actor: str = "koru-shell",
     dry_run: bool = False,
     queue_name: str | None = None,
+    target_ticket_id: str | None = None,
     interactive: bool = False,
     planfile_runner: Callable[[list[str], Path], CommandResult] = run_process,
     shell_runner: Callable[[str, Path], CommandResult] = run_shell_command,
@@ -827,6 +858,7 @@ def run_next_planfile_task(
             actor=actor,
             dry_run=dry_run,
             queue_name=queue_name,
+            target_ticket_id=target_ticket_id,
             interactive=interactive,
             planfile_runner=planfile_runner,
             shell_runner=shell_runner,

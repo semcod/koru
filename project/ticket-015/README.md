@@ -2,8 +2,8 @@
 
 - **ID**: ticket-015
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-26
 
 ## Goal and scope
@@ -21,3 +21,9 @@ Move the LLM boundary out of Koru after ticket-014 declares the published
 
 - Human participant: unresolved; no user-* file was created by this script.
 - Agent participant: [ai-codex.md](ai-codex.md)
+
+## Closure evidence
+
+The implementation was merged to `main` by pull request #34 at
+`d4a7ecfddd4208a65af835afc1f47b2ac2e9358d`; both acceptance criteria were
+already checked before merge.
