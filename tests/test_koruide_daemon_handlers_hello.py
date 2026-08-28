@@ -4,7 +4,6 @@ from __future__ import annotations
 from unittest import mock
 
 import pytest
-
 from koruide.daemon.handlers_hello import (
     _configure_plugin_client,
     _extract_hello_metadata,

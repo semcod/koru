@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from koru.autonomous_daemon import daemon_status_log_summary
 from koruide.daemon.metadata import (
     daemon_metadata_path,
     read_daemon_metadata,
     remove_daemon_metadata,
     write_daemon_metadata,
 )
+
+from koru.autonomous_daemon import daemon_status_log_summary
 
 
 def test_daemon_metadata_path_uses_project_sidecar(tmp_path: Path) -> None:

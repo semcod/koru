@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+from koruide.command_picker import HeuristicPicker, _reorder_submit_for_hint
+
 from koru.autonomous_submit_strategy import (
     consume_pending_submit_strategy_hint,
     record_submit_drive_outcome,
@@ -13,7 +15,6 @@ from koru.autonomous_submit_strategy import (
     submit_strategy_hint_for_streak,
 )
 from koru.autonomy.state import AutoloopState
-from koruide.command_picker import HeuristicPicker, _reorder_submit_for_hint
 
 
 def _queue_result(*, ticket_id: str = "T-1", status: str = "waiting_input"):

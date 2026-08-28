@@ -6,9 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from koruide.ide import autopilot_ide_choices
+
 from koru.configurator import CONFIG_REL_PATH, configure_project, load_project_config
 from koru.dotenv_loader import load_dotenv
-from koruide.ide import autopilot_ide_choices
 
 
 @dataclass(frozen=True)

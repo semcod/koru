@@ -437,9 +437,10 @@ def _post_remote_drive(handler: Any, _config: ServeConfig, body: dict[str, Any])
         return
     corr = str(body.get("corr") or body.get("ticket") or "dashboard-remote-drive").strip()
     try:
+        from koruide.socket import default_socket_path
+
         from koru.autopilot.client import AutopilotClient
         from koru.control_commands import api_command
-        from koruide.socket import default_socket_path
 
         api_command(
             project,

@@ -11,7 +11,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from koruide.ides import get_strategy, strategy_ids
 from koruide.ides.base import IdeStrategy
 from koruide.ides.cursor import CursorStrategy

@@ -4,8 +4,9 @@ import os
 from pathlib import Path
 from types import SimpleNamespace
 
-from koru.autopilot import install_manager
 from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
+
+from koru.autopilot import install_manager
 
 
 def test_source_version_ignores_non_koru_pyproject(tmp_path: Path) -> None:

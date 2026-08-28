@@ -5,7 +5,6 @@ from __future__ import annotations
 from unittest import mock
 
 import pytest
-
 from koruide.daemon.handlers_drive import (
     _active_pending_plugin_drive,
     _deliver_chat_via_plugin_socket,

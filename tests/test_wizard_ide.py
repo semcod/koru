@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from koruide.ide import RunningIDE
+
 from koru.wizard.ide import (
     DetectedIDE,
     discover_installed_ides,
     summarize_ides,
 )
-from koruide.ide import RunningIDE
 
 
 def _hint_for(path: Path) -> dict[str, tuple[str, tuple[str, ...]]]:

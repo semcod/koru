@@ -10,8 +10,9 @@ def _plugin_debug_log_path() -> Path:
 
 
 def _daemon_plugin_logs() -> list[dict[str, object]]:
-    from koru.autopilot.client import AutopilotClient
     from koruide.socket import default_socket_path
+
+    from koru.autopilot.client import AutopilotClient
 
     socket_path = default_socket_path()
     status = AutopilotClient(socket_path=socket_path, timeout=1.0).status()

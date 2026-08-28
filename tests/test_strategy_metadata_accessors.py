@@ -4,7 +4,6 @@ from gillm.focus.darwin import DarwinStrategy
 from gillm.focus.wayland import WaylandLinuxStrategy
 from gillm.focus.windows import WindowsStrategy
 from gillm.focus.x11 import X11LinuxStrategy
-
 from koruide.ides.antigravity import AntigravityStrategy
 from koruide.ides.cursor import CursorStrategy
 from koruide.ides.jetbrains import JetbrainsStrategy
@@ -12,6 +11,7 @@ from koruide.ides.vscode import VscodeStrategy
 from koruide.ides.vscodium import VscodiumStrategy
 from koruide.ides.windsurf import WindsurfStrategy
 from koruide.ides.zed import ZedStrategy
+
 from korullm.strategies.claude import ClaudeStrategy
 from korullm.strategies.codex import CodexStrategy
 from korullm.strategies.gpt import GptStrategy

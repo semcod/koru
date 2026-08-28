@@ -7,13 +7,14 @@ import socket
 from pathlib import Path
 from typing import Any
 
+from koruide.ide import autopilot_ide_choices, detect_running_ides
+
 from koru.agents import shell_agent_lane_rows
 from koruapi.dashboard_projects import (
   dashboard_workspace,
   discover_dashboard_projects,
   projects_by_ide,
 )
-from koruide.ide import autopilot_ide_choices, detect_running_ides
 
 
 def local_lan_addresses() -> list[str]:

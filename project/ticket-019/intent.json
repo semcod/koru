@@ -1,0 +1,42 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-019",
+  "summary": "Restore green CI by applying enforced Ruff fixes",
+  "workstream": "application",
+  "allowedPaths": ["project/ticket-019/**", "project/TICKETS.md", "src/**", "tests/**"],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "4efde5ea3364e1520a249f667dd7e86577375f94",
+    "targetBranch": "main",
+    "outcome": "The exact Ruff command enforced by main CI passes without changing runtime behavior.",
+    "nonGoals": ["Change runtime behavior", "Reformat files outside the CI lint scope"],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 35,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Apply only Ruff's safe import-order fixes under the paths enforced by CI.",
+      "components": [{"name": "ci-lint-scope", "paths": ["src/**", "tests/**"]}],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the mechanical import-order commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [{
+      "criterion": "AC-01",
+      "commands": ["python -m ruff check src tests", "python -m pytest tests -q"],
+      "evidence": "Ruff reports zero errors and the main test suite remains green."
+    }]
+  }
+}
