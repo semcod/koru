@@ -32,9 +32,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import re
-import shutil
 import subprocess
 import time
 from collections.abc import Callable, Sequence
@@ -47,6 +45,9 @@ from koru.autonomy.code_change_usefulness import (
     plan_useful_paths,
     plan_usefulness_score,
 )
+from koru.queue.todo2code_support import build_pipeline_cmd as _build_pipeline_cmd
+from koru.queue.todo2code_support import config_value as _config_value
+from koru.queue.todo2code_support import t2c_executable as _t2c_executable
 
 Runner = Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]]
 
@@ -117,21 +118,6 @@ def _default_runner(cmd: Sequence[str], cwd: Path) -> subprocess.CompletedProces
     )
 
 
-def _dotenv_value(project: Path | None, name: str) -> str:
-    if project is None:
-        return ""
-    try:
-        text = (project / ".env").read_text(encoding="utf-8")
-    except OSError:
-        return ""
-    match = re.search(rf"^\s*{re.escape(name)}\s*=\s*(.+?)\s*$", text, re.M)
-    return match.group(1).strip().strip("'\"") if match else ""
-
-
-def _config_value(name: str, project: Path | None = None) -> str:
-    return (os.environ.get(name) or "").strip() or _dotenv_value(project, name)
-
-
 def _env_flag(name: str, default: bool, project: Path | None = None) -> bool:
     raw = _config_value(name, project).lower()
     if not raw:
@@ -157,42 +143,6 @@ def todo2code_enabled(project: Path | None = None) -> bool:
     return _env_flag("KORU_TODO2CODE_ENABLE", True, project)
 
 
-def _t2c_executable(project: Path | None = None) -> str | None:
-    override = _config_value("KORU_TODO2CODE_BIN", project)
-    if override:
-        path = Path(override).expanduser()
-        return str(path) if path.is_file() else None
-    found = shutil.which("t2c")
-    if found:
-        return found
-    # Common local install from the monorepo checkout.
-    sibling = Path.home() / "github" / "semcod" / "todo2code" / "dist" / "src" / "cli.js"
-    if sibling.is_file():
-        return str(sibling)
-    return None
-
-
-def _resolve_t2c_cli_js(binary: str) -> str | None:
-    """Resolve ``t2c`` / symlink / path to the real ``cli.js`` entrypoint.
-
-    ``todo2code`` only calls ``main()`` when ``process.argv[1]`` equals
-    ``import.meta.url``. Invoking a PATH symlink such as
-    ``~/.nvm/.../bin/t2c`` therefore exits 0 without running the pipeline.
-    Always prefer ``node <resolved-cli.js>`` when we can resolve to a ``.js``
-    file.
-    """
-    path = Path(binary)
-    try:
-        resolved = path.resolve()
-    except OSError:
-        resolved = path
-    if resolved.is_file() and resolved.suffix == ".js":
-        return str(resolved)
-    if path.is_file() and path.suffix == ".js":
-        return str(path)
-    return None
-
-
 def _out_dir(project: Path) -> Path:
     sub = _config_value("KORU_TODO2CODE_OUT", project) or DEFAULT_OUT_SUBDIR
     candidate = (project / sub).resolve()
@@ -203,59 +153,6 @@ def _out_dir(project: Path) -> Path:
             "KORU_TODO2CODE_OUT must resolve inside the target project"
         ) from exc
     return candidate
-
-
-def _optional_input(project: Path, *candidates: str) -> Path | None:
-    for name in candidates:
-        path = project / name
-        if path.is_file():
-            return path
-    return None
-
-
-def _build_pipeline_cmd(
-    binary: str,
-    project: Path,
-    *,
-    out_dir: Path,
-) -> list[str]:
-    # Prefer node + resolved cli.js so PATH symlinks actually run main().
-    cli_js = _resolve_t2c_cli_js(binary)
-    if cli_js is not None:
-        cmd = ["node", cli_js, "pipeline", str(project)]
-    else:
-        cmd = [binary, "pipeline", str(project)]
-
-    cmd.extend(
-        [
-            "--nl-mode",
-            "deterministic",
-            "--markdown-mode",
-            "deterministic",
-            "--communication-mode",
-            "deterministic",
-            "--project-dir",
-            "project",
-            "--no-docs-llm",
-            "--no-summary-llm",
-            "--out",
-            str(out_dir),
-        ]
-    )
-
-    todo = _optional_input(project, "TODO.md", "todo.md", "TODO.txt", "todo.txt")
-    if todo is not None:
-        cmd.extend(["--todo", str(todo)])
-
-    changelog = _optional_input(project, "CHANGELOG.md", "changelog.md")
-    if changelog is not None:
-        cmd.extend(["--changelog", str(changelog)])
-
-    task = _optional_input(project, "TASK.md", "task.md", "TASKS.md")
-    if task is not None:
-        cmd.extend(["--task", str(task)])
-
-    return cmd
 
 
 def find_latest_plans_path(out_dir: Path) -> Path | None:

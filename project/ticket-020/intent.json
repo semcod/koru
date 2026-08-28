@@ -1,0 +1,57 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-020",
+  "summary": "Restore queue lower-layer import contract",
+  "workstream": "application",
+  "allowedPaths": [
+    "project/ticket-020/**",
+    "project/TICKETS.md",
+    "src/koru/autonomy/todo2code_discovery.py",
+    "src/koru/queue/ticket_templates.py",
+    "src/koru/queue/todo2code_gate.py",
+    "src/koru/queue/todo2code_support.py",
+    "tests/test_todo2code_discovery.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": ["ticket-019"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "db65f25999112b87be3e967f06b267d7fa7fc1dc",
+    "targetBranch": "main",
+    "outcome": "Queue code no longer imports the higher autonomy layer and the required import contract passes.",
+    "nonGoals": ["Change todo2code command semantics", "Weaken or remove the import-linter contract"],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Move shared todo2code configuration and command construction to the lower queue layer; autonomy imports and re-exports those private compatibility names.",
+      "components": [
+        {
+          "name": "todo2code-lower-layer-support",
+          "paths": ["src/koru/queue/**", "src/koru/autonomy/todo2code_discovery.py", "tests/test_todo2code_discovery.py"]
+        }
+      ],
+      "responsibilityChanges": true,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Restore the helpers in autonomy; this will intentionally restore the CI contract failure."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["lint-imports", "pytest -q tests/test_todo2code_discovery.py tests/test_todo2code_autonomous_gate.py tests/test_subactor_repair_ticket_template.py"],
+        "evidence": "Import contract and focused behavior tests pass."
+      }
+    ]
+  }
+}
