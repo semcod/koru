@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from unittest import mock
 
+from koruide.ide import RunningIDE
+
 from koruapi.dashboard_projects import (
     _read_workspace_folder,
     _walk_descendant_pids,
@@ -13,7 +15,6 @@ from koruapi.dashboard_projects import (
     projects_by_ide,
 )
 from koruapi.dashboard_state import dashboard_ide_rows, dashboard_state
-from koruide.ide import RunningIDE
 
 
 def _fake_running_ides(tmp_path: Path) -> list[RunningIDE]:

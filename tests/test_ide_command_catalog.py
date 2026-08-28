@@ -4,8 +4,6 @@ import json
 from pathlib import Path
 
 import pytest
-
-from koru.ide_doctor_cli import ide_main
 from koruide.command_catalog import (
     build_ide_command_catalog,
     command_catalog_for_llm,
@@ -17,6 +15,8 @@ from koruide.command_scenario import (
     ide_command_scenario_schema,
     validate_ide_command_scenario,
 )
+
+from koru.ide_doctor_cli import ide_main
 
 
 def _ids(catalog: dict, ide: str, category: str) -> set[str]:

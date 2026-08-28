@@ -10,10 +10,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
+from koruide.ide import normalize_ide_id
+
 from koru.queue.locking import ticket_claim_command_missing
 from koru.queue.runners import run_process
 from koru.queue.ticket import planfile_command
-from koruide.ide import normalize_ide_id
 
 yaml = cast(Any, importlib.import_module("yaml"))
 

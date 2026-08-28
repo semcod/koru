@@ -5,12 +5,12 @@ import os
 from pathlib import Path
 
 import pytest
-
-from koru.autonomous_cycle import _plugin_required_for_ide
-from koru.ide_router import resolve_ide_route
 from koruide.config import cached_config
 from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 from koruide.socket import default_socket_path
+
+from koru.autonomous_cycle import _plugin_required_for_ide
+from koru.ide_router import resolve_ide_route
 
 ROOT = Path(__file__).resolve().parents[1]
 MATRIX_IDES = ("vscode", "vscodium", "cursor", "windsurf", "antigravity", "jetbrains", "zed")

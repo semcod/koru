@@ -9,8 +9,9 @@ from pathlib import Path
 from typing import Any, cast
 from urllib.parse import unquote, urlparse
 
-from koru.wizard.project import _candidates_from_running_ide, propose_projects
 from koruide.ide import RunningIDE, detect_running_ides
+
+from koru.wizard.project import _candidates_from_running_ide, propose_projects
 
 _VSCODE_LIKE_IDE_DIRS: dict[str, tuple[str, ...]] = {
     "cursor": ("Cursor",),

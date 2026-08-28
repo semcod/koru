@@ -29,6 +29,9 @@ from typing import Any
 
 import pytest
 from gillm.injection import InjectionResult, InjectorError, OsInjectorProfile
+from koruide import daemon as koruide_daemon_mod
+from koruide.drive_orchestrator import DriveOrchestrator
+from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 
 from koru.autopilot import ide as ide_mod
 from koru.autopilot.client import AutopilotClient
@@ -36,9 +39,6 @@ from koru.autopilot.daemon import AutopilotDaemon
 from koru.autopilot.ide import RunningIDE
 from koru.autopilot.protocol import Message, decode, hello
 from koru.observability_writer import observability_event_store_path
-from koruide import daemon as koruide_daemon_mod
-from koruide.drive_orchestrator import DriveOrchestrator
-from koruide.plugin_version import EXPECTED_VSCODE_PLUGIN_VERSION
 
 # ---------------------------------------------------------------------------
 # Shared test plumbing

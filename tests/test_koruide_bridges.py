@@ -5,18 +5,19 @@ from __future__ import annotations
 import importlib
 import warnings
 
-from koru.autopilot import audit as legacy_audit_mod
-from koru.autopilot import config as legacy_config_mod
-from koru.autopilot import daemon as legacy_daemon_mod
-from koru.autopilot import host_setup as legacy_host_setup_mod
-from koru.autopilot import ide as legacy_ide_mod
-from koru.autopilot import plugin_installer as legacy_plugin_installer_mod
 from koruide import audit as koruide_audit_mod
 from koruide import config as koruide_config_mod
 from koruide import daemon as koruide_daemon_mod
 from koruide import host_setup as koruide_host_setup_mod
 from koruide import ide as koruide_ide_mod
 from koruide import plugin_installer as koruide_plugin_installer_mod
+
+from koru.autopilot import audit as legacy_audit_mod
+from koru.autopilot import config as legacy_config_mod
+from koru.autopilot import daemon as legacy_daemon_mod
+from koru.autopilot import host_setup as legacy_host_setup_mod
+from koru.autopilot import ide as legacy_ide_mod
+from koru.autopilot import plugin_installer as legacy_plugin_installer_mod
 
 with warnings.catch_warnings(record=True) as _bridge_deprecation_warnings:
     warnings.simplefilter("always", DeprecationWarning)

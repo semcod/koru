@@ -8,9 +8,9 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
+from koruide.client import KoruIDEClient
 
 from koru.ide_client import LegacyAutopilotClientAdapter
-from koruide.client import KoruIDEClient
 
 
 class _TransportStub:

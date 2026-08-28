@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 
 import pytest
-
-from koru import mcp_server
 from koruide.command_catalog import supported_catalog_ides
 from koruide.strategy_prompt import (
     STRATEGY_PROMPT_SCHEMA,
@@ -14,6 +12,8 @@ from koruide.strategy_prompt import (
     build_strategy_prompt,
     format_strategy_prompt_text,
 )
+
+from koru import mcp_server
 
 
 def test_build_strategy_prompt_default_returns_all_supported_ides() -> None:

@@ -4,7 +4,6 @@ from __future__ import annotations
 from unittest import mock
 
 import pytest
-
 from koruide.daemon.handlers_plugin_event import (
     _ack_plugin_event_without_handoff,
     _append_event,

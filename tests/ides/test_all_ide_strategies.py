@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from koruide.ides import get_strategy, strategy_ids
 
 _EXPECTED = frozenset(

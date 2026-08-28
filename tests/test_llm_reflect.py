@@ -7,6 +7,7 @@ import time
 from pathlib import Path  # noqa: F401
 
 import pytest
+from koruide.chat_history import ChatEvent
 
 from koru.llm_reflect import (
     ReflectionResult,
@@ -14,7 +15,6 @@ from koru.llm_reflect import (
     llm_reflect_enabled,
     reflect_on_chat,
 )
-from koruide.chat_history import ChatEvent
 
 
 def _event(ts_offset: float, type_: str, text: str) -> ChatEvent:

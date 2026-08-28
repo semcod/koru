@@ -4,7 +4,6 @@ from __future__ import annotations
 from unittest import mock
 
 import pytest
-
 from koruide.daemon.handlers_ack import (
     _annotated_plugin_ack_info,
     _plugin_ack_needs_os_fallback,

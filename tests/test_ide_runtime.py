@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from koruide import ide as koruide_ide_mod
+
 from koru import ide_runtime
 from koru.autopilot import host_setup as host_setup_mod
-from koruide import ide as koruide_ide_mod
 
 
 def test_build_host_setup_report_delegates_to_legacy_backend(monkeypatch) -> None:

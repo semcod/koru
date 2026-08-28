@@ -6,9 +6,8 @@ import os
 import unittest
 from unittest import mock
 
-from korullm.strategies.ide_chat import IdeChatStrategy
-
 from korullm import list_llm_strategy_ids, resolve_active_llm_strategy
+from korullm.strategies.ide_chat import IdeChatStrategy
 
 
 class RegistryTests(unittest.TestCase):

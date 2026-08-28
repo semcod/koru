@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import json
 
-from koru.autonomy_strategy.openrouter import OpenRouterStrategyResponse
 from koruide.command_picker import HeuristicPicker, OpenRouterPicker, pick_command_order
 from koruide.command_telemetry import CommandTelemetry
+
+from koru.autonomy_strategy.openrouter import OpenRouterStrategyResponse
 
 
 def test_heuristic_picker_orders_by_success_rate(tmp_path) -> None:

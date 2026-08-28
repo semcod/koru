@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from koru.autonomous_plugin import plugin_status_decision
 from koruide.ide import canonical_autopilot_ide_id
 from koruide.plugin_router import PluginRouter
+
+from koru.autonomous_plugin import plugin_status_decision
 
 
 def test_canonical_autopilot_ide_id_maps_lane_suffix() -> None:
