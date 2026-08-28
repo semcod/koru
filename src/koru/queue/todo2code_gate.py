@@ -10,6 +10,8 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from koru.queue.todo2code_support import build_pipeline_cmd
+
 
 def infer_project_verify_commands(project: Path) -> list[list[str]]:
     """Return all declared completion gates, or one conventional fallback."""
@@ -168,12 +170,8 @@ def run_todo2code_gate(
                 f"{shlex.join(verify)}: {detail[-4000:]}"
             )
 
-    # Reuse the exact deterministic pipeline contract used by discovery. The
-    # import is intentionally lazy so this gate stays cheap to inspect/use.
-    from koru.autonomy.todo2code_discovery import _build_pipeline_cmd
-
     output = project / ".intent-koru-gate"
-    analysed = _run(_build_pipeline_cmd(t2c, project, out_dir=output), project)
+    analysed = _run(build_pipeline_cmd(t2c, project, out_dir=output), project)
     if analysed.returncode != 0:
         detail = (analysed.stderr or analysed.stdout or "todo2code pipeline failed").strip()
         return False, f"todo2code pipeline failed ({analysed.returncode}): {detail[-4000:]}"

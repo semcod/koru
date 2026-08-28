@@ -17,6 +17,7 @@ from typing import Any
 import yaml
 
 from koru.queue.runners import _DEFAULT_LLM_MODEL
+from koru.queue.todo2code_support import config_value, t2c_executable
 from koru.queue.verify.legacy import VERIFY_COMMAND_HEADS, verify_command_from_criteria
 
 SUBACTOR_DEVELOPMENT_REPAIR = "subactor-development-repair"
@@ -271,11 +272,9 @@ def hydrate_todo2code_ticket(ticket: dict[str, Any], project: Path) -> dict[str,
     inputs.setdefault("worktree", True)
     inputs.setdefault("max_patch_attempts", 3)
     inputs.setdefault("risk_class", "R1")
-    from koru.autonomy.todo2code_discovery import _config_value
-
     contract = str(
         inputs.get("contract")
-        or _config_value("KORU_TODO2CODE_CONTRACT", project)
+        or config_value("KORU_TODO2CODE_CONTRACT", project)
         or ""
     ).strip()
     if contract:
@@ -297,9 +296,7 @@ def hydrate_todo2code_ticket(ticket: dict[str, Any], project: Path) -> dict[str,
         if re.fullmatch(r"DIAG-[a-f0-9]+", str(value))
     ]
     if not str(inputs.get("verify_command") or "").strip() and diagnostic_ids:
-        from koru.autonomy.todo2code_discovery import _t2c_executable
-
-        t2c = _t2c_executable(project)
+        t2c = t2c_executable(project)
         if t2c:
             # Verification runs in a temporary worktree of the target project.
             # A relative developer PYTHONPATH (commonly ``src``) would then
