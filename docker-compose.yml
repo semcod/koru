@@ -3,7 +3,6 @@ services:
     build:
       context: .
       target: production
-    image: koru:latest
     container_name: koru-test
     volumes:
       - ./test-data:/workspace
@@ -22,7 +21,6 @@ services:
     build:
       context: .
       target: development
-    image: koru:dev
     container_name: koru-dev
     volumes:
       - .:/app
@@ -44,7 +42,6 @@ services:
     build:
       context: .
       target: development
-    image: koru:dev
     volumes:
       - .:/app
     working_dir: /app
@@ -57,7 +54,9 @@ services:
 
   # External dependencies for testing
   planfile:
-    image: semcod/planfile:latest
+    build:
+      context: .
+      target: development
     container_name: planfile-test
     volumes:
       - ./test-data:/workspace
@@ -67,7 +66,9 @@ services:
       - deps
 
   regix:
-    image: semcod/regix:latest
+    build:
+      context: .
+      target: development
     container_name: regix-test
     volumes:
       - ./test-data:/workspace
@@ -77,7 +78,9 @@ services:
       - deps
 
   testql:
-    image: semcod/testql:latest
+    build:
+      context: .
+      target: development
     container_name: testql-test
     volumes:
       - ./test-data:/workspace
@@ -89,7 +92,6 @@ services:
   healing-webhook:
     build:
       context: ./services/healing-webhook
-    image: koru/healing-webhook:latest
     container_name: healing-webhook-test
     ports:
       - "8810:8810"

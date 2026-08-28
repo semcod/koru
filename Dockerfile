@@ -4,7 +4,7 @@
 # Keep floors aligned with pyproject.toml extras (see docs/docker-e2e-testing.md).
 # This image is a *queue/CLI* runtime, not a full desktop/noVNC stack.
 
-FROM python:3.12-slim AS base
+FROM python:3.12-slim@sha256:09f7da3bc104798d0afb40bc08d23ab2da20a76130cec1f2ef170848f5d85217 AS base
 
 WORKDIR /app
 

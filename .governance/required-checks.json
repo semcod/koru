@@ -1,0 +1,30 @@
+{
+  "circularGovernanceChecksIgnoredByValidator": [
+    "governance / enforce",
+    "governance / governance / enforce"
+  ],
+  "externalConsumers": [
+    {
+      "bindings": [
+        "DIRECT_PR_REQUIRED_CHECKS",
+        "DIRECT_PR_SCAN_CONFIG[\"wellmanifest/new-project\"].required_checks",
+        "bin/dispatch-direct-pr.sh resolve_required_checks"
+      ],
+      "mustRead": "governance/required-checks.json#/requiredCheckNames",
+      "name": "validator-agent",
+      "note": "External consumers must load requiredCheckNames from this file (or an equivalent generated export). Hardcoding a subset is a governance defect of the same class as ticket-025.",
+      "repository": "subactor/validator-agent"
+    },
+    {
+      "id": "main-governance-protection",
+      "mustMatch": "requiredCheckNames",
+      "name": "github-ruleset",
+      "note": "Ruleset lives outside the repository and cannot be read from CI without admin API. Align it manually with requiredCheckNames; CI gates the workflow side only."
+    }
+  ],
+  "repository": "semcod/koru",
+  "requiredCheckNames": ["test"],
+  "schema": "new-project.required-checks/v1",
+  "version": 1,
+  "workflowFile": ".github/workflows/ci.yml"
+}

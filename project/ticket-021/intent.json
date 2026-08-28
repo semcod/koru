@@ -1,0 +1,62 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-021",
+  "summary": "Upgrade governance adoption to new-project 0.19.5",
+  "workstream": "governance",
+  "classification": {"kind": "SERVICE", "priority": "P0", "origin": "requested"},
+  "allowedPaths": [
+    "project/ticket-021/**",
+    "project/TICKETS.md",
+    ".governance/**",
+    "AGENTS.md",
+    "project/governance-check.bat",
+    "project/governance-check.sh",
+    "project/new-ticket.sh",
+    "project/readme.sh",
+    "package.json",
+    "pyproject.toml",
+    "Dockerfile",
+    "docker-compose.yml"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e40b907d9871cfa8533d5405188f60e40e178f04",
+    "targetBranch": "main",
+    "outcome": "Koru adopts immutable new-project 0.19.5, releases integrated snapshot leases and governs packages/** as application code.",
+    "nonGoals": ["Change Koru runtime behavior", "Modify the published standard payload locally"],
+    "complexity": "L",
+    "estimatedMinutes": 30,
+    "budgets": {"maxImplementationFiles": 15, "maxAffectedComponents": 5, "maxPublicInterfaceChanges": 1, "maxRuntimeDependencies": 0},
+    "architecture": {
+      "status": "accepted",
+      "decision": "Upgrade through the standard's immutable adoption generator at published revision 88bc0b5d54ddd6e46cd9aa589779293180f36352.",
+      "components": [
+        {"name": "governance-package", "paths": [".governance/**"]},
+        {"name": "agent-host-contract", "paths": ["AGENTS.md", "CLAUDE.md", "GEMINI.md", ".cursor/**", ".githooks/**", ".aider.conf.yml", ".github/copilot-instructions.md"]},
+        {"name": "governance-entrypoints", "paths": ["project/**", "scripts/runtime.sh", "scripts/install-agent-hosts.sh", "wellmanifest_governance.py", "worktree-guard.yaml"]},
+        {"name": "governance-workflow", "paths": [".github/workflows/new-project-governance.yml"]},
+        {"name": "target-adoption-bindings", "paths": ["package.json", "pyproject.toml", "Dockerfile", "docker-compose.yml"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": ["Governance standard 0.19.5"],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the complete adoption commit; never mix standard revisions."
+    },
+    "runtimeDependencies": [],
+    "standardAdoption": {
+      "sourceRepository": "wellmanifest/new-project",
+      "fromRevision": "cc9b04673bbd85cb4e35fb683d288ef34be1485f",
+      "toRevision": "88bc0b5d54ddd6e46cd9aa589779293180f36352"
+    },
+    "validation": [
+      {"criterion": "AC-01", "commands": ["python3 scripts/create_adoption_lock.py --check"], "evidence": "Immutable adoption reports no drift."},
+      {"criterion": "AC-02", "commands": ["./project/governance-check.sh --actor agent"], "evidence": "Integrated snapshots no longer block the governed diff."},
+      {"criterion": "AC-03", "commands": ["python -m pytest focused governance and smoke tests"], "evidence": "Koru behavior remains green."}
+    ]
+  }
+}
