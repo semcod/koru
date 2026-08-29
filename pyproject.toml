@@ -104,8 +104,8 @@ dev = [
     "cryptography>=42.0,<50.0",
     "planfile>=0.1.117",
     "goal>=2.1.293",
-    "costs>=0.1.53",
-    "pfix>=0.1.60",
+    "costs>=0.1.53; python_version >= '3.9'",
+    "pfix>=0.1.60; python_version >= '3.10'",
     "tagi>=0.49.0",
 ]
 api = [

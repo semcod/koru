@@ -246,7 +246,7 @@ strategies:
   python:
     test: KORU_PYTEST_CRITICAL_XDIST=1 bash scripts/koru-pytest.sh --critical --quick
     build: python -m build
-    publish: twine upload dist/koru-{version}*
+    publish: twine upload --skip-existing dist/koru-{version}*
     publish_enabled: true
     dependencies:
       file: uv.lock

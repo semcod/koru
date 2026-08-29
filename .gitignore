@@ -28,7 +28,7 @@ node_modules
 __pycache__/
 *.py[codz]
 *$py.class
-
+.rescue
 # C extensions
 *.so
 
