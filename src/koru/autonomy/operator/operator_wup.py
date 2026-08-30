@@ -66,6 +66,9 @@ class WupHealthResult:
 
 
 _FAIL_STATUSES = {"down", "failed", "failure", "error"}
+_WUP_WATCH_LIVENESS_SECONDS = 180
+
+
 _INTERRUPTED_MARKERS = (
     "aborted",
     "interrupted",
@@ -418,6 +421,38 @@ def _ensure_wup_profiled_compose_services(
         )
 
 
+def _wup_watch_already_running(config: WupWatchConfig, *, stdio_format: str) -> bool:
+    """Skip spawning a second watcher when one is already alive.
+
+    The shared watcher (typically the ``c2004-wup-watch`` systemd user
+    service) publishes its contract files in ``.wup/``. A health snapshot
+    updated within the probe interval means a live instance owns them, so
+    spawning another watcher would duplicate probes and race on state files.
+    """
+    from koru.activity_log import activity
+
+    health_path = config.project / ".wup" / "service-health.json"
+    try:
+        mtime = health_path.stat().st_mtime
+    except OSError:
+        return False
+    age = time.time() - mtime
+    if age > _WUP_WATCH_LIVENESS_SECONDS:
+        return False
+    _wup_stdio_info(
+        "koru autonomous: WUP watch already running "
+        f"(service-health.json updated {int(age)}s ago) — skipping duplicate spawn",
+        fmt=stdio_format,
+    )
+    activity(
+        "WUP",
+        "watch skipped — already running",
+        fmt=stdio_format,
+        data={"project": str(config.project), "health_age_s": int(max(age, 0))},
+    )
+    return True
+
+
 def _start_wup_watch(
     config: WupWatchConfig,
     *,
@@ -478,6 +513,8 @@ def _start_wup_watch(
         enabled=topology_integration,
     ):
         _wup_stdio_info("koru autonomous: WUP watch disabled in topology", fmt=stdio_format)
+        return None
+    if _wup_watch_already_running(config, stdio_format=stdio_format):
         return None
     _ensure_wup_profiled_compose_services(config, stdio_format=stdio_format)
     command = _wup_watch_command(config)

@@ -5597,6 +5597,87 @@ def test_wup_subprocess_env_pins_planfile_command(tmp_path, monkeypatch) -> None
     assert env["PATH"].split(":")[0] == "/opt/planfile/bin"
 
 
+def _wup_watch_config(tmp_path: Path) -> "autonomous_wup_mod.WupWatchConfig":
+    return autonomous_wup_mod.WupWatchConfig(
+        enabled=True,
+        mode="testql",
+        project=tmp_path,
+        deps_file="deps.json",
+        scenarios_dir="testql-scenarios",
+        testql_bin="testql",
+        track_dir=".wup/tracks",
+        debounce=2,
+        cooldown=300,
+        cpu_throttle=0.8,
+        quick_limit=3,
+        config=None,
+    )
+
+
+def test_start_wup_watch_skips_when_shared_watcher_alive(tmp_path, monkeypatch) -> None:
+    (tmp_path / "wup.yaml").write_text("project:\n  name: test\n", encoding="utf-8")
+    (tmp_path / ".wup").mkdir()
+    (tmp_path / ".wup" / "service-health.json").write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(
+        autonomous_wup_mod.shutil,
+        "which",
+        lambda name: "/usr/bin/wup" if name == "wup" else None,
+    )
+
+    def fail_popen(*_args, **_kwargs):
+        raise AssertionError("Popen must not be called when a live watcher owns .wup state")
+
+    monkeypatch.setattr(autonomous_wup_mod.subprocess, "Popen", fail_popen)
+
+    config = _wup_watch_config(tmp_path)
+    assert autonomous_wup_mod._start_wup_watch(config, topology_integration=False) is None
+
+
+def test_start_wup_watch_spawns_when_health_state_stale(tmp_path, monkeypatch) -> None:
+    (tmp_path / "wup.yaml").write_text("project:\n  name: test\n", encoding="utf-8")
+    (tmp_path / ".wup").mkdir()
+    stale = tmp_path / ".wup" / "service-health.json"
+    stale.write_text("{}", encoding="utf-8")
+    import os
+    import time as _time
+
+    stale_timestamp = _time.time() - autonomous_wup_mod._WUP_WATCH_LIVENESS_SECONDS - 60
+    os.utime(stale, (stale_timestamp, stale_timestamp))
+
+    monkeypatch.setattr(
+        autonomous_wup_mod.shutil,
+        "which",
+        lambda name: "/usr/bin/wup" if name == "wup" else None,
+    )
+    monkeypatch.setattr(
+        autonomous_wup_mod,
+        "_ensure_wup_profiled_compose_services",
+        lambda *args, **kwargs: None,
+    )
+
+    from koru.queue.ticket import resolve_planfile_base_command
+
+    resolve_planfile_base_command(tmp_path)
+
+    popen_calls: list[list[str]] = []
+
+    class DummyProcess:
+        pid = 321
+
+    def fake_popen(command, cwd=None, env=None, **_kwargs):
+        popen_calls.append(command)
+        return DummyProcess()
+
+    monkeypatch.setattr(autonomous_wup_mod.subprocess, "Popen", fake_popen)
+
+    config = _wup_watch_config(tmp_path)
+    process = autonomous_wup_mod._start_wup_watch(config, topology_integration=False)
+
+    assert process is not None
+    assert popen_calls and popen_calls[0][:2] == ["wup", "watch"]
+
+
 def test_start_wup_watch_passes_playwright_env(tmp_path, monkeypatch) -> None:
     (tmp_path / "wup.yaml").write_text("project:\n  name: test\n", encoding="utf-8")
     (tmp_path / ".wup.env").write_text(
