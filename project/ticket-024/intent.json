@@ -1,0 +1,117 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-024",
+  "summary": "Synchronize architecture documentation contracts with code",
+  "workstream": "integration",
+  "allowedPaths": [
+    "project/ticket-024/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "docs/README.md",
+    "docs/package-extraction-plan.md",
+    "docs/adr/adr-auto-002-autonomous-decision-llm.md",
+    "docs/architecture/adr/001-canonical-namespaces.md",
+    "docs/architecture/adr/README.md",
+    "docs/architecture/autonomy-determinism-refactor-plan.md",
+    "docs/architecture/autonomy-mutation-inventory.yaml",
+    "docs/architecture/dependency-boundary-inventory.yaml",
+    "docs/architecture/documentation-conformance.toon.yaml",
+    "docs/architecture/volume-reduction-plan.yaml"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "58c17b255b7e10a590f4aafe08ab011a5b3d847f",
+    "targetBranch": "main",
+    "outcome": "Architecture documentation and its machine-readable DSL describe the current Koru source tree and preserve a reproducible backlog for the remaining documentation refresh",
+    "nonGoals": [
+      "Change runtime source, tests, schemas or dependency metadata",
+      "Rewrite root, package, plugin, example or generated project documentation whose paths are not owned by the integration workstream",
+      "Treat heuristic empty-section or unknown-symbol findings as automatic deletion instructions",
+      "Install or modify autogrammar or semcod tools",
+      "Change public interfaces or runtime behavior"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 10,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use a compact, code-derived documentation-conformance DSL as the reproducible baseline; repair only the architecture contract slice and queue all other documentation groups as bounded follow-ups",
+      "components": [
+        {
+          "name": "architecture-documentation-contracts",
+          "paths": [
+            "docs/README.md",
+            "docs/package-extraction-plan.md",
+            "docs/adr/adr-auto-002-autonomous-decision-llm.md",
+            "docs/architecture/adr/001-canonical-namespaces.md",
+            "docs/architecture/adr/README.md",
+            "docs/architecture/autonomy-determinism-refactor-plan.md",
+            "docs/architecture/autonomy-mutation-inventory.yaml",
+            "docs/architecture/dependency-boundary-inventory.yaml",
+            "docs/architecture/documentation-conformance.toon.yaml",
+            "docs/architecture/volume-reduction-plan.yaml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [
+        "Add a non-executable koru.documentation-conformance/v1 documentation DSL derived from current code and documentation scans"
+      ],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the ticket-024 documentation commit; no runtime or authority state is affected"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "sumd map . --stdout",
+          "docval scan docs --project . --no-llm --output /tmp/koru-docval.json",
+          "code2docs validate . --pattern 'docs/**/*.md'"
+        ],
+        "evidence": "project/ticket-024/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -c \"import pathlib,yaml; [yaml.safe_load(pathlib.Path(p).read_text()) for p in ('docs/architecture/autonomy-mutation-inventory.yaml','docs/architecture/dependency-boundary-inventory.yaml','docs/architecture/documentation-conformance.toon.yaml','docs/architecture/volume-reduction-plan.yaml')]\""
+        ],
+        "evidence": "project/ticket-024/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python -m pytest -q tests/test_autonomy_mutation_inventory.py tests/test_dependency_boundary_inventory.py tests/test_volume_reduction_plan.py"
+        ],
+        "evidence": "project/ticket-024/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "code2docs validate . --pattern 'docs/architecture/**/*.md' --strict",
+          "rg -n 'src/korullm' docs/adr docs/architecture docs/package-extraction-plan.md"
+        ],
+        "evidence": "project/ticket-024/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-06",
+        "commands": [
+          "./project/governance-check.sh",
+          "git diff --check",
+          "docker compose config --quiet"
+        ],
+        "evidence": "project/ticket-024/ai-codex-logs.txt"
+      }
+    ]
+  }
+}

@@ -14,14 +14,16 @@ refactor automation system for multi-repo workspaces.
 | Understand queue lifecycle and retries | [`planfile-execution-gateway.md`](./planfile-execution-gateway.md) | [`planfile-llm-guide.md`](./planfile-llm-guide.md) |
 | Run Subactor development repair | [`subactor-development-repair-template.md`](./subactor-development-repair-template.md) | [`architecture/dependency-boundary-inventory.yaml`](./architecture/dependency-boundary-inventory.yaml) |
 | Change autonomy architecture | [`architecture/autonomy-determinism-refactor-plan.md`](./architecture/autonomy-determinism-refactor-plan.md) | [`architecture/adr/README.md`](./architecture/adr/README.md) |
+| Audit documentation against code | [`architecture/documentation-conformance.toon.yaml`](./architecture/documentation-conformance.toon.yaml) | [`architecture/volume-reduction-plan.yaml`](./architecture/volume-reduction-plan.yaml) |
 
 `TODO.md` is only for active work. Completed implementation and documentation
 changes are recorded in `CHANGELOG.md`.
 
 ## Architecture (autonomy / determinism)
 
-- **[`architecture/autonomy-determinism-refactor-plan.md`](./architecture/autonomy-determinism-refactor-plan.md)** — Subactor-like governance for Koru (intent → grant → verify); ~18 PRs; **docs only until PR1**.
+- **[`architecture/autonomy-determinism-refactor-plan.md`](./architecture/autonomy-determinism-refactor-plan.md)** — historical 18-unit autonomy roadmap; PR1 namespace ownership is delivered and later units must be checked against current code before execution.
 - **[`architecture/adr/`](./architecture/adr/README.md)** — ADR stubs AD-001…AD-006 (namespaces, SSOT, ExecutionPlan, grant/manifest, worktree, remote mTLS).
+- **[`architecture/documentation-conformance.toon.yaml`](./architecture/documentation-conformance.toon.yaml)** — reproducible `sumd`/`docval`/`code2docs` baseline and ordered documentation-refresh queue.
 
 - **[`koru-fleet.md`](./koru-fleet.md)** — `koru fleet bootstrap` / `up` / `ls`:
   multi-project workspace init + one supervisor for every koru-managed project
@@ -96,7 +98,8 @@ For LLM agents starting a session in a koru-driven repository:
    layer (`coru`) that keeps user-facing commands stable while `koruenv` + `koru`
    internals can be refactored independently.
 17. **[`package-extraction-plan.md`](./package-extraction-plan.md)** — practical,
-   incremental plan for moving selected modules from `src` to `packages/*`.
+   dependency-first plan for removing duplicate source roots and keeping only
+   Koru-owned mechanisms in this checkout.
 18. **[`architecture/dependency-boundary-inventory.yaml`](./architecture/dependency-boundary-inventory.yaml)** —
    validated DSL for dependency ownership, typed boundary contracts and the
    dependency-first extraction order across `semcod/*`, `wronai/*` and TestQL.
@@ -241,7 +244,10 @@ Complete index of documentation in this directory. Start with
 | [`desktop-uri-orchestration.md`](./desktop-uri-orchestration.md) | nlp2uri MCP bridge (PL) |
 | [`plans/nlp2uri-koruide-integration-refactor-plan.md`](./plans/nlp2uri-koruide-integration-refactor-plan.md) | nlp2uri ↔ koruide refactor plan (PL) |
 | [`package-extraction-plan.md`](./package-extraction-plan.md) | `packages/*` extraction plan |
+| [`architecture/documentation-conformance.toon.yaml`](./architecture/documentation-conformance.toon.yaml) | Code-derived documentation baseline and refresh queue |
+| [`architecture/autonomy-mutation-inventory.yaml`](./architecture/autonomy-mutation-inventory.yaml) | Canonical source-root, capability and mutation inventory |
 | [`architecture/dependency-boundary-inventory.yaml`](./architecture/dependency-boundary-inventory.yaml) | Validated ownership/contracts/extraction DSL |
+| [`architecture/volume-reduction-plan.yaml`](./architecture/volume-reduction-plan.yaml) | Current checkout-volume baseline and reduction stages |
 
 ### Tooling & pipeline
 

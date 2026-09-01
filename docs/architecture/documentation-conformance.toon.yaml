@@ -1,0 +1,152 @@
+# koru | 1469f 264786L | python:1203,typescript:184,shell:74,javascript:3,go:2,less:1,rust:1,css:1 | 2026-09-01
+# generated-by: autogrammar/sumd 0.3.60; normalized compact documentation baseline
+# stats: 8819 func | 819 cls | CC̄=3.0 | critical:339 | cycles:0
+# documentation: 125 files under docs; 95 Markdown files; ticket-024 slice
+schema: koru.documentation-conformance/v1
+captured_on: "2026-09-01"
+base_sha: 58c17b255b7e10a590f4aafe08ab011a5b3d847f
+authority: documentation_only
+
+code_map:
+  generator: autogrammar/sumd
+  version: 0.3.60
+  command: sumd map . --stdout
+  projection: compact_header
+  normalization: Ignore the progress line, normalize the checkout basename to koru, and retain the project and stats headers.
+  metrics:
+    indexed_files: 1469
+    indexed_lines: 264786
+    python_modules: 1203
+    functions: 8819
+    classes: 819
+    mean_cyclomatic_complexity: 3.0
+    critical_functions: 339
+    dependency_cycles: 0
+
+documentation_baseline:
+  files_under_docs: 125
+  markdown_files: 95
+  tracked_bytes_with_root_readme: 922052
+  docval:
+    tool: semcod/docval
+    version: 0.1.5
+    command: docval scan docs --project . --no-llm
+    sections: 1704
+    valid: 1386
+    invalid: 9
+    outdated: 2
+    orphaned: 4
+    heuristic_empty: 281
+    health_percent: 81.3
+  code2docs:
+    tool: semcod/code2docs
+    version: 3.0.34
+    command: code2docs validate . --pattern 'docs/**/*.md'
+    broken_links: 14
+    malformed_tables: 3
+    duplicate_headings: 36
+
+tool_limits:
+  - tool: semcod/code2llm
+    version: 0.5.176
+    status: unavailable
+    reason: The current CLI imports the removed streaming_analyzer.STRATEGY_QUICK compatibility symbol.
+    handling: Recorded as a tool defect; sumd provides the deterministic code-map source for this slice.
+  - tool: semcod/code2docs
+    version: 3.0.34
+    status: source_checkout_fallback
+    reason: The installed entry point does not resolve its code2llm dependency.
+    handling: Validation uses matching semcod/code2docs and semcod/code2llm sources on PYTHONPATH.
+
+findings:
+  - id: architecture.deleted_source_root
+    severity: error
+    baseline_count: 3
+    target_count: 0
+    evidence:
+      - docs/architecture/autonomy-mutation-inventory.yaml
+      - docs/architecture/dependency-boundary-inventory.yaml
+      - docs/architecture/volume-reduction-plan.yaml
+    resolution: Remove src/korullm as a source root while retaining the published korullm dependency in prose.
+  - id: architecture.contract_tests
+    severity: error
+    baseline_failed: 4
+    baseline_passed: 19
+    baseline_subtests_passed: 857
+    target_failed: 0
+    tests:
+      - tests/test_autonomy_mutation_inventory.py
+      - tests/test_dependency_boundary_inventory.py
+      - tests/test_volume_reduction_plan.py
+  - id: architecture.markdown_tables
+    severity: error
+    baseline_count: 2
+    target_count: 0
+    evidence:
+      - docs/architecture/adr/README.md
+      - docs/architecture/autonomy-determinism-refactor-plan.md
+
+slices:
+  - order: 1
+    id: architecture_contracts
+    status: validated
+    ticket: ticket-024
+    owned_paths: docs/**
+    files: 10
+    goal: Synchronize architecture DSLs, current namespace prose and the documentation index.
+  - order: 2
+    id: documentation_navigation
+    status: queued
+    owned_paths: docs/**
+    goal: Repair remaining broken local links and malformed tables outside the architecture slice.
+  - order: 3
+    id: llm_tool_mirrors
+    status: queued
+    owned_paths: docs/llm-tools/**
+    goal: Reconcile mirrored tool documentation and remove links to machine-local session files.
+  - order: 4
+    id: operational_symbol_contracts
+    status: queued
+    owned_paths: docs/**
+    goal: Verify CLI, configuration, protocol and API claims against current public symbols and focused tests.
+  - order: 5
+    id: repository_wide_documentation_ownership
+    status: blocked_by_governance
+    owned_paths: []
+    goal: Assign an owning workstream before editing root, package, plugin, example or project-generated documentation.
+
+after_slice:
+  status: validated
+  docs_files: 126
+  contract_tests:
+    passed: 21
+    failed: 0
+    subtests_passed: 857
+  full_python_suite:
+    passed: 3640
+    failed: 3
+    skipped: 15
+    deselected: 164
+    subtests_passed: 947
+    unrelated_failures:
+      - tests/test_ide_doctor_cli.py::test_ide_doctor_treats_auto_instance_as_selected_ide
+      - tests/test_pyproject_metadata.py::test_base_runtime_dependencies_stay_small
+      - tests/test_pyproject_metadata.py::test_all_extra_matches_union_of_other_extras
+  architecture_code2docs:
+    files: 9
+    issues: 0
+  docval:
+    files: 95
+    sections: 1704
+    valid: 1387
+    invalid: 9
+    outdated: 1
+    orphaned: 4
+    heuristic_empty: 281
+    health_percent: 81.4
+  repository_code2docs:
+    files: 95
+    broken_links: 14
+    malformed_tables: 1
+    duplicate_headings: 36
+  note: Remaining repository findings are retained for slices 2-5 and are not hidden by this architecture repair.

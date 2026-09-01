@@ -1,10 +1,12 @@
 # Package Extraction Plan (map-driven, dependency-first)
 
-> Updated 2026-07-19. The old rule “move `src` to `packages/*`” did not reduce
+> Updated 2026-09-01. The old rule “move `src` to `packages/*`” did not reduce
 > the repository and encouraged parallel namespaces. The quantitative source
 > of truth is now
 > [`architecture/volume-reduction-plan.yaml`](architecture/volume-reduction-plan.yaml),
-> backed by `project/map.toon.yaml` and a CI schema contract.
+> backed by
+> [`architecture/documentation-conformance.toon.yaml`](architecture/documentation-conformance.toon.yaml)
+> and CI schema contracts.
 
 Goal: reduce the Koru checkout and production surface while keeping the `koru`
 and compatibility `coru` UX stable.
@@ -21,13 +23,16 @@ then dependency-first releases with one compatibility release.
 - `koru`
 - `koruapi`
 - `korudsl`
-- `koruenv` (already extracted, stale leftovers should not be canonical)
-- `koruide`
-- `korullm`
 - `korumesh`
 - `koruobserve`
-- `koruos` *(deprecated shim → `gillm.focus`; remove after two releases)*
+- `koruos` *(compatibility shim → `gillm.focus`; remove after two releases)*
 - `koruvision`
+
+This list is enforced by
+[`architecture/autonomy-mutation-inventory.yaml`](architecture/autonomy-mutation-inventory.yaml).
+`koruenv` and `koruide` live under `packages/*/src`, while `korullm` is a
+published core dependency declared in `pyproject.toml`; none is a current
+top-level source root under `src/`.
 
 ## Previous extraction list (reclassified)
 
@@ -43,8 +48,11 @@ then dependency-first releases with one compatibility release.
 4. `koruapi` and `korudsl` — keep. They are Koru facade/domain authority, not
    dependency mechanisms.
 
-5. `korullm` — move provider registry/transport to `semcod/tillm`; keep Koru's
-   orchestration decision and `ProposalEnvelope` validation.
+5. `korullm` — source-root extraction is complete: Koru imports the published
+   `korullm>=0.1.0` dependency and must not recreate `src/korullm`. The
+   remaining local `src/koru/tillm_bridge.py` adapter delegates shell-client
+   mechanics to `semcod/tillm`; Koru keeps orchestration decisions and
+   `ProposalEnvelope` validation.
 
 6. `korumesh` — defer until a second non-Koru consumer establishes a protocol
    owner.

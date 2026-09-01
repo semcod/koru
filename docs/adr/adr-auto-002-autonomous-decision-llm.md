@@ -2,8 +2,15 @@
 
 - Status: **Phase 1-3 implemented; Phase 4 wired (reflection runtime + advisory hooks)**
 - Date: 2026-05-25
-- Updated: 2026-05-26
-- Related: `koru.yaml` `autonomy.strategy.planning_assistant`, `korullm`, `decision_engine.py`
+- Updated: 2026-09-01
+- Related: `koru.yaml` `autonomy.strategy.planning_assistant`, external
+  `korullm>=0.1.0`, `src/koru/decision_engine.py`
+
+> Current-state note: this ADR records the phased design that was implemented
+> in May 2026. The former in-repository `korullm/` source root has since been
+> extracted; current Koru imports the published `korullm` dependency. Module
+> rows below describe their phase-time role unless an explicit current path is
+> shown.
 
 ## Kontekst
 
@@ -217,7 +224,7 @@ class ActionPlan:
 | `decision_engine.py` | Dodaj planning_llm jako opcjonalne źródło | 3 |
 | `reflection_policy.py` | Wywołaj `planning_llm.reflect_on_chat()` | 4 |
 | `autonomy_strategy/defaults.py` | Rozszerz `planning_assistant` config | 3 |
-| `korullm/` | Dodaj `openrouter` strategy | 3 |
+| published `korullm` dependency | Model strategy and typed invocation boundary (formerly local `korullm/`) | 3 |
 | `autonomous_cycle_drive_retry.py` | Verification verdict wpływa na retry | 1 |
 | `autonomy/post_run_verify.py` | Integracja z verification_engine | 1 |
 
@@ -295,4 +302,5 @@ mierzalną wartość. Faza 1 jest zero-cost (brak LLM), Faza 3 wymaga
 - OpenRouter koszt ~$0.01/ticket przy Qwen3-coder-next
 - IDE LLM pozostaje executorem (generuje kod), koru jest orchestratorem
 - Heurystyki zawsze mają veto (bezpieczeństwo)
-- Istniejąca architektura (strategy, decision_engine, korullm) rozszerzana, nie zastępowana
+- Istniejąca architektura (`autonomy_strategy`, `decision_engine` and the
+  published `korullm` dependency) is extended rather than replaced

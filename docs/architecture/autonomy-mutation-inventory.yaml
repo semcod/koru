@@ -63,12 +63,6 @@ namespaces:
       - packages/koruide/src/koruide
     owns: IDE control-plane, daemon protocol, command catalog, and plugins.
     must_not_own: Ticket prioritization, intent registry, or grants.
-  - id: korullm
-    boundary: koru
-    roots:
-      - src/korullm
-    owns: Model invocation and typed model-facing integration helpers.
-    must_not_own: Approval, capability policy, or direct mutation.
   - id: korumesh
     boundary: koru
     roots:
