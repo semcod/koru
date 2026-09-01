@@ -64,7 +64,7 @@ behavior is changed.
 - Stage 1 protected revert: [#57](https://github.com/semcod/koru/pull/57), exact
   head `dcf47f0ebfeee9227450a0045fa4b8050921f558`, validator run `33519533252`,
   review `5079288844`, merge `4de42dc35b6fc3cd883c21fad6fd3760cf6afe00`.
-- Stage 2 corrected closure: pending publication.
+- Stage 2 corrected closure: [#58](https://github.com/semcod/koru/pull/58)
 
 ## Participants
 

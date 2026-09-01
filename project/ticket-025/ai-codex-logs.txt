@@ -23,3 +23,4 @@
 2026-09-01 MERGE validator-agent explicitly merged PR #55 as f841c613c7fdb3c51b5147cc50c4d0d8f93bd56b; protected path latency 167 seconds, SLO 300 seconds met
 2026-09-01 INCIDENT PR #56 merged before protected approval; validator run 33517867410 failed closed with POST_APPROVAL_RECEIPT_MISSING
 2026-09-01 REPAIR protected PR #57 exact head dcf47f0ebfeee9227450a0045fa4b8050921f558 received review 5079288844 and merged as 4de42dc35b6fc3cd883c21fad6fd3760cf6afe00, neutralizing every PR #56 effect before corrected reclosure
+2026-09-01 RECLOSURE opened protected correction PR https://github.com/semcod/koru/pull/58

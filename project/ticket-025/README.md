@@ -56,6 +56,7 @@ the changed-evidence test confirms a new artifact SHA remains eligible.
 - Governance-only PR #56 was merged before protected review and is not trusted
   evidence. Protected PR #57 neutralized all of its effects at exact head
   `dcf47f0ebfeee9227450a0045fa4b8050921f558` before this corrected closure.
+- Corrected governance closure: [#58](https://github.com/semcod/koru/pull/58).
 
 ## Participants
 

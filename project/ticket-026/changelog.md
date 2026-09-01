@@ -22,3 +22,4 @@
 - Reapply ticket-025 closure with truthful incident evidence after the revert.
 - Validate both stages with governance, diff and Docker gates and confirm no
   abandoned remote branch remains before stage-2 publication.
+- Open stage-2 corrected closure PR #58.
