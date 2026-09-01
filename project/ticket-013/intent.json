@@ -19,6 +19,11 @@
     "project/ticket-021/ai-cursor.md",
     "project/ticket-021/ai-cursor-logs.txt",
     "project/ticket-021/changelog.md",
+    "project/ticket-022/README.md",
+    "project/ticket-022/intent.json",
+    "project/ticket-022/ai-cursor.md",
+    "project/ticket-022/ai-cursor-logs.txt",
+    "project/ticket-022/changelog.md",
     "project/ticket-013/**",
     "TODO.md",
     "project/TICKETS.md"
@@ -29,7 +34,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "cd95ca6c314bcc2e214db7eeb5918c87b195ae71",
+    "acceptedBaseSha": "d40f6fd94914c4cda913df038aa6ee1c3dddad56",
     "targetBranch": "main",
     "outcome": "Close merged tickets 019 and 020 and park incomplete ticket 021 without changing runtime code",
     "nonGoals": ["Change runtime code", "Change dependency policy"],
@@ -53,6 +58,7 @@
             "project/ticket-019/**",
             "project/ticket-020/**",
             "project/ticket-021/**",
+            "project/ticket-022/**",
             "project/ticket-013/**",
             "TODO.md",
             "project/TICKETS.md"
@@ -68,7 +74,7 @@
     "runtimeDependencies": [],
     "validation": [
       {
-        "criterion": "AC-05",
+        "criterion": "AC-06",
         "commands": ["./project/governance-check.sh", "git diff --check"],
         "evidence": "project/ticket-013/ai-codex-logs.txt"
       }

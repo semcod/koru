@@ -1,0 +1,4 @@
+2026-09-01T00:03:00+02:00
+Reconciliation evidence: initial work-lifecycle implementation is present on main in ef5ccace, 6a80fc24 and d40f6fd9.
+The ticket remained PLAN / WAIT_FOR_APPROVAL with an invalid intent; implementation presence is not completion evidence.
+Ticket state remains non-reserving PLAN / WAIT_FOR_APPROVAL pending a dedicated approved repair.

@@ -17,7 +17,9 @@ rather than manufacturing completion evidence.
 1. Preserve the prior exact merged evidence for tickets 011 and 012.
 2. Confirm the exact merged heads and protected checks for tickets 019 and 020.
 3. Close tickets 019 and 020 and park incomplete ticket 021 in planning.
-4. Run governance and publish through exact-head validation.
+4. Reconcile a concurrent, out-of-sequence ticket-022 merge without claiming
+   its implementation is complete.
+5. Run governance and publish through exact-head validation.
 
 ## Actual changes
 
@@ -29,6 +31,9 @@ rather than manufacturing completion evidence.
 - Closed tickets 019 and 020 against that historical exact-head evidence.
 - Returned ticket 021 to `PLAN / WAIT_FOR_APPROVAL` with a valid bounded
   intent after current-main Ruff exposed incomplete CI-pipeline work.
+- Refreshed the branch to `main@d40f6fd9` after a concurrent merge allocated
+  ticket 022, and normalized that unfinished workflow ticket to a valid
+  non-reserving plan.
 
 ## Blockers
 

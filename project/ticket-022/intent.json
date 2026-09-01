@@ -2,7 +2,7 @@
   "schema": "new-project.intent/v2",
   "ticket": "ticket-022",
   "summary": "Koru work start/finish workflow",
-  "workstream": "workflow",
+  "workstream": "application",
   "allowedPaths": [
     "project/ticket-022/**",
     "project/TICKETS.md",
@@ -20,7 +20,61 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
+    "acceptedBaseSha": "cd95ca6c314bcc2e214db7eeb5918c87b195ae71",
     "targetBranch": "main",
-    "outcome": "koru work start/finish binds planfile ticket, git branch, CI, and validator-agent publish."
+    "outcome": "Koru work start/finish follows ticket-first Planfile synchronization, local verification, exact-head validator review, and explicit merge boundaries.",
+    "nonGoals": [
+      "Treat GitHub Actions capacity as the verification boundary",
+      "Let Koru approve or merge its own pull request",
+      "Create a branch before ticket allocation and Planfile synchronization"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "proposed",
+      "decision": "Keep ticket and Planfile state authoritative before branch creation; run CI locally and leave trusted exact-head approval and merge to validator-agent.",
+      "components": [
+        {
+          "name": "work-lifecycle",
+          "paths": [
+            "src/koru/work/**",
+            "src/koru/cli_work.py",
+            "src/koru/cli.py",
+            "src/koru/ci/publication.py",
+            "tests/test_work_lifecycle.py",
+            "tests/test_cli.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": true,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the work-lifecycle implementation while retaining the ticket evidence."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["python -m pytest -q tests/test_work_lifecycle.py tests/test_cli.py"],
+        "evidence": "project/ticket-022/ai-cursor-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python -m ruff check src/koru/work src/koru/cli_work.py tests/test_work_lifecycle.py",
+          "./project/governance-check.sh",
+          "git diff --check",
+          "docker compose config --quiet"
+        ],
+        "evidence": "project/ticket-022/ai-cursor-logs.txt"
+      }
+    ]
   }
 }

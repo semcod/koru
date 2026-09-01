@@ -22,3 +22,16 @@ git diff --check
 PASS
 docker compose config --quiet
 PASS
+
+2026-09-01T00:03:00+02:00
+Concurrent target movement: main advanced cd95ca6c..d40f6fd9.
+The new main allocated ticket-022 for the Koru work lifecycle while the local POA/Logs plan used the same unpublished ID.
+Reconciliation action: preserve main history, refresh PR #44, normalize main ticket-022 as PLAN / WAIT_FOR_APPROVAL, and require the POA/Logs work to allocate a new ID.
+
+2026-09-01T00:04:00+02:00
+./project/governance-check.sh
+GOV-PASS: passed (0 errors, 0 warnings)
+git diff --check
+PASS
+docker compose config --quiet
+PASS

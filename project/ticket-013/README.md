@@ -22,7 +22,9 @@ non-reserving planning state.
   and protected checks were confirmed.
 - [x] AC-04: Ticket 021 is retained as unfinished work with a valid bounded
   intent and no active write-scope reservation.
-- [x] AC-05: Governance, Docker configuration and diff checks pass without
+- [x] AC-05: Concurrent ticket 022 is retained as unfinished work with a valid
+  bounded intent and no active write-scope reservation.
+- [x] AC-06: Governance, Docker configuration and diff checks pass without
   implementation changes.
 
 ## Participants
