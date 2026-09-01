@@ -2,7 +2,7 @@
   "schema": "new-project.intent/v2",
   "ticket": "ticket-027",
   "summary": "Work commit notify and LLM provenance registry",
-  "workstream": "koru-work-observability",
+  "workstream": "application",
   "allowedPaths": [
     "project/ticket-027/**",
     "src/koru/notifications/**",
