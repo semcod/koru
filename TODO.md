@@ -1,5 +1,17 @@
 # Governance roadmap
 
+- [x] [`ticket-020`](project/ticket-020/README.md) — restore the queue
+  lower-layer import contract. State: `DONE / DONE`; exact PR #42 head passed
+  `onedev/local-verify` and exact-head validator review.
+- [x] [`ticket-019`](project/ticket-019/README.md) — restore green Ruff CI for
+  the delivered import-order scope. State: `DONE / DONE`; exact PR #39 head
+  passed protected smoke and local verification.
+- [ ] [`ticket-021`](project/ticket-021/README.md) — finish local CI and
+  exact-head validator publication. State: `PLAN / WAIT_FOR_APPROVAL`; current
+  Ruff evidence records the incomplete import repair.
+- [ ] [`ticket-022`](project/ticket-022/README.md) — finish the ticket-first
+  `koru work start/finish` lifecycle. State: `PLAN / WAIT_FOR_APPROVAL`;
+  already-present code is retained without manufacturing approval evidence.
 - [x] [`ticket-017`](project/ticket-017/README.md) — make MCP ticket execution
   exact-target and preflight the central SubLLM route before Planfile lifecycle
   mutation. State: `DONE`; classification:

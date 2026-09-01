@@ -1,8 +1,8 @@
 {
   "schema": "new-project.intent/v2",
   "ticket": "ticket-021",
-  "summary": "Koru CI publish pipeline",
-  "workstream": "ci",
+  "summary": "Finish local CI and exact-head validator publication",
+  "workstream": "application",
   "allowedPaths": [
     "project/ticket-021/**",
     "project/TICKETS.md",
@@ -19,15 +19,53 @@
   ],
   "forbiddenPaths": ["project/ticket-*/user-*.md"],
   "stacks": ["python"],
-  "dependsOn": [],
+  "dependsOn": ["ticket-019", "ticket-020"],
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
     "acceptedBaseSha": "db65f25999112b87be3e967f06b267d7fa7fc1dc",
     "targetBranch": "main",
-    "outcome": "Koru exposes koru ci run/gates/publish for local CI and validator-agent publication.",
-    "nonGoals": ["Replace validator-agent as merge trust root", "Auto-merge without explicit --merge"],
-    "complexity": "M",
-    "estimatedMinutes": 90
+    "outcome": "Koru exposes lint-clean local CI commands and publishes only after local OneDev verification plus exact-head validator approval.",
+    "nonGoals": [
+      "Replace validator-agent as merge trust root",
+      "Auto-merge without explicit --merge",
+      "Depend on GitHub Actions capacity as the verification boundary"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 12,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "proposed",
+      "decision": "Keep execution local, publish onedev/local-verify for the exact head, and delegate deterministic approval and merge to validator-agent.",
+      "components": [
+        {
+          "name": "ci-publication-boundary",
+          "paths": ["src/koru/ci/**", "src/koru/cli_ci.py", "src/koruapi/mcp_server_planfile.py", "tests/test_ci_pipeline.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": ["koru ci run|gates|publish"],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the CI publication changes while retaining the ticket evidence."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["python -m ruff check src tests", "python -m pytest -q tests/test_ci_pipeline.py tests/test_cli.py"],
+        "evidence": "project/ticket-021/ai-cursor-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["./project/governance-check.sh", "git diff --check", "docker compose config"],
+        "evidence": "project/ticket-021/ai-cursor-logs.txt"
+      }
+    ]
   }
 }

@@ -16,8 +16,12 @@ To be completed after reading human-owned input and the ticket preprompt.
 
 ## Actual changes
 
-- None; waiting for approval.
+- Initial work-lifecycle implementation commits are already present on
+  `main`, but were not delivered from an approved bounded ticket state.
+- Governance reconciliation retained the work as a plan instead of creating
+  false completion evidence.
 
 ## Blockers
 
-- Human approval is required before implementation.
+- Approval of the amended intent and terminal ticket 021 are required before
+  any repair or completion work.
