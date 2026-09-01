@@ -23,7 +23,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "db8cd2e3c4706615388d4fbf8219ebeacd0c918a",
+    "acceptedBaseSha": "59c197a60c465a25460f0eefb960504d7175dbf6",
     "targetBranch": "main",
     "outcome": "Standalone nlp2koru and nlp2coru installations obtain the central korullm transport and their documentation describes the policy-owned routes delivered by ticket-032.",
     "nonGoals": [
