@@ -69,6 +69,17 @@ def _commit_planfile_sync(project: Path, ticket_id: str, message: str) -> str | 
         detail = (commit.stderr or commit.stdout or "").strip()
         raise RuntimeError(f"planfile commit failed: {detail}")
     sha = _run_git(project, ["rev-parse", "HEAD"]).stdout.strip()
+    try:
+        from koru.work.llm_provenance import notify_work_commit
+
+        notify_work_commit(
+            project,
+            ticket_id=ticket_id,
+            commit_sha=sha or None,
+            message=subject,
+        )
+    except Exception:
+        pass
     return sha or None
 
 

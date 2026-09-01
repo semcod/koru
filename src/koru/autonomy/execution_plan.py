@@ -118,11 +118,30 @@ def _profile_matches(profile: dict[str, Any], *, ticket: dict[str, Any] | None, 
     return bool(labels_any or signals_any or patterns)
 
 
+def _profile_order(profiles_doc: dict[str, Any]) -> tuple[str, ...]:
+    defaults = profiles_doc.get("defaults")
+    if isinstance(defaults, dict):
+        order = defaults.get("profile_order")
+        if isinstance(order, list):
+            return tuple(str(item).strip() for item in order if str(item).strip())
+    return ("cc_hotspot_refactor", "god_module_split")
+
+
+def _fallback_profile_id(profiles_doc: dict[str, Any]) -> str:
+    defaults = profiles_doc.get("defaults")
+    if isinstance(defaults, dict):
+        token = str(defaults.get("fallback_profile") or "").strip()
+        if token:
+            return token
+    return "god_module_split"
+
+
 def _select_profile(ticket: dict[str, Any] | None, phase: str) -> tuple[str | None, dict[str, Any] | None]:
-    profiles = _load_task_profiles().get("profiles") or {}
+    profiles_doc = _load_task_profiles()
+    profiles = profiles_doc.get("profiles") or {}
     if not isinstance(profiles, dict):
         return None, None
-    profile_order = ("cc_hotspot_refactor", "god_module_split")
+    profile_order = _profile_order(profiles_doc)
     ordered_ids = [pid for pid in profile_order if pid in profiles]
     ordered_ids.extend(pid for pid in profiles if pid not in ordered_ids)
     for profile_id in ordered_ids:
@@ -301,6 +320,12 @@ def compile_execution_plan(project: Path) -> ExecutionPlan:
         "skipped_likely_complete": _count_skipped_complete(project),
         "heuristics": heuristics,
     }
+    try:
+        from koru.work.llm_provenance import resolve_work_llm_context
+
+        signals["llm"] = resolve_work_llm_context(project).to_dict()
+    except Exception:
+        pass
 
     steps: list[ExecutionStep] = []
     selected: dict[str, Any] | None = None
@@ -312,9 +337,10 @@ def compile_execution_plan(project: Path) -> ExecutionPlan:
         repo = Path(resolve_ticket_repo(project, selected) or project)
         profile_id, profile = _select_profile(selected, phase)
         if profile is None:
-            profile_id, profile = "god_module_split", (_load_task_profiles().get("profiles") or {}).get(
-                "god_module_split",
-            )
+            profiles_doc = _load_task_profiles()
+            fallback_id = _fallback_profile_id(profiles_doc)
+            profile = (profiles_doc.get("profiles") or {}).get(fallback_id)
+            profile_id = fallback_id if isinstance(profile, dict) else None
         if isinstance(profile, dict):
             steps = _workflow_steps(
                 profile,
