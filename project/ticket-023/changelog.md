@@ -14,3 +14,10 @@
 - Added focused contract, registry/policy and event-chain tests.
 - Verified the built wheel contains every new module and contract; recorded
   focused and repository-wide test evidence.
+
+## [0.2.0] - 2026-09-01
+
+- Record current-base OneDev success and protected exact-head validation for
+  PR #47.
+- Close ticket-023 after protected merge commit `d79665ef`.
+- Bind the governance-only closure to PR #50.

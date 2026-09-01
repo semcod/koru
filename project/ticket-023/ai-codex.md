@@ -36,9 +36,11 @@ All external contract bytes and every accepted response are hash-pinned.
 - Verified 22 focused tests, Ruff, mypy, governance, Docker configuration,
   contract pins and wheel contents; recorded unrelated full-suite baseline
   failures without editing their paths.
+- Refreshed exact-head OneDev evidence against current `main`, then published
+  through Koru and protected validator run `33502635123`.
+- PR #47 merged exact head `c5a51b47` as `d79665ef`; the ticket is closed with
+  this governance-only follow-up.
 
 ## Blockers
 
-- Trusted validator publication still requires the protected Validator App
-  signer, which is unavailable in this checkout; no repository-authored
-  substitute will be treated as approval.
+- None. Protected exact-head publication and merge completed.

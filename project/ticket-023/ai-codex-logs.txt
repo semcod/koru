@@ -78,3 +78,17 @@ Validation evidence follows.
 - Repository-wide Ruff now reports three findings introduced or retained by
   main in `src/koru/autonomy/execution_plan.py`, `src/koru/cli_work.py` and
   `tests/test_autonomous.py`; none is in the ticket-023 diff.
+
+2026-09-01 protected publication
+- final PR #47 head: c5a51b470ce5f8e05361dcd5c5a730ae53337135
+- onedev/local-verify: SUCCESS against main dbe43a7a9c19
+- Koru publication status: published; frozen_head=c5a51b47; exit_code=0
+- protected validator run 33502635123: SUCCESS in 1m46s
+- protected review 5077433713: APPROVED and bound semcod/koru, PR #47,
+  ticket-023, exact head c5a51b47 and ifuri-validator-agent[bot]
+- advisory LLM review unavailable because 10 chunks exceeded the limit of 8;
+  deterministic validation remained authoritative
+- PR #47 merged at 2026-09-01T11:29:47Z as
+  d79665ef2cb29a0221204ed12eb8220dbbe81f4f
+- closure PR #50 opened; initial closure head 699e2e8d is superseded by this
+  PR-binding evidence before exact-head verification
