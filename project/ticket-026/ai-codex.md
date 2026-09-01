@@ -43,6 +43,11 @@ protected PR. The trusted implementation merge from PR #55 remains untouched.
   remaining TODO delta against that parent is the ticket-026 roadmap entry.
 - Governance, diff hygiene and Docker Compose validation passed; the first
   stage moved to `IN_PROGRESS / PUBLICATION`.
+- Protected validator run `33519533252` approved stage-1 exact head
+  `dcf47f0ebfeee9227450a0045fa4b8050921f558` with review `5079288844` before
+  merging PR #57 as `4de42dc35b6fc3cd883c21fad6fd3760cf6afe00`.
+- Reapplied ticket-025 closure only after the protected revert was integrated,
+  including truthful PR #56 incident evidence.
 
 ## Blockers
 

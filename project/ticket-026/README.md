@@ -42,14 +42,14 @@ behavior is changed.
   ticket-025 lifecycle file is changed.
 - [x] AC-02: Apart from the ticket-026 governance scaffold, the first PR is the
   exact first-parent reversal of merge `665bc68e` on its five paths.
-- [ ] AC-03: Protected exact-head review and merge complete for the revert
+- [x] AC-03: Protected exact-head review and merge complete for the revert
   before any closure evidence is reapplied.
 - [ ] AC-04: The second PR restores ticket-025 as `DONE / DONE`, records both
   the trusted PR #55 delivery and the PR #56 incident, and receives protected
   review before merge.
 - [ ] AC-05: Final GitHub review evidence binds repository, PR, current head,
   ticket 026 and `ifuri-validator-agent[bot]`; no post-merge approval is used.
-- [ ] AC-06: Governance, diff hygiene and Docker Compose checks pass for both
+- [x] AC-06: Governance, diff hygiene and Docker Compose checks pass for both
   stages, and remote branch inventory contains no abandoned unique diff.
 
 ## Non-goals
@@ -61,8 +61,10 @@ behavior is changed.
 
 ## Publication
 
-- Stage 1 protected revert: [#57](https://github.com/semcod/koru/pull/57)
-- Stage 2 corrected closure: pending successful protected merge of stage 1.
+- Stage 1 protected revert: [#57](https://github.com/semcod/koru/pull/57), exact
+  head `dcf47f0ebfeee9227450a0045fa4b8050921f558`, validator run `33519533252`,
+  review `5079288844`, merge `4de42dc35b6fc3cd883c21fad6fd3760cf6afe00`.
+- Stage 2 corrected closure: [#58](https://github.com/semcod/koru/pull/58)
 
 ## Participants
 

@@ -16,3 +16,11 @@
 2026-09-01 DOCKER docker compose config --quiet => PASS
 2026-09-01 DIFF git diff --check => PASS
 2026-09-01 REAL_PROBE umbrella Planfile loaded 62 dedupe keys and suppressed all 33 current suggestions with identical historical producer/key/fingerprint; changed-evidence unit coverage remains green
+2026-09-01 PR opened semcod/koru#55 at frozen head 4fb26e742f83349ee8d0a2c66d7672ca9f6cc0ac
+2026-09-01 ONEDEV onedev/local-verify SUCCESS at exact head 4fb26e74; trusted local profile passed 110 tests with 16 deselected against main 8d5a5a39
+2026-09-01 SMOKE GitHub Koru CI smoke SUCCESS at exact head 4fb26e74
+2026-09-01 VALIDATOR protected run 33516867597 approved exact head 4fb26e74 for semcod/koru PR #55 and ticket-025; actor ifuri-validator-agent[bot]
+2026-09-01 MERGE validator-agent explicitly merged PR #55 as f841c613c7fdb3c51b5147cc50c4d0d8f93bd56b; protected path latency 167 seconds, SLO 300 seconds met
+2026-09-01 INCIDENT PR #56 merged before protected approval; validator run 33517867410 failed closed with POST_APPROVAL_RECEIPT_MISSING
+2026-09-01 REPAIR protected PR #57 exact head dcf47f0ebfeee9227450a0045fa4b8050921f558 received review 5079288844 and merged as 4de42dc35b6fc3cd883c21fad6fd3760cf6afe00, neutralizing every PR #56 effect before corrected reclosure
+2026-09-01 RECLOSURE opened protected correction PR https://github.com/semcod/koru/pull/58
