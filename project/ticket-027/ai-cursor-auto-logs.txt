@@ -9,3 +9,7 @@
 2026-09-01 docker compose --profile verify config --quiet: passed
 2026-09-01 docker compose --profile verify build koru-verify: passed
 2026-09-01 container validation: 14 focused tests passed in Python 3.12 image
+2026-09-01 OneDev: 110 passed, 16 deselected on exact head ea0afa9c
+2026-09-01 Validator run 33525268445: approved exact head ea0afa9c with review
+  5079898325 after two stable policy reads; PR #60 merged as 4d37bc6a; Direct
+  PR SLO met in 166 seconds

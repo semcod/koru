@@ -24,7 +24,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "703dc7a2aa452adc7b4d336e8fc800ef6e2a8ae7",
+    "acceptedBaseSha": "4d37bc6ab806b82c194a96941f26e886f5ba37d3",
     "targetBranch": "main",
     "outcome": "Desktop notification results and LLM provenance tests are deterministic, registry ordering is covered, and the correction is published through exact-head OneDev and Validator evidence.",
     "nonGoals": [

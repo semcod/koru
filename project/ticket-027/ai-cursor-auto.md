@@ -31,5 +31,5 @@ unprotected direct push.
 
 ## Blockers
 
-- The initial implementation was pushed directly to unprotected `main`; an
-  exact-head validation-repair publication is required before closure.
+- None. Protected PR #60 supplied exact-head review and merge evidence, and
+  `main` now rejects direct pushes.
