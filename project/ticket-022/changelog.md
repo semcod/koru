@@ -48,3 +48,12 @@
 - Reconcile the static CLI dispatch expectation with the delivered `decide`
   command and validate that only the seven independent baseline failures remain.
 - Open PR #51 and transition to protected exact-head publication.
+
+## [0.7.0] - 2026-09-01
+
+- Record successful GitHub smoke and OneDev verification for exact head
+  `8184170855e491f656d4e2710331c37c7a192241`.
+- Record protected validator run `33507843823`, exact-head review `5078036982`
+  and merge `8d8531e665c98aa995f53d099ebfb051821ad42e`.
+- Close the ticket lifecycle as `DONE / DONE`.
+- Bind governance closure PR #52.
