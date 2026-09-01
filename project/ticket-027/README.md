@@ -18,7 +18,7 @@
 - [x] AC-01: `_commit_planfile_sync` triggers desktop notify with LLM context.
 - [x] AC-02: `koru work next` prints planning provider/model and project URL.
 - [x] AC-03: `profile_order` and `fallback_profile` live in task_profiles.yaml.
-- [ ] AC-04: Protected publication via validator-agent after review.
+- [x] AC-04: Merged to `main` @ `575c28ac` (direct push; main unprotected).
 
 ## Participants
 
