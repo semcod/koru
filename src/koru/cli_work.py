@@ -14,6 +14,7 @@ from koru.autonomy.execution_plan import (
 )
 from koru.events import emit_management_event
 from koru.work.lifecycle import finish_work, start_work
+from koru.work.llm_provenance import resolve_work_llm_context
 
 
 def _print(payload: dict, fmt: str) -> None:
@@ -51,7 +52,12 @@ def _action_start(args: argparse.Namespace) -> int:
 
 def _action_next(args: argparse.Namespace) -> int:
     plan = compile_execution_plan(args.project)
-    payload: dict = {"status": "planned", "plan": plan.to_dict()}
+    llm_ctx = resolve_work_llm_context(args.project)
+    payload: dict = {
+        "status": "planned",
+        "plan": plan.to_dict(),
+        "llm": llm_ctx.to_dict(),
+    }
     if args.run_gates:
         payload["auto_run"] = run_auto_steps(plan, dry_run=False)
     if args.start_branch and plan.selected_ticket:
@@ -72,6 +78,13 @@ def _action_next(args: argparse.Namespace) -> int:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
         print(f"koru work next: {plan.summary}")
+        print(
+            "  llm: "
+            f"planning={llm_ctx.planning_provider}/{llm_ctx.planning_model} "
+            f"work={llm_ctx.work_llm_mode}"
+        )
+        if llm_ctx.project_url:
+            print(f"  project: {llm_ctx.project_url}")
         if plan.selected_ticket:
             ticket = plan.to_dict().get("selected_ticket") or {}
             print(f"  selected: {ticket.get('id')} @ {ticket.get('repo')}")

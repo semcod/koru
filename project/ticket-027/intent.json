@@ -1,0 +1,25 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-027",
+  "summary": "Work commit notify and LLM provenance registry",
+  "workstream": "koru-work-observability",
+  "allowedPaths": [
+    "project/ticket-027/**",
+    "src/koru/notifications/**",
+    "src/koru/work/llm_provenance.py",
+    "src/koru/work/lifecycle.py",
+    "src/koru/cli_work.py",
+    "src/koru/autonomy/execution_plan.py",
+    "src/koru/autonomy/task_profiles.yaml",
+    "tests/test_llm_provenance.py",
+    "tests/test_desktop_notify.py",
+    "tests/test_work_lifecycle.py",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null
+}

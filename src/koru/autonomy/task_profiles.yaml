@@ -1,5 +1,10 @@
 # Built-in task profiles for koru decide / koru work next (schema koru.task_profiles/v1)
 schema: koru.task_profiles/v1
+defaults:
+  fallback_profile: god_module_split
+  profile_order:
+    - cc_hotspot_refactor
+    - god_module_split
 profiles:
   god_module_split:
     description: Split a god module into focused submodules by responsibility.
