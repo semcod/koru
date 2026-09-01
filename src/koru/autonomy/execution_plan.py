@@ -123,7 +123,11 @@ def _select_profile(ticket: dict[str, Any] | None, phase: str) -> tuple[str | No
     profiles = _load_task_profiles().get("profiles") or {}
     if not isinstance(profiles, dict):
         return None, None
-    for profile_id, profile in profiles.items():
+    profile_order = ("cc_hotspot_refactor", "god_module_split")
+    ordered_ids = [pid for pid in profile_order if pid in profiles]
+    ordered_ids.extend(pid for pid in profiles if pid not in ordered_ids)
+    for profile_id in ordered_ids:
+        profile = profiles.get(profile_id)
         if isinstance(profile, dict) and _profile_matches(profile, ticket=ticket, phase=phase):
             return str(profile_id), profile
     return None, None
@@ -147,6 +151,21 @@ def _target_source_lines(project: Path, ticket: dict[str, Any]) -> int | None:
     return None
 
 
+def _ticket_likely_complete(project: Path, ticket: dict[str, Any]) -> bool:
+    """Skip planfile tickets whose target file no longer matches scan evidence."""
+    labels = _ticket_labels(ticket)
+    lines = _target_source_lines(project, ticket)
+    if lines is None:
+        return False
+    if "god-module" in labels and lines < 250:
+        return True
+    if "cyclomatic" in labels and lines < 120:
+        return True
+    if "large-module" in labels and lines < 400:
+        return True
+    return False
+
+
 def _ticket_sort_key(project: Path, ticket: dict[str, Any]) -> tuple[int, int, str]:
     priority = _PRIORITY_RANK.get(str(ticket.get("priority") or "normal"), 2)
     labels = _ticket_labels(ticket)
@@ -160,6 +179,20 @@ def _ticket_sort_key(project: Path, ticket: dict[str, Any]) -> tuple[int, int, s
     return (priority + deprioritize, lines or 99999, str(ticket.get("id") or ""))
 
 
+def _count_skipped_complete(project: Path) -> int:
+    count = 0
+    for ticket in _current_sprint_tickets(project):
+        ticket_id = str(ticket.get("id") or "").strip().upper()
+        status = str(ticket.get("status") or "").lower()
+        if ticket_id in _SKIP_TICKET_IDS:
+            continue
+        if status not in _OPEN_STATUSES:
+            continue
+        if _ticket_likely_complete(project, ticket):
+            count += 1
+    return count
+
+
 def _open_refactor_tickets(project: Path) -> list[dict[str, Any]]:
     tickets: list[dict[str, Any]] = []
     for ticket in _current_sprint_tickets(project):
@@ -168,6 +201,8 @@ def _open_refactor_tickets(project: Path) -> list[dict[str, Any]]:
         if ticket_id in _SKIP_TICKET_IDS:
             continue
         if status not in _OPEN_STATUSES:
+            continue
+        if _ticket_likely_complete(project, ticket):
             continue
         tickets.append(ticket)
     tickets.sort(key=lambda t: _ticket_sort_key(project, t))
@@ -264,6 +299,7 @@ def compile_execution_plan(project: Path) -> ExecutionPlan:
     signals: dict[str, Any] = {
         "planfile": sprint_ticket_status_summary(project),
         "open_refactor_tickets": len(open_tickets),
+        "skipped_likely_complete": _count_skipped_complete(project),
         "heuristics": heuristics,
     }
 

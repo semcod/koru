@@ -54,6 +54,47 @@ def test_compile_plan_selects_highest_priority_ticket(tmp_path: Path) -> None:
     assert plan.selected_ticket is not None
     assert plan.selected_ticket["id"] == "STARTER-010"
     assert plan.steps[0].profile_id == "cc_hotspot_refactor"
+    assert plan.signals.get("skipped_likely_complete") == 1
+
+
+def test_skips_likely_complete_god_module_ticket(tmp_path: Path) -> None:
+    (tmp_path / "koru.yaml").write_text(
+        "schema: '1.0'\nautonomy:\n  strategy:\n    id: test\n"
+        "    default_pipeline:\n      order: [planfile_queue, idle_scan]\n",
+        encoding="utf-8",
+    )
+    _write_sprint(
+        tmp_path,
+        {
+            "STARTER-003": {
+                "id": "STARTER-003",
+                "status": "open",
+                "priority": "high",
+                "name": "Split god module: codot/godot/llm/app.py",
+                "labels": ["god-module", "refactor"],
+                "files": ["codot/godot/llm/app.py"],
+            },
+            "STARTER-020": {
+                "id": "STARTER-020",
+                "status": "open",
+                "priority": "normal",
+                "name": "Split large module: site_explorer",
+                "labels": ["large-module", "refactor"],
+                "files": ["curllm/site_explorer.py"],
+            },
+        },
+    )
+    target = tmp_path / "codot" / "godot" / "llm"
+    target.mkdir(parents=True)
+    (target / "app.py").write_text("print('ok')\n", encoding="utf-8")
+    big = tmp_path / "curllm"
+    big.mkdir()
+    (big / "site_explorer.py").write_text("\n".join(["# line"] * 500), encoding="utf-8")
+
+    plan = compile_execution_plan(tmp_path)
+    assert plan.selected_ticket is not None
+    assert plan.selected_ticket["id"] == "STARTER-020"
+    assert plan.signals.get("skipped_likely_complete") == 1
 
 
 def test_resolve_ticket_repo_uses_nested_git_root(tmp_path: Path) -> None:
