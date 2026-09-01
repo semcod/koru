@@ -100,6 +100,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     finish.add_argument("--pr", type=int, default=None, help="Existing PR number for publish.")
     finish.add_argument("--merge", action="store_true", help="Pass --merge to validator dispatch.")
+    finish.add_argument("--no-publish", action="store_true", help="Skip validator-agent dispatch.")
     finish.add_argument("--dry-run", action="store_true")
     finish.set_defaults(func=_action_finish)
 
