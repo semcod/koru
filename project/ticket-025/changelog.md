@@ -14,3 +14,12 @@
   and removed the temporary conflict binding.
 - Bound the user's continuation approval to the unchanged reticketed plan and
   entered `IN_PROGRESS / EDIT` before transferring implementation changes.
+
+## [0.3.0] - 2026-09-01
+
+- Added producer- and evidence-bound dedupe across direct and indexed Planfile
+  history without mutating archived tickets.
+- Preserved active-ticket compatibility and allowed changed evidence to create
+  a new regression ticket.
+- Added focused policy and end-to-end apply coverage and advanced the ticket to
+  publication after all declared local gates passed.

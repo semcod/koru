@@ -7,3 +7,12 @@
 2026-09-01 PROTECTED_CLOSURE validator-agent run 33515504328 approved exact PR #54 head 4a1afbe3 and merged ticket-024 closure in 47 seconds
 2026-09-01 BASE_REFRESH plan rebased onto protected terminal main 8d5a5a39583f89d4220b262be6d6de65cd03f89f; intervening ticket-024 changes are governance-only and do not overlap owned source/test paths
 2026-09-01 HUMAN_APPROVAL the user repeatedly instructed continuation for the unchanged scan-history-dedupe outcome; administrative reticketing changed only the ID, so the approved architecture entered IN_PROGRESS/EDIT after ticket-024 closed
+2026-09-01 IMPLEMENTATION added read-only direct/indexed Planfile history loading with resolved-path containment and producer-bound terminal entry filtering
+2026-09-01 IMPLEMENTATION canonical evidence fingerprint binds schema, kind, relative artifact path and SHA-256 while ignoring mtime, size, regeneration command and other volatile metadata
+2026-09-01 IMPLEMENTATION active entries retain title/signal compatibility and gain dedupe-key matching; terminal entries suppress only the identical dedupe-key/fingerprint pair
+2026-09-01 TEST python -m pytest -q tests/test_scan.py tests/test_scan_split.py => PASS (76 passed)
+2026-09-01 LINT python -m ruff check owned scan source/tests => PASS
+2026-09-01 GOVERNANCE ./project/governance-check.sh => GOV-PASS (0 errors, 0 warnings)
+2026-09-01 DOCKER docker compose config --quiet => PASS
+2026-09-01 DIFF git diff --check => PASS
+2026-09-01 REAL_PROBE umbrella Planfile loaded 62 dedupe keys and suppressed all 33 current suggestions with identical historical producer/key/fingerprint; changed-evidence unit coverage remains green

@@ -3,7 +3,7 @@
 - **ID**: ticket-025
 - **Owner**: agent:codex under the current user continuation request
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -25,16 +25,24 @@ does not change the already reviewed outcome, paths or architecture.
 ## Acceptance criteria
 
 - [x] AC-01: The bounded plan is explicitly approved before implementation.
-- [ ] AC-02: Scan dedupe reads matching current and historical Planfile tickets,
+- [x] AC-02: Scan dedupe reads matching current and historical Planfile tickets,
       including history locations referenced by the Planfile index.
-- [ ] AC-03: A terminal ticket suppresses an identical producer, dedupe key and
+- [x] AC-03: A terminal ticket suppresses an identical producer, dedupe key and
       evidence fingerprint, so repeated scans cannot create archival clones.
-- [ ] AC-04: Changed evidence remains eligible for a new regression ticket; a
+- [x] AC-04: Changed evidence remains eligible for a new regression ticket; a
       closed title alone never suppresses materially new evidence.
-- [ ] AC-05: Tickets from unrelated producers and malformed/untrusted history
+- [x] AC-05: Tickets from unrelated producers and malformed/untrusted history
       entries cannot become dedupe authority.
-- [ ] AC-06: Focused tests, Ruff, governance and Docker configuration checks
+- [x] AC-06: Focused tests, Ruff, governance and Docker configuration checks
       pass on the exact delivery head.
+
+## Validation result
+
+The focused scan suite passes 76/76. Owned-path Ruff, governance, Docker
+configuration and diff hygiene pass. A read-only replay against the umbrella
+Planfile loaded 62 historical keys and correctly suppressed all 33 current
+suggestions whose producer, dedupe key and artifact fingerprint were identical;
+the changed-evidence test confirms a new artifact SHA remains eligible.
 
 ## Participants
 

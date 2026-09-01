@@ -39,6 +39,17 @@ scope and architecture are unchanged.
 - The user's repeated instruction to continue applies to the same outcome,
   paths and architecture after the administrative ID correction; ticket 025
   moved to `IN_PROGRESS / EDIT` only after the conflicting ticket closed.
+- Scan dedupe now reads direct and indexed `history-*.yaml` files through a
+  path-contained, read-only loader.
+- Terminal history contributes authority only for the exact scan producer,
+  stable dedupe key and a structurally valid artifact fingerprint. The
+  fingerprint intentionally excludes host-specific and volatile metadata.
+- Active tickets retain the legacy title/signal fallback and gain stable-key
+  dedupe; changed evidence remains eligible for a new regression.
+- Unit and end-to-end apply tests cover indexed history, identical and changed
+  fingerprints, unrelated producers, malformed evidence and create avoidance.
+- The focused suite passes 76/76; owned-path Ruff, governance, Docker and diff
+  checks are green on the refreshed base.
 
 ## Blockers
 
