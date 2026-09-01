@@ -17,4 +17,6 @@
 - governance: GOV-PASS, 0 errors / 0 warnings
 - worktree overlap: PASS, 0 findings
 - Docker Compose config and Dockerfile build check: PASS
+- broad autonomous regression: 528 passed, 2 deselected; the hygiene query is
+  skipped for projects without a `.planfile` store
 - lifecycle: IN_PROGRESS / VALIDATION

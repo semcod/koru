@@ -418,6 +418,8 @@ def resolve_in_progress_stale_minutes(project: Path | None = None) -> float | No
             return None
     if project is None:
         return 120.0
+    if not (project / ".planfile").exists():
+        return None
     raw = load_koru_project_pipeline(project)
     if not isinstance(raw, dict):
         return 120.0
