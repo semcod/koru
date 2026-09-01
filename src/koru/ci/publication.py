@@ -95,6 +95,7 @@ def dispatch_validator_merge(
     name: str | None = None,
     config: PublicationConfig | None = None,
     dry_run: bool = False,
+    merge: bool | None = None,
 ) -> dict[str, Any]:
     """Freeze PR head and dispatch validator-agent direct-pr."""
     if not gh_available():
@@ -102,6 +103,8 @@ def dispatch_validator_merge(
 
     project = project.resolve()
     cfg = config or load_publication_config(project)
+    if merge is not None:
+        cfg = replace(cfg, merge=merge)
     repo = resolve_github_repo(project)
     resolved_owner = owner or repo.owner
     resolved_name = name or repo.name

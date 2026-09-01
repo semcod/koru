@@ -401,7 +401,7 @@ brief / etc.).
 | `koru task` / `koru agent` | Planfile task creation and LLM agent management. |
 | `koru tools` | Inspect / dispatch the AI tool registry. |
 | `koru tillm` | Interactive picker for shell LLM tools + API providers (claude-code via Anthropic or z.ai, aider via OpenRouter, …): choose from the list, paste a token, live-verify. Other args forward to tillm CLI (`koru tillm providers`, `koru tillm provider set z.ai`, `koru tillm drive --provider z.ai …`). Full matrix: [`docs/llm-provider-configuration.md`](docs/llm-provider-configuration.md). |
-| `koru ci` / `koru gate` / `koru queue` / `koru scan` | Run CI/publish, gate waivers, queue, or scan in isolation. |
+| `koru ci` / `koru work` / `koru gate` / `koru queue` / `koru scan` | CI/publish, ticket→branch workflow, gate waivers, queue, or scan. |
 | `koru gc` | Garbage-collect old planfile tickets / artifacts (see [Queue GC](#queue-garbage-collection--koru-gc)). |
 | `koru tagi` | Run tagi-backed change analysis / safe commit orchestration. |
 | `koru git` | Git helpers used by the autopilot daemon. |
