@@ -21,7 +21,7 @@
   "conflictsWith": ["ticket-019", "ticket-020"],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "e94f3aa7d558859967de96a3feee55dd2cac2b83",
+    "acceptedBaseSha": "7cda533e30bbc758d163410f447dee58d8b26ac4",
     "targetBranch": "main",
     "outcome": "Standardize POA planning and Wellmanifest Logs with evidence-bound dynamic Registry, Strategy and Policy resolution",
     "nonGoals": [

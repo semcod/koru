@@ -29,6 +29,14 @@
   to exact main head e94f3aa7d558859967de96a3feee55dd2cac2b83 before publication.
 - The base refresh changed no POA architecture, intent scope or implementation
   path; focused and governance checks were rerun after the refresh.
+- After PR publication, main advanced through the completed ticket-021 and
+  `koru decide` work to 7cda533e30bbc758d163410f447dee58d8b26ac4.
+- That main range does not touch `src/koru/poa`, the three contract files or
+  the focused tests. It was merged into the ticket branch without conflict;
+  acceptedBaseSha was refreshed and the ticket checks were rerun.
+- OneDev's first executor run passed 110 configured Koru tests for the earlier
+  exact PR head against main 0cf4ba1f. That evidence became historical when
+  the branch HEAD changed and is not used as final publication evidence.
 
 Validation evidence follows.
 
@@ -61,3 +69,12 @@ Validation evidence follows.
 - Repository-wide Ruff reports 7 pre-existing findings in `src/koru/cli_ci.py`,
   `src/koruapi/mcp_server.py`, `tests/test_autonomous.py` and
   `tests/test_ci_pipeline.py`; focused ticket Ruff is clean.
+
+2026-09-01 final main refresh validation
+- Combined POA, configured Koru OneDev-profile, execution-plan and CI tests:
+  143 passed, 16 deselected in 6.36s.
+- Focused POA Ruff, mypy, governance, diff and Docker configuration checks
+  passed after merging main 7cda533e30bbc758d163410f447dee58d8b26ac4.
+- Repository-wide Ruff now reports three findings introduced or retained by
+  main in `src/koru/autonomy/execution_plan.py`, `src/koru/cli_work.py` and
+  `tests/test_autonomous.py`; none is in the ticket-023 diff.
