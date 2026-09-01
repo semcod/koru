@@ -7,9 +7,13 @@ import json
 import sys
 from pathlib import Path
 
+from koru.autonomy.execution_plan import (
+    compile_execution_plan,
+    resolve_ticket_repo,
+    run_auto_steps,
+)
 from koru.events import emit_management_event
 from koru.work.lifecycle import finish_work, start_work
-from koru.autonomy.execution_plan import compile_execution_plan, resolve_ticket_repo, run_auto_steps
 
 
 def _print(payload: dict, fmt: str) -> None:

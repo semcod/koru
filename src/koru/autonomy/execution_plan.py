@@ -15,7 +15,6 @@ import yaml
 from koru.autonomy.ide_work import _current_sprint_tickets, sprint_ticket_status_summary
 from koru.autonomy_strategy import load_autonomy_strategy
 from koru.autonomy_strategy.heuristics import build_strategy_heuristics
-from koru.project_pipeline import load_koru_project_pipeline
 
 _SCHEMA = "koru.execution_plan/v1"
 _PRIORITY_RANK = {"critical": 0, "high": 1, "normal": 2, "low": 3}

@@ -877,6 +877,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "gate",
             "ci",
             "work",
+            "decide",
             "queue",
             "replay",
             "gc",
