@@ -1,0 +1,26 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-022",
+  "summary": "Koru work start/finish workflow",
+  "workstream": "workflow",
+  "allowedPaths": [
+    "project/ticket-022/**",
+    "project/TICKETS.md",
+    "src/koru/work/**",
+    "src/koru/cli_work.py",
+    "src/koru/cli.py",
+    "src/koru/ci/publication.py",
+    "tests/test_work_lifecycle.py",
+    "tests/test_cli.py",
+    "README.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": ["ticket-021"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "targetBranch": "main",
+    "outcome": "koru work start/finish binds planfile ticket, git branch, CI, and validator-agent publish."
+  }
+}
