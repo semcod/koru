@@ -38,3 +38,32 @@ planning validation:
 - git diff --check: pass
 - docker compose config --quiet: pass
 - implementation files changed: none
+
+2026-09-01 approval transition
+- user explicitly approved ticket 024
+- exact scope remains ten docs/** files on accepted base 58c17b25
+- state moved from PLAN / WAIT_FOR_APPROVAL to IN_PROGRESS / EDIT
+
+2026-09-01 implementation validation
+- sumd fresh map: 1469 modules / 264786 lines / 1203 Python modules;
+  tracked compact header matches exactly
+- YAML/TOON parsing: pass for all four architecture DSL files
+- focused pytest: 21 passed, 857 subtests passed
+- code2docs architecture scope: 9 files, 0 issues
+- code2docs complete docs baseline after slice: 14 broken links,
+  1 malformed table, 36 duplicate headings (51 findings; queued)
+- docval after slice: 1387 valid, 9 invalid, 1 outdated, 4 orphaned,
+  281 heuristic-empty sections; health 81.4%
+- changed implementation paths: exactly 10 approved docs/** files
+- source, tests, schemas and dependency metadata changed: none
+
+2026-09-01 full stack baseline
+- complete pytest: 3640 passed, 15 skipped, 164 deselected, 947 subtests
+  passed, 3 failed in 339.11s
+- unrelated failure: tests/test_ide_doctor_cli.py socket expectation
+- unrelated failures: two tests/test_pyproject_metadata.py expectations
+- none of the three failure paths is writable by ticket-024
+- governance-check: pass
+- git diff --check: pass
+- docker compose config --quiet: pass
+- workflow moved to IN_PROGRESS / PUBLICATION

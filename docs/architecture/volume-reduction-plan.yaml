@@ -4,15 +4,15 @@
 schema_version: "1.0"
 
 baseline:
-  map_path: project/map.toon.yaml
-  captured_on: "2026-07-19"
-  indexed_files: 1101
-  indexed_lines: 178416
-  python_modules: 816
-  critical_functions: 6
+  map_path: docs/architecture/documentation-conformance.toon.yaml
+  captured_on: "2026-09-01"
+  indexed_files: 1469
+  indexed_lines: 264786
+  python_modules: 1203
+  critical_functions: 339
   dependency_cycles: 0
-  tracked_repository_bytes: 31858429
-  tracked_repository_lines: 523456
+  tracked_repository_bytes: 75813629
+  tracked_repository_lines: 591383
 
 targets:
   indexed_lines_max: 150000
@@ -269,17 +269,16 @@ stages:
   - id: tillm.provider_mechanism
     order: 100
     priority: P2
-    status: blocked_by_upstream
+    status: dual_run
     action: move_to_dependency
     source_paths:
       - src/koru/tillm_bridge.py
-      - src/korullm
     target_owners:
       - semcod/tillm
     target_available: true
-    candidate_lines: 946
-    minimum_production_lines_removed: 350
-    minimum_checkout_lines_removed: 350
+    candidate_lines: 236
+    minimum_production_lines_removed: 100
+    minimum_checkout_lines_removed: 100
     ecosystem_lines_deleted: 0
     contracts:
       - tillm.completion-result.v1
@@ -287,6 +286,7 @@ stages:
       - ProposalEnvelope validation, provider policy, retry budget and authority.
       - Drive failure assessment that changes orchestration state.
     acceptance:
+      - The published korullm dependency remains external and no src/korullm source root returns to Koru.
       - Koru contains no provider registry or checkout path injection.
       - Provider fallback cannot change proposal schema or granted capability.
     blocked_by: []

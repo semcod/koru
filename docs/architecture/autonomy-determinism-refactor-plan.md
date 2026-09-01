@@ -1,10 +1,11 @@
 # Koru — autonomy & determinism refactor plan
 
-**Status:** canonical architecture plan (documentation only; implementation via sequential PRs below).  
+**Status:** historical architecture roadmap; PR1 namespace ownership is delivered, later units require current-code review.
 **Date:** 2026-07-18  
+**Reviewed against code:** 2026-09-01
 **Repo:** [`semcod/koru`](https://github.com/semcod/koru)  
-**Index baseline:** `project/map.toon.yaml` (local; ChatGPT sandbox `map.toon(5).yaml` was **not** recoverable on disk).  
-**Source plan file:** `sandbox:/mnt/data/koru-autonomy-determinism-refactor-plan.md` — **not found** under `/mnt/data`, `/tmp`, `~/Downloads`, or Cursor upload dirs. This document reconstructs the full plan from the 2026-07-18 assessment paste + in-repo exploration.
+**Current index baseline:** [`documentation-conformance.toon.yaml`](./documentation-conformance.toon.yaml), generated from the checked-out code with `autogrammar/sumd`.
+**Provenance:** this document reconstructs the original 2026-07-18 assessment; current-state claims are reviewed against the repository and the conformance DSL above.
 
 **Related (Subactor — borrow governance, not languages):**
 
@@ -15,8 +16,6 @@
 | [`subactor/docs/architecture/adr/003-approval-hitl-model.md`](https://github.com/subactor/docs/blob/main/architecture/adr/003-approval-hitl-model.md) | Immutable manifest + signed grant + replay (`jti`) |
 | [`subactor/docs/architecture/adr/004-publish-definition-of-done.md`](https://github.com/subactor/docs/blob/main/architecture/adr/004-publish-definition-of-done.md) | Verify as mandatory success gate |
 | [`subactor/docs/plans/autonomy-implementation-roadmap.md`](https://github.com/subactor/docs/blob/main/plans/autonomy-implementation-roadmap.md) | Phased PR units; dual-run migration |
-
-Local checkouts (same machine): `/home/tom/github/subactor/docs/architecture/…`.
 
 **Separate track:** Subactor **PR6 (Paramiko/SFTP + capability readiness)** is *infrastructure for docs.subactor.com publish*. It does **not** block or merge into this Koru refactor. Do not couple commits, grants, or DoD criteria across the two repos.
 
@@ -38,13 +37,20 @@ Do **not** copy AQL/OQL as new languages into Koru. Map the same *governance sha
 
 ### 1.2 Koru (functionally autonomous, architecturally fragmented)
 
-Koru already runs a rich closed loop: policy engine, decision arbiter, checkpoints, replay, post-run verify, observability, repair, supervisor, Planfile/MCP, and many IDE adapters. Index signals (order-of-magnitude from `project/map.toon.yaml` / recent analyses): ~1k+ modules, ~160k–170k LOC Python-heavy tree, low mean CC, **no dependency cycles**, but **concentrated hotspots**.
+Koru already runs a rich closed loop: policy engine, decision arbiter,
+checkpoints, replay, post-run verify, observability, repair, supervisor,
+Planfile/MCP, and many IDE adapters. The 2026-09-01 `sumd` baseline reports
+1,469 indexed modules, 264,786 lines, mean CC 3.0 and **no dependency cycles**,
+but **339 critical functions** and concentrated hotspots.
 
 **Problem is not “missing autonomy features”.** It is:
 
 1. **No single execution contract** shared by cycle, operator, repair, and replay.
 2. **Parallel registries / package names** (`koru`, `coru`, `koruide`, `korudsl`, `koruapi`, …) without one capability SSOT.
-3. **Hotspot concentration** — especially `integrations/vdisplay_client.py` (~6.8k lines), main CLI, `scan.py`, `autonomous.py`, and cycle/operator pipelines — where planning still reaches subprocess/GUI.
+3. **Hotspot concentration** — especially
+   `src/koru/integrations/vdisplay_client.py` (6,577 lines), the main CLI,
+   `scan.py`, `autonomous.py`, and cycle/operator pipelines — where planning
+   still reaches subprocess/GUI.
 
 ### 1.3 Honest gap matrix
 
@@ -57,7 +63,7 @@ Koru already runs a rich closed loop: policy engine, decision arbiter, checkpoin
 | Verify | `post_run_verify`, `verification_engine.py` | Soft reopen/block; not hard DoD with evidence bundle + rollback |
 | Planfile / MCP | Queue gateway, MCP tools, ticket lifecycle | Tickets are work items, not capability-authorized execution units |
 | IDE control | `koruide`, probe ladder, plugins | Ladder exists but planning layer still spawns GUI/subprocess paths |
-| Namespaces | `coru` thin CLI; `koru*` packages | Canonical ownership ADR incomplete; drift risk across packages |
+| Namespaces | `coru` thin CLI; `koru*` packages; AD-001 inventory enforced by CI | Distribution and compatibility layers can still drift after ownership changes |
 | Remote exec | Local daemon / UDS | No capability-scoped mTLS remote executor |
 
 ---
@@ -84,7 +90,7 @@ Intent Pack
 | **Capability Dispatcher** | Sole path to shell/IDE/MCP/remote; planning layer **never** calls subprocess/GUI directly | Connector + control |
 | **Transactional Workspace** | Git worktree (or equivalent) for code mutations; promote only after verify | Release dir + activate |
 | **Evidence + Verify** | Bundle: git diff digest, gate commands, drive trace ids, screenshots refs; fail → reopen/rollback | Origin + public verify |
-| **Promote \| Rollback** | Merge/apply worktree or discard; ticket status reflects outcome | Activate previous / DNS rollback |
+| **Promote or Rollback** | Merge/apply worktree or discard; ticket status reflects outcome | Activate previous / DNS rollback |
 
 **Non-goals**
 
@@ -171,10 +177,15 @@ APIs and MCP tools must not collapse this to a single boolean `ok`. Cycle, opera
 | **16** | Remote executor prototype: mTLS + capability allowlist (lab only) | 7, 9 |
 | **17** | Failure-injection suite green; remove dual-run shims; docs DoD | 10–16 |
 
-### First recommended implementation PR
+### Delivered first implementation unit
 
-**PR1 — Canonical namespace inventory + ADR-AD-001 acceptance.**  
-Smallest reversible step: freeze ownership (`coru` = thin stable client; `koru` = orchestration; `koruide` = IDE control-plane), publish an inventory table, and add a lightweight check that new top-level packages declare an owner ADR. No runtime behavior change.
+**PR1 — Canonical namespace inventory + ADR-AD-001 acceptance — delivered.**
+Ownership is frozen (`coru` = thin stable client; `koru` = orchestration;
+`koruide` = IDE control-plane), and
+[`autonomy-mutation-inventory.yaml`](./autonomy-mutation-inventory.yaml) plus
+its CI contract rejects undeclared source roots. Later units in this historical
+sequence must be selected from current repository evidence rather than assumed
+unfinished from their original PR number.
 
 ---
 
@@ -264,4 +275,10 @@ Read-only / advisory flows may stop at `dry_run_passed` without grant.
 
 ## 11. Verdict
 
-Koru does not need “more autonomy features.” It needs **Subactor-grade governance boundaries** expressed in **Koru’s existing DSL / protobuf / JSON Schema**, with one execution contract and unified registries. Subactor PR6 (SFTP) stays on its own publish track. Next code step: **PR1** only.
+Koru does not need “more autonomy features.” It needs **Subactor-grade
+governance boundaries** expressed in **Koru’s existing DSL / protobuf / JSON
+Schema**, with one execution contract and unified registries. Subactor PR6
+(SFTP) stays on its own publish track. PR1 is complete; any next implementation
+unit must be chosen from current tests, tickets and
+[`documentation-conformance.toon.yaml`](./documentation-conformance.toon.yaml),
+not solely from this historical ordering.

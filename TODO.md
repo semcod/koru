@@ -3,8 +3,9 @@
 - [ ] [`ticket-024`](project/ticket-024/README.md) — generate a current
   documentation-conformance DSL and synchronize the bounded architecture
   documentation contracts with the code tree. State:
-  `PLAN / WAIT_FOR_APPROVAL`; exact ten-document integration scope awaits
-  explicit approval before any `docs/**` change.
+  `IN_PROGRESS / PUBLICATION`; the exact ten-document integration scope was
+  approved on 2026-09-01, and focused contract/documentation plus required
+  governance and Docker checks pass.
 - [x] [`ticket-023`](project/ticket-023/README.md) — standardize POA planning
   and Wellmanifest Logs using hash-pinned Subactor Config evidence for dynamic
   Registry/Strategy resolution and a separately bound Policy decision. State:

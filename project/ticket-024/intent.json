@@ -43,7 +43,7 @@
       "maxRuntimeDependencies": 0
     },
     "architecture": {
-      "status": "proposed",
+      "status": "accepted",
       "decision": "Use a compact, code-derived documentation-conformance DSL as the reproducible baseline; repair only the architecture contract slice and queue all other documentation groups as bounded follow-ups",
       "components": [
         {

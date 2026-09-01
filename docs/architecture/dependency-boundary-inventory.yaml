@@ -39,6 +39,10 @@ repositories:
     package: koruide
     state: planned
     checkout_hint: ~/github/semcod/koruide
+  - id: semcod/korullm
+    package: korullm
+    state: existing
+    checkout_hint: ~/github/semcod/korullm
   - id: semcod/nlp2uri
     package: nlp2uri
     state: existing
@@ -383,7 +387,6 @@ extractions:
     kind: delete_duplicate
     source_modules:
       - src/koru/tillm_bridge.py
-      - src/korullm
     target_repositories:
       - semcod/tillm
     contract_ids:
@@ -394,6 +397,7 @@ extractions:
     keep_in_koru:
       - ProposalEnvelope validation, retry budget, provider policy and authority decisions.
     current_smells:
+      - The former src/korullm source root is already an external core dependency; it must not be recreated in Koru.
       - Koru retains a fallback provider registry and a local checkout path injection helper.
     acceptance:
       - Koru has no copied provider registry and receives typed provider-switch provenance.

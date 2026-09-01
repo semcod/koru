@@ -1,9 +1,9 @@
 # Ticket 024: Synchronize architecture documentation contracts with code
 
 - **ID**: ticket-024
-- **Owner**: agent:codex (planning); implementation requires explicit approval
-- **Status**: PLAN
-- **Workflow state**: WAIT_FOR_APPROVAL
+- **Owner**: agent:codex under explicit conversational approval
+- **Status**: IN_PROGRESS
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -42,23 +42,32 @@ stable delta rather than rerunning an unbounded rewrite.
 
 ## Acceptance criteria
 
-- [ ] AC-01: The exact-base, ten-document integration scope is explicitly
+- [x] AC-01: The exact-base, ten-document integration scope is explicitly
   approved before any `docs/**` file changes.
-- [ ] AC-02: `docs/architecture/documentation-conformance.toon.yaml` records
+- [x] AC-02: `docs/architecture/documentation-conformance.toon.yaml` records
   reproducible `sumd`, `docval` and `code2docs` provenance, current code-map
   metrics, documentation findings and the remaining bounded work queue.
-- [ ] AC-03: The autonomy mutation, dependency boundary and volume-reduction
+- [x] AC-03: The autonomy mutation, dependency boundary and volume-reduction
   DSLs contain only real current source paths and remain schema-valid and
   canonically ordered.
-- [ ] AC-04: The three focused architecture contract test modules pass,
+- [x] AC-04: The three focused architecture contract test modules pass,
   including their existing 857 subtests, without changing tests or runtime
   code.
-- [ ] AC-05: Current architecture prose no longer presents `src/korullm` as an
+- [x] AC-05: Current architecture prose no longer presents `src/korullm` as an
   existing namespace; historical decisions are clearly labelled, and the two
   architecture table-shape findings reported by `code2docs` are resolved.
-- [ ] AC-06: Governance, YAML parsing, diff hygiene and Docker configuration
+- [x] AC-06: Governance, YAML parsing, diff hygiene and Docker configuration
   checks pass; the full documentation audit remains recorded as follow-up
   evidence rather than being hidden.
+
+## Validation result
+
+The focused documentation contracts pass: 21 tests and 857 subtests. The full
+Python suite completed with 3,640 passed, 15 skipped and three unrelated
+baseline failures in `tests/test_ide_doctor_cli.py` and
+`tests/test_pyproject_metadata.py`; neither implementation nor test path is in
+this ticket. Governance, YAML/TOON parsing, `code2docs` architecture validation,
+diff hygiene and Docker configuration pass.
 
 ## Planned follow-up slices
 
@@ -74,5 +83,6 @@ stable delta rather than rerunning an unbounded rewrite.
 ## Participants
 
 - Human participant: the active user requested the repository-wide audit and
-  refresh; identity remains unresolved and no `user-*` file was created.
+  refresh and explicitly approved ticket 024 on 2026-09-01; identity remains
+  unresolved and no `user-*` file was created.
 - Agent participant: [ai-codex.md](ai-codex.md)
