@@ -459,3 +459,5 @@ def _check_pytest_collect(project: Path) -> tuple[str, str]:
 _check_inotify_watches = _project_health.check_inotify_watches
 _check_wup_binary = _project_health.check_wup_binary
 _check_ci_command = _project_health.check_ci_command
+_check_pyqual_pipeline = _project_health.check_pyqual_pipeline
+_check_ci_test_script = _project_health.check_ci_test_script

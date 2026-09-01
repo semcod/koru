@@ -562,3 +562,23 @@ def check_ci_command(project: Path) -> tuple[str, str]:
     if Path(first).is_file():
         return PASS, f"`{policy.ci_command}` (file exists)"
     return FAIL, f"ci.command first token `{first}` not on PATH"
+
+
+def check_pyqual_pipeline(project: Path) -> tuple[str, str]:
+    """Report whether a declarative pyqual loop is configured."""
+    config = project / "pyqual.yaml"
+    if not config.is_file():
+        return SKIP, "no pyqual.yaml"
+    if shutil.which("pyqual") is None:
+        return WARN, "pyqual.yaml present but `pyqual` CLI not on PATH"
+    return PASS, "pyqual.yaml configured — run `pyqual run` for iterative quality loops"
+
+
+def check_ci_test_script(project: Path) -> tuple[str, str]:
+    """Detect the shared scripts/ci-test.sh entrypoint used by policy CI."""
+    script = project / "scripts" / "ci-test.sh"
+    if not script.is_file():
+        return SKIP, "no scripts/ci-test.sh"
+    if not os.access(script, os.X_OK):
+        return WARN, "scripts/ci-test.sh exists but is not executable"
+    return PASS, "scripts/ci-test.sh present — wire it via policy.ci.command"

@@ -16,7 +16,7 @@ profiles:
       - id: inspect
         kind: shell
         auto: true
-        command: sh -c 'cd {repo} && koru ci gates'
+        command: sh -c 'cd {repo} && koru ci run --skip-gates'
       - id: refactor
         kind: ide_work
         auto: false
@@ -26,7 +26,7 @@ profiles:
       - id: verify
         kind: shell
         auto: true
-        command: sh -c 'cd {repo} && koru ci gates'
+        command: sh -c 'cd {repo} && koru ci run'
       - id: publish
         kind: shell
         auto: false
@@ -42,7 +42,7 @@ profiles:
       - id: baseline
         kind: shell
         auto: true
-        command: sh -c 'cd {repo} && koru ci gates'
+        command: sh -c 'cd {repo} && koru ci run --skip-gates'
       - id: refactor
         kind: ide_work
         auto: false
@@ -52,7 +52,7 @@ profiles:
       - id: verify
         kind: shell
         auto: true
-        command: sh -c 'cd {repo} && koru ci gates'
+        command: sh -c 'cd {repo} && koru ci run'
 
   idle_scan:
     description: Turn repo signals into planfile tickets when the queue is idle.
