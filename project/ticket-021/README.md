@@ -78,6 +78,7 @@ Or set `KORU_VALIDATOR_CHECKOUT`.
 - GitHub smoke and `onedev/local-verify` passed on that head.
 - Protected validator run `33498969168` created exact-head review `5077039641`
   and merged PR #46 as `fac3639e`.
+- Governance closure is published separately as PR #48.
 
 ## MCP
 

@@ -50,3 +50,4 @@
 - Record successful GitHub smoke, OneDev verification and protected exact-head
   validator review for PR #46.
 - Close the ticket after protected merge commit `fac3639e`.
+- Bind the governance-only closure to PR #48.

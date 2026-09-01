@@ -25,6 +25,8 @@
   PR #46, ticket-021, exact head d12f7884 and validator-agent bot actor
 - PR #46 merged at 2026-09-01T10:46:34Z as
   fac3639e10e647f871ddd386890e4c020702993f
+- governance-only closure PR #48 opened; this follow-up binds its PR number and
+  supersedes closure head b2ee8567 before exact-head checks
 - no implementation files changed during PLAN
 
 2026-09-01 EDIT authorization
