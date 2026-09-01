@@ -1,9 +1,10 @@
 # Governance roadmap
 
-- [ ] [`ticket-025`](project/ticket-025/README.md) — prevent repeated
+- [x] [`ticket-025`](project/ticket-025/README.md) — prevent repeated
   `koru scan --apply` cycles from recreating unchanged findings after their
-  Planfile tickets move into history. State: `IN_PROGRESS / PUBLICATION`;
-  focused stack, governance and Docker checks pass.
+  Planfile tickets move into history. State: `DONE / DONE`; exact head
+  `4fb26e74` passed smoke, OneDev and protected validation before PR #55
+  merged as `f841c613`.
 - [x] [`ticket-024`](project/ticket-024/README.md) — generate a current
   documentation-conformance DSL and synchronize the bounded architecture
   documentation contracts with the code tree. State: `DONE / DONE`; exact head

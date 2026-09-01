@@ -50,6 +50,10 @@ scope and architecture are unchanged.
   fingerprints, unrelated producers, malformed evidence and create avoidance.
 - The focused suite passes 76/76; owned-path Ruff, governance, Docker and diff
   checks are green on the refreshed base.
+- OneDev verified the exact PR #55 merge candidate (110 passed, 16 deselected)
+  and published `onedev/local-verify=SUCCESS` at `4fb26e74`.
+- Protected Validator run `33516867597` reviewed that same head, issued a
+  deterministic approval and explicitly merged PR #55 as `f841c613`.
 
 ## Blockers
 
