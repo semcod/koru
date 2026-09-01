@@ -26,7 +26,7 @@
       "Change validator-agent publication or merge authority"
     ],
     "complexity": "XS",
-    "estimatedMinutes": 15,
+    "estimatedMinutes": 10,
     "budgets": {
       "maxImplementationFiles": 2,
       "maxAffectedComponents": 1,
@@ -34,7 +34,7 @@
       "maxRuntimeDependencies": 0
     },
     "architecture": {
-      "status": "proposed",
+      "status": "accepted",
       "decision": "Apply only Ruff-prescribed import cleanup to the two source modules while preserving the delivered work/decide behavior and exact-head validator boundary.",
       "components": [
         {

@@ -6,3 +6,21 @@ Baseline: `ruff check src/koru` -> 2 failures: F401 in src/koru/autonomy/executi
 Baseline: `ruff check src tests` -> the same 2 source failures plus unrelated UP037 in tests/test_autonomous.py:5600.
 Baseline: `pytest -q tests/test_execution_plan.py tests/test_work_lifecycle.py` -> 6 passed in 1.02s.
 No implementation or test files changed. State remains PLAN / WAIT_FOR_APPROVAL.
+2026-09-01T13:56:33+02:00
+User explicitly approved the bounded ticket-022 plan in the active conversation.
+Transitioned governance state to IN_PROGRESS / EDIT and architecture to accepted.
+Conversational approval authorizes implementation only; protected exact-head merge evidence remains required.
+Initial EDIT validation exposed GOV-DELIVERY-001 because an XS estimate of 15 minutes exceeds the enforced 10-minute class limit.
+Narrowed estimatedMinutes to 10; the two-file implementation budget and allowed paths were unchanged.
+2026-09-01T13:58:02+02:00
+`ruff check src/koru/autonomy/execution_plan.py src/koru/cli_work.py` -> All checks passed.
+`ruff check src/koru` -> All checks passed.
+`pytest -q tests/test_execution_plan.py tests/test_work_lifecycle.py` -> 6 passed in 1.44s.
+`docker compose config --quiet` -> exit 0.
+`governance-check.sh` after XS estimate correction -> GOV-PASS (0 errors, 0 warnings).
+Transitioned workflow state to IN_PROGRESS / VALIDATION.
+Full `pytest -q` -> 8 failed, 3637 passed, 15 skipped, 164 deselected, 946 subtests passed in 498.19s.
+Seven failures match the pre-existing backlog: three stale src/korullm inventory references, IDE auto-instance socket selection, two pyproject metadata expectations, and the volume-map header parser.
+The eighth failure is directly related to delivered decide routing: tests/test_cli.py::TestSubcommandDispatch::test_table_contains_all_documented_subcommands.
+Exact dispatch delta: actual_only=['decide']; expected_only=[].
+`ruff check src tests` after the source repair -> one unrelated UP037 remains at tests/test_autonomous.py:5600; both repaired source findings are gone.

@@ -2,8 +2,8 @@
 
 - **ID**: ticket-022
 - **Owner**: agent:codex
-- **Status**: PLAN
-- **Workflow state**: WAIT_FOR_APPROVAL
+- **Status**: IN_PROGRESS
+- **Workflow state**: VALIDATION
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -19,11 +19,11 @@ or completion evidence for this bounded repair.
 
 ## Acceptance criteria
 
-- [ ] AC-01: The amended exact-base, two-source-file scope is explicitly
+- [x] AC-01: The amended exact-base, two-source-file scope is explicitly
   approved before implementation or test files change.
-- [ ] AC-02: Ruff passes for both touched modules and for the complete
+- [x] AC-02: Ruff passes for both touched modules and for the complete
   `src/koru` smoke scope without suppressions.
-- [ ] AC-03: Existing execution-plan and work-lifecycle regression tests remain
+- [x] AC-03: Existing execution-plan and work-lifecycle regression tests remain
   green with no CLI behavior or public-interface change.
 - [ ] AC-04: Governance, diff hygiene and Docker configuration checks pass on
   the delivery head.
@@ -31,13 +31,16 @@ or completion evidence for this bounded repair.
 ## Planning note
 
 The accepted planning base is `37cd8021034680b6bee7d7ef27c628fef12dddab`.
-Resume only after explicit approval by transitioning to `IN_PROGRESS / EDIT`
-in this dedicated branch/worktree. The unrelated Ruff failure in
+The user explicitly approved this bounded plan on 2026-09-01, so the ticket is
+now `IN_PROGRESS / EDIT` in its dedicated branch/worktree. This conversational
+approval authorizes implementation but is not trusted merge authorization.
+The unrelated Ruff failure in
 `tests/test_autonomous.py` and the seven previously measured deterministic
 test failures require separate scopes.
 
 ## Participants
 
-- Human participant: unresolved; no user-* file was created.
+- Human participant: explicit conversational approval; identity unresolved and
+  no user-* file was created.
 - Agent participant: [ai-codex.md](ai-codex.md)
 - Agent participant: [ai-cursor.md](ai-cursor.md)

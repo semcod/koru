@@ -16,7 +16,7 @@ semantics.
 
 ## Execution plan
 
-1. Wait for explicit approval of the amended intent.
+1. Record explicit approval of the amended intent.
 2. Transition the ticket to `IN_PROGRESS / EDIT` and verify the accepted base.
 3. Remove the unused execution-plan import and organize the CLI import block.
 4. Run focused tests, full source Ruff, governance, diff and Docker checks.
@@ -25,9 +25,12 @@ semantics.
 
 ## Actual changes
 
-- Planning evidence only; no source or test file has been changed.
-- Baseline confirms two source Ruff failures and six passing focused tests.
+- The user approved the bounded plan and the ticket entered
+  `IN_PROGRESS / EDIT` on the accepted base.
+- Removed the unused project-pipeline import from the execution-plan module.
+- Organized the work CLI imports without changing behavior.
+- Full source Ruff passes and the six focused tests remain green.
 
 ## Blockers
 
-- Explicit approval is required before transition to `EDIT` and source changes.
+- None.
