@@ -1,0 +1,29 @@
+{
+  "schema": "semcod.standard-pack-projection/v1",
+  "packId": "wellmanifest/logs",
+  "version": "0.3.0",
+  "claimedLevel": "S2",
+  "source": {
+    "repository": "wellmanifest/logs",
+    "revision": "48c284ef7a069055c0bcb6b900147ce5e65f8b43",
+    "contract": {
+      "path": "contracts/logs.contract.v0.3.json",
+      "uri": "https://github.com/wellmanifest/logs/blob/48c284ef7a069055c0bcb6b900147ce5e65f8b43/contracts/logs.contract.v0.3.json",
+      "sha256": "916ccdd3a6f499b160b631da09a6a060233105e907f5582c12d8eaecae92e2eb"
+    },
+    "conformance": {
+      "path": "standard/logs_check.py",
+      "uri": "https://github.com/wellmanifest/logs/blob/48c284ef7a069055c0bcb6b900147ce5e65f8b43/standard/logs_check.py",
+      "sha256": "12a1ac4058572d5393ebff639097aefddff42135877206c9c1753976b57abc71"
+    }
+  },
+  "localBindings": [
+    {
+      "target": "src/koru/data/wellmanifest-logs-contract-v0.3.json",
+      "sourceRole": "contract",
+      "sha256": "916ccdd3a6f499b160b631da09a6a060233105e907f5582c12d8eaecae92e2eb"
+    }
+  ],
+  "ciReceipt": null,
+  "protectionReceipt": null
+}

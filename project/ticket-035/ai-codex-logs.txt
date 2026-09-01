@@ -1,0 +1,2 @@
+Ticket 035 uses deterministic command output and protected external receipts.
+Raw logs are intentionally not delivery output.
