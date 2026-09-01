@@ -9,3 +9,5 @@
 - Added deterministic notification and provenance test coverage.
 - Kept protected validator publication open after detecting a direct merge to
   unprotected `main`.
+- Closed the lifecycle after protected PR #60 supplied exact-head OneDev and
+  Validator evidence and merged as `4d37bc6a`.

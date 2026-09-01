@@ -2,8 +2,8 @@
 
 - **ID**: ticket-027
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -18,14 +18,15 @@
 - [x] AC-01: `_commit_planfile_sync` triggers desktop notify with LLM context.
 - [x] AC-02: `koru work next` prints planning provider/model and project URL.
 - [x] AC-03: `profile_order` and `fallback_profile` live in task_profiles.yaml.
-- [ ] AC-04: Protected publication via validator-agent after exact-head review.
+- [x] AC-04: PR #60 was approved by `ifuri-validator-agent[bot]` at exact
+  head `ea0afa9c` and merged as `4d37bc6a`.
 
 ## Publication correction
 
-Commit `575c28ac` reached unprotected `main` without a pull request. The
-validation-repair branch keeps this ticket open, records deterministic test
-evidence and must use OneDev plus validator-agent before the lifecycle may be
-closed.
+Commit `575c28ac` reached unprotected `main` without a pull request. Protected
+PR #60 corrected the validation evidence, passed `onedev/local-verify`,
+received exact-head Validator approval `5079898325` and merged as `4d37bc6a`.
+The repository now protects `main` against recurrence.
 
 ## Participants
 
