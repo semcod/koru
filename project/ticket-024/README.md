@@ -2,8 +2,8 @@
 
 - **ID**: ticket-024
 - **Owner**: agent:codex under explicit conversational approval
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -73,11 +73,15 @@ diff hygiene and Docker configuration pass.
 
 - Pull request: [#53](https://github.com/semcod/koru/pull/53)
 - Implementation commit: `0cbf78a0f21d0d2cdb76fa9ce926f07446bb3b9e`.
-- Initial GitHub smoke run `33513231617` and `onedev/local-verify` passed
-  against PR #53.
-- This governance-only PR binding supersedes that candidate head; fresh
-  exact-head checks and protected validator evidence are required before
-  merge.
+- Exact head: `ce1886afef40b9e8d7b40196a5374473c4ac0986`.
+- GitHub smoke: run `33513570279`, successful.
+- OneDev: `onedev/local-verify` passed against
+  `main@58c17b255b7e10a590f4aafe08ab011a5b3d847f`.
+- Protected validator: run `33514316665`, result `approved`; review
+  `5078747149` by `ifuri-validator-agent[bot]` targets the exact head.
+- Merge: `b3d7e3f46d905d90ee68a203d8a93b6b8ef2e9bc` at
+  `2026-09-01T13:39:53Z`.
+- Governance closure: [#54](https://github.com/semcod/koru/pull/54)
 
 ## Planned follow-up slices
 
