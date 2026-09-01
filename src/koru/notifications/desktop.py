@@ -22,7 +22,7 @@ def notify_desktop(*, title: str, body: str, urgency: str = "normal") -> bool:
     if not text:
         return False
     try:
-        subprocess.run(
+        notification = subprocess.run(
             [
                 "notify-send",
                 f"--urgency={urgency}",
@@ -34,6 +34,6 @@ def notify_desktop(*, title: str, body: str, urgency: str = "normal") -> bool:
             timeout=5,
             capture_output=True,
         )
-        return True
-    except Exception:
+        return notification.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
         return False

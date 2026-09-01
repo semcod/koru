@@ -3,7 +3,7 @@
 - **ID**: ticket-027
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -18,7 +18,14 @@
 - [x] AC-01: `_commit_planfile_sync` triggers desktop notify with LLM context.
 - [x] AC-02: `koru work next` prints planning provider/model and project URL.
 - [x] AC-03: `profile_order` and `fallback_profile` live in task_profiles.yaml.
-- [x] AC-04: Merged to `main` @ `575c28ac` (direct push; main unprotected).
+- [ ] AC-04: Protected publication via validator-agent after exact-head review.
+
+## Publication correction
+
+Commit `575c28ac` reached unprotected `main` without a pull request. The
+validation-repair branch keeps this ticket open, records deterministic test
+evidence and must use OneDev plus validator-agent before the lifecycle may be
+closed.
 
 ## Participants
 

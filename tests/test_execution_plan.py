@@ -6,6 +6,7 @@ from pathlib import Path
 
 import yaml
 
+from koru.autonomy import execution_plan as execution_plan_module
 from koru.autonomy.execution_plan import compile_execution_plan, resolve_ticket_repo
 
 
@@ -108,3 +109,27 @@ def test_resolve_ticket_repo_uses_nested_git_root(tmp_path: Path) -> None:
     # Without a real git repo this falls back to project; smoke the function shape.
     resolved = resolve_ticket_repo(repo, ticket)
     assert isinstance(resolved, str)
+
+
+def test_profile_selection_uses_registry_order(monkeypatch) -> None:
+    profiles = {
+        "defaults": {"profile_order": ["second", "first"]},
+        "profiles": {
+            "first": {"match": {"labels_any": ["refactor"]}},
+            "second": {"match": {"labels_any": ["refactor"]}},
+        },
+    }
+    monkeypatch.setattr(execution_plan_module, "_load_task_profiles", lambda: profiles)
+
+    profile_id, _profile = execution_plan_module._select_profile(
+        {"labels": ["refactor"]},
+        "planfile_queue",
+    )
+
+    assert profile_id == "second"
+
+
+def test_fallback_profile_uses_registry_default() -> None:
+    assert execution_plan_module._fallback_profile_id(
+        {"defaults": {"fallback_profile": "custom"}},
+    ) == "custom"

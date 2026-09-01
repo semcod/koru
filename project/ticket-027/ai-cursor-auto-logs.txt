@@ -1,0 +1,11 @@
+2026-09-01 GOV-PASS: project/governance-check.sh (0 errors, 0 warnings)
+2026-09-01 focused: 9 passed (execution plan, lifecycle, provenance, desktop notify)
+2026-09-01 ruff: all owned source and tests passed
+2026-09-01 full suite: 3648 passed, 15 skipped, 164 deselected, 950 subtests;
+  four failures observed, three reproduced on base 812cd145 and one provenance
+  test-order leak corrected on this branch
+2026-09-01 refreshed base: 703dc7a2; GOV-PASS after bounded delivery declaration
+2026-09-01 focused host validation: 15 passed; owned Ruff passed
+2026-09-01 docker compose --profile verify config --quiet: passed
+2026-09-01 docker compose --profile verify build koru-verify: passed
+2026-09-01 container validation: 14 focused tests passed in Python 3.12 image

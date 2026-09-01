@@ -8,7 +8,10 @@ from unittest.mock import patch
 from koru.work.llm_provenance import notify_work_commit, resolve_work_llm_context
 
 
-def test_resolve_work_llm_context_reads_strategy_model(tmp_path: Path) -> None:
+def test_resolve_work_llm_context_reads_strategy_model(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.delenv("KORU_PLANNING_LLM_MODEL", raising=False)
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.delenv("ZAI_API_KEY", raising=False)
     (tmp_path / "koru.yaml").write_text(
         """
 schema: '1.0'
@@ -28,6 +31,15 @@ autonomy:
     assert ctx.planning_model == "qwen/qwen3-coder-next"
     assert ctx.work_uses_llm is False
     assert ctx.work_llm_mode == "task_profiles+ide_work"
+
+
+def test_resolve_work_llm_context_prefers_explicit_model_override(tmp_path: Path, monkeypatch) -> None:
+    (tmp_path / "koru.yaml").write_text("schema: '1.0'\n", encoding="utf-8")
+    monkeypatch.setenv("KORU_PLANNING_LLM_MODEL", "operator/model")
+
+    ctx = resolve_work_llm_context(tmp_path)
+
+    assert ctx.planning_model == "operator/model"
 
 
 def test_notify_work_commit_uses_desktop_notify(tmp_path: Path) -> None:

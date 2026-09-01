@@ -1,5 +1,9 @@
 # Governance roadmap
 
+- [ ] [`ticket-027`](project/ticket-027/README.md) — expose work-commit desktop
+  notifications and LLM provenance with registry-driven profile ordering.
+  State: `IN_PROGRESS / PUBLICATION`; implementation is present on `main`, but
+  protected exact-head repair publication remains required.
 - [x] [`ticket-026`](project/ticket-026/README.md) — neutralize the
   authorization-order violation in governance-only PR #56, then reapply the
   ticket-025 closure through protected exact-head review. State:
