@@ -1,10 +1,11 @@
 # Governance roadmap
 
-- [ ] [`ticket-026`](project/ticket-026/README.md) — neutralize the
+- [x] [`ticket-026`](project/ticket-026/README.md) — neutralize the
   authorization-order violation in governance-only PR #56, then reapply the
   ticket-025 closure through protected exact-head review. State:
-  `IN_PROGRESS / PUBLICATION`; protected PR #57 neutralized the untrusted
-  closure, and corrected reclosure is being prepared.
+  `DONE / DONE`; protected PR #57 neutralized the untrusted closure, and
+  exact head `d7f68633` passed smoke, OneDev and protected validation before
+  corrected reclosure PR #58 merged as `f04dbbf1`.
 - [x] [`ticket-025`](project/ticket-025/README.md) — prevent repeated
   `koru scan --apply` cycles from recreating unchanged findings after their
   Planfile tickets move into history. State: `DONE / DONE`; exact head

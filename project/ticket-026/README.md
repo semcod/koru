@@ -1,9 +1,9 @@
 # Ticket 026: Reconcile the untrusted PR 56 closure merge
 
 - **ID**: ticket-026
-- **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Owner**: agent:codex under explicit conversational approval
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -44,10 +44,10 @@ behavior is changed.
   exact first-parent reversal of merge `665bc68e` on its five paths.
 - [x] AC-03: Protected exact-head review and merge complete for the revert
   before any closure evidence is reapplied.
-- [ ] AC-04: The second PR restores ticket-025 as `DONE / DONE`, records both
+- [x] AC-04: The second PR restores ticket-025 as `DONE / DONE`, records both
   the trusted PR #55 delivery and the PR #56 incident, and receives protected
   review before merge.
-- [ ] AC-05: Final GitHub review evidence binds repository, PR, current head,
+- [x] AC-05: Final GitHub review evidence binds repository, PR, current head,
   ticket 026 and `ifuri-validator-agent[bot]`; no post-merge approval is used.
 - [x] AC-06: Governance, diff hygiene and Docker Compose checks pass for both
   stages, and remote branch inventory contains no abandoned unique diff.
@@ -64,9 +64,15 @@ behavior is changed.
 - Stage 1 protected revert: [#57](https://github.com/semcod/koru/pull/57), exact
   head `dcf47f0ebfeee9227450a0045fa4b8050921f558`, validator run `33519533252`,
   review `5079288844`, merge `4de42dc35b6fc3cd883c21fad6fd3760cf6afe00`.
-- Stage 2 corrected closure: [#58](https://github.com/semcod/koru/pull/58)
+- Stage 2 corrected closure: [#58](https://github.com/semcod/koru/pull/58),
+  exact head `d7f68633c0a05fde6d024a9e95865765818bdfe2`, validator run
+  `33520531075`, review `5079395138`, merge
+  `f04dbbf1343290a84b0f5ee0176ae0aa9a9ff549` at
+  `2026-09-01T14:38:01Z`.
+- Governance closure: [#59](https://github.com/semcod/koru/pull/59)
 
 ## Participants
 
-- Human participant: unresolved; no user-* file was created by this script.
+- Human participant: the active user explicitly approved ticket 026 on
+  2026-09-01; identity remains unresolved and no `user-*` file was created.
 - Agent participant: [ai-codex.md](ai-codex.md)

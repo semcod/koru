@@ -48,6 +48,13 @@ protected PR. The trusted implementation merge from PR #55 remains untouched.
   merging PR #57 as `4de42dc35b6fc3cd883c21fad6fd3760cf6afe00`.
 - Reapplied ticket-025 closure only after the protected revert was integrated,
   including truthful PR #56 incident evidence.
+- Exact stage-2 head `d7f68633c0a05fde6d024a9e95865765818bdfe2`
+  passed smoke and OneDev before protected validator run `33520531075` created
+  review `5079395138`; the validator then merged PR #58 as
+  `f04dbbf1343290a84b0f5ee0176ae0aa9a9ff549`.
+- Confirmed the stage-2 topic branch was deleted and the remote branch
+  inventory returned to `main` only, then closed the lifecycle as
+  `DONE / DONE`.
 
 ## Blockers
 

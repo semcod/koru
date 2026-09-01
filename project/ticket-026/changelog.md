@@ -23,3 +23,14 @@
 - Validate both stages with governance, diff and Docker gates and confirm no
   abandoned remote branch remains before stage-2 publication.
 - Open stage-2 corrected closure PR #58.
+
+## [0.2.0] - 2026-09-01
+
+- Record successful GitHub smoke and OneDev verification for exact head
+  `d7f68633c0a05fde6d024a9e95865765818bdfe2`.
+- Record protected validator run `33520531075`, exact-head review `5079395138`
+  and merge `f04dbbf1343290a84b0f5ee0176ae0aa9a9ff549`.
+- Confirm automatic deletion of the stage-2 topic branch and a remote
+  inventory containing only `main`.
+- Close the ticket lifecycle as `DONE / DONE` and bind governance-only closure
+  PR #59.
