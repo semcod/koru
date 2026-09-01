@@ -96,14 +96,61 @@ def test_doctor_runner_probe_specs_keep_conditionals(tmp_path):
     names = [name for name, _attr in doctor_runner.probe_specs(tmp_path)]
     assert "gitignore" not in names
     assert "pytest_collect" not in names
-    assert names[-1] == "ci_command"
+    assert names[-3:] == ["ci_command", "pyqual_pipeline", "ci_test_script"]
 
     (tmp_path / ".git").mkdir()
     (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\n", encoding="utf-8")
 
     names = [name for name, _attr in doctor_runner.probe_specs(tmp_path)]
     assert "gitignore" in names
-    assert names[-2:] == ["ci_command", "pytest_collect"]
+    assert names[-4:] == [
+        "ci_command",
+        "pyqual_pipeline",
+        "ci_test_script",
+        "pytest_collect",
+    ]
+
+
+def test_doctor_quality_pipeline_probes(monkeypatch, tmp_path):
+    """Quality-pipeline hints distinguish absent, unavailable, and ready tools."""
+    from koru import doctor_project_health
+
+    assert doctor_project_health.check_pyqual_pipeline(tmp_path) == (
+        "skip",
+        "no pyqual.yaml",
+    )
+    assert doctor_project_health.check_ci_test_script(tmp_path) == (
+        "skip",
+        "no scripts/ci-test.sh",
+    )
+
+    (tmp_path / "pyqual.yaml").write_text("schema: pyqual/v1\n", encoding="utf-8")
+    monkeypatch.setattr(doctor_project_health.shutil, "which", lambda _name: None)
+    status, detail = doctor_project_health.check_pyqual_pipeline(tmp_path)
+    assert status == "warn"
+    assert "not on PATH" in detail
+
+    monkeypatch.setattr(
+        doctor_project_health.shutil,
+        "which",
+        lambda _name: "/usr/bin/pyqual",
+    )
+    status, detail = doctor_project_health.check_pyqual_pipeline(tmp_path)
+    assert status == "pass"
+    assert "pyqual run" in detail
+
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    ci_test = scripts / "ci-test.sh"
+    ci_test.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    status, detail = doctor_project_health.check_ci_test_script(tmp_path)
+    assert status == "warn"
+    assert "not executable" in detail
+
+    ci_test.chmod(0o755)
+    status, detail = doctor_project_health.check_ci_test_script(tmp_path)
+    assert status == "pass"
+    assert "policy.ci.command" in detail
 
 
 def test_doctor_project_checks_are_reexported():

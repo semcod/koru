@@ -39,6 +39,16 @@ class TestCiRunner(unittest.TestCase):
             result = run_local_ci(Path("/tmp/project"), include_gates=False)
         self.assertEqual(result["overall_status"], "failed")
 
+    def test_skip_gates_without_policy_command_is_a_noop(self) -> None:
+        policy = Policy(ci_command="")
+        with (
+            patch("koru.ci.runner.load_policy", return_value=policy),
+            patch("koru.ci.runner.run_quality_gates") as quality_gates,
+        ):
+            result = run_local_ci(Path("/tmp/project"), include_gates=False)
+        self.assertEqual(result, {"overall_status": "passed", "stages": []})
+        quality_gates.assert_not_called()
+
 
 class TestPublication(unittest.TestCase):
     def test_load_publication_config_defaults(self) -> None:
