@@ -40,3 +40,7 @@
 - Record full-suite monitoring separately from the green focused scope: seven
   known failures remain outside ticket-021, down from the noisy initial run.
 - Enter `PUBLICATION` after governance, focused stack and Docker checks pass.
+
+## [0.7.0] - 2026-09-01
+
+- Bind delivery to PR #46 before requesting exact-head protected validation.

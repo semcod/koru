@@ -71,6 +71,13 @@ publication:
 
 Or set `KORU_VALIDATOR_CHECKOUT`.
 
+## Delivery
+
+- Pull request: #46
+- Protected publication target: exact current PR head for `ticket-021`.
+- Merge remains disabled until local OneDev succeeds and the protected
+  validator binds its approval to that exact head.
+
 ## MCP
 
 - `koru_run_ci` with `action=run|gates|publish`

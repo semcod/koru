@@ -10,6 +10,11 @@
 - ruff check src tests: 7 errors, including ticket-021 import defects
 - full pytest: 3590 passed, 15 failed, 27 skipped, 160 deselected
 - docker compose config --quiet: pass
+
+2026-09-01 publication
+- PR #46 opened from ticket/021-ci-selfcheck at 4fc4eb39
+- this documentation-only follow-up binds the PR number before exact-head
+  OneDev and protected validator publication; prior-head checks are superseded
 - no implementation files changed during PLAN
 
 2026-09-01 EDIT authorization
