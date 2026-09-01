@@ -50,3 +50,4 @@
 - git diff --check: pass
 - docker compose config --quiet: pass
 - lifecycle moved to IN_PROGRESS / PUBLICATION
+- opened stage-1 protected revert PR https://github.com/semcod/koru/pull/57

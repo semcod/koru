@@ -16,3 +16,4 @@
 - Reversed all five PR #56 first-parent effects; ticket-025 evidence matches
   the trusted PR #55 parent and local required gates pass.
 - Moved the first stage to `IN_PROGRESS / PUBLICATION` for protected review.
+- Opened stage-1 revert PR #57.

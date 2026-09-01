@@ -59,6 +59,11 @@ behavior is changed.
 - Change scan-dedupe implementation delivered by PR #55.
 - Mix issue #41, issue #37 or the governance-standard upgrade into this repair.
 
+## Publication
+
+- Stage 1 protected revert: [#57](https://github.com/semcod/koru/pull/57)
+- Stage 2 corrected closure: pending successful protected merge of stage 1.
+
 ## Participants
 
 - Human participant: unresolved; no user-* file was created by this script.
