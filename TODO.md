@@ -20,9 +20,10 @@
 - [x] [`ticket-021`](project/ticket-021/README.md) — finish local CI and
   exact-head validator publication. State: `DONE / DONE`; PR #46 passed smoke,
   OneDev and protected exact-head validation before merge `fac3639e`.
-- [ ] [`ticket-022`](project/ticket-022/README.md) — finish the ticket-first
-  `koru work start/finish` lifecycle. State: `PLAN / WAIT_FOR_APPROVAL`;
-  already-present code is retained without manufacturing approval evidence.
+- [ ] [`ticket-022`](project/ticket-022/README.md) — stabilize the delivered
+  `koru work/decide` integration by repairing its two source Ruff findings.
+  State: `PLAN / WAIT_FOR_APPROVAL`; focused behavior tests are green and no
+  source change is authorized yet.
 - [x] [`ticket-017`](project/ticket-017/README.md) — make MCP ticket execution
   exact-target and preflight the central SubLLM route before Planfile lifecycle
   mutation. State: `DONE`; classification:

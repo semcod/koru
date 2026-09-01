@@ -1,36 +1,43 @@
-# Ticket 022: Koru work start/finish workflow
+# Ticket 022: Stabilize Koru work/decide smoke
 
 - **ID**: ticket-022
-- **Owner**: agent:cursor
+- **Owner**: agent:codex
 - **Status**: PLAN
 - **Workflow state**: WAIT_FOR_APPROVAL
 - **Created**: 2026-09-01
 
 ## Goal and scope
 
-Finish and validate the already-present `koru work start/finish` lifecycle that
-binds a Planfile ticket, local branch, local CI, and validator-agent
-publication. The initial implementation is on `main`, but it was merged while
-this ticket still had an invalid, unapproved intent; presence is not completion
-evidence.
+Stabilize the already-present `koru work` and execution-plan integration after
+the delivered `work/decide` implementation introduced two Ruff failures in
+the source smoke gate. The repair is limited to removing one unused import and
+restoring deterministic import order; it must not change CLI behavior or the
+validator-agent authority boundary.
+
+The broader implementation is already on `main`, but presence is not approval
+or completion evidence for this bounded repair.
 
 ## Acceptance criteria
 
-- [ ] AC-01: The amended bounded scope is approved before repair work.
-- [ ] AC-02: Start creates and synchronizes the ticket before local and remote
-  branch creation, without granting merge authority.
-- [ ] AC-03: Finish runs local verification and delegates exact-head review and
-  explicit merge to validator-agent without depending on GitHub Actions.
-- [ ] AC-04: Focused tests, Ruff, governance and Docker checks pass on the
-  delivery head.
+- [ ] AC-01: The amended exact-base, two-source-file scope is explicitly
+  approved before implementation or test files change.
+- [ ] AC-02: Ruff passes for both touched modules and for the complete
+  `src/koru` smoke scope without suppressions.
+- [ ] AC-03: Existing execution-plan and work-lifecycle regression tests remain
+  green with no CLI behavior or public-interface change.
+- [ ] AC-04: Governance, diff hygiene and Docker configuration checks pass on
+  the delivery head.
 
 ## Planning note
 
-Resume this existing ticket only from `IN_PROGRESS / EDIT` in its own
-branch/worktree after ticket 021 is terminal. Do not treat commits already on
-`main` as approval or exact-head validation evidence.
+The accepted planning base is `37cd8021034680b6bee7d7ef27c628fef12dddab`.
+Resume only after explicit approval by transitioning to `IN_PROGRESS / EDIT`
+in this dedicated branch/worktree. The unrelated Ruff failure in
+`tests/test_autonomous.py` and the seven previously measured deterministic
+test failures require separate scopes.
 
 ## Participants
 
 - Human participant: unresolved; no user-* file was created.
+- Agent participant: [ai-codex.md](ai-codex.md)
 - Agent participant: [ai-cursor.md](ai-cursor.md)

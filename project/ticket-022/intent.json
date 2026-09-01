@@ -1,18 +1,14 @@
 {
   "schema": "new-project.intent/v2",
   "ticket": "ticket-022",
-  "summary": "Koru work start/finish workflow",
+  "summary": "Stabilize Koru work/decide source smoke",
   "workstream": "application",
   "allowedPaths": [
     "project/ticket-022/**",
     "project/TICKETS.md",
-    "src/koru/work/**",
-    "src/koru/cli_work.py",
-    "src/koru/cli.py",
-    "src/koru/ci/publication.py",
-    "tests/test_work_lifecycle.py",
-    "tests/test_cli.py",
-    "README.md"
+    "TODO.md",
+    "src/koru/autonomy/execution_plan.py",
+    "src/koru/cli_work.py"
   ],
   "forbiddenPaths": ["project/ticket-*/user-*.md"],
   "stacks": ["python"],
@@ -20,60 +16,66 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "cd95ca6c314bcc2e214db7eeb5918c87b195ae71",
+    "acceptedBaseSha": "37cd8021034680b6bee7d7ef27c628fef12dddab",
     "targetBranch": "main",
-    "outcome": "Koru work start/finish follows ticket-first Planfile synchronization, local verification, exact-head validator review, and explicit merge boundaries.",
+    "outcome": "The delivered Koru work/decide integration passes the complete source Ruff smoke gate without changing runtime behavior or authority boundaries.",
     "nonGoals": [
-      "Treat GitHub Actions capacity as the verification boundary",
-      "Let Koru approve or merge its own pull request",
-      "Create a branch before ticket allocation and Planfile synchronization"
+      "Change the public work or decide CLI",
+      "Repair the unrelated Ruff finding in tests/test_autonomous.py",
+      "Repair the seven previously measured deterministic test failures",
+      "Change validator-agent publication or merge authority"
     ],
-    "complexity": "S",
-    "estimatedMinutes": 30,
+    "complexity": "XS",
+    "estimatedMinutes": 15,
     "budgets": {
-      "maxImplementationFiles": 8,
+      "maxImplementationFiles": 2,
       "maxAffectedComponents": 1,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
     },
     "architecture": {
       "status": "proposed",
-      "decision": "Keep ticket and Planfile state authoritative before branch creation; run CI locally and leave trusted exact-head approval and merge to validator-agent.",
+      "decision": "Apply only Ruff-prescribed import cleanup to the two source modules while preserving the delivered work/decide behavior and exact-head validator boundary.",
       "components": [
         {
-          "name": "work-lifecycle",
+          "name": "work-decide-cli",
           "paths": [
-            "src/koru/work/**",
-            "src/koru/cli_work.py",
-            "src/koru/cli.py",
-            "src/koru/ci/publication.py",
-            "tests/test_work_lifecycle.py",
-            "tests/test_cli.py"
+            "src/koru/autonomy/execution_plan.py",
+            "src/koru/cli_work.py"
           ]
         }
       ],
-      "responsibilityChanges": true,
+      "responsibilityChanges": false,
       "interfaceChanges": [],
       "dataChanges": [],
       "ui": {"impact": "none", "states": [], "evidence": []},
-      "rollback": "Revert the work-lifecycle implementation while retaining the ticket evidence."
+      "rollback": "Revert the two import-only changes while retaining planning and validation evidence."
     },
     "runtimeDependencies": [],
     "validation": [
       {
         "criterion": "AC-02",
-        "commands": ["python -m pytest -q tests/test_work_lifecycle.py tests/test_cli.py"],
-        "evidence": "project/ticket-022/ai-cursor-logs.txt"
+        "commands": [
+          "python -m ruff check src/koru/autonomy/execution_plan.py src/koru/cli_work.py",
+          "python -m ruff check src/koru"
+        ],
+        "evidence": "project/ticket-022/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_execution_plan.py tests/test_work_lifecycle.py"
+        ],
+        "evidence": "project/ticket-022/ai-codex-logs.txt"
       },
       {
         "criterion": "AC-04",
         "commands": [
-          "python -m ruff check src/koru/work src/koru/cli_work.py tests/test_work_lifecycle.py",
           "./project/governance-check.sh",
           "git diff --check",
           "docker compose config --quiet"
         ],
-        "evidence": "project/ticket-022/ai-cursor-logs.txt"
+        "evidence": "project/ticket-022/ai-codex-logs.txt"
       }
     ]
   }

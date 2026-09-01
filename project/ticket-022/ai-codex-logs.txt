@@ -1,0 +1,8 @@
+2026-09-01T13:46:40+02:00
+Planning base: 37cd8021034680b6bee7d7ef27c628fef12dddab (origin/main after protected PR #50 merge).
+Read .governance/manifest.json, TODO.md, project/TICKETS.md and every ticket-022 evidence file before planning.
+Reused ticket-022 because the observed source smoke regression is in the same application workstream and delivered work/decide scope.
+Baseline: `ruff check src/koru` -> 2 failures: F401 in src/koru/autonomy/execution_plan.py and I001 in src/koru/cli_work.py.
+Baseline: `ruff check src tests` -> the same 2 source failures plus unrelated UP037 in tests/test_autonomous.py:5600.
+Baseline: `pytest -q tests/test_execution_plan.py tests/test_work_lifecycle.py` -> 6 passed in 1.02s.
+No implementation or test files changed. State remains PLAN / WAIT_FOR_APPROVAL.
