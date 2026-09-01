@@ -1,0 +1,80 @@
+# ticket-023 execution evidence
+
+2026-09-01 authorization
+- User explicitly requested continued implementation, testing and GitHub push.
+- Ticket moved from PLAN / WAIT_FOR_APPROVAL to IN_PROGRESS / EDIT.
+- No project/ticket-*/user-*.md file was created or modified.
+
+2026-09-01 contract research and pins
+- poa-process/v1 schema SHA-256:
+  9222fbe9aded60df6d3c0b39b7a4a89b8ad627f122349e909fdfba44047669ab
+- wellmanifest.logs/event/v1 contract v0.3 SHA-256:
+  916ccdd3a6f499b160b631da09a6a060233105e907f5582c12d8eaecae92e2eb
+- POA request GBNF reference pin:
+  d13d736cc3f4e07dd9366378183055ff0d9ad10dd4fc5bf1f322e2dc37d919ee
+- Koru POA source-registry schema SHA-256:
+  94fc544a75ee5f2e940399a1dba3eda193e8fb916add053c4daca655c723f165
+- Registry and Strategy evidence is intentionally modeled as separate actual
+  subactor.config-response/v1 responses; Policy is a separate decision input.
+
+2026-09-01 allocation and branch evidence
+- Canonical allocator first observed a concurrent ticket-022 allocation on
+  main; the POA/Logs work was reallocated as ticket-023 rather than taking over
+  that ticket.
+- Initial main base: d40f6fd94914c4cda913df038aa6ee1c3dddad56.
+- Working branch: ticket/023-poa-logs in a separate worktree.
+- Work initially stacked on governance reconciliation head
+  b9aa519018f0d2e69e349b6dd41982ef4fd862ab.
+- Governance reconciliation later merged to main; the branch was fast-forwarded
+  to exact main head e94f3aa7d558859967de96a3feee55dd2cac2b83 before publication.
+- The base refresh changed no POA architecture, intent scope or implementation
+  path; focused and governance checks were rerun after the refresh.
+- After PR publication, main advanced through the completed ticket-021 and
+  `koru decide` work to 7cda533e30bbc758d163410f447dee58d8b26ac4.
+- That main range does not touch `src/koru/poa`, the three contract files or
+  the focused tests. It was merged into the ticket branch without conflict;
+  acceptedBaseSha was refreshed and the ticket checks were rerun.
+- OneDev's first executor run passed 110 configured Koru tests for the earlier
+  exact PR head against main 0cf4ba1f. That evidence became historical when
+  the branch HEAD changed and is not used as final publication evidence.
+
+Validation evidence follows.
+
+2026-09-01 focused validation
+- `python -m pytest -q tests/test_poa_contracts.py tests/test_poa_registry.py
+  tests/test_poa_logs.py`: final run 22 passed in 2.71s.
+- `ruff check src/koru/poa tests/test_poa_contracts.py
+  tests/test_poa_logs.py tests/test_poa_registry.py`: passed.
+- `mypy src/koru/poa`: no issues in 4 source files.
+- Source-registry, POA process and Logs contract SHA-256 values match the
+  recorded pins.
+- `./project/governance-check.sh`: 0 errors, 0 warnings.
+- `git diff --check`: passed.
+- `docker compose config --quiet`: passed.
+
+2026-09-01 distribution validation
+- `uv build --wheel --out-dir /tmp/koru-ticket-023-wheel`: passed.
+- Built wheel contains all three vendored JSON contracts and all four
+  `koru/poa` Python modules.
+
+2026-09-01 repository-wide baseline evidence
+- Full pytest: 7 failed, 3633 passed, 15 skipped, 163 deselected and 944
+  subtests passed in 475.31s.
+- None of the seven failing test paths or subjects is changed by ticket-023.
+- Five failures reproduce on main: autonomy root inventory, IDE auto-instance
+  socket expectation, two pyproject metadata assertions and volume-map header.
+- Two additional worktree subfailures require local ignored `src/korullm`;
+  that directory exists only in the primary checkout and is absent from the Git
+  tree and a fresh worktree.
+- Repository-wide Ruff reports 7 pre-existing findings in `src/koru/cli_ci.py`,
+  `src/koruapi/mcp_server.py`, `tests/test_autonomous.py` and
+  `tests/test_ci_pipeline.py`; focused ticket Ruff is clean.
+
+2026-09-01 final main refresh validation
+- Combined POA, configured Koru OneDev-profile, execution-plan and CI tests:
+  143 passed, 16 deselected in 6.36s.
+- Focused POA Ruff, mypy, governance, diff and Docker configuration checks
+  passed after merging main 7cda533e30bbc758d163410f447dee58d8b26ac4.
+- Repository-wide Ruff now reports three findings introduced or retained by
+  main in `src/koru/autonomy/execution_plan.py`, `src/koru/cli_work.py` and
+  `tests/test_autonomous.py`; none is in the ticket-023 diff.

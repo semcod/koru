@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://semcod.dev/schemas/koru/poa/source-registry-snapshot.v1.json",
+  "title": "Koru evidence-only POA source registry snapshot v1",
+  "description": "A hash-pinned, secret-free projection of Subactor Config discovery plus Registry and Strategy evidence. It contains no policy decision or execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "snapshotId",
+    "createdAt",
+    "validUntil",
+    "resolutions",
+    "evidence",
+    "candidates",
+    "snapshotHash"
+  ],
+  "properties": {
+    "schema": {"const": "koru.poa/source-registry-snapshot/v1"},
+    "snapshotId": {"type": "string", "minLength": 10, "maxLength": 128, "pattern": "^snapshot:[A-Za-z0-9._:-]+$"},
+    "createdAt": {"type": "string", "format": "date-time", "maxLength": 40},
+    "validUntil": {"type": "string", "format": "date-time", "maxLength": 40},
+    "resolutions": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 16,
+      "items": {"$ref": "#/$defs/resolution"}
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 16,
+      "items": {"$ref": "#/$defs/sourceEvidence"}
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {"$ref": "#/$defs/candidate"}
+    },
+    "snapshotHash": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 96, "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "artifactRef": {
+      "type": "string",
+      "maxLength": 320,
+      "pattern": "^artifact://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/r[1-9][0-9]*$"
+    },
+    "schemaRef": {
+      "type": "string",
+      "maxLength": 320,
+      "pattern": "^schema://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/v[1-9][0-9]*$"
+    },
+    "sourceLocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "uri", "access", "status"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "uri": {"type": "string", "minLength": 4, "maxLength": 320, "pattern": "^[a-z][a-z0-9+.-]*://\\S+$"},
+        "access": {"enum": ["metadata", "enumerate", "read"]},
+        "status": {"enum": ["configured", "optional"]}
+      }
+    },
+    "repositoryAvailability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "present"],
+      "properties": {
+        "repository": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"},
+        "present": {"type": "boolean"}
+      }
+    },
+    "availability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "repositories"],
+      "properties": {
+        "state": {"enum": ["ready", "partial", "unavailable"]},
+        "repositories": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {"$ref": "#/$defs/repositoryAvailability"}
+        }
+      }
+    },
+    "configurationSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "id", "kind", "owners", "trust", "authority", "provides", "locations", "availability"],
+      "properties": {
+        "schema": {"const": "subactor.configuration-source/v1"},
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"$ref": "#/$defs/id"},
+        "owners": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"}
+        },
+        "trust": {"enum": ["versioned", "live-observation", "runtime-projection"]},
+        "authority": {"const": "evidence-only"},
+        "provides": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/id"}
+        },
+        "locations": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {"$ref": "#/$defs/sourceLocation"}
+        },
+        "availability": {"$ref": "#/$defs/availability"}
+      }
+    },
+    "control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["configurationMode", "requesters", "supervisorDecisionScope", "authoritySource", "mutationMode", "localVerification"],
+      "properties": {
+        "configurationMode": {"const": "versioned-proposal"},
+        "requesters": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {"enum": ["human:user", "agent:supervisor"]}
+        },
+        "supervisorDecisionScope": {"const": "all-declared-sources"},
+        "authoritySource": {"const": "external-policy-or-grant"},
+        "mutationMode": {"const": "plan-hash-grant-apply-eql"},
+        "localVerification": {"const": "onedev/local-verify"}
+      }
+    },
+    "configResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "data"],
+      "properties": {
+        "schema": {"const": "subactor.config-response/v1"},
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema", "need", "matchedSources", "authority", "control"],
+          "properties": {
+            "schema": {"const": "subactor.configuration-resolution/v1"},
+            "need": {"$ref": "#/$defs/id"},
+            "matchedSources": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 32,
+              "items": {"$ref": "#/$defs/configurationSource"}
+            },
+            "authority": {"const": "evidence-only"},
+            "control": {"$ref": "#/$defs/control"}
+          }
+        }
+      }
+    },
+    "resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["response", "responseSha256"],
+      "properties": {
+        "response": {"$ref": "#/$defs/configResponse"},
+        "responseSha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "sourceEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "sourceId", "schemaRef", "artifactRef", "sha256"],
+      "properties": {
+        "role": {"enum": ["registry", "strategy"]},
+        "sourceId": {"$ref": "#/$defs/id"},
+        "schemaRef": {"$ref": "#/$defs/schemaRef"},
+        "artifactRef": {"$ref": "#/$defs/artifactRef"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "binding_id",
+        "capability_ref",
+        "process_uri",
+        "target_ref",
+        "adapter_ref",
+        "observation_ref",
+        "observation_sha256",
+        "priority"
+      ],
+      "properties": {
+        "schema": {"const": "poa.binding/v1"},
+        "binding_id": {"type": "string", "minLength": 1, "maxLength": 96, "pattern": "^[a-z][a-z0-9._:-]*$"},
+        "capability_ref": {"type": "string", "maxLength": 240, "pattern": "^capability://[a-z0-9.-]+/[a-z][a-z0-9._:/-]*/v[1-9][0-9]*$"},
+        "process_uri": {"type": "string", "maxLength": 320, "pattern": "^[a-z][a-z0-9+.-]*://[A-Za-z0-9._:-]+(?:/[A-Za-z0-9._:-]+)*/(?:query|command)/[A-Za-z0-9._:-]+$"},
+        "target_ref": {"type": "string", "maxLength": 240, "pattern": "^target://[a-z0-9.-]+/[A-Za-z0-9._:/-]+$"},
+        "adapter_ref": {"type": "string", "maxLength": 240, "pattern": "^adapter://[a-z0-9.-]+/[A-Za-z0-9._:/-]+/v[1-9][0-9]*$"},
+        "observation_ref": {"$ref": "#/$defs/artifactRef"},
+        "observation_sha256": {"$ref": "#/$defs/sha256"},
+        "priority": {"type": "integer", "minimum": -1000, "maximum": 1000}
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["configNeeds", "sourceIds", "binding"],
+      "properties": {
+        "configNeeds": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/id"}
+        },
+        "sourceIds": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/id"}
+        },
+        "binding": {"$ref": "#/$defs/binding"}
+      }
+    }
+  }
+}

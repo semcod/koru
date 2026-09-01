@@ -1,0 +1,99 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-023",
+  "summary": "Adopt POA planning and Logs event contracts",
+  "workstream": "application",
+  "allowedPaths": [
+    "project/ticket-023/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/data/koru-poa-source-registry-v1.schema.json",
+    "src/koru/data/poa-process-v1.schema.json",
+    "src/koru/data/wellmanifest-logs-contract-v0.3.json",
+    "src/koru/poa/**",
+    "tests/test_poa_contracts.py",
+    "tests/test_poa_logs.py",
+    "tests/test_poa_registry.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": ["ticket-020"],
+  "conflictsWith": ["ticket-019", "ticket-020"],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "7cda533e30bbc758d163410f447dee58d8b26ac4",
+    "targetBranch": "main",
+    "outcome": "Standardize POA planning and Wellmanifest Logs with evidence-bound dynamic Registry, Strategy and Policy resolution",
+    "nonGoals": [
+      "Execute compiled plans or grant execution authority",
+      "Perform network registry discovery",
+      "Add or change runtime dependencies",
+      "Change unrelated CI or autonomy modules"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 10,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep POA compilation pure and inert; consume separately hash-pinned Subactor Config evidence for Registry and Strategy and a separately bound Policy decision, then emit hash-linked Wellmanifest Logs events",
+      "components": [
+        {
+          "name": "poa-contract-boundary",
+          "paths": [
+            "src/koru/data/koru-poa-source-registry-v1.schema.json",
+            "src/koru/data/poa-process-v1.schema.json",
+            "src/koru/data/wellmanifest-logs-contract-v0.3.json",
+            "src/koru/poa/**",
+            "tests/test_poa_contracts.py",
+            "tests/test_poa_logs.py",
+            "tests/test_poa_registry.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the ticket-023 implementation commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["python -m pytest -q tests/test_poa_contracts.py"],
+        "evidence": "project/ticket-023/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["python -m pytest -q tests/test_poa_registry.py"],
+        "evidence": "project/ticket-023/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["python -m pytest -q tests/test_poa_registry.py -k 'policy or evidence or config'"],
+        "evidence": "project/ticket-023/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["python -m pytest -q tests/test_poa_logs.py"],
+        "evidence": "project/ticket-023/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-06",
+        "commands": [
+          "ruff check src/koru/poa tests/test_poa_contracts.py tests/test_poa_logs.py tests/test_poa_registry.py",
+          "mypy src/koru/poa",
+          "./project/governance-check.sh",
+          "git diff --check",
+          "docker compose config --quiet"
+        ],
+        "evidence": "project/ticket-023/ai-codex-logs.txt"
+      }
+    ]
+  }
+}
