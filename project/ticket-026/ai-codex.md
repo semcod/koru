@@ -8,39 +8,31 @@ ticket: ticket-026
 
 ## Understanding
 
-The user asked to finish and correctly merge outstanding branches and issues.
-PR #43 was not mergeable: it conflicted with main, failed smoke and OneDev,
-changed dozens of files under ticket 021 after that ticket closed for another
-delivery, and was therefore closed as superseded. Issue #41 remains valid and
-blocks issue #37 because current standard 0.11.0 does not own `packages/**`.
+The user asked to finish and correctly merge outstanding branches. During the
+audit, PR #55 was found correctly protected and merged. Its governance-only
+closure PR #56 was then merged by a human before protected review. Validator
+run `33517867410` correctly refused to create a retroactive receipt, reporting
+`POST_APPROVAL_RECEIPT_MISSING`.
 
-The first replacement plan was serialized locally as ticket 025, validated and
-approved for continuation. Before implementation, a concurrent protected PR
-merged a different ticket 025 first. The winning merge receipt is authoritative,
-so this equivalent plan has been preserved as ticket 026 on refreshed main; no
-implementation content from the losing allocation was mixed into the winner.
-
-The latest final upstream release is 0.19.18 at immutable revision
-`7dd68589340bfd4b18b94f3141f41833280c2985`. Its changelog includes the 0.19.3
-monorepo ownership fix and later atomic-adoption, worktree and ticket-activity
-repairs. A read-only Goal preflight identifies 75 managed operations. Koru's
-broad local ignores require four exact negations first.
+Approval cannot be manufactured after merge. Rewriting `main` would be
+destructive, while merely adding a note would leave the untrusted effects in
+place. The smallest authority-preserving repair is therefore to neutralize all
+five PR #56 effects in one protected PR and reintroduce the closure in a second
+protected PR. The trusted implementation merge from PR #55 remains untouched.
 
 ## Execution plan
 
-1. Wait for explicit approval of the successor ID in
-   `PLAN / WAIT_FOR_APPROVAL`.
-2. Move to `IN_PROGRESS / EDIT` and add only the four exact `.gitignore`
-   trackability exceptions declared by the ticket.
-3. Run Goal 2.1.300 with `governance adopt --upgrade` against the exact
-   published revision; do not hand-edit generated governance files.
-4. Reconcile the ticket intent mechanically with the adopted schema without
-   widening product scope, then verify repeated adoption reports zero drift.
-5. Validate package ownership, closed-ticket activity, ticket allocation,
-   governance, focused Python smoke, diff hygiene and Docker configuration.
-6. Publish a replacement PR bound to issue #41 and request protected
-   exact-head review and merge. After delivery close #41 and proceed to a
-   separate application ticket for #37.
+1. Wait for explicit approval in `PLAN / WAIT_FOR_APPROVAL`.
+2. Move to `IN_PROGRESS / EDIT`, revert merge `665bc68e` with first-parent
+   semantics and verify the diff is exactly the five PR #56 governance paths.
+3. Run governance, diff and Docker checks; publish and merge the revert only
+   through protected exact-head validation.
+4. Refresh from the trusted revert merge and reapply the ticket-025 closure,
+   adding truthful incident evidence and keeping ticket 026 active.
+5. Run the same checks, publish the corrected closure and require protected
+   exact-head review before merge.
+6. Confirm only `main` remains remotely, then resume issue #41 through the next
+   available ticket ID.
 
 ## Actual changes
 
