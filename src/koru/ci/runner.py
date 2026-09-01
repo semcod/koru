@@ -57,7 +57,7 @@ def run_local_ci(
         if gate_result.get("overall_status") != "passed":
             return {"overall_status": "failed", "stages": stages}
 
-    if not stages:
+    if not stages and include_gates:
         gate_result = run_quality_gates(project, gates=gates, fail_fast=fail_fast)
         stages.append({"stage": "quality_gates", **gate_result})
         overall = gate_result.get("overall_status", "failed")

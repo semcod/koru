@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-031",
+  "summary": "Repair post-merge CI verification gaps",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-031/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/ci/runner.py",
+    "tests/test_ci_pipeline.py",
+    "tests/test_doctor_facade.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": ["ticket-030"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e63de7d5ded0fdf3f2cfdb8a9679975f3689fddf",
+    "targetBranch": "main",
+    "outcome": "Koru preserves ticket-030 doctor coverage and honors --skip-gates when policy CI is absent.",
+    "nonGoals": [
+      "Rewrite or append to merged ticket-030",
+      "Remediate unrelated full-suite or repository-wide Ruff baseline findings",
+      "Change the regix and redup default gate selection"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Treat --skip-gates as an explicit no-gates contract even without policy CI, and retain doctor probe coverage in the existing facade test module.",
+      "components": [
+        {
+          "name": "ci-runner",
+          "paths": ["src/koru/ci/runner.py", "tests/test_ci_pipeline.py"]
+        },
+        {
+          "name": "doctor-regression-coverage",
+          "paths": ["tests/test_doctor_facade.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "koru ci run --skip-gates with no ci.command succeeds without invoking quality gates"
+      ],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the repair commit; ticket-030 remains merged and unchanged."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_ci_pipeline.py tests/test_doctor_facade.py tests/test_execution_plan.py tests/test_doctor.py"
+        ],
+        "evidence": "focused pytest output"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python -m ruff check src/koru/ci/runner.py tests/test_ci_pipeline.py tests/test_doctor_facade.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "local deterministic gate output and protected checks"
+      }
+    ]
+  }
+}

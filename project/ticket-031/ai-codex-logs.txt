@@ -1,0 +1,2 @@
+ticket-031: recovered only the bounded material delta created after ticket-030 froze and merged.
+validation: 30 focused tests passed; changed-file Ruff, governance, Docker Compose and diff checks passed.
