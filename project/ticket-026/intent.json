@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-026",
+  "summary": "Neutralize the untrusted PR 56 closure merge and reclose ticket 025 through protected exact-head review",
+  "workstream": "governance",
+  "allowedPaths": [
+    "project/ticket-026/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "project/ticket-025/README.md",
+    "project/ticket-025/ai-codex-logs.txt",
+    "project/ticket-025/ai-codex.md",
+    "project/ticket-025/changelog.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "665bc68eb22f6e98156d540a01fda6976bf0c632",
+    "targetBranch": "main",
+    "outcome": "Every effective ticket-025 closure change is introduced by a protected exact-head merge that occurred after Validator approval.",
+    "nonGoals": [
+      "Rewrite or force-push main history",
+      "Retroactively classify PR 56 as trusted",
+      "Change the scan-dedupe implementation from PR 55",
+      "Implement issues 41 or 37"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use two sequential protected pull requests: first revert every first-parent effect of untrusted merge 665bc68e, then reapply the ticket-025 closure with truthful incident evidence and pre-merge exact-head approval.",
+      "components": [
+        {
+          "name": "ticket-025-closure-trust",
+          "paths": [
+            "TODO.md",
+            "project/ticket-025/README.md",
+            "project/ticket-025/ai-codex-logs.txt",
+            "project/ticket-025/ai-codex.md",
+            "project/ticket-025/changelog.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Stop after the trusted revert if corrected closure validation fails; never restore the closure through an unreviewed merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["git diff --name-only 665bc68eb22f6e98156d540a01fda6976bf0c632^1..665bc68eb22f6e98156d540a01fda6976bf0c632"],
+        "evidence": "project/ticket-026/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["gh api repos/semcod/koru/pulls/PR/reviews"],
+        "evidence": "project/ticket-026/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-06",
+        "commands": [
+          "./project/governance-check.sh",
+          "git diff --check",
+          "docker compose config --quiet"
+        ],
+        "evidence": "project/ticket-026/ai-codex-logs.txt"
+      }
+    ]
+  }
+}

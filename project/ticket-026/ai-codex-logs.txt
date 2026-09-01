@@ -1,0 +1,53 @@
+2026-09-01T14:12Z successor planning baseline
+- exact base: 665bc68eb22f6e98156d540a01fda6976bf0c632
+- PR #43: closed as superseded; conflicting with failed smoke and OneDev
+- remote branches after cleanup: main only
+- PR #55 exact head 4fb26e742f83349ee8d0a2c66d7672ca9f6cc0ac
+  received protected review and merged as f841c613c7fdb3c51b5147cc50c4d0d8f93bd56b
+- PR #56 merged ticket-025 closure as
+  665bc68eb22f6e98156d540a01fda6976bf0c632; post-merge validator run
+  33517867410 is monitored separately because review timing matters
+- winning ticket-025 is scan-history dedupe; governance plan allocation lost
+  the collision and no implementation was performed under that ID
+- canonical successor allocated as ticket-026 with equivalent goal and scope
+- open Koru issues: #41 and #37; issue #37 depends on resolving #41 first
+- upstream latest final release: new-project 0.19.18
+- exact published target: 7dd68589340bfd4b18b94f3141f41833280c2985
+- installed adoption entry point: Goal 2.1.300
+- read-only preflight: 75 managed CREATE/UPDATE operations after four exact
+  .gitignore trackability negations
+- implementation files changed on successor branch: none
+- lifecycle: PLAN / WAIT_FOR_APPROVAL
+
+2026-09-01T14:14Z branch-merge trust audit
+- protected run 33517867410 completed FAILURE
+- deterministic blocker: POST_APPROVAL_RECEIPT_MISSING for PR #56 exact head
+  b2a9fac8c6382eb25ac7ab234b6356f129f8077a and Validator identity
+- PR #56 merged at 14:09:58Z; validator dispatch began at 14:10:29Z
+- no protected review exists on PR #56 and approval cannot be retroactive
+- PR #56 first-parent diff is exactly five governance paths and no runtime code
+- remote branch inventory contained only main after merged/closed branch cleanup
+- ticket-026 was replanned before approval to perform a protected two-stage
+  revert and corrected closure; issue #41 adoption remains queued for the next
+  safely allocated ticket
+- implementation files changed: none
+- lifecycle remains PLAN / WAIT_FOR_APPROVAL
+
+2026-09-01 approval transition
+- user explicitly approved ticket 026
+- accepted base and five-path repair scope remain unchanged
+- lifecycle moved from PLAN / WAIT_FOR_APPROVAL to IN_PROGRESS / EDIT before
+  changing any ticket-025 lifecycle file
+
+2026-09-01 first-stage reversal validation
+- reversed the five first-parent effects of merge
+  665bc68eb22f6e98156d540a01fda6976bf0c632
+- ticket-025 README, agent log, agent record and changelog are byte-identical
+  to trusted parent f841c613c7fdb3c51b5147cc50c4d0d8f93bd56b
+- TODO differs from trusted parent only by the active ticket-026 roadmap entry
+- implementation/runtime/test/dependency paths changed: none
+- ./project/governance-check.sh: GOV-PASS (0 errors, 0 warnings)
+- git diff --check: pass
+- docker compose config --quiet: pass
+- lifecycle moved to IN_PROGRESS / PUBLICATION
+- opened stage-1 protected revert PR https://github.com/semcod/koru/pull/57
