@@ -61,3 +61,4 @@ test failures require separate scopes.
   `5078036982` by `ifuri-validator-agent` targets the exact head.
 - Merge: `8d8531e665c98aa995f53d099ebfb051821ad42e` at
   `2026-09-01T12:31:16Z`.
+- Governance closure: [#52](https://github.com/semcod/koru/pull/52)
