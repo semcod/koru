@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-038",
+  "summary": "Allow enforced standard-pack conformance",
+  "workstream": "infrastructure",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-038/**",
+    "project/TICKETS.md",
+    ".github/workflows/standard-pack-conformance.yml"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-036"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a7ada51881e091cb37621752babe7866cd8118f0",
+    "targetBranch": "main",
+    "outcome": "The stable standard-pack check deterministically accepts either the exact truthful audit baseline or a completely green enforced baseline and rejects all intermediate states.",
+    "nonGoals": [
+      "Change evidence, adoption levels or required-check registries",
+      "Accept arbitrary audit findings",
+      "Modify GitHub rulesets",
+      "Change application runtime behavior"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep one stable check name and branch explicitly on the report mode, with closed assertions for both authorized rollout endpoints.",
+      "components": [
+        {
+          "name": "standard-pack-conformance-ci",
+          "paths": [".github/workflows/standard-pack-conformance.yml"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected ticket merge; audit-mode checks remain available from ticket-036."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 .governance/standard_pack_check.py --root . --format json",
+          "python3 .governance/standard_pack_projection_check.py --root . --format json"
+        ],
+        "evidence": "closed audit/enforce assertion probes"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "local gates plus protected checks"
+      }
+    ]
+  }
+}

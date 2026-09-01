@@ -47,9 +47,16 @@ jobs:
               (item.get("code"), item.get("message"))
               for item in report.get("findings", [])
           }
-          assert report.get("mode") == "audit", report
+          assert report.get("schema") == "wellmanifest.standard-adoption-report/v1", report
           assert report.get("profile") == "baseline", report
-          assert observed == expected, report
+          if report.get("mode") == "audit":
+              assert report.get("ok") is False, report
+              assert observed == expected, report
+          elif report.get("mode") == "enforce":
+              assert report.get("ok") is True, report
+              assert observed == set(), report
+          else:
+              raise AssertionError(report)
           PY
       - name: Validate the worktrees projection
         shell: bash
