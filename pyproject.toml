@@ -290,6 +290,7 @@ koru = [
     "data/koru-interface-registry.yaml",
     "wizard/strategies.json",
     "wizard/templates/*.json",
+    "autonomy/task_profiles.yaml",
     "wizard/gui/templates/*.html",
     "wizard/gui/static/*",
     "repair_runs/migrations/*.sql",

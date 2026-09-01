@@ -36,6 +36,7 @@ def test_tools_list_includes_required_koru_tools() -> None:
         "koru_run_ticket",
         "koru_job_status",
         "koru_run_quality_gates",
+        "koru_run_ci",
         "koru_propose_edits",
         "koru_ide_command_catalog",
         "koru_ide_command_scenario_schema",
@@ -62,6 +63,11 @@ def test_tools_list_includes_required_koru_tools() -> None:
         "koru_env2llm_list_uris",
         "koru_env2llm_mqtt_status",
     }.issubset(names)
+
+
+def test_ci_tool_is_exported_by_compatibility_facade() -> None:
+    assert "tool_run_ci" in mcp_server.__all__
+    assert mcp_server.tool_run_ci is mcp_server.TOOL_DISPATCH["koru_run_ci"]
 
 
 def test_tools_call_unknown_tool_returns_error_payload() -> None:

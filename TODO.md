@@ -14,9 +14,9 @@
 - [x] [`ticket-019`](project/ticket-019/README.md) — restore green Ruff CI for
   the delivered import-order scope. State: `DONE / DONE`; exact PR #39 head
   passed protected smoke and local verification.
-- [ ] [`ticket-021`](project/ticket-021/README.md) — finish local CI and
-  exact-head validator publication. State: `PLAN / WAIT_FOR_APPROVAL`; current
-  Ruff evidence records the incomplete import repair.
+- [x] [`ticket-021`](project/ticket-021/README.md) — finish local CI and
+  exact-head validator publication. State: `DONE / DONE`; PR #46 passed smoke,
+  OneDev and protected exact-head validation before merge `fac3639e`.
 - [ ] [`ticket-022`](project/ticket-022/README.md) — finish the ticket-first
   `koru work start/finish` lifecycle. State: `PLAN / WAIT_FOR_APPROVAL`;
   already-present code is retained without manufacturing approval evidence.

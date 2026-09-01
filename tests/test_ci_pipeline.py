@@ -6,8 +6,12 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from koru.ci.publication import PublicationConfig, dispatch_validator_merge, load_publication_config
-from koru.ci.gates import has_testql_scenarios, run_quality_gates
+from koru.ci.gates import run_quality_gates
+from koru.ci.publication import (
+    PublicationConfig,
+    dispatch_validator_merge,
+    load_publication_config,
+)
 from koru.ci.runner import run_local_ci
 from koru.cli_ci import ci_main
 from koru.policy import Policy
@@ -59,7 +63,10 @@ class TestPublication(unittest.TestCase):
             patch("koru.ci.publication.gh_available", return_value=True),
             patch("koru.ci.publication.resolve_github_repo") as repo_mock,
             patch("koru.ci.publication.resolve_pr_head_sha", return_value="abc123"),
-            patch("koru.ci.publication._resolve_validator_script", return_value=Path("/tmp/validator-agent/bin/dispatch-direct-pr.sh")),
+            patch(
+                "koru.ci.publication._resolve_validator_script",
+                return_value=Path("/tmp/validator-agent/bin/dispatch-direct-pr.sh"),
+            ),
         ):
             repo_mock.return_value = type("Repo", (), {"owner": "semcod", "name": "koru", "slug": "semcod/koru"})()
             result = dispatch_validator_merge(
@@ -95,6 +102,66 @@ class TestCiCli(unittest.TestCase):
         with self.assertRaises(SystemExit) as ctx:
             ci_main(["--project", "/tmp", "publish"])
         self.assertEqual(ctx.exception.code, 2)
+
+    def test_ci_publish_preserves_command_line_overrides(self) -> None:
+        config = PublicationConfig(
+            validator_checkout=Path("/tmp/validator-agent"),
+            validator_repo="subactor/validator-agent",
+            validator_ref="main",
+            merge=False,
+            wait_checks=True,
+            watch=False,
+            update_branch=False,
+        )
+        with (
+            patch("koru.cli_ci.load_publication_config", return_value=config),
+            patch(
+                "koru.cli_ci.dispatch_validator_merge",
+                return_value={
+                    "status": "dry_run",
+                    "repo": "semcod/koru",
+                    "pr": 99,
+                    "frozen_head": "abc123",
+                },
+            ) as dispatch,
+            patch("koru.cli_ci.emit_management_event"),
+        ):
+            code = ci_main(
+                [
+                    "--project",
+                    "/tmp/project",
+                    "publish",
+                    "--ticket",
+                    "ticket-021",
+                    "--pr",
+                    "99",
+                    "--merge",
+                    "--watch",
+                    "--update-branch",
+                    "--no-wait-checks",
+                    "--dry-run",
+                    "--format",
+                    "json",
+                ],
+            )
+
+        self.assertEqual(code, 0)
+        self.assertEqual(dispatch.call_args.args, (Path("/tmp/project"),))
+        self.assertEqual(dispatch.call_args.kwargs["ticket_id"], "ticket-021")
+        self.assertEqual(dispatch.call_args.kwargs["pr_number"], 99)
+        self.assertTrue(dispatch.call_args.kwargs["dry_run"])
+        self.assertEqual(
+            dispatch.call_args.kwargs["config"],
+            PublicationConfig(
+                validator_checkout=Path("/tmp/validator-agent"),
+                validator_repo="subactor/validator-agent",
+                validator_ref="main",
+                merge=True,
+                wait_checks=False,
+                watch=True,
+                update_branch=True,
+            ),
+        )
 
 
 if __name__ == "__main__":
