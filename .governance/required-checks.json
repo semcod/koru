@@ -24,6 +24,10 @@
     {
       "name": "conversation-dry-run",
       "workflowFile": ".github/workflows/testql-conversations.yml"
+    },
+    {
+      "name": "standard packs / conformance",
+      "workflowFile": ".github/workflows/standard-pack-conformance.yml"
     }
   ],
   "schema": "new-project.required-checks/v1",

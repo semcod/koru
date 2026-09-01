@@ -1,0 +1,91 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-037",
+  "summary": "Enforce complete HOME standard pack evidence",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-037/**",
+    "project/TICKETS.md",
+    ".gitignore",
+    ".governance/required-checks.json",
+    ".governance/standard-adoption.json",
+    ".governance/standard-pack-evidence/worktrees.json",
+    ".governance/standard-pack-evidence/logs.json"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-035", "ticket-036", "ticket-038"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "389a02894a3bedd332e0fe8a93e3da57b1fd1afd",
+    "targetBranch": "main",
+    "outcome": "Koru enforces a complete independently checkable baseline HOME pack, including real target-owned S3 receipts for worktrees and Logs and a live required status check.",
+    "nonGoals": [
+      "Modify normative HOME repositories or source revisions",
+      "Claim S4 or runtime authority for worktrees or Logs",
+      "Treat workflow URLs, pending checks or empty artifacts as evidence",
+      "Change application runtime behavior"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Promote only the two remaining local projections to S3 using one exact successful adopter check receipt, and independently require that stable check in both the tracked registry and GitHub's active main ruleset before enforcement.",
+      "components": [
+        {
+          "name": "standard-pack-evidence",
+          "paths": [
+            ".governance/standard-adoption.json",
+            ".governance/standard-pack-evidence/worktrees.json",
+            ".governance/standard-pack-evidence/logs.json"
+          ]
+        },
+        {
+          "name": "required-check-contract",
+          "paths": [
+            ".governance/required-checks.json",
+            ".gitignore"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Restore ruleset 22026679 to only onedev/local-verify, then revert the protected ticket merge to return adoption to audit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python3 .governance/standard_pack_check.py --root . --format json",
+          "python3 .governance/standard_pack_projection_check.py --root . --format json"
+        ],
+        "evidence": "deterministic enforce-mode standard-pack reports"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "./project/governance-check.sh",
+          "python3 .governance/check_required_checks.py --root .",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "local gates, live ruleset snapshot and protected checks"
+      }
+    ]
+  }
+}

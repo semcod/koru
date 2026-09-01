@@ -297,6 +297,7 @@ local.dev.txt
 !.github/workflows/
 .github/workflows/*
 !.github/workflows/new-project-governance.yml
+!.github/workflows/standard-pack-conformance.yml
 .import_linter_cache/
 .nlp2dsl/
 .planfile/

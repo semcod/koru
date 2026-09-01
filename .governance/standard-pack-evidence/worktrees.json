@@ -2,7 +2,7 @@
   "schema": "semcod.standard-pack-projection/v1",
   "packId": "wellmanifest/worktrees",
   "version": "0.1.0-dev",
-  "claimedLevel": "S2",
+  "claimedLevel": "S3",
   "source": {
     "repository": "wellmanifest/worktrees",
     "revision": "bad8fab4ef96e770ccc4e4089bb4a3d623c1651a",
@@ -29,6 +29,20 @@
       "sha256": "ad978120003eef0c47c3fd3af545d6869e9d1717d945e3e0264c81238bfb1cab"
     }
   ],
-  "ciReceipt": null,
+  "ciReceipt": {
+    "sha256": "9197eaaed9ed38b3de121e8859719e1e1b69cc0886a1e4453bfc217c445d8ec8",
+    "snapshot": {
+      "schema": "semcod.projection-ci-receipt/v1",
+      "repository": "semcod/koru",
+      "subjectSha": "10ed01410fa137273a25d4df45b679fa6c2105eb",
+      "checkName": "standard packs / conformance",
+      "conclusion": "success",
+      "completedAt": "2026-09-01T20:05:46Z",
+      "sourceUri": "https://api.github.com/repos/semcod/koru/check-runs/100007807439",
+      "statusId": 100007807439,
+      "sourceRevision": "bad8fab4ef96e770ccc4e4089bb4a3d623c1651a",
+      "sourceProjectionSha256": "6621ae3ca59aa2da9ea99d2abec03e8762afac62eb0efbb0a128388198e1aa1a"
+    }
+  },
   "protectionReceipt": null
 }
