@@ -3,7 +3,7 @@
 - **ID**: ticket-028
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -23,8 +23,9 @@ configuration are part of the same reviewed atomic adoption.
 
 The role-based standard-pack seed remains in `audit` until every HOME pack has
 its own immutable projection provenance and protected S3/S4 receipt. The audit
-therefore reports seven explicit missing pack adoptions instead of converting
-workflow URLs or empty artifact lists into unsupported enforcement claims.
+therefore records the verified `worktrees` projection at S2 and reports seven
+unmet profile requirements instead of converting workflow URLs or empty
+artifact lists into unsupported enforcement claims.
 
 Future delivery uses one canonical worktree under
 `<workspace>/.worktrees/<repo>--ticket-NNN--<slug>`, never a system temporary

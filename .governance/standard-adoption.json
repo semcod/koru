@@ -3,5 +3,40 @@
   "mode": "audit",
   "profile": "baseline",
   "repositoryRole": "standalone-application",
-  "adoptions": []
+  "adoptions": [
+    {
+      "id": "wellmanifest/worktrees",
+      "version": "0.1.0-dev",
+      "revision": "bad8fab4ef96e770ccc4e4089bb4a3d623c1651a",
+      "model": "local-conformance",
+      "level": "S2",
+      "artifacts": [
+        {
+          "target": ".governance/worktrees.schema.json",
+          "sha256": "0399c25a334e902d1cfa6ff44366419888d7b6281329602841c3c2766cd15442"
+        },
+        {
+          "target": ".governance/worktree_path_check.py",
+          "sha256": "ad978120003eef0c47c3fd3af545d6869e9d1717d945e3e0264c81238bfb1cab"
+        }
+      ],
+      "evidence": [
+        {
+          "level": "S0",
+          "uri": "https://github.com/wellmanifest/worktrees/blob/bad8fab4ef96e770ccc4e4089bb4a3d623c1651a/models/worktrees.schema.json",
+          "sha256": "0399c25a334e902d1cfa6ff44366419888d7b6281329602841c3c2766cd15442"
+        },
+        {
+          "level": "S1",
+          "uri": "https://github.com/wellmanifest/worktrees/blob/bad8fab4ef96e770ccc4e4089bb4a3d623c1651a/operations/conformance.py",
+          "sha256": "ad978120003eef0c47c3fd3af545d6869e9d1717d945e3e0264c81238bfb1cab"
+        },
+        {
+          "level": "S2",
+          "uri": ".governance/worktrees.lock.json",
+          "sha256": "c2bf1c90a3e54bcb725693856dc1e4b1759e4dfe4bc7094c853bf715573a19d7"
+        }
+      ]
+    }
+  ]
 }

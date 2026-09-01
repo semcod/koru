@@ -24,3 +24,5 @@
   its dirty state, then pass the focused overlap and continuity checks.
 - Enter `IN_PROGRESS / VALIDATION` with Goal, governance, host, CI-equivalent
   Python and Docker checks passing.
+- Record the exact `wellmanifest/worktrees` S2 projection and enter
+  `IN_PROGRESS / PUBLICATION` after a conflict-free final refresh from main.

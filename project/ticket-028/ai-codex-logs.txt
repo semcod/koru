@@ -86,8 +86,19 @@
 - Koru CI-equivalent pytest subset: 83 passed
 - docker compose --profile '*' config --quiet: PASS
 - docker build --check .: PASS, no warnings
-- standard-pack remains audit and reports seven missing HOME-pack adoptions;
-  no unsupported S3/S4 enforcement was claimed
+- standard-pack remains audit, records the verified worktrees projection at
+  S2 and reports seven unmet profile requirements; no unsupported S3/S4
+  enforcement was claimed
 - broader Docker audit: external contexts are commit-pinned, but nested and
   upstream Dockerfiles/dependency installers need a separate hardening ticket
 - lifecycle: IN_PROGRESS / VALIDATION
+
+2026-09-01 final refresh boundary
+- continuity sequence 2 for clean head d55dc2035b4569d1679887d3bc6a554adfb64f2b:
+  receipt:continuity.ticket-028.2.8cb31c8aeb9c7b6444726c35d39dc79e2e9c49e109ef7041c1cfb60999fe0198
+- fetched and pruned origin; origin/main remains
+  d4c3075f726c67702807cc154c00b82e161d4474
+- final rebase result: branch already up to date, no rewrite and no conflicts
+- truthful standard-pack projection prepared: wellmanifest/worktrees
+  0.1.0-dev at bad8fab4ef96e770ccc4e4089bb4a3d623c1651a, S2 only
+- lifecycle: IN_PROGRESS / PUBLICATION
