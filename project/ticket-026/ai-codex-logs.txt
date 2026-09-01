@@ -51,3 +51,22 @@
 - docker compose config --quiet: pass
 - lifecycle moved to IN_PROGRESS / PUBLICATION
 - opened stage-1 protected revert PR https://github.com/semcod/koru/pull/57
+
+2026-09-01 stage-1 protected delivery
+- final head dcf47f0ebfeee9227450a0045fa4b8050921f558
+- GitHub smoke run 33519269640: success
+- onedev/local-verify: success against main 665bc68eb22f
+- protected validator run 33519533252: approved, SLO met in 127 seconds
+- review 5079288844 by ifuri-validator-agent[bot] approved exact head before merge
+- PR #57 merged at 2026-09-01T14:28:28Z as
+  4de42dc35b6fc3cd883c21fad6fd3760cf6afe00
+
+2026-09-01 stage-2 edit
+- refreshed from trusted stage-1 merge 4de42dc35b6fc3cd883c21fad6fd3760cf6afe00
+- reapplied the ticket-025 DONE / DONE projection with original trusted PR #55
+  evidence and explicit PR #56 / PR #57 incident chain
+- runtime source, tests, dependencies and scan behavior changed: none
+- ./project/governance-check.sh: GOV-PASS (0 errors, 0 warnings)
+- git diff --check: pass
+- docker compose config --quiet: pass
+- remote branch inventory before stage-2 publication: main only

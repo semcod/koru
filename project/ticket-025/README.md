@@ -2,8 +2,8 @@
 
 - **ID**: ticket-025
 - **Owner**: agent:codex under the current user continuation request
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -43,6 +43,19 @@ configuration and diff hygiene pass. A read-only replay against the umbrella
 Planfile loaded 62 historical keys and correctly suppressed all 33 current
 suggestions whose producer, dedupe key and artifact fingerprint were identical;
 the changed-evidence test confirms a new artifact SHA remains eligible.
+
+## Publication
+
+- Pull request: [#55](https://github.com/semcod/koru/pull/55).
+- Exact implementation head: `4fb26e742f83349ee8d0a2c66d7672ca9f6cc0ac`.
+- GitHub smoke and `onedev/local-verify` passed on that exact head.
+- Protected `ifuri-validator-agent[bot]` issued deterministic approval bound to
+  `semcod/koru`, PR #55, ticket-025 and the exact head.
+- Validator-agent explicitly merged the PR as
+  `f841c613c7fdb3c51b5147cc50c4d0d8f93bd56b`.
+- Governance-only PR #56 was merged before protected review and is not trusted
+  evidence. Protected PR #57 neutralized all of its effects at exact head
+  `dcf47f0ebfeee9227450a0045fa4b8050921f558` before this corrected closure.
 
 ## Participants
 

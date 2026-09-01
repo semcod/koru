@@ -3,12 +3,13 @@
 - [ ] [`ticket-026`](project/ticket-026/README.md) — neutralize the
   authorization-order violation in governance-only PR #56, then reapply the
   ticket-025 closure through protected exact-head review. State:
-  `IN_PROGRESS / PUBLICATION`; the exact first-stage reversal and local gates
-  pass, pending protected review and merge.
-- [ ] [`ticket-025`](project/ticket-025/README.md) — prevent repeated
+  `IN_PROGRESS / PUBLICATION`; protected PR #57 neutralized the untrusted
+  closure, and corrected reclosure is being prepared.
+- [x] [`ticket-025`](project/ticket-025/README.md) — prevent repeated
   `koru scan --apply` cycles from recreating unchanged findings after their
-  Planfile tickets move into history. State: `IN_PROGRESS / PUBLICATION`;
-  focused stack, governance and Docker checks pass.
+  Planfile tickets move into history. State: `DONE / DONE`; exact head
+  `4fb26e74` passed smoke, OneDev and protected validation before PR #55
+  merged as `f841c613`.
 - [x] [`ticket-024`](project/ticket-024/README.md) — generate a current
   documentation-conformance DSL and synchronize the bounded architecture
   documentation contracts with the code tree. State: `DONE / DONE`; exact head
