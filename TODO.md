@@ -9,6 +9,9 @@
 - [x] [`ticket-019`](project/ticket-019/README.md) — restore green Ruff CI for
   the delivered import-order scope. State: `DONE / DONE`; exact PR #39 head
   passed protected smoke and local verification.
+- [x] [`ticket-016`](project/ticket-016/README.md) — stabilize Ruff `korullm`
+  import classification. State: `DONE / DONE`; protected PR #35 delivered the
+  one-file integration change and the stale lifecycle state is reconciled.
 - [x] [`ticket-021`](project/ticket-021/README.md) — finish local CI and
   exact-head validator publication. State: `DONE / DONE`; PR #46 passed smoke,
   OneDev and protected exact-head validation before merge `fac3639e`.

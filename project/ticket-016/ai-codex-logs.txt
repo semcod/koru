@@ -1,0 +1,12 @@
+2026-09-01 closure audit
+- PR #35 state: MERGED at 2026-08-26T17:30:54Z
+- implementation head: 3badaebb1f2bf79bd303c6937da5318176bc6490
+- merge commit: 775baf65e446ff7d85050fef47e598e3ef46eb7d
+- protected review: 5033302296 by ifuri-validator-agent[bot], APPROVED for
+  ticket-016 at exact head 3badaebb
+- GitHub smoke associated with PR #35: SUCCESS
+- current main retains known-first-party=[koru, korullm] and
+  known-third-party=[gillm, koruide]
+- scoped Ruff over all four current `korullm` import consumers: pass
+- repository source Ruff has two later, unrelated application findings in
+  execution_plan.py and cli_work.py; neither is an import-classification drift
