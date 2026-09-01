@@ -1,55 +1,54 @@
 {
   "schema": "new-project.intent/v2",
   "ticket": "ticket-021",
-  "summary": "Finish local CI and exact-head validator publication",
+  "summary": "Finish and validate the existing Koru CI publication boundary",
   "workstream": "application",
   "allowedPaths": [
     "project/ticket-021/**",
+    "TODO.md",
     "project/TICKETS.md",
-    "src/koru/ci/**",
+    "src/koru/ci/publication.py",
     "src/koru/cli_ci.py",
-    "src/koru/cli.py",
-    "src/koru/init.py",
-    "src/koru/project_pipeline.py",
-    "src/koruapi/mcp_server_planfile.py",
     "src/koruapi/mcp_server.py",
+    "tests/test_mcp_server.py",
     "tests/test_ci_pipeline.py",
     "README.md",
     "tests/test_cli.py"
   ],
   "forbiddenPaths": ["project/ticket-*/user-*.md"],
   "stacks": ["python"],
-  "dependsOn": ["ticket-019", "ticket-020"],
+  "dependsOn": ["ticket-013", "ticket-019", "ticket-020"],
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "db65f25999112b87be3e967f06b267d7fa7fc1dc",
+    "acceptedBaseSha": "b0b41998c6f66f54b2d89bb4967136208246e6bc",
     "targetBranch": "main",
-    "outcome": "Koru exposes lint-clean local CI commands and publishes only after local OneDev verification plus exact-head validator approval.",
+    "outcome": "The existing Koru CI publication commands execute their documented dry-run path without NameError while preserving the protected exact-head trust boundary.",
     "nonGoals": [
       "Replace validator-agent as merge trust root",
       "Auto-merge without explicit --merge",
-      "Depend on GitHub Actions capacity as the verification boundary"
+      "Change the existing argparse option grammar",
+      "Repair unrelated full-suite failures"
     ],
     "complexity": "S",
     "estimatedMinutes": 30,
     "budgets": {
-      "maxImplementationFiles": 12,
+      "maxImplementationFiles": 6,
       "maxAffectedComponents": 1,
-      "maxPublicInterfaceChanges": 1,
+      "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
     },
     "architecture": {
       "status": "proposed",
-      "decision": "Keep execution local, publish onedev/local-verify for the exact head, and delegate deterministic approval and merge to validator-agent.",
+      "decision": "Repair the misplaced import and validate the existing CLI/publication adapter without changing its grammar or trust policy.",
       "components": [
         {
           "name": "ci-publication-boundary",
-          "paths": ["src/koru/ci/**", "src/koru/cli_ci.py", "src/koruapi/mcp_server_planfile.py", "tests/test_ci_pipeline.py"]
+          "paths": ["src/koru/ci/publication.py", "src/koru/cli_ci.py", "src/koruapi/mcp_server.py", "tests/test_ci_pipeline.py", "tests/test_mcp_server.py"]
         }
       ],
       "responsibilityChanges": false,
-      "interfaceChanges": ["koru ci run|gates|publish"],
+      "interfaceChanges": [],
       "dataChanges": [],
       "ui": {"impact": "none", "states": [], "evidence": []},
       "rollback": "Revert the CI publication changes while retaining the ticket evidence."
@@ -57,14 +56,14 @@
     "runtimeDependencies": [],
     "validation": [
       {
-        "criterion": "AC-02",
-        "commands": ["python -m ruff check src tests", "python -m pytest -q tests/test_ci_pipeline.py tests/test_cli.py"],
-        "evidence": "project/ticket-021/ai-cursor-logs.txt"
+        "criterion": "AC-03, AC-05",
+        "commands": ["python -m ruff check src/koru/ci/publication.py src/koru/cli_ci.py src/koruapi/mcp_server.py tests/test_ci_pipeline.py tests/test_mcp_server.py", "python -m pytest -q tests/test_ci_pipeline.py tests/test_cli.py tests/test_mcp_server.py"],
+        "evidence": "project/ticket-021/ai-codex-logs.txt"
       },
       {
-        "criterion": "AC-04",
+        "criterion": "AC-06",
         "commands": ["./project/governance-check.sh", "git diff --check", "docker compose config"],
-        "evidence": "project/ticket-021/ai-cursor-logs.txt"
+        "evidence": "project/ticket-021/ai-codex-logs.txt"
       }
     ]
   }

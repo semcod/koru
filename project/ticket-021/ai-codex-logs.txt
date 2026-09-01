@@ -1,0 +1,13 @@
+2026-09-01 PLAN audit
+- koru self doctor --json: 5 ok, 0 warn, 0 fail
+- koru doctor --format json: 29 pass, 5 warn, 0 fail, 2 skip
+- koru scan --skip-pytest --format json: 0 suggestions
+- koru ci publish --project .: parser rejects --project after subcommand
+- koru ci --project . publish --merge --dry-run: NameError for replace
+- koru ci publish dry-run for PR #44: missing validator checkout by default;
+  succeeds and freezes exact head b0b41998 when KORU_VALIDATOR_CHECKOUT points
+  at the existing protected validator-agent checkout
+- ruff check src tests: 7 errors, including ticket-021 import defects
+- full pytest: 3590 passed, 15 failed, 27 skipped, 160 deselected
+- docker compose config --quiet: pass
+- no implementation files changed during PLAN
