@@ -1,5 +1,9 @@
 # Ticket 021: Koru CI publish pipeline
 
+- **ID**: ticket-021
+- **Status**: IN_PROGRESS
+- **Workflow state**: EDIT
+
 Add `koru ci` for local CI execution and validator-agent publication dispatch.
 
 ## Commands
