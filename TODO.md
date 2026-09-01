@@ -1,5 +1,9 @@
 # Governance roadmap
 
+- [ ] [`ticket-025`](project/ticket-025/README.md) — prevent repeated
+  `koru scan --apply` cycles from recreating unchanged findings after their
+  Planfile tickets move into history. State: `PLAN / WAIT_FOR_APPROVAL`;
+  protected ticket-024 publication closure is complete.
 - [x] [`ticket-024`](project/ticket-024/README.md) — generate a current
   documentation-conformance DSL and synchronize the bounded architecture
   documentation contracts with the code tree. State: `DONE / DONE`; exact head
