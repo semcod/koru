@@ -1,0 +1,31 @@
+{
+  "repository": "semcod/koru",
+  "requiredChecks": [
+    {
+      "name": "package-tests",
+      "workflowFile": ".github/workflows/coru-ci.yml"
+    },
+    {
+      "name": "smoke",
+      "workflowFile": ".github/workflows/koru-ci.yml"
+    },
+    {
+      "name": "package-tests",
+      "workflowFile": ".github/workflows/koruenv-ci.yml"
+    },
+    {
+      "name": "governance / remote lifecycle",
+      "workflowFile": ".github/workflows/new-project-governance.yml"
+    },
+    {
+      "name": "governance / enforce",
+      "workflowFile": ".github/workflows/new-project-governance.yml"
+    },
+    {
+      "name": "conversation-dry-run",
+      "workflowFile": ".github/workflows/testql-conversations.yml"
+    }
+  ],
+  "schema": "new-project.required-checks/v1",
+  "version": 1
+}

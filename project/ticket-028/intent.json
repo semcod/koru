@@ -1,0 +1,133 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-028",
+  "summary": "Adopt resumable conflict-safe merge streaming",
+  "workstream": "governance",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-028/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".gitignore",
+    ".aider.conf.yml",
+    ".cursor/rules/new-project-standard.mdc",
+    ".githooks/pre-commit",
+    ".github/copilot-instructions.md",
+    ".github/workflows/new-project-governance.yml",
+    ".governance/**",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "GEMINI.md",
+    "project/governance-check.bat",
+    "project/governance-check.sh",
+    "project/new-ticket.sh",
+    "project/readme.sh",
+    "scripts/install-agent-hosts.sh",
+    "scripts/runtime.sh",
+    "wellmanifest_governance.py",
+    "worktree-guard.yaml",
+    "package.json",
+    "pyproject.toml",
+    "Dockerfile",
+    "docker-compose.yml"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-027"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d4c3075f726c67702807cc154c00b82e161d4474",
+    "targetBranch": "main",
+    "outcome": "Koru adopts immutable new-project 0.19.19 and enforces durable resumable worktrees, conflict-safe streamed PRs and protected exact-head merges.",
+    "nonGoals": [
+      "Change implementation already present on main",
+      "Merge or discard ticket-027 validation-repair work",
+      "Implement issue 37 runtime routing",
+      "Enable a merge queue that changes the reviewed subject"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 120,
+    "standardAdoption": {
+      "sourceRepository": "wellmanifest/new-project",
+      "fromRevision": "cc9b04673bbd85cb4e35fb683d288ef34be1485f",
+      "toRevision": "43999c793a86084b4c3198fe07be350105db59ec"
+    },
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the upstream atomic standard-adoption contract as the single orchestration authority, retain Koru ci publish as the protected publisher, stream only before one final freeze, and enforce canonical durable worktree and GitHub ruleset boundaries.",
+      "components": [
+        {
+          "name": "merge-orchestration-governance",
+          "paths": [
+            ".gitignore",
+            ".aider.conf.yml",
+            ".cursor/rules/new-project-standard.mdc",
+            ".githooks/pre-commit",
+            ".github/copilot-instructions.md",
+            ".github/workflows/new-project-governance.yml",
+            ".governance/**",
+            "AGENTS.md",
+            "CLAUDE.md",
+            "GEMINI.md",
+            "project/governance-check.bat",
+            "project/governance-check.sh",
+            "project/new-ticket.sh",
+            "project/readme.sh",
+            "scripts/install-agent-hosts.sh",
+            "scripts/runtime.sh",
+            "wellmanifest_governance.py",
+            "worktree-guard.yaml",
+            "package.json",
+            "pyproject.toml",
+            "Dockerfile",
+            "docker-compose.yml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected adoption merge and restore the prior repository ruleset export; never rewrite main history or discard an unknown dirty worktree."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "goal governance adopt --source-revision 43999c793a86084b4c3198fe07be350105db59ec --target-root . --check"
+        ],
+        "evidence": "project/ticket-028/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python3 .governance/worktree_guard.py --root . --once --format json",
+          "python3 .governance/work_continuity.py capture --help"
+        ],
+        "evidence": "project/ticket-028/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-09",
+        "commands": [
+          "./project/governance-check.sh",
+          "python3 .governance/standard_pack_check.py --root . --format json",
+          "git diff --check",
+          "docker compose config --quiet"
+        ],
+        "evidence": "project/ticket-028/ai-codex-logs.txt"
+      }
+    ]
+  }
+}

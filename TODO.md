@@ -1,5 +1,9 @@
 # Governance roadmap
 
+- [ ] [`ticket-028`](project/ticket-028/README.md) — adopt immutable
+  `new-project` 0.19.19 and its resumable, conflict-safe delivery contracts.
+  State: `IN_PROGRESS / EDIT`; ticket 027 is terminal and the user authorized
+  implementation and protected deployment in the active session.
 - [x] [`ticket-027`](project/ticket-027/README.md) — expose work-commit desktop
   notifications and LLM provenance with registry-driven profile ordering.
   State: `DONE / DONE`; exact head `ea0afa9c` passed OneDev and protected

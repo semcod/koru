@@ -1,0 +1,53 @@
+2026-09-01 planning baseline
+- accepted base: 703dc7a2aa452adc7b4d336e8fc800ef6e2a8ae7
+- current standard: new-project 0.11.0 at
+  cc9b04673bbd85cb4e35fb683d288ef34be1485f
+- latest final upstream: new-project 0.19.19 at verified commit
+  43999c793a86084b4c3198fe07be350105db59ec
+- system Goal: 2.1.300; repository venv Goal: 2.1.293
+- GitHub main protection: absent; active repository rulesets: none
+- delete_branch_on_merge: true
+- immutable adoption preflight in durable audit clone: 78 Goal operations
+- required target remediations discovered by the adopted gate: host hook,
+  package.json and pyproject.toml governance bindings, immutable Docker image
+  references and one active approved ticket
+- upstream managed AGENTS contract provides canonical <workspace>/.worktrees,
+  remote-aware ID allocation, overlap guard, work continuity, final-head
+  freeze, automatic branch deletion and external lifecycle closure
+- issue 41 remains open; issue 37 remains blocked on packages/** ownership
+- ticket 027 remains IN_PROGRESS and is an explicit dependency
+- implementation paths changed: none
+- lifecycle: PLAN / WAIT_FOR_APPROVAL
+
+2026-09-01 execution authorization and base refresh
+- ticket 027 terminal receipt: PR #60 merged ea0afa9c as 4d37bc6a;
+  legacy closure PR #61 merged 4a2e5b10 as d4c3075f
+- active user request: continue, implement and deploy the approved streaming
+  standardization
+- refreshed accepted base: d4c3075f726c67702807cc154c00b82e161d4474
+- scope change: none; lifecycle: IN_PROGRESS / EDIT
+- intent migrated to new-project.intent/v3, classification FEATURE/P1/requested
+  and exact standardAdoption cc9b0467 -> 43999c79
+
+2026-09-01 durable worktree incident handling
+- external worktree /tmp/koru-ticket027-audit.jmrTeR contained 10 staged files
+- staged binary diff SHA-256 before migration:
+  5a6984de4f8e6351d124c6232b3f1195d605e25afaa435a93b3226067674c0c8
+- recovery stash: 73c3c41f188ea74d9f3f20aa6dae0c52a7b10167
+- durable destination: <repository-workspace>/ticket-027-validation-repair
+- staged binary diff SHA-256 after migration: identical
+- no ticket-027 file was merged, discarded or modified by Codex
+- stale merged ticket-026 remote/local branch was verified reachable and
+  deleted; main plus active ticket-027 remain remotely
+
+2026-09-01 canonical ticket-028 isolation
+- managed worktree planner resolved branch ticket/028-merge-streaming to
+  <workspace>/.worktrees/koru--ticket-028--merge-streaming
+- ticket-028 staged plan diff SHA-256 before migration:
+  5e592d6540937a00971fc71729d3708a2306fc2295b5f31678a9a8949a19c94c
+- recovery stash: 1d4e61f7288525c4dc72f6df11db5ab956b31d73
+- staged plan diff SHA-256 after migration: identical
+- linked worktree inventory contains no /tmp location
+- concurrent ticket-027 repair was preserved in its durable isolated worktree,
+  pushed at ea0afa9c6b189deb0e93a52b27cc263ca2d0da88 and opened as PR #60
+- ticket-027 remains non-terminal, so ticket-028 stays PLAN / WAIT_FOR_APPROVAL

@@ -263,6 +263,7 @@ testql-deps.json
 plugins/**/src/_shared
 plugins/**/src/_shared/
 .aider*
+!.aider.conf.yml
 
 # coru runtime event artifacts
 packages/coru/src/.coru/
@@ -282,9 +283,20 @@ local.dev.txt
 .coru/
 .coverage_data/
 .cursor/
+!.cursor/
+.cursor/*
+!.cursor/rules/
+.cursor/rules/*
+!.cursor/rules/new-project-standard.mdc
 .devin/
 .dirac-symbol-index/
 .github/
+!.github/
+.github/*
+!.github/copilot-instructions.md
+!.github/workflows/
+.github/workflows/*
+!.github/workflows/new-project-governance.yml
 .import_linter_cache/
 .nlp2dsl/
 .planfile/
