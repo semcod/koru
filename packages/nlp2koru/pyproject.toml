@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-llm = ["litellm>=1.51,<2.0"]
+llm = ["korullm>=0.1.0,<2.0"]
 dev = ["pytest>=8.0"]
 
 [project.scripts]
