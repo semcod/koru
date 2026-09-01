@@ -20,6 +20,15 @@ except ImportError:
 
 DEFAULT_GATES = ("regix", "redup")
 GATE_TIMEOUT_SECONDS = 120
+TESTQL_PATTERN = "*.testql.toon.yaml"
+
+
+def has_testql_scenarios(project: Path, pattern: str = TESTQL_PATTERN) -> bool:
+    """Return True when the project tree contains at least one TestQL scenario file."""
+    try:
+        return any(project.rglob(pattern))
+    except OSError:
+        return False
 
 
 def gate_commands(project: Path) -> dict[str, list[str]]:
@@ -188,6 +197,16 @@ def run_quality_gates(
                     "status": "skipped",
                     "issues": [],
                     "message": f"Unknown gate: {gate_name}",
+                }
+            )
+            continue
+        if gate_name == "testql" and not has_testql_scenarios(project):
+            results.append(
+                {
+                    "gate": gate_name,
+                    "status": "skipped",
+                    "issues": [],
+                    "message": f"No {TESTQL_PATTERN} scenarios under project root",
                 }
             )
             continue

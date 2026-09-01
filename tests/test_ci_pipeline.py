@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from koru.ci.publication import PublicationConfig, dispatch_validator_merge, load_publication_config
+from koru.ci.gates import has_testql_scenarios, run_quality_gates
 from koru.ci.runner import run_local_ci
 from koru.cli_ci import ci_main
 from koru.policy import Policy
@@ -72,6 +73,16 @@ class TestPublication(unittest.TestCase):
         self.assertEqual(result["frozen_head"], "abc123")
         self.assertIn("--ticket", result["command"])
         self.assertIn("ticket-021", result["command"])
+
+
+class TestCiGates(unittest.TestCase):
+    def test_skips_testql_when_no_scenarios(self) -> None:
+        project = Path("/tmp/koru-testql-skip")
+        project.mkdir(parents=True, exist_ok=True)
+        with patch("koru.ci.gates.has_testql_scenarios", return_value=False):
+            result = run_quality_gates(project, gates=["testql"])
+        self.assertEqual(result["overall_status"], "passed")
+        self.assertEqual(result["results"][0]["status"], "skipped")
 
 
 class TestCiCli(unittest.TestCase):
