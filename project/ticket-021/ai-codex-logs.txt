@@ -1,0 +1,50 @@
+2026-09-01 PLAN audit
+- koru self doctor --json: 5 ok, 0 warn, 0 fail
+- koru doctor --format json: 29 pass, 5 warn, 0 fail, 2 skip
+- koru scan --skip-pytest --format json: 0 suggestions
+- koru ci publish --project .: parser rejects --project after subcommand
+- koru ci --project . publish --merge --dry-run: NameError for replace
+- koru ci publish dry-run for PR #44: missing validator checkout by default;
+  succeeds and freezes exact head b0b41998 when KORU_VALIDATOR_CHECKOUT points
+  at the existing protected validator-agent checkout
+- ruff check src tests: 7 errors, including ticket-021 import defects
+- full pytest: 3590 passed, 15 failed, 27 skipped, 160 deselected
+- docker compose config --quiet: pass
+
+2026-09-01 publication
+- PR #46 opened from ticket/021-ci-selfcheck at 4fc4eb39
+- this documentation-only follow-up binds the PR number before exact-head
+  OneDev and protected validator publication; prior-head checks are superseded
+- no implementation files changed during PLAN
+
+2026-09-01 EDIT authorization
+- human response `zatwierdzam`: explicit approval of the bounded ticket-021 plan
+- protected validator run 33496912870: approved exact PR #45 head 9bb7e9a6
+- validator review 5076844504: APPROVED for ticket-013 at the exact head
+- PR #45 merged as e94f3aa7d558859967de96a3feee55dd2cac2b83
+- ticket-021 rebased onto e94f3aa7 and moved to IN_PROGRESS / EDIT
+- governance preflight rejected root README.md as governance-workstream-owned;
+  no root README change was needed (it contains no affected CI example), so
+  the application intent was narrowed before any implementation edit
+- governance preflight after narrowing: GOV-PASS (0 errors, 0 warnings)
+
+2026-09-01 implementation validation
+- scoped Ruff: all checks passed for cli_ci, publication, MCP facade and tests
+- focused pytest: 71 passed, 16 deselected, 50 subtests passed in 31.31s
+- publication regression exercises --merge, --watch, --update-branch,
+  --no-wait-checks and --dry-run through the real argparse/action adapter
+- live Koru publish dry-run: status=dry_run; frozen PR #45 head=9bb7e9a6;
+  command preserved --watch, --merge, --update-branch and omitted wait-checks
+- koru self doctor: 5 ok, 0 warn, 0 fail; needs_repair=false
+- koru doctor: 27 pass, 7 warn, 0 fail, 2 skip; warnings are worktree,
+  local IDE/plugin/log and empty policy.ci.command observations
+- koru scan --skip-pytest: zero suggestions (unchanged blind spot)
+- full Ruff: one remaining unrelated UP037 in tests/test_autonomous.py
+- full pytest: 3613 passed, 7 failed, 15 skipped, 164 deselected,
+  940 subtests passed in 366.68s
+- remaining pytest failures: stale src/korullm inventory references (3), IDE
+  auto-instance socket expectation (1), pyproject metadata contracts (2),
+  generated volume-map header parsing (1); none is ticket-owned
+- governance-check: GOV-PASS (0 errors, 0 warnings)
+- git diff --check: pass
+- docker compose config --quiet: pass

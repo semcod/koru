@@ -10,8 +10,9 @@
   the delivered import-order scope. State: `DONE / DONE`; exact PR #39 head
   passed protected smoke and local verification.
 - [ ] [`ticket-021`](project/ticket-021/README.md) — finish local CI and
-  exact-head validator publication. State: `PLAN / WAIT_FOR_APPROVAL`; current
-  Ruff evidence records the incomplete import repair.
+  exact-head validator publication. State: `IN_PROGRESS / PUBLICATION`; the
+  bounded repair and regression coverage are validated and await protected
+  exact-head delivery.
 - [ ] [`ticket-022`](project/ticket-022/README.md) — finish the ticket-first
   `koru work start/finish` lifecycle. State: `PLAN / WAIT_FOR_APPROVAL`;
   already-present code is retained without manufacturing approval evidence.
