@@ -57,6 +57,17 @@ task test
 task tickets:done -- PLF-XXX
 ```
 
+### Automatyczne uruchamianie poleceń (np. `koru ci run`)
+
+Sekcja `when:` w `koru.yaml` to głównie brief — żeby Koru **sam** wykonał shell,
+dodaj ticket planfile z `executor.kind: shell` i uruchom kolejkę:
+
+```bash
+koru --queue --loop --project .
+```
+
+Pełna tabela mechanizmów: [`auto-execute-commands.md`](./auto-execute-commands.md).
+
 Szczegóły cyklu życia ticketów: [`agent-guide.md`](./agent-guide.md), [`planfile-llm-guide.md`](./planfile-llm-guide.md).
 
 ## Dalej
