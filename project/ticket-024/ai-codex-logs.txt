@@ -1,0 +1,40 @@
+2026-09-01T12:51Z PLAN baseline
+base_sha=58c17b255b7e10a590f4aafe08ab011a5b3d847f
+worktree=clean detached origin/main before ticket allocation
+
+inventory:
+- docs files: 125 (95 Markdown, 8 YAML; 922052 tracked bytes including README.md)
+- Python source files: 624; tests: 345
+
+autogrammar/sumd 0.3.60 (`sumd map . --stdout`, source checkout fallback):
+- 1469 modules; 264786 lines; python=1203
+- 8819 functions; 819 classes; mean_cc=3.0; critical=339; cycles=0
+- committed project/map.toon.yaml baseline: 1762 files / 293289 lines,
+  generated 2026-07-29
+
+semcod/docval 0.1.5 (`docval scan docs --project . --no-llm`):
+- 95 files; 1704 chunks; 1386 valid; 9 invalid; 2 outdated;
+  4 orphaned; 281 heuristic-empty; health=81.3%
+
+semcod/code2docs 3.0.34 (matching source checkout on PYTHONPATH):
+- docs/**: 14 broken links, 3 table-shape issues, 36 duplicate headings
+- docs/architecture/**: 2 table-shape issues
+- direct installed entry point initially lacked its code2llm dependency
+
+semcod/code2llm 0.5.176:
+- dry-run unavailable because the current CLI imports removed
+  streaming_analyzer.STRATEGY_QUICK compatibility state
+- this tool defect is evidence only and is not classified as a Koru failure
+
+focused baseline tests:
+- pytest tests/test_autonomy_mutation_inventory.py
+  tests/test_dependency_boundary_inventory.py tests/test_volume_reduction_plan.py
+- result: 4 failed, 19 passed, 857 subtests passed
+- failures: three stale src/korullm references and one stale map-header parser
+
+planning validation:
+- governance-check: pass after replacing machine-local paths with portable CLI
+  commands
+- git diff --check: pass
+- docker compose config --quiet: pass
+- implementation files changed: none
