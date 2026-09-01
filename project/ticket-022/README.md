@@ -2,8 +2,8 @@
 
 - **ID**: ticket-022
 - **Owner**: agent:codex
-- **Status**: PLAN
-- **Workflow state**: WAIT_FOR_APPROVAL
+- **Status**: IN_PROGRESS
+- **Workflow state**: VALIDATION
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -21,13 +21,13 @@ or completion evidence for this bounded repair.
 
 ## Acceptance criteria
 
-- [ ] AC-01: The amended exact-base, two-source-plus-one-test scope is explicitly
+- [x] AC-01: The amended exact-base, two-source-plus-one-test scope is explicitly
   approved before implementation or test files change.
 - [x] AC-02: Ruff passes for both touched modules and for the complete
   `src/koru` smoke scope without suppressions.
-- [ ] AC-03: Existing execution-plan, work-lifecycle and CLI dispatch regression
+- [x] AC-03: Existing execution-plan, work-lifecycle and CLI dispatch regression
   tests are green with no CLI behavior or public-interface change.
-- [ ] AC-04: Governance, diff hygiene and Docker configuration checks pass on
+- [x] AC-04: Governance, diff hygiene and Docker configuration checks pass on
   the delivery head.
 
 ## Planning note
@@ -36,8 +36,9 @@ The accepted planning base is `37cd8021034680b6bee7d7ef27c628fef12dddab`.
 The user explicitly approved the original two-source-file plan on 2026-09-01;
 that slice is preserved in commit `e02bf463`. Full validation exposed a directly
 related stale test registry, so the ticket returned to `PLAN / WAIT_FOR_APPROVAL`
-for fresh approval of `tests/test_cli.py`. Conversational approval authorizes
-implementation but is not trusted merge authorization.
+for fresh approval of `tests/test_cli.py`. The user approved that amendment on
+2026-09-01 and the ticket resumed in `IN_PROGRESS / EDIT`. Conversational
+approval authorizes implementation but is not trusted merge authorization.
 The unrelated Ruff failure in
 `tests/test_autonomous.py` and the seven previously measured deterministic
 test failures require separate scopes.

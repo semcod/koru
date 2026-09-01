@@ -35,8 +35,8 @@
       "maxRuntimeDependencies": 0
     },
     "architecture": {
-      "status": "proposed",
-      "decision": "Apply only Ruff-prescribed import cleanup to the two source modules while preserving the delivered work/decide behavior and exact-head validator boundary.",
+      "status": "accepted",
+      "decision": "Apply only Ruff-prescribed import cleanup to the two source modules and reconcile the static CLI test registry with delivered decide routing while preserving runtime behavior and the exact-head validator boundary.",
       "components": [
         {
           "name": "work-decide-cli",
@@ -51,7 +51,7 @@
       "interfaceChanges": [],
       "dataChanges": [],
       "ui": {"impact": "none", "states": [], "evidence": []},
-      "rollback": "Revert the two import-only changes while retaining planning and validation evidence."
+      "rollback": "Revert the two import-only changes and static test registry entry while retaining planning and validation evidence."
     },
     "runtimeDependencies": [],
     "validation": [

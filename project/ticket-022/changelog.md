@@ -39,3 +39,11 @@
   `tests/test_cli.py` to reconcile the delivered `decide` registry.
 - Keep the seven independent test failures and test-only Ruff finding outside
   this amendment.
+
+## [0.6.0] - 2026-09-01
+
+- Record explicit approval of the one-test amendment.
+- Resume `IN_PROGRESS / EDIT` with accepted architecture and unchanged runtime
+  behavior boundaries.
+- Reconcile the static CLI dispatch expectation with the delivered `decide`
+  command and validate that only the seven independent baseline failures remain.

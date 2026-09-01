@@ -16,7 +16,7 @@ semantics.
 
 ## Execution plan
 
-1. Obtain fresh approval for adding `tests/test_cli.py` to the bounded intent.
+1. Record fresh approval for adding `tests/test_cli.py` to the bounded intent.
 2. Transition the ticket back to `IN_PROGRESS / EDIT` and verify the accepted base.
 3. Remove the unused execution-plan import and organize the CLI import block.
 4. Run focused tests, full source Ruff, governance, diff and Docker checks.
@@ -32,7 +32,11 @@ semantics.
 - Full source Ruff passes and the six focused tests remain green.
 - Full-suite validation found that only `decide` is missing from the static
   expected subcommand registry; no runtime CLI change is needed.
+- Added `decide` to the expected dispatch keys; the focused suite now passes
+  with 11 tests and 48 subtests.
+- A targeted residual run confirms the seven independent baseline failures are
+  unchanged and the eighth work/decide regression is gone.
 
 ## Blockers
 
-- Fresh approval is required before editing `tests/test_cli.py`.
+- None.

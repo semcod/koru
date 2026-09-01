@@ -28,3 +28,14 @@ Exact dispatch delta: actual_only=['decide']; expected_only=[].
 Committed the approved source-smoke slice as e02bf463.
 Returned ticket-022 to PLAN / WAIT_FOR_APPROVAL after proposing a one-file test amendment.
 No edit to tests/test_cli.py has been made; fresh approval is required.
+2026-09-01T14:20:36+02:00
+User explicitly approved the one-file tests/test_cli.py amendment.
+Resumed ticket-022 in IN_PROGRESS / EDIT and accepted the amended architecture.
+2026-09-01T14:21:49+02:00
+Added `decide` to TestSubcommandDispatch.EXPECTED_KEYS; no runtime source changed in the amendment.
+Focused Ruff for both source modules and tests/test_cli.py -> All checks passed.
+Full `ruff check src/koru` -> All checks passed.
+Focused pytest including TestSubcommandDispatch -> 11 passed, 48 subtests passed in 5.68s.
+Targeted residual baseline -> 7 failed, 34 passed, 857 subtests passed in 3.99s; the prior decide dispatch failure is absent.
+`governance-check.sh` -> GOV-PASS (0 errors, 0 warnings); `git diff --check` and `docker compose config --quiet` -> exit 0.
+Transitioned workflow state to IN_PROGRESS / VALIDATION.
