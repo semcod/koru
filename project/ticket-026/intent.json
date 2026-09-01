@@ -1,0 +1,109 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-026",
+  "summary": "Atomically adopt published new-project 0.19.18 to resolve Koru issue 41",
+  "workstream": "governance",
+  "allowedPaths": [
+    "project/ticket-026/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".gitignore",
+    ".aider.conf.yml",
+    ".cursor/rules/new-project-standard.mdc",
+    ".githooks/pre-commit",
+    ".github/copilot-instructions.md",
+    ".github/workflows/new-project-governance.yml",
+    ".governance/**",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "GEMINI.md",
+    "project/governance-check.bat",
+    "project/governance-check.sh",
+    "project/new-ticket.sh",
+    "project/readme.sh",
+    "scripts/install-agent-hosts.sh",
+    "scripts/runtime.sh",
+    "wellmanifest_governance.py",
+    "worktree-guard.yaml"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "665bc68eb22f6e98156d540a01fda6976bf0c632",
+    "targetBranch": "main",
+    "outcome": "Koru reproducibly adopts published new-project 0.19.18, resolves issue 41 and unlocks governed packages application work.",
+    "nonGoals": [
+      "Change Koru runtime behavior",
+      "Implement issue 37 package LLM routing",
+      "Reuse or force-merge PR 43",
+      "Modify generated standard payload by hand"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 19,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use Goal 2.1.300 to atomically upgrade from cc9b04673bbd85cb4e35fb683d288ef34be1485f to published revision 7dd68589340bfd4b18b94f3141f41833280c2985 after making exactly four managed targets trackable.",
+      "components": [
+        {
+          "name": "immutable-governance-adoption",
+          "paths": [
+            ".gitignore",
+            ".aider.conf.yml",
+            ".cursor/rules/new-project-standard.mdc",
+            ".githooks/pre-commit",
+            ".github/copilot-instructions.md",
+            ".github/workflows/new-project-governance.yml",
+            ".governance/**",
+            "AGENTS.md",
+            "CLAUDE.md",
+            "GEMINI.md",
+            "project/governance-check.bat",
+            "project/governance-check.sh",
+            "project/new-ticket.sh",
+            "project/readme.sh",
+            "scripts/install-agent-hosts.sh",
+            "scripts/runtime.sh",
+            "wellmanifest_governance.py",
+            "worktree-guard.yaml"
+          ]
+        }
+      ],
+      "responsibilityChanges": true,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the complete atomic adoption commit and the exact .gitignore prerequisite together; never mix standard revisions."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": ["goal governance adopt --source-revision 7dd68589340bfd4b18b94f3141f41833280c2985 --target-root . --check"],
+        "evidence": "project/ticket-026/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["./project/governance-check.sh --actor agent"],
+        "evidence": "project/ticket-026/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-06",
+        "commands": [
+          "python -m pytest -q tests/test_init.py tests/test_autopilot_cli.py",
+          "git diff --check",
+          "docker compose config --quiet"
+        ],
+        "evidence": "project/ticket-026/ai-codex-logs.txt"
+      }
+    ]
+  }
+}

@@ -1,5 +1,9 @@
 # Governance roadmap
 
+- [ ] [`ticket-026`](project/ticket-026/README.md) — atomically adopt published
+  `new-project` 0.19.18 to resolve issue #41 and unlock governed
+  `packages/**` work. State: `PLAN / WAIT_FOR_APPROVAL`; this is the canonical
+  successor of the colliding governance plan formerly allocated as 025.
 - [x] [`ticket-025`](project/ticket-025/README.md) — prevent repeated
   `koru scan --apply` cycles from recreating unchanged findings after their
   Planfile tickets move into history. State: `DONE / DONE`; exact head
