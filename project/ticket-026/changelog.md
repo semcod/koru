@@ -32,5 +32,5 @@
   and merge `f04dbbf1343290a84b0f5ee0176ae0aa9a9ff549`.
 - Confirm automatic deletion of the stage-2 topic branch and a remote
   inventory containing only `main`.
-- Close the ticket lifecycle as `DONE / DONE` and prepare its governance-only
-  closure PR binding.
+- Close the ticket lifecycle as `DONE / DONE` and bind governance-only closure
+  PR #59.

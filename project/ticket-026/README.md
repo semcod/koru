@@ -69,7 +69,7 @@ behavior is changed.
   `33520531075`, review `5079395138`, merge
   `f04dbbf1343290a84b0f5ee0176ae0aa9a9ff549` at
   `2026-09-01T14:38:01Z`.
-- Governance closure: pending pull-request binding.
+- Governance closure: [#59](https://github.com/semcod/koru/pull/59)
 
 ## Participants
 

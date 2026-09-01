@@ -83,4 +83,5 @@
   f04dbbf1343290a84b0f5ee0176ae0aa9a9ff549
 - protected validator deleted branch ticket/026-protected-reclosure
 - remote branch inventory after stage-2 delivery: main only
-- lifecycle closed as DONE / DONE; governance-only closure PR binding pending
+- lifecycle closed as DONE / DONE; opened governance-only closure PR
+  https://github.com/semcod/koru/pull/59
