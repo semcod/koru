@@ -10,6 +10,7 @@ refactor automation system for multi-repo workspaces.
 | Need | Start here | Continue with |
 |---|---|---|
 | Install and run Koru | [`quickstart-10min.md`](./quickstart-10min.md) | [`cli-examples.md`](./cli-examples.md) |
+| Make Koru run shell commands (CI, pytest) | [`auto-execute-commands.md`](./auto-execute-commands.md) | [`planfile-execution-gateway.md`](./planfile-execution-gateway.md) |
 | Operate an autonomous agent | [`agent-guide.md`](./agent-guide.md) | [`autopilot-quickstart.md`](./autopilot-quickstart.md) |
 | Understand queue lifecycle and retries | [`planfile-execution-gateway.md`](./planfile-execution-gateway.md) | [`planfile-llm-guide.md`](./planfile-llm-guide.md) |
 | Run Subactor development repair | [`subactor-development-repair-template.md`](./subactor-development-repair-template.md) | [`architecture/dependency-boundary-inventory.yaml`](./architecture/dependency-boundary-inventory.yaml) |
@@ -35,6 +36,7 @@ changes are recorded in `CHANGELOG.md`.
 - **[`ci-github.md`](./ci-github.md)** (PL) — szablon thin CI na GitHub Actions (`koru-ci.yml`).
 - **[`ci-gitlab.md`](./ci-gitlab.md)** (PL) — ten sam smoke na GitLab CI (przykład w `examples/ci/gitlab-ci.example.yml`).
 - **[`quickstart-10min.md`](./quickstart-10min.md)** — krótka ścieżka: instalacja, `koru --init`, CI, pierwszy ticket.
+- **[`auto-execute-commands.md`](./auto-execute-commands.md)** — kiedy Koru **sam** uruchamia shell (`koru --queue`, `koru ci run`, `post_run_verify`) vs kiedy `koru.yaml` `when:` to tylko brief.
 - **[`pipeline-design.md`](./pipeline-design.md)** — closed-loop stages (detect→plan→execute→verify→heal), flat pipeline YAML, autonomy layout, design-debt hotspots.
 - **[`docker-e2e-testing.md`](./docker-e2e-testing.md)** — Docker / shell e2e map: suites, installs, IDE-matrix stubs, Xvfb, **noVNC lab** (`docker/novnc/`).
 - **[`goal-tags-and-releases.md`](./goal-tags-and-releases.md)** — why git tags advance while GitHub Releases can stick on an old version (goal + `create_on_tag`).

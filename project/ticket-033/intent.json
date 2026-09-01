@@ -1,0 +1,65 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-033",
+  "summary": "Document auto-execute shell commands and CI hooks",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-033/**",
+    "docs/auto-execute-commands.md",
+    "docs/README.md",
+    "docs/quickstart-10min.md",
+    "docs/cli-examples.md",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "db8cd2e3c4706615388d4fbf8219ebeacd0c918a",
+    "targetBranch": "main",
+    "outcome": "Operators can find a single guide explaining when Koru auto-runs shell commands versus brief-only koru.yaml when blocks.",
+    "nonGoals": [
+      "Change queue runner behavior",
+      "Add new CLI flags"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Documentation-only delivery; no runtime code changes.",
+      "components": [
+        {
+          "name": "auto-execute-guide",
+          "paths": ["docs/auto-execute-commands.md", "docs/README.md", "docs/quickstart-10min.md", "docs/cli-examples.md"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the ticket branch."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["test -f docs/auto-execute-commands.md"],
+        "evidence": "guide file exists"
+      }
+    ]
+  }
+}
