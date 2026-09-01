@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-035",
+  "summary": "Prove HOME standard pack S3 S4 evidence",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-035/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".governance/standard-adoption.json",
+    ".governance/standard-pack-evidence/**",
+    ".governance/standard_pack_projection_check.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-028"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ffa8643ffaeaf1755876315930924828652913dd",
+    "targetBranch": "main",
+    "outcome": "Koru records independently checkable immutable HOME-pack projections while retaining truthful audit mode for the two packs awaiting target CI receipts.",
+    "nonGoals": [
+      "Change normative HOME standard semantics",
+      "Treat a workflow URL or empty artifact list as conformance evidence",
+      "Claim S5 runtime authority",
+      "Modify external repositories"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep normative ownership in each HOME repository, store only digest-bound generated projections in Koru, and require one stable target-owned conformance check before switching the adoption profile to enforce.",
+      "components": [
+        {
+          "name": "standard-pack-evidence",
+          "paths": [
+            ".governance/standard-adoption.json",
+            ".governance/standard-pack-evidence/**",
+            ".governance/standard_pack_projection_check.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected ticket merge; HOME repositories and Koru's active ruleset remain unchanged."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python3 .governance/standard_pack_check.py --root . --format json",
+          "python3 .governance/standard_pack_projection_check.py --root . --format json"
+        ],
+        "evidence": "deterministic standard-pack reports"
+      },
+      {
+        "criterion": "AC-06",
+        "commands": [
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "local gates and protected checks"
+      }
+    ]
+  }
+}

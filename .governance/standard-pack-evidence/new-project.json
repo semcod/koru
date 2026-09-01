@@ -1,0 +1,65 @@
+{
+  "schema": "semcod.standard-pack-projection/v1",
+  "packId": "wellmanifest/new-project",
+  "version": "0.19.19",
+  "claimedLevel": "S4",
+  "source": {
+    "repository": "wellmanifest/new-project",
+    "revision": "43999c793a86084b4c3198fe07be350105db59ec",
+    "contract": {
+      "path": "governance/standard-packs.json",
+      "uri": "https://github.com/wellmanifest/new-project/blob/43999c793a86084b4c3198fe07be350105db59ec/governance/standard-packs.json",
+      "sha256": "107f9fcc6231c108b216055c63ba43e8bd5ec152ea7a2a5906642c3484fceed9"
+    },
+    "conformance": {
+      "path": "scripts/standard_pack_check.py",
+      "uri": "https://github.com/wellmanifest/new-project/blob/43999c793a86084b4c3198fe07be350105db59ec/scripts/standard_pack_check.py",
+      "sha256": "87d2adb23afb59886225a4534aaa3349300a499ac564a0f58650b45d3fdcb1f4"
+    }
+  },
+  "localBindings": [
+    {
+      "target": ".governance/standard-packs.json",
+      "sourceRole": "contract",
+      "sha256": "107f9fcc6231c108b216055c63ba43e8bd5ec152ea7a2a5906642c3484fceed9"
+    },
+    {
+      "target": ".governance/standard_pack_check.py",
+      "sourceRole": "conformance",
+      "sha256": "87d2adb23afb59886225a4534aaa3349300a499ac564a0f58650b45d3fdcb1f4"
+    }
+  ],
+  "ciReceipt": {
+    "sha256": "fe3ca9618b00444fa3671c73373c11911f0ad30e033bf2cfd64cd6901de2c0ec",
+    "snapshot": {
+      "schema": "semcod.ci-check-receipt/v1",
+      "repository": "wellmanifest/new-project",
+      "subjectSha": "43999c793a86084b4c3198fe07be350105db59ec",
+      "workflowPath": ".github/workflows/ci.yml",
+      "workflowSha256": "c0926109f3584698723196edfbd1d6434721c14797171519a36e727403825994",
+      "runId": 33520222299,
+      "runAttempt": 1,
+      "event": "push",
+      "jobId": 99897284345,
+      "checkName": "test",
+      "conclusion": "success",
+      "completedAt": "2026-09-01T14:39:32Z",
+      "sourceUri": "https://api.github.com/repos/wellmanifest/new-project/actions/jobs/99897284345"
+    }
+  },
+  "protectionReceipt": {
+    "sha256": "9288319177709989c277268de08efbab56c1193b5f71948fb0c8d1f99b64c86c",
+    "snapshot": {
+      "schema": "semcod.ruleset-receipt/v1",
+      "repository": "wellmanifest/new-project",
+      "rulesetId": 20451097,
+      "rulesetName": "main-governance-protection",
+      "enforcement": "active",
+      "target": "branch",
+      "branchSelector": "~DEFAULT_BRANCH",
+      "requiredCheck": "test",
+      "strict": true,
+      "sourceUri": "https://api.github.com/repos/wellmanifest/new-project/rulesets/20451097"
+    }
+  }
+}

@@ -5,37 +5,122 @@
   "repositoryRole": "standalone-application",
   "adoptions": [
     {
+      "id": "wellmanifest/new-project",
+      "version": "0.19.19",
+      "revision": "43999c793a86084b4c3198fe07be350105db59ec",
+      "model": "protected-conformance",
+      "level": "S4",
+      "artifacts": [
+        {"target": ".governance/standard-pack-evidence/new-project.json", "sha256": "09ed48a77956e6d58fe58f4a1574bb0c07701d928bc941e673f6237b8adcb392"},
+        {"target": ".governance/standard-packs.json", "sha256": "107f9fcc6231c108b216055c63ba43e8bd5ec152ea7a2a5906642c3484fceed9"},
+        {"target": ".governance/standard_pack_check.py", "sha256": "87d2adb23afb59886225a4534aaa3349300a499ac564a0f58650b45d3fdcb1f4"}
+      ],
+      "evidence": [
+        {"level": "S0", "uri": "https://github.com/wellmanifest/new-project/blob/43999c793a86084b4c3198fe07be350105db59ec/governance/standard-packs.json", "sha256": "107f9fcc6231c108b216055c63ba43e8bd5ec152ea7a2a5906642c3484fceed9"},
+        {"level": "S1", "uri": "https://github.com/wellmanifest/new-project/blob/43999c793a86084b4c3198fe07be350105db59ec/scripts/standard_pack_check.py", "sha256": "87d2adb23afb59886225a4534aaa3349300a499ac564a0f58650b45d3fdcb1f4"},
+        {"level": "S2", "uri": "urn:sha256:09ed48a77956e6d58fe58f4a1574bb0c07701d928bc941e673f6237b8adcb392", "sha256": "09ed48a77956e6d58fe58f4a1574bb0c07701d928bc941e673f6237b8adcb392"},
+        {"level": "S3", "uri": "urn:sha256:fe3ca9618b00444fa3671c73373c11911f0ad30e033bf2cfd64cd6901de2c0ec", "sha256": "fe3ca9618b00444fa3671c73373c11911f0ad30e033bf2cfd64cd6901de2c0ec"},
+        {"level": "S4", "uri": "urn:sha256:9288319177709989c277268de08efbab56c1193b5f71948fb0c8d1f99b64c86c", "sha256": "9288319177709989c277268de08efbab56c1193b5f71948fb0c8d1f99b64c86c"}
+      ]
+    },
+    {
+      "id": "wellmanifest/git-lifecycle",
+      "version": "0.2.0-dev",
+      "revision": "7d77d4b7af57e69bc75c3a0290b3a4805c5c4438",
+      "model": "protected-conformance",
+      "level": "S4",
+      "artifacts": [
+        {"target": ".governance/standard-pack-evidence/git-lifecycle.json", "sha256": "0bc35982117e306578d88adfa55030e1e6e93a6323300923f081c09ef8f54e24"}
+      ],
+      "evidence": [
+        {"level": "S0", "uri": "https://github.com/wellmanifest/git-lifecycle/blob/7d77d4b7af57e69bc75c3a0290b3a4805c5c4438/standard/git-lifecycle.schema.json", "sha256": "de3bb3711cb96e90e916253bfddb211b9abba2d0666af061ae6b316a5a689268"},
+        {"level": "S1", "uri": "https://github.com/wellmanifest/git-lifecycle/blob/7d77d4b7af57e69bc75c3a0290b3a4805c5c4438/standard/conformance.py", "sha256": "752f9ffe0912f67732092f3a426bd301b7fda17b749ac09acf70345d242b0e56"},
+        {"level": "S2", "uri": "urn:sha256:0bc35982117e306578d88adfa55030e1e6e93a6323300923f081c09ef8f54e24", "sha256": "0bc35982117e306578d88adfa55030e1e6e93a6323300923f081c09ef8f54e24"},
+        {"level": "S3", "uri": "urn:sha256:558ff78a3c981803e4626ceed180e2e4ba430d387c6604b442024aed28c3f84a", "sha256": "558ff78a3c981803e4626ceed180e2e4ba430d387c6604b442024aed28c3f84a"},
+        {"level": "S4", "uri": "urn:sha256:2546432fb2ce4b131be5c1cb8924418fd118ddfc43f22f07aab659f97b312ae7", "sha256": "2546432fb2ce4b131be5c1cb8924418fd118ddfc43f22f07aab659f97b312ae7"}
+      ]
+    },
+    {
       "id": "wellmanifest/worktrees",
       "version": "0.1.0-dev",
       "revision": "bad8fab4ef96e770ccc4e4089bb4a3d623c1651a",
       "model": "local-conformance",
       "level": "S2",
       "artifacts": [
-        {
-          "target": ".governance/worktrees.schema.json",
-          "sha256": "0399c25a334e902d1cfa6ff44366419888d7b6281329602841c3c2766cd15442"
-        },
-        {
-          "target": ".governance/worktree_path_check.py",
-          "sha256": "ad978120003eef0c47c3fd3af545d6869e9d1717d945e3e0264c81238bfb1cab"
-        }
+        {"target": ".governance/standard-pack-evidence/worktrees.json", "sha256": "5101e4d4851cf8930b24c652bfc582e1dd50b001789843d2890df53dc519fe3e"},
+        {"target": ".governance/worktrees.schema.json", "sha256": "0399c25a334e902d1cfa6ff44366419888d7b6281329602841c3c2766cd15442"},
+        {"target": ".governance/worktree_path_check.py", "sha256": "ad978120003eef0c47c3fd3af545d6869e9d1717d945e3e0264c81238bfb1cab"}
       ],
       "evidence": [
-        {
-          "level": "S0",
-          "uri": "https://github.com/wellmanifest/worktrees/blob/bad8fab4ef96e770ccc4e4089bb4a3d623c1651a/models/worktrees.schema.json",
-          "sha256": "0399c25a334e902d1cfa6ff44366419888d7b6281329602841c3c2766cd15442"
-        },
-        {
-          "level": "S1",
-          "uri": "https://github.com/wellmanifest/worktrees/blob/bad8fab4ef96e770ccc4e4089bb4a3d623c1651a/operations/conformance.py",
-          "sha256": "ad978120003eef0c47c3fd3af545d6869e9d1717d945e3e0264c81238bfb1cab"
-        },
-        {
-          "level": "S2",
-          "uri": ".governance/worktrees.lock.json",
-          "sha256": "c2bf1c90a3e54bcb725693856dc1e4b1759e4dfe4bc7094c853bf715573a19d7"
-        }
+        {"level": "S0", "uri": "https://github.com/wellmanifest/worktrees/blob/bad8fab4ef96e770ccc4e4089bb4a3d623c1651a/models/worktrees.schema.json", "sha256": "0399c25a334e902d1cfa6ff44366419888d7b6281329602841c3c2766cd15442"},
+        {"level": "S1", "uri": "https://github.com/wellmanifest/worktrees/blob/bad8fab4ef96e770ccc4e4089bb4a3d623c1651a/operations/conformance.py", "sha256": "ad978120003eef0c47c3fd3af545d6869e9d1717d945e3e0264c81238bfb1cab"},
+        {"level": "S2", "uri": "urn:sha256:5101e4d4851cf8930b24c652bfc582e1dd50b001789843d2890df53dc519fe3e", "sha256": "5101e4d4851cf8930b24c652bfc582e1dd50b001789843d2890df53dc519fe3e"}
+      ]
+    },
+    {
+      "id": "wellmanifest/merge",
+      "version": "0.1.0-dev",
+      "revision": "2a55d6de7eb5dbc92d59b9e2ed8f3fbd30b4fa8a",
+      "model": "protected-conformance",
+      "level": "S4",
+      "artifacts": [
+        {"target": ".governance/standard-pack-evidence/merge.json", "sha256": "a8256d779f929dff3a62ea1bdc2d61205ba9f180eb0181d443ded25df0b0d48e"}
+      ],
+      "evidence": [
+        {"level": "S0", "uri": "https://github.com/wellmanifest/merge/blob/2a55d6de7eb5dbc92d59b9e2ed8f3fbd30b4fa8a/standard/merge-decision.schema.json", "sha256": "6cf3766abab6834555ec1275dee4ca42e60ceb99fe57c73b0130e443e9eb53f1"},
+        {"level": "S1", "uri": "https://github.com/wellmanifest/merge/blob/2a55d6de7eb5dbc92d59b9e2ed8f3fbd30b4fa8a/standard/conformance.py", "sha256": "71d85445d77bb4231bdb8bf057a92e7ffe9d5fe5ea8594d04b0b09eea6980d06"},
+        {"level": "S2", "uri": "urn:sha256:a8256d779f929dff3a62ea1bdc2d61205ba9f180eb0181d443ded25df0b0d48e", "sha256": "a8256d779f929dff3a62ea1bdc2d61205ba9f180eb0181d443ded25df0b0d48e"},
+        {"level": "S3", "uri": "urn:sha256:2315c53908efffd19d828262af82f415407cae70463e8f7778932b9cff365f79", "sha256": "2315c53908efffd19d828262af82f415407cae70463e8f7778932b9cff365f79"},
+        {"level": "S4", "uri": "urn:sha256:65248f6fcd66d4379d9a5273b7cdea34d9d0c4ee07a564109aff4928aa47e06e", "sha256": "65248f6fcd66d4379d9a5273b7cdea34d9d0c4ee07a564109aff4928aa47e06e"}
+      ]
+    },
+    {
+      "id": "wellmanifest/validation-attestation",
+      "version": "0.1.0-dev",
+      "revision": "393c494144e29a5eb565189fab295109b5b5d6f7",
+      "model": "protected-conformance",
+      "level": "S4",
+      "artifacts": [
+        {"target": ".governance/standard-pack-evidence/validation-attestation.json", "sha256": "f3144fbc9fb00549d3eb5879c76964831dd0ae31f3fa87897a0055cb488d549c"}
+      ],
+      "evidence": [
+        {"level": "S0", "uri": "https://github.com/wellmanifest/validation-attestation/blob/393c494144e29a5eb565189fab295109b5b5d6f7/schemas/validation-attestation.schema.json", "sha256": "38a8e2c3609849bd05a79f99f42e9e27e41592b31d04c5eb5e9b85669a991d50"},
+        {"level": "S1", "uri": "https://github.com/wellmanifest/validation-attestation/blob/393c494144e29a5eb565189fab295109b5b5d6f7/src/attestation_check.py", "sha256": "deca1279c502a6b9a7db6e5761f4c9a5aaedab787e39c004f55aa285bc7fe803"},
+        {"level": "S2", "uri": "urn:sha256:f3144fbc9fb00549d3eb5879c76964831dd0ae31f3fa87897a0055cb488d549c", "sha256": "f3144fbc9fb00549d3eb5879c76964831dd0ae31f3fa87897a0055cb488d549c"},
+        {"level": "S3", "uri": "urn:sha256:7a62be2ce84eebc30e59738e01d6fdc249172b1b195b72e89cab5312ba9f02c8", "sha256": "7a62be2ce84eebc30e59738e01d6fdc249172b1b195b72e89cab5312ba9f02c8"},
+        {"level": "S4", "uri": "urn:sha256:bdb76e94a683cb988beec1105b26847ab7714df880987b00138f293564c29a54", "sha256": "bdb76e94a683cb988beec1105b26847ab7714df880987b00138f293564c29a54"}
+      ]
+    },
+    {
+      "id": "wellmanifest/ticket-lifecycle",
+      "version": "0.1.0-dev",
+      "revision": "955ee86e24fdc4be568de44629546cce64138ed6",
+      "model": "protected-conformance",
+      "level": "S3",
+      "artifacts": [
+        {"target": ".governance/standard-pack-evidence/ticket-lifecycle.json", "sha256": "e5081000cc8f6ca6a00b915cc75ec2ab190df01994e9c1785c5b3ae29b1eaa2e"}
+      ],
+      "evidence": [
+        {"level": "S0", "uri": "https://github.com/wellmanifest/ticket-lifecycle/blob/955ee86e24fdc4be568de44629546cce64138ed6/standard/ticket-lifecycle.schema.json", "sha256": "c62f771911c27910a94d2d873bfa7d1627117fa421ec38e3438552b059a2aa31"},
+        {"level": "S1", "uri": "https://github.com/wellmanifest/ticket-lifecycle/blob/955ee86e24fdc4be568de44629546cce64138ed6/standard/conformance.py", "sha256": "e03e223079462c279def2f2d00ea2e72fd16094841797ad6ea9e6a9ac5a58849"},
+        {"level": "S2", "uri": "urn:sha256:e5081000cc8f6ca6a00b915cc75ec2ab190df01994e9c1785c5b3ae29b1eaa2e", "sha256": "e5081000cc8f6ca6a00b915cc75ec2ab190df01994e9c1785c5b3ae29b1eaa2e"},
+        {"level": "S3", "uri": "urn:sha256:4dc13665f645d6be6747219cb4443e0de765ed931674c3ca9f77cbadadcba2b6", "sha256": "4dc13665f645d6be6747219cb4443e0de765ed931674c3ca9f77cbadadcba2b6"}
+      ]
+    },
+    {
+      "id": "wellmanifest/logs",
+      "version": "0.3.0",
+      "revision": "48c284ef7a069055c0bcb6b900147ce5e65f8b43",
+      "model": "local-conformance",
+      "level": "S2",
+      "artifacts": [
+        {"target": ".governance/standard-pack-evidence/logs.json", "sha256": "369bc76e2ff88859ed88a0e013e162e1c05cf343e65eb8f475051d00c21fd4f8"},
+        {"target": "src/koru/data/wellmanifest-logs-contract-v0.3.json", "sha256": "916ccdd3a6f499b160b631da09a6a060233105e907f5582c12d8eaecae92e2eb"}
+      ],
+      "evidence": [
+        {"level": "S0", "uri": "https://github.com/wellmanifest/logs/blob/48c284ef7a069055c0bcb6b900147ce5e65f8b43/contracts/logs.contract.v0.3.json", "sha256": "916ccdd3a6f499b160b631da09a6a060233105e907f5582c12d8eaecae92e2eb"},
+        {"level": "S1", "uri": "https://github.com/wellmanifest/logs/blob/48c284ef7a069055c0bcb6b900147ce5e65f8b43/standard/logs_check.py", "sha256": "12a1ac4058572d5393ebff639097aefddff42135877206c9c1753976b57abc71"},
+        {"level": "S2", "uri": "urn:sha256:369bc76e2ff88859ed88a0e013e162e1c05cf343e65eb8f475051d00c21fd4f8", "sha256": "369bc76e2ff88859ed88a0e013e162e1c05cf343e65eb8f475051d00c21fd4f8"}
       ]
     }
   ]

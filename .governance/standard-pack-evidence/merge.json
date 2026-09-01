@@ -1,0 +1,54 @@
+{
+  "schema": "semcod.standard-pack-projection/v1",
+  "packId": "wellmanifest/merge",
+  "version": "0.1.0-dev",
+  "claimedLevel": "S4",
+  "source": {
+    "repository": "wellmanifest/merge",
+    "revision": "2a55d6de7eb5dbc92d59b9e2ed8f3fbd30b4fa8a",
+    "contract": {
+      "path": "standard/merge-decision.schema.json",
+      "uri": "https://github.com/wellmanifest/merge/blob/2a55d6de7eb5dbc92d59b9e2ed8f3fbd30b4fa8a/standard/merge-decision.schema.json",
+      "sha256": "6cf3766abab6834555ec1275dee4ca42e60ceb99fe57c73b0130e443e9eb53f1"
+    },
+    "conformance": {
+      "path": "standard/conformance.py",
+      "uri": "https://github.com/wellmanifest/merge/blob/2a55d6de7eb5dbc92d59b9e2ed8f3fbd30b4fa8a/standard/conformance.py",
+      "sha256": "71d85445d77bb4231bdb8bf057a92e7ffe9d5fe5ea8594d04b0b09eea6980d06"
+    }
+  },
+  "localBindings": [],
+  "ciReceipt": {
+    "sha256": "2315c53908efffd19d828262af82f415407cae70463e8f7778932b9cff365f79",
+    "snapshot": {
+      "schema": "semcod.ci-check-receipt/v1",
+      "repository": "wellmanifest/merge",
+      "subjectSha": "2a55d6de7eb5dbc92d59b9e2ed8f3fbd30b4fa8a",
+      "workflowPath": ".github/workflows/conformance.yml",
+      "workflowSha256": "85813777a80b0b1133787edcab75734967e4239f6f55427406855fbf3100ef27",
+      "runId": 32667429909,
+      "runAttempt": 1,
+      "event": "push",
+      "jobId": 97262951471,
+      "checkName": "conformance",
+      "conclusion": "success",
+      "completedAt": "2026-08-23T21:24:46Z",
+      "sourceUri": "https://api.github.com/repos/wellmanifest/merge/actions/jobs/97262951471"
+    }
+  },
+  "protectionReceipt": {
+    "sha256": "65248f6fcd66d4379d9a5273b7cdea34d9d0c4ee07a564109aff4928aa47e06e",
+    "snapshot": {
+      "schema": "semcod.ruleset-receipt/v1",
+      "repository": "wellmanifest/merge",
+      "rulesetId": 20870194,
+      "rulesetName": "main-autonomous-publication",
+      "enforcement": "active",
+      "target": "branch",
+      "branchSelector": "~DEFAULT_BRANCH",
+      "requiredCheck": "conformance",
+      "strict": true,
+      "sourceUri": "https://api.github.com/repos/wellmanifest/merge/rulesets/20870194"
+    }
+  }
+}
