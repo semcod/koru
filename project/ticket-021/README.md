@@ -2,16 +2,17 @@
 
 - **ID**: ticket-021
 - **Owner**: unresolved:human
-- **Status**: PLAN
-- **Workflow state**: WAIT_FOR_APPROVAL
+- **Status**: IN_PROGRESS
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-09-01
 
 ## Goal and scope
 
 Finish the already-merged `koru ci` slice without broadening its interface:
-move the misplaced `dataclasses.replace` import to its actual consumer, make
-the ticket-owned modules Ruff-clean, align command examples with the existing
-argparse contract, and add regression coverage for publication overrides.
+add the missing `dataclasses.replace` import to the CLI consumer while
+retaining its valid publication-module use, make the ticket-owned modules
+Ruff-clean, align command examples with the existing argparse contract, and
+add regression coverage for publication overrides.
 
 The initial implementation commits are already on `main`, but they do not
 constitute completion evidence for this ticket. Runtime changes stay limited
@@ -20,13 +21,13 @@ to the CI/publication boundary declared in `intent.json`.
 ## Acceptance criteria
 
 - [x] AC-01: `koru ci run`, `gates` and `publish` command surfaces exist.
-- [ ] AC-02: A human owner approves this bounded repair.
-- [ ] AC-03: `koru ci --project . publish --merge --dry-run` reaches the
+- [x] AC-02: A human owner approves this bounded repair.
+- [x] AC-03: `koru ci --project . publish --merge --dry-run` reaches the
   publication boundary without `NameError` and preserves all override flags.
-- [ ] AC-04: README examples place the existing global `--project` option
+- [x] AC-04: README examples place the existing global `--project` option
   before the `run`, `gates` or `publish` subcommand.
-- [ ] AC-05: Ruff and focused CI/MCP tests pass for every touched module.
-- [ ] AC-06: Governance, stack and Docker checks pass on the delivery head.
+- [x] AC-05: Ruff and focused CI/MCP tests pass for every touched module.
+- [x] AC-06: Governance, stack and Docker checks pass on the delivery head.
 
 ## Planning note
 
@@ -39,8 +40,9 @@ Current-main evidence is reproducible:
 - `koru ci --project . publish --merge --dry-run ...` reaches the undefined
   `replace` call.
 
-Resume this ticket only after approval, after ticket-013 lands, and after
-moving it to `IN_PROGRESS / EDIT` in its dedicated branch/worktree.
+The human approved the bounded repair on 2026-09-01. Ticket-013 then closed
+through protected PR #45, so this dedicated branch/worktree resumed in
+`IN_PROGRESS / EDIT` from merge commit `e94f3aa7`.
 
 ## Commands
 

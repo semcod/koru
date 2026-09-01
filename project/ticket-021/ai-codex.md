@@ -15,17 +15,35 @@ unfinished scope that owns those defects.
 
 ## Execution plan
 
-1. Wait for explicit approval and for governance dependency ticket-013.
-2. Move `replace` to its actual consumer without changing publication policy.
+1. Record explicit approval and the protected closure of ticket-013.
+2. Import `replace` in its missing CLI consumer without changing publication
+   policy or removing its now-valid use in the publication adapter.
 3. Correct ticket-owned lint findings and command examples.
 4. Add focused regression coverage for dry-run publication overrides.
 5. Run focused tests, Ruff, Koru CI, governance and Docker validation.
 
 ## Actual changes
 
-- Audit and planning evidence only; no implementation file was changed.
+- Human approval was recorded and ticket-013 was closed through protected
+  exact-head validation and merge.
+- The ticket moved to `IN_PROGRESS / EDIT` on the accepted `e94f3aa7` base;
+  implementation remained limited to `intent.json`.
+- Added the missing `dataclasses.replace` import to `cli_ci` and regression
+  coverage proving that all four command-line publication overrides reach the
+  dispatcher together.
+- Kept the existing MCP CI tool accessible through the compatibility facade,
+  added it to the required tool-list assertion, and cleaned ticket-owned Ruff
+  findings without changing dispatch policy.
+- Moved the ticket to `VALIDATION` after 71 focused tests, 50 subtests and the
+  scoped Ruff check passed.
+- Exercised Koru's real publication dry-run against frozen PR #45 evidence;
+  all requested overrides reached the protected dispatcher command.
+- Completed full-repository monitoring: 3613 tests and 940 subtests passed;
+  the seven remaining failures and one remaining full-Ruff finding are all in
+  pre-existing files outside this ticket's write scope.
+- Entered `PUBLICATION` after governance, focused Python checks, Docker Compose
+  validation and diff validation passed on the delivery worktree.
 
 ## Blockers
 
-- Human approval is required before `EDIT`.
-- Ticket-013 must land before this application workstream can be reserved.
+- None. The approval and ticket-013 dependency gates are satisfied.

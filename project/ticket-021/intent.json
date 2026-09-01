@@ -12,7 +12,6 @@
     "src/koruapi/mcp_server.py",
     "tests/test_mcp_server.py",
     "tests/test_ci_pipeline.py",
-    "README.md",
     "tests/test_cli.py"
   ],
   "forbiddenPaths": ["project/ticket-*/user-*.md"],
@@ -21,7 +20,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "b0b41998c6f66f54b2d89bb4967136208246e6bc",
+    "acceptedBaseSha": "e94f3aa7d558859967de96a3feee55dd2cac2b83",
     "targetBranch": "main",
     "outcome": "The existing Koru CI publication commands execute their documented dry-run path without NameError while preserving the protected exact-head trust boundary.",
     "nonGoals": [
@@ -39,7 +38,7 @@
       "maxRuntimeDependencies": 0
     },
     "architecture": {
-      "status": "proposed",
+      "status": "accepted",
       "decision": "Repair the misplaced import and validate the existing CLI/publication adapter without changing its grammar or trust policy.",
       "components": [
         {
@@ -56,7 +55,12 @@
     "runtimeDependencies": [],
     "validation": [
       {
-        "criterion": "AC-03, AC-05",
+        "criterion": "AC-03",
+        "commands": ["python -m pytest -q tests/test_ci_pipeline.py tests/test_cli.py tests/test_mcp_server.py"],
+        "evidence": "project/ticket-021/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-05",
         "commands": ["python -m ruff check src/koru/ci/publication.py src/koru/cli_ci.py src/koruapi/mcp_server.py tests/test_ci_pipeline.py tests/test_mcp_server.py", "python -m pytest -q tests/test_ci_pipeline.py tests/test_cli.py tests/test_mcp_server.py"],
         "evidence": "project/ticket-021/ai-codex-logs.txt"
       },
