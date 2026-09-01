@@ -60,6 +60,11 @@ is not misclassified as a Koru defect.
   ticket to `PUBLICATION`.
 - Published PR #53, observed initial GitHub smoke and OneDev success, and
   added the auditable PR binding before requesting fresh exact-head checks.
+- Exact head `ce1886afef40b9e8d7b40196a5374473c4ac0986` passed GitHub smoke,
+  OneDev and protected validator run `33514316665`.
+- Review `5078747149` bound the protected validator identity to that head
+  before PR #53 merged as `b3d7e3f46d905d90ee68a203d8a93b6b8ef2e9bc`.
+- Ticket lifecycle is closed as `DONE / DONE`.
 - No source, test, schema or dependency file has been changed.
 
 ## Blockers

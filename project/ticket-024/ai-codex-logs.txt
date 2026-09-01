@@ -74,3 +74,13 @@ planning validation:
 - onedev/local-verify: success against main 58c17b255b7e
 - this governance-only PR binding supersedes 0cbf78a0 as the final candidate;
   fresh exact-head checks are required before protected validation
+
+2026-09-01 protected delivery closure
+- final exact head: ce1886afef40b9e8d7b40196a5374473c4ac0986
+- GitHub smoke run 33513570279: success in 1m20s
+- onedev/local-verify: success against main 58c17b255b7e10a590f4aafe08ab011a5b3d847f
+- protected validator run 33514316665: approved; delivery SLO missed at 536s
+- review 5078747149 by ifuri-validator-agent[bot] approved the exact head
+- PR #53 merged at 2026-09-01T13:39:53Z as
+  b3d7e3f46d905d90ee68a203d8a93b6b8ef2e9bc
+- closed ticket-024 as DONE / DONE

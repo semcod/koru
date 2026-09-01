@@ -1,11 +1,10 @@
 # Governance roadmap
 
-- [ ] [`ticket-024`](project/ticket-024/README.md) — generate a current
+- [x] [`ticket-024`](project/ticket-024/README.md) — generate a current
   documentation-conformance DSL and synchronize the bounded architecture
-  documentation contracts with the code tree. State:
-  `IN_PROGRESS / PUBLICATION`; the exact ten-document integration scope was
-  approved on 2026-09-01, and focused contract/documentation plus required
-  governance and Docker checks pass.
+  documentation contracts with the code tree. State: `DONE / DONE`; exact head
+  `ce1886af` passed smoke, OneDev and protected validation before PR #53 merged
+  as `b3d7e3f4`.
 - [x] [`ticket-023`](project/ticket-023/README.md) — standardize POA planning
   and Wellmanifest Logs using hash-pinned Subactor Config evidence for dynamic
   Registry/Strategy resolution and a separately bound Policy decision. State:
