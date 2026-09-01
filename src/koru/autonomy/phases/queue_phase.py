@@ -29,19 +29,19 @@ def handle_queue_hygiene(
 ) -> None:
     stale_minutes = resolve_in_progress_stale_minutes(project)
     if stale_minutes is not None:
-        released_stale = release_stale_in_progress_tickets(
+        triaged_stale = release_stale_in_progress_tickets(
             project,
             stale_minutes=stale_minutes,
             runner=_run_process,
         )
-        if released_stale:
+        if triaged_stale:
             _hp(
-                f"  queue hygiene: reopened {released_stale} stale in_progress "
+                f"  queue hygiene: triaged {triaged_stale} stale in_progress "
                 f"(>{stale_minutes:.0f}m)",
             )
             _emit(
-                "QueueStaleReleased",
-                {"cycle": cycle, "count": released_stale, "stale_minutes": stale_minutes},
+                "QueueSlaTriaged",
+                {"cycle": cycle, "count": triaged_stale, "stale_minutes": stale_minutes},
             )
 
 

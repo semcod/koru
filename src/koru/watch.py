@@ -40,6 +40,8 @@ def _format_ticket_event(event: dict[str, Any], event_type: str) -> str:
         parts.append(f"state={execution['state']}")
     if execution.get("assigned_to"):
         parts.append(f"assigned_to={execution['assigned_to']}")
+    if execution.get("lease_expires_at"):
+        parts.append(f"lease_expires_at={execution['lease_expires_at']}")
     if execution.get("last_error"):
         parts.append(f"error={execution['last_error']}")
     return " | ".join(parts)

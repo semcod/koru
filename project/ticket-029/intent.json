@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-029",
+  "summary": "Implement leased issue execution and living status",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-029/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/locking.py",
+    "src/koru/queue/living_status.py",
+    "src/koru/queue/runner.py",
+    "src/koru/autonomy/ide_work.py",
+    "src/koru/autonomy/phases/queue_phase.py",
+    "src/koru/watch.py",
+    "tests/test_queue_living_status.py",
+    "tests/test_planfile_queue.py",
+    "tests/test_ide_work.py",
+    "tests/test_watch.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": ["ticket-028"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8bc9775c76e64289886f09783b7568631ed99873",
+    "targetBranch": "main",
+    "outcome": "Koru claims Planfile work for two hours, projects one transport-neutral Living Status and escalates expired work to human triage.",
+    "nonGoals": [
+      "Implement the Subactor chat UI",
+      "Call GitHub Issues directly from a Koru worker",
+      "Replace Planfile synchronization",
+      "Implement issue 37 SubLLM routing"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 5,
+      "maxPublicInterfaceChanges": 3,
+      "maxRuntimeDependencies": 3
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep Planfile as the canonical lifecycle and synchronization boundary; Koru writes an idempotent status projection and never owns remote tracker credentials.",
+      "components": [
+        {
+          "name": "queue-lease-status",
+          "paths": ["src/koru/queue/**", "tests/test_planfile_queue.py", "tests/test_queue_living_status.py"]
+        },
+        {
+          "name": "autonomous-sla-triage",
+          "paths": ["src/koru/autonomy/**", "tests/test_ide_work.py"]
+        },
+        {
+          "name": "status-observation",
+          "paths": ["src/koru/watch.py", "tests/test_watch.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "KORU_TICKET_LEASE_SECONDS defaults to 7200",
+        "Planfile descriptions gain one koru:living-status marker block"
+      ],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the ticket merge; existing marker blocks remain inert Markdown and Planfile stays authoritative."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["python -m pytest -q tests/test_queue_living_status.py tests/test_planfile_queue.py tests/test_ide_work.py tests/test_watch.py"],
+        "evidence": "protected OneDev status and validator receipt"
+      },
+      {
+        "criterion": "AC-07",
+        "commands": ["python -m ruff check src/koru/queue/locking.py src/koru/queue/living_status.py src/koru/queue/runner.py src/koru/autonomy/ide_work.py src/koru/autonomy/phases/queue_phase.py src/koru/watch.py tests/test_queue_living_status.py tests/test_ide_work.py tests/test_watch.py", "./project/governance-check.sh", "docker compose config --quiet"],
+        "evidence": "protected OneDev status and validator receipt"
+      }
+    ]
+  }
+}

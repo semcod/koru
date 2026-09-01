@@ -1,5 +1,9 @@
 # Governance roadmap
 
+- [ ] [`ticket-029`](project/ticket-029/README.md) — implement two-hour leased
+  Planfile execution, one Living Status projection and SLA human triage.
+  State: `IN_PROGRESS / VALIDATION`; local deterministic gates pass and
+  protected publication is pending.
 - [ ] [`ticket-028`](project/ticket-028/README.md) — adopt immutable
   `new-project` 0.19.19 and its resumable, conflict-safe delivery contracts.
   State: `IN_PROGRESS / PUBLICATION`; Draft PR #62 has received the streamed

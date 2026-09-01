@@ -43,11 +43,11 @@ def queue_runner_lock(project: Path):
 
 def claim_lease_seconds_str() -> str:
     """Get the ticket lease duration in seconds from environment."""
-    raw = os.environ.get("KORU_TICKET_LEASE_SECONDS", "3600").strip()
+    raw = os.environ.get("KORU_TICKET_LEASE_SECONDS", "7200").strip()
     try:
         n = int(raw, 10)
     except ValueError:
-        return "3600"
+        return "7200"
     return str(max(60, min(n, 86400 * 7)))
 
 
