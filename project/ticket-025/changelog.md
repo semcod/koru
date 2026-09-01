@@ -23,10 +23,3 @@
   a new regression ticket.
 - Added focused policy and end-to-end apply coverage and advanced the ticket to
   publication after all declared local gates passed.
-
-## [0.4.0] - 2026-09-01
-
-- Recorded exact-head smoke, OneDev and protected Validator evidence for PR
-  #55 and its merge commit.
-- Closed the ticket lifecycle as `DONE / DONE` without changing runtime code,
-  tests or publication policy.

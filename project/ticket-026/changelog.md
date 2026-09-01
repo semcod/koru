@@ -13,3 +13,6 @@
   `WAIT_FOR_APPROVAL`.
 - The user explicitly approved ticket 026; workflow moved to
   `IN_PROGRESS / EDIT` before the first-stage reversal.
+- Reversed all five PR #56 first-parent effects; ticket-025 evidence matches
+  the trusted PR #55 parent and local required gates pass.
+- Moved the first stage to `IN_PROGRESS / PUBLICATION` for protected review.

@@ -38,6 +38,11 @@ protected PR. The trusted implementation merge from PR #55 remains untouched.
 
 - The user explicitly approved ticket 026 and the workflow moved to
   `IN_PROGRESS / EDIT` before changing any ticket-025 lifecycle file.
+- Reversed all five first-parent effects of merge `665bc68e`; the four
+  ticket-025 files match trusted parent `f841c613` byte-for-byte and the only
+  remaining TODO delta against that parent is the ticket-026 roadmap entry.
+- Governance, diff hygiene and Docker Compose validation passed; the first
+  stage moved to `IN_PROGRESS / PUBLICATION`.
 
 ## Blockers
 

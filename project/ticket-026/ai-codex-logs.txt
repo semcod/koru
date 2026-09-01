@@ -38,3 +38,15 @@
 - accepted base and five-path repair scope remain unchanged
 - lifecycle moved from PLAN / WAIT_FOR_APPROVAL to IN_PROGRESS / EDIT before
   changing any ticket-025 lifecycle file
+
+2026-09-01 first-stage reversal validation
+- reversed the five first-parent effects of merge
+  665bc68eb22f6e98156d540a01fda6976bf0c632
+- ticket-025 README, agent log, agent record and changelog are byte-identical
+  to trusted parent f841c613c7fdb3c51b5147cc50c4d0d8f93bd56b
+- TODO differs from trusted parent only by the active ticket-026 roadmap entry
+- implementation/runtime/test/dependency paths changed: none
+- ./project/governance-check.sh: GOV-PASS (0 errors, 0 warnings)
+- git diff --check: pass
+- docker compose config --quiet: pass
+- lifecycle moved to IN_PROGRESS / PUBLICATION
