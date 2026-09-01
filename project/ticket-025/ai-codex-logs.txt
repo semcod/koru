@@ -3,3 +3,7 @@
 2026-09-01 COLLISION local ticket-024 scan plan was superseded by concurrent protected PR #53, which reserved ticket-024 for documentation conformance
 2026-09-01 ALLOCATION ticket-025 canonically allocated from protected main b3d7e3f46d905d90ee68a203d8a93b6b8ef2e9bc in a detached worktree before branch creation
 2026-09-01 PLAN bounded to scan dedupe policy and tests; no implementation file changed on this branch; waiting for ticket-024 closure and explicit continuation checkpoint
+2026-09-01 CHECKPOINT plan committed and pushed as 28b28cc5 in PLAN/WAIT_FOR_APPROVAL before any source or test edit on ticket-025
+2026-09-01 PROTECTED_CLOSURE validator-agent run 33515504328 approved exact PR #54 head 4a1afbe3 and merged ticket-024 closure in 47 seconds
+2026-09-01 BASE_REFRESH plan rebased onto protected terminal main 8d5a5a39583f89d4220b262be6d6de65cd03f89f; intervening ticket-024 changes are governance-only and do not overlap owned source/test paths
+2026-09-01 HUMAN_APPROVAL the user repeatedly instructed continuation for the unchanged scan-history-dedupe outcome; administrative reticketing changed only the ID, so the approved architecture entered IN_PROGRESS/EDIT after ticket-024 closed

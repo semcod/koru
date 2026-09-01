@@ -2,8 +2,8 @@
 
 - **ID**: ticket-025
 - **Owner**: agent:codex under the current user continuation request
-- **Status**: PLAN
-- **Workflow state**: WAIT_FOR_APPROVAL
+- **Status**: IN_PROGRESS
+- **Workflow state**: EDIT
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -24,7 +24,7 @@ does not change the already reviewed outcome, paths or architecture.
 
 ## Acceptance criteria
 
-- [ ] AC-01: The bounded plan is explicitly approved before implementation.
+- [x] AC-01: The bounded plan is explicitly approved before implementation.
 - [ ] AC-02: Scan dedupe reads matching current and historical Planfile tickets,
       including history locations referenced by the Planfile index.
 - [ ] AC-03: A terminal ticket suppresses an identical producer, dedupe key and

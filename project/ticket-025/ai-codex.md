@@ -32,13 +32,14 @@ scope and architecture are unchanged.
 
 ## Actual changes
 
-- The plan is complete and no implementation file has changed on this branch.
-- Activation is serialized behind the ticket-024 closure because the two plan
-  diffs share `TODO.md` and `project/TICKETS.md`, despite distinct runtime
-  workstreams.
+- The plan was first committed and pushed in `WAIT_FOR_APPROVAL`; no
+  implementation file changed at that checkpoint.
+- Protected validator-agent merged the ticket-024 closure at exact head, so
+  the branch was rebased onto terminal main `8d5a5a39`.
+- The user's repeated instruction to continue applies to the same outcome,
+  paths and architecture after the administrative ID correction; ticket 025
+  moved to `IN_PROGRESS / EDIT` only after the conflicting ticket closed.
 
 ## Blockers
 
-- The unchanged scope was approved under the collided local allocation; an
-  explicit continuation after this reticket will be recorded before entering
-  `EDIT`.
+- None inside the approved scan-dedupe scope.

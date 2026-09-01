@@ -15,10 +15,10 @@
   "forbiddenPaths": ["project/ticket-*/user-*.md"],
   "stacks": ["python"],
   "dependsOn": [],
-  "conflictsWith": ["ticket-024"],
+  "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "b3d7e3f46d905d90ee68a203d8a93b6b8ef2e9bc",
+    "acceptedBaseSha": "8d5a5a39583f89d4220b262be6d6de65cd03f89f",
     "targetBranch": "main",
     "outcome": "Repeated scan application does not recreate identical findings from Planfile history while changed evidence can open a new regression ticket.",
     "nonGoals": [
@@ -36,7 +36,7 @@
       "maxRuntimeDependencies": 0
     },
     "architecture": {
-      "status": "proposed",
+      "status": "accepted",
       "decision": "Build a read-only dedupe index from trusted current/history Planfile entries keyed by producer, stable dedupe key and evidence fingerprint; terminal history is authoritative only for an identical fingerprint.",
       "components": [
         {
