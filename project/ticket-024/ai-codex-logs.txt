@@ -84,3 +84,4 @@ planning validation:
 - PR #53 merged at 2026-09-01T13:39:53Z as
   b3d7e3f46d905d90ee68a203d8a93b6b8ef2e9bc
 - closed ticket-024 as DONE / DONE
+- opened governance-only closure PR https://github.com/semcod/koru/pull/54

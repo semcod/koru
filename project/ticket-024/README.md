@@ -81,6 +81,7 @@ diff hygiene and Docker configuration pass.
   `5078747149` by `ifuri-validator-agent[bot]` targets the exact head.
 - Merge: `b3d7e3f46d905d90ee68a203d8a93b6b8ef2e9bc` at
   `2026-09-01T13:39:53Z`.
+- Governance closure: [#54](https://github.com/semcod/koru/pull/54)
 
 ## Planned follow-up slices
 

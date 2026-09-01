@@ -26,3 +26,4 @@
 - Record protected validator run `33514316665`, exact-head review `5078747149`
   and merge `b3d7e3f46d905d90ee68a203d8a93b6b8ef2e9bc`.
 - Close the ticket lifecycle as `DONE / DONE`.
+- Bind governance closure PR #54.
