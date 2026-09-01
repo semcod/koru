@@ -1887,7 +1887,7 @@ def _record_scan_activity(
         pass
 
 
-# Terminal planfile statuses: scan may re-apply when the signal is still present.
+# Terminal Planfile entries suppress only identical evidence-bound findings.
 _SCAN_DEDUP_SKIP_STATUSES: frozenset[str] = frozenset(
     _SCAN_DEDUP_SKIP_STATUSES_IMPL,
 )
@@ -1949,11 +1949,13 @@ def _existing_scan_titles(
     source: str,
     runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]] | None = None,
 ) -> set[str]:
-    """Return titles of *active* tickets from previous ``koru scan`` runs.
+    """Return active legacy keys and evidence-bound historical scan keys.
 
     Used to deduplicate ``--apply`` runs: re-running ``koru scan --apply``
-    should not pile up identical open tickets. Closed tickets (``done``,
-    ``canceled``) are ignored so a regressing signal can open a fresh ticket.
+    should not pile up identical open tickets or recreate an unchanged finding
+    after archival. A terminal ticket is authoritative only when producer,
+    dedupe key and evidence fingerprint all match; changed evidence remains a
+    fresh regression.
     """
     return _existing_scan_titles_impl(
         project,
@@ -2025,8 +2027,15 @@ def _log_scan_decision(
 def _scan_duplicate_skip(
     suggestion: Suggestion,
     existing: set[str],
+    *,
+    source: str | None = None,
 ) -> tuple[str, str] | None:
-    return _scan_duplicate_skip_impl(suggestion, existing)
+    return _scan_duplicate_skip_impl(
+        suggestion,
+        existing,
+        source=source,
+        suggestion_dedupe_key=_suggestion_dedupe_key if source is not None else None,
+    )
 
 
 def _normalize_create_detail(detail: str) -> str:
@@ -2070,7 +2079,11 @@ def _apply_scan_suggestions(
         source=source,
         runner=runner,
         existing_scan_titles=_existing_scan_titles,
-        scan_duplicate_skip=_scan_duplicate_skip,
+        scan_duplicate_skip=lambda suggestion, existing: _scan_duplicate_skip(
+            suggestion,
+            existing,
+            source=source,
+        ),
         create_ticket=_create_ticket,
         apply_create_result=_apply_create_result,
         log_scan_decision=_log_scan_decision,
