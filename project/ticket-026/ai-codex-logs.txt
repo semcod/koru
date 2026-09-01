@@ -71,3 +71,16 @@
 - docker compose config --quiet: pass
 - remote branch inventory before stage-2 publication: main only
 - opened stage-2 corrected closure PR https://github.com/semcod/koru/pull/58
+
+2026-09-01 stage-2 protected delivery
+- final exact head d7f68633c0a05fde6d024a9e95865765818bdfe2
+- GitHub smoke run 33520141658: success
+- onedev/local-verify: success against main 4de42dc35b6f
+- protected validator run 33520531075: approved, SLO met in 137 seconds
+- review 5079395138 by ifuri-validator-agent[bot] approved exact head before
+  merge
+- PR #58 merged at 2026-09-01T14:38:01Z as
+  f04dbbf1343290a84b0f5ee0176ae0aa9a9ff549
+- protected validator deleted branch ticket/026-protected-reclosure
+- remote branch inventory after stage-2 delivery: main only
+- lifecycle closed as DONE / DONE; governance-only closure PR binding pending
