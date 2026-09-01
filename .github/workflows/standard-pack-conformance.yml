@@ -1,0 +1,104 @@
+name: standard-pack-conformance
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conformance:
+    name: standard packs / conformance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the exact revision under review
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+      - name: Verify the audited projection set
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .governance/standard_pack_check.py \
+            --root . --format json > "$RUNNER_TEMP/standard-pack-audit.json"
+          python3 .governance/standard_pack_projection_check.py \
+            --root . --format json
+          python3 - "$RUNNER_TEMP/standard-pack-audit.json" <<'PY'
+          import json
+          import sys
+
+          report = json.load(open(sys.argv[1], encoding="utf-8"))
+          expected = {
+              ("STD-PACK-LEVEL", "profile requires wellmanifest/worktrees at S3"),
+              ("STD-PACK-LEVEL", "profile requires wellmanifest/logs at S3"),
+          }
+          observed = {
+              (item.get("code"), item.get("message"))
+              for item in report.get("findings", [])
+          }
+          assert report.get("mode") == "audit", report
+          assert report.get("profile") == "baseline", report
+          assert observed == expected, report
+          PY
+      - name: Validate the worktrees projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          record="$RUNNER_TEMP/worktree-layout.json"
+          python3 .governance/worktree_path_check.py plan \
+            --repository github.com/semcod/koru \
+            --repository-name koru \
+            --ticket ticket-777 \
+            --slug ci-probe \
+            --workspace-root /workspace > "$record"
+          python3 .governance/worktree_path_check.py validate "$record"
+          python3 - "$record" <<'PY'
+          import json
+          import sys
+
+          record = json.load(open(sys.argv[1], encoding="utf-8"))
+          assert record["branch"] == "ticket/777-ci-probe", record
+          assert record["worktreePath"] == (
+              "/workspace/.worktrees/koru--ticket-777--ci-probe"
+          ), record
+          assert record["leasePath"] == (
+              "/workspace/.worktrees/.leases/"
+              "koru--ticket-777--ci-probe.json"
+          ), record
+          PY
+      - name: Validate the Logs projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          path = Path("src/koru/data/wellmanifest-logs-contract-v0.3.json")
+          raw = path.read_bytes()
+          contract = json.loads(raw)
+          assert hashlib.sha256(raw).hexdigest() == (
+              "916ccdd3a6f499b160b631da09a6a060233105e907f5582c12d8eaecae92e2eb"
+          )
+          assert contract["schema"] == "wellmanifest.logs/contract-bundle/v1"
+          assert contract["version"] == "0.3.0"
+          assert contract["canonical"] == "protobuf"
+          assert contract["projection"] == "canonical-jsonl"
+          assert contract["hashProfile"] == "wellmanifest-canonical-json-v1+SHA-256"
+          assert contract["processes"]["append"].endswith("/command/append")
+          assert contract["processes"]["inspect"].endswith("/query/inspect")
+          assert set(contract["vocabulary"]["modes"]) == {"PLAN", "APPLY"}
+          assert "SECURITY" in contract["vocabulary"]["errorCategories"]
+          assert contract["schemas"]["evidence"]["additionalProperties"] is False
+          PY
