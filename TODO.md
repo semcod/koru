@@ -1,5 +1,8 @@
 # Governance roadmap
 
+- [x] [`ticket-013`](project/ticket-013/README.md) — reconcile merged tickets
+  and park incomplete concurrent work without changing runtime code. State:
+  `DONE / DONE`; PR #44 merged exact protected head `b9aa5190`.
 - [x] [`ticket-020`](project/ticket-020/README.md) — restore the queue
   lower-layer import contract. State: `DONE / DONE`; exact PR #42 head passed
   `onedev/local-verify` and exact-head validator review.

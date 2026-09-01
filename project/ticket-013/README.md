@@ -2,8 +2,8 @@
 
 - **ID**: ticket-013
 - **Owner**: agent:codex under SESSION_EXECUTION_AUTHORIZATION
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-08-26
 
 ## Goal and scope
@@ -26,6 +26,9 @@ non-reserving planning state.
   bounded intent and no active write-scope reservation.
 - [x] AC-06: Governance, Docker configuration and diff checks pass without
   implementation changes.
+- [x] AC-07: Protected validator review `5076738806` binds PR #44,
+  `ticket-013` and exact head `b9aa519018f0d2e69e349b6dd41982ef4fd862ab`;
+  GitHub merged it as `144ef64d44167d382444ab8dd43cbed8b3ed6983`.
 
 ## Participants
 

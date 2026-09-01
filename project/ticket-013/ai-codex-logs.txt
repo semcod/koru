@@ -23,6 +23,15 @@ PASS
 docker compose config --quiet
 PASS
 
+2026-09-01T12:11:51+02:00
+semcod/koru#44: MERGED at 2026-09-01T10:11:51Z.
+Exact head: b9aa519018f0d2e69e349b6dd41982ef4fd862ab.
+Protected validator run: subactor/validator-agent#33495833465 SUCCESS.
+Trusted validator review: 5076738806 by ifuri-validator-agent[bot].
+Merge commit: 144ef64d44167d382444ab8dd43cbed8b3ed6983.
+The earlier b0b41998 validation was rejected as STALE_HEAD_CHANGED and is not
+used as approval evidence.
+
 2026-09-01T00:03:00+02:00
 Concurrent target movement: main advanced cd95ca6c..d40f6fd9.
 The new main allocated ticket-022 for the Koru work lifecycle while the local POA/Logs plan used the same unpublished ID.
