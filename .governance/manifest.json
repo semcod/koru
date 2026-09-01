@@ -1,9 +1,181 @@
 {
   "$schema": "./manifest.schema.json",
-  "schema": "new-project.governance/v2",
-  "standard": {
-    "id": "wellmanifest/new-project",
-    "version": "0.11.0"
+  "approvalEvidence": {
+    "requiredBindings": [
+      "repository",
+      "pullRequest",
+      "headSha",
+      "ticket",
+      "actor"
+    ],
+    "reviewVerificationMethod": "github-api-allowlist",
+    "schema": "new-project.approval-evidence/v1",
+    "signedAttestationPredicateType": "https://wellmanifest.com/attestations/validator/v1"
+  },
+  "coordination": {
+    "integration": {
+      "requiredForPaths": [
+        "VERSION",
+        "CHANGELOG.md",
+        "package.json",
+        "package-lock.json",
+        "pyproject.toml",
+        "app.doql.less",
+        "uv.lock",
+        "go.mod",
+        "Cargo.toml",
+        "pom.xml"
+      ],
+      "workstream": "integration"
+    },
+    "maxActiveTicketsPerWorkstream": 4,
+    "mode": "workstreams",
+    "rejectActiveScopeOverlap": true,
+    "workstreams": {
+      "application": {
+        "ownedPaths": [
+          "src/**",
+          "app/**",
+          "lib/**",
+          "packages/**",
+          "test/**",
+          "tests/**"
+        ]
+      },
+      "governance": {
+        "ownedPaths": [
+          ".governance/**",
+          ".gitignore",
+          "AGENTS.md",
+          "README.md",
+          "TODO.md",
+          "goal.yaml",
+          "project/TICKETS.md",
+          "project/governance-check.*",
+          "project/new-ticket.sh",
+          "project/readme.sh",
+          "project/ticket-*/**",
+          "project.sh",
+          "project.bat"
+        ]
+      },
+      "infrastructure": {
+        "ownedPaths": [
+          "Dockerfile*",
+          "compose*.yml",
+          "compose*.yaml",
+          "infra/**",
+          ".github/**"
+        ]
+      },
+      "integration": {
+        "ownedPaths": [
+          "VERSION",
+          "CHANGELOG.md",
+          "package.json",
+          "package-lock.json",
+          "pyproject.toml",
+          "app.doql.less",
+          "uv.lock",
+          "go.mod",
+          "Cargo.toml",
+          "pom.xml",
+          "docs/**"
+        ]
+      },
+      "interfaces": {
+        "ownedPaths": [
+          "api/**",
+          "sdk/**",
+          "clients/**"
+        ]
+      }
+    }
+  },
+  "delivery": {
+    "allowedComplexityClasses": [
+      "XS",
+      "S",
+      "M",
+      "L"
+    ],
+    "checkpointMinutes": 30,
+    "dependencyManifestPaths": [
+      "package.json",
+      "pyproject.toml",
+      "go.mod",
+      "Cargo.toml",
+      "pom.xml"
+    ],
+    "maxActiveMinutes": 120,
+    "maxAffectedComponents": 5,
+    "maxImplementationFiles": 15,
+    "maxPublicInterfaceChanges": 3,
+    "maxRuntimeDependencies": 3,
+    "profiles": {
+      "L": {
+        "maxAffectedComponents": 5,
+        "maxImplementationFiles": 15,
+        "maxPublicInterfaceChanges": 3,
+        "maxRuntimeDependencies": 3
+      },
+      "M": {
+        "maxAffectedComponents": 3,
+        "maxImplementationFiles": 9,
+        "maxPublicInterfaceChanges": 2,
+        "maxRuntimeDependencies": 2
+      },
+      "S": {
+        "maxAffectedComponents": 2,
+        "maxImplementationFiles": 5,
+        "maxPublicInterfaceChanges": 1,
+        "maxRuntimeDependencies": 1
+      },
+      "XS": {
+        "maxAffectedComponents": 1,
+        "maxImplementationFiles": 2,
+        "maxPublicInterfaceChanges": 0,
+        "maxRuntimeDependencies": 0
+      }
+    },
+    "publicInterfacePaths": [
+      "api/**",
+      "sdk/**",
+      "src/public/**"
+    ],
+    "requiredForImplementation": true,
+    "targetBranches": [
+      "main"
+    ]
+  },
+  "docker": {
+    "composeFiles": [
+      "compose.yml",
+      "docker-compose.yml",
+      "compose.e2e.yml",
+      "compose.yaml",
+      "docker-compose.yaml"
+    ],
+    "dockerfiles": [
+      "Dockerfile",
+      "Dockerfile.e2e"
+    ],
+    "required": true
+  },
+  "domainContracts": {
+    "mode": "none"
+  },
+  "governancePaths": [
+    ".gitignore",
+    "TODO.md",
+    "project/TICKETS.md",
+    "project/ticket-*/**",
+    ".governance/standard-adoption.json",
+    "config/artifact-registry.json"
+  ],
+  "repository": {
+    "componentRoots": [],
+    "mode": "standalone"
   },
   "requiredFiles": [
     "README.md",
@@ -16,80 +188,50 @@
     "project/new-ticket.sh",
     "project/readme.sh"
   ],
-  "governancePaths": [
-    "TODO.md",
-    "project/TICKETS.md",
-    "project/ticket-*/**"
+  "schema": "new-project.governance/v2",
+  "stacks": [
+    "python",
+    "docker"
   ],
-  "trustedApprovalSources": [
-    "github-review",
-    "github-app-review",
-    "signed-attestation"
-  ],
-  "approvalEvidence": {
-    "schema": "new-project.approval-evidence/v1",
-    "requiredBindings": [
-      "repository",
-      "pullRequest",
-      "headSha",
-      "ticket",
-      "actor"
-    ],
-    "reviewVerificationMethod": "github-api-allowlist",
-    "signedAttestationPredicateType": "https://wellmanifest.dev/attestations/validator/v1"
+  "standard": {
+    "id": "wellmanifest/new-project",
+    "version": "0.19.19"
   },
   "ticket": {
-    "root": "project",
+    "activeStatuses": [
+      "IN_PROGRESS"
+    ],
+    "closedStatuses": [
+      "DONE",
+      "CANCELLED"
+    ],
     "directoryPattern": "^ticket-[0-9]{3}$",
+    "implementationStates": [
+      "EDIT",
+      "VALIDATION",
+      "PUBLICATION"
+    ],
+    "intentFile": "intent.json",
+    "nonActiveStatuses": [
+      "BACKLOG",
+      "PLAN",
+      "BLOCKED"
+    ],
+    "requiredAgentFiles": [
+      "ai-*.md",
+      "ai-*-logs.txt"
+    ],
     "requiredFiles": [
       "README.md",
       "preprompt.md",
       "changelog.md",
       "intent.json"
     ],
-    "requiredAgentFiles": [
-      "ai-*.md",
-      "ai-*-logs.txt"
-    ],
-    "activeStatuses": ["IN_PROGRESS"],
-    "nonActiveStatuses": ["BACKLOG", "PLAN", "BLOCKED"],
-    "closedStatuses": ["DONE", "CANCELLED"],
-    "implementationStates": ["EDIT", "VALIDATION", "PUBLICATION"],
-    "intentFile": "intent.json"
+    "root": "project"
   },
-  "docker": {
-    "required": true,
-    "dockerfiles": ["Dockerfile", "Dockerfile.e2e"],
-    "composeFiles": ["compose.yml", "docker-compose.yml", "compose.e2e.yml"]
-  },
-  "coordination": {
-    "mode": "workstreams",
-    "maxActiveTicketsPerWorkstream": 1,
-    "rejectActiveScopeOverlap": true,
-    "workstreams": {
-      "application": {"ownedPaths": ["src/**", "app/**", "lib/**", "test/**", "tests/**"]},
-      "interfaces": {"ownedPaths": ["api/**", "sdk/**", "clients/**"]},
-      "infrastructure": {"ownedPaths": ["Dockerfile*", "compose*.yml", "compose*.yaml", "infra/**", ".github/**"]},
-      "governance": {"ownedPaths": [".governance/**", "AGENTS.md", "README.md", "TODO.md", "goal.yaml", "project/TICKETS.md", "project/governance-check.*", "project/new-ticket.sh", "project/readme.sh", "project/ticket-*/**", "project.sh", "project.bat"]},
-      "integration": {"ownedPaths": ["VERSION", "CHANGELOG.md", "package.json", "package-lock.json", "pyproject.toml", "app.doql.less", "uv.lock", "go.mod", "Cargo.toml", "pom.xml", "docs/**"]}
-    },
-    "integration": {
-      "workstream": "integration",
-      "requiredForPaths": ["VERSION", "CHANGELOG.md", "package.json", "package-lock.json", "pyproject.toml", "app.doql.less", "uv.lock", "go.mod", "Cargo.toml", "pom.xml"]
-    }
-  },
-  "delivery": {
-    "requiredForImplementation": true,
-    "maxActiveMinutes": 30,
-    "checkpointMinutes": 25,
-    "allowedComplexityClasses": ["XS", "S"],
-    "maxImplementationFiles": 19,
-    "maxAffectedComponents": 1,
-    "maxPublicInterfaceChanges": 0,
-    "maxRuntimeDependencies": 1,
-    "targetBranches": ["main"],
-    "publicInterfacePaths": ["api/**", "sdk/**", "src/public/**"],
-    "dependencyManifestPaths": ["package.json", "pyproject.toml", "go.mod", "Cargo.toml", "pom.xml"]
-  },
-  "stacks": ["python", "docker"]
+  "trustedApprovalSources": [
+    "github-review",
+    "github-app-review",
+    "signed-attestation"
+  ]
 }

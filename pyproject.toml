@@ -315,10 +315,15 @@ pythonpath = [
     "packages/mcp2koru/src",
     "packages/rest2koru/src",
 ]
-addopts = ["-m", "not slow"]
+addopts = ["-p", "wellmanifest_governance", "-m", "not slow"]
 markers = [
     "slow: marks slow/integration tests (deselect with -m not slow)",
 ]
+
+[tool.wellmanifest]
+standard = "0.19.19"
+revision = "43999c793a86084b4c3198fe07be350105db59ec"
+gate = "project/governance-check.sh"
 
 [tool.ruff]
 target-version = "py312"

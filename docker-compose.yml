@@ -3,7 +3,6 @@ services:
     build:
       context: .
       target: production
-    image: koru:latest
     container_name: koru-test
     volumes:
       - ./test-data:/workspace
@@ -22,7 +21,6 @@ services:
     build:
       context: .
       target: development
-    image: koru:dev
     container_name: koru-dev
     volumes:
       - .:/app
@@ -44,7 +42,6 @@ services:
     build:
       context: .
       target: development
-    image: koru:dev
     volumes:
       - .:/app
     working_dir: /app
@@ -57,39 +54,49 @@ services:
 
   # External dependencies for testing
   planfile:
-    image: semcod/planfile:latest
+    build:
+      context: https://github.com/semcod/planfile.git#8e5e19c40a464f49844a6c9df542173cd67876a7
     container_name: planfile-test
     volumes:
       - ./test-data:/workspace
     working_dir: /workspace
-    command: tail -f /dev/null
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["tail -f /dev/null"]
     profiles:
       - deps
 
   regix:
-    image: semcod/regix:latest
+    build:
+      context: https://github.com/semcod/regix.git#ca098059ee97dc4b81d44f42fd24ec72f899c9e8
+      dockerfile_inline: |
+        FROM python@sha256:e5c9fa26ffb76e11e0f054f30dc2523a2f9693f0c36c0cf1e39b27e152d899fc
+        WORKDIR /app
+        COPY . .
+        RUN pip install --no-cache-dir .
     container_name: regix-test
     volumes:
       - ./test-data:/workspace
     working_dir: /workspace
-    command: tail -f /dev/null
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["tail -f /dev/null"]
     profiles:
       - deps
 
   testql:
-    image: semcod/testql:latest
+    build:
+      context: https://github.com/autogrammar/testql.git#cc9171f2c702caa363b17f1a529ec41a88d038aa
     container_name: testql-test
     volumes:
       - ./test-data:/workspace
     working_dir: /workspace
-    command: tail -f /dev/null
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["tail -f /dev/null"]
     profiles:
       - deps
 
   healing-webhook:
     build:
       context: ./services/healing-webhook
-    image: koru/healing-webhook:latest
     container_name: healing-webhook-test
     ports:
       - "8810:8810"
