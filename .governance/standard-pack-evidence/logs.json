@@ -2,7 +2,7 @@
   "schema": "semcod.standard-pack-projection/v1",
   "packId": "wellmanifest/logs",
   "version": "0.3.0",
-  "claimedLevel": "S2",
+  "claimedLevel": "S3",
   "source": {
     "repository": "wellmanifest/logs",
     "revision": "48c284ef7a069055c0bcb6b900147ce5e65f8b43",
@@ -24,6 +24,20 @@
       "sha256": "916ccdd3a6f499b160b631da09a6a060233105e907f5582c12d8eaecae92e2eb"
     }
   ],
-  "ciReceipt": null,
+  "ciReceipt": {
+    "sha256": "24a7971bb02aedc3cc97a843eb501414e6fe46c7cc0595c06c5b6afc47f4aace",
+    "snapshot": {
+      "schema": "semcod.projection-ci-receipt/v1",
+      "repository": "semcod/koru",
+      "subjectSha": "10ed01410fa137273a25d4df45b679fa6c2105eb",
+      "checkName": "standard packs / conformance",
+      "conclusion": "success",
+      "completedAt": "2026-09-01T20:05:46Z",
+      "sourceUri": "https://api.github.com/repos/semcod/koru/check-runs/100007807439",
+      "statusId": 100007807439,
+      "sourceRevision": "48c284ef7a069055c0bcb6b900147ce5e65f8b43",
+      "sourceProjectionSha256": "24e5ce3c4393dc80d5b19e379f763cd2b01f98fc03e5e0da9aa7b5da18c31ddc"
+    }
+  },
   "protectionReceipt": null
 }
