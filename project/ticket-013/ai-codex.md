@@ -34,6 +34,11 @@ rather than manufacturing completion evidence.
 - Refreshed the branch to `main@d40f6fd9` after a concurrent merge allocated
   ticket 022, and normalized that unfinished workflow ticket to a valid
   non-reserving plan.
+- Protected validator run `33495833465` approved exact PR #44 head
+  `b9aa519018f0d2e69e349b6dd41982ef4fd862ab`; GitHub ruleset merged it as
+  `144ef64d44167d382444ab8dd43cbed8b3ed6983`.
+- Closed this governance-only ticket after verifying the merged repository,
+  ticket, head, actor and review bindings.
 
 ## Blockers
 

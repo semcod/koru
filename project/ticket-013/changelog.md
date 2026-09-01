@@ -12,3 +12,8 @@
 - Keep the reconciliation governance-only.
 - Reconcile concurrent main movement and normalize the separately allocated
   work-lifecycle ticket 022 without overwriting it.
+
+## [0.3.0] - 2026-09-01
+
+- Record protected exact-head validator approval and merge evidence for PR #44.
+- Close the governance reconciliation ticket after merge.
