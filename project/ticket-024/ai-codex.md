@@ -58,6 +58,8 @@ is not misclassified as a Koru defect.
   without expanding the ticket.
 - Governance, YAML/TOON, Markdown, diff and Docker gates passed; moved the
   ticket to `PUBLICATION`.
+- Published PR #53, observed initial GitHub smoke and OneDev success, and
+  added the auditable PR binding before requesting fresh exact-head checks.
 - No source, test, schema or dependency file has been changed.
 
 ## Blockers

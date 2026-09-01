@@ -16,3 +16,5 @@
   `IN_PROGRESS / VALIDATION` for final gates.
 - Final required gates passed and the unrelated full-suite baseline was
   recorded; workflow moved to `IN_PROGRESS / PUBLICATION`.
+- Published PR #53 and recorded its initial smoke/OneDev evidence; the
+  governance-only binding requires fresh exact-head checks.

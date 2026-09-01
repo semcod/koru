@@ -67,3 +67,10 @@ planning validation:
 - git diff --check: pass
 - docker compose config --quiet: pass
 - workflow moved to IN_PROGRESS / PUBLICATION
+
+2026-09-01 publication candidate
+- PR #53 opened at implementation head 0cbf78a0f21d0d2cdb76fa9ce926f07446bb3b9e
+- GitHub smoke run 33513231617: success in 1m20s
+- onedev/local-verify: success against main 58c17b255b7e
+- this governance-only PR binding supersedes 0cbf78a0 as the final candidate;
+  fresh exact-head checks are required before protected validation

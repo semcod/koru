@@ -69,6 +69,16 @@ baseline failures in `tests/test_ide_doctor_cli.py` and
 this ticket. Governance, YAML/TOON parsing, `code2docs` architecture validation,
 diff hygiene and Docker configuration pass.
 
+## Publication
+
+- Pull request: [#53](https://github.com/semcod/koru/pull/53)
+- Implementation commit: `0cbf78a0f21d0d2cdb76fa9ce926f07446bb3b9e`.
+- Initial GitHub smoke run `33513231617` and `onedev/local-verify` passed
+  against PR #53.
+- This governance-only PR binding supersedes that candidate head; fresh
+  exact-head checks and protected validator evidence are required before
+  merge.
+
 ## Planned follow-up slices
 
 1. Repair the remaining navigation/link findings in top-level `docs/*.md`.
