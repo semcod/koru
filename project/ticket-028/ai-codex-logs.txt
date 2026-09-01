@@ -51,3 +51,43 @@
 - concurrent ticket-027 repair was preserved in its durable isolated worktree,
   pushed at ea0afa9c6b189deb0e93a52b27cc263ca2d0da88 and opened as PR #60
 - ticket-027 remains non-terminal, so ticket-028 stays PLAN / WAIT_FOR_APPROVAL
+
+2026-09-01 streamed implementation and validation
+- user authorization recorded; ticket entered IN_PROGRESS / EDIT without a
+  second confirmation under SESSION_EXECUTION_AUTHORIZATION
+- atomic adoption commit: ec0a066373b352cbbd304afb8fe76a996351e79d
+- draft pull request: https://github.com/semcod/koru/pull/62
+- Goal check: up-to-date new-project 0.19.19 at
+  43999c793a86084b4c3198fe07be350105db59ec
+- managed lock: 76/76 managed targets match SHA-256
+- first streamed checks: smoke PASS; governance/enforce PASS
+- stale remote ticket/027-validation-repair branch was proven merged and
+  reachable from origin/main, then deleted
+- clean ticket-027 validation-repair and closure worktrees were removed through
+  Git; local disposable branches were deleted; recovery stashes retained
+- rerun 33527536151: governance/remote lifecycle PASS
+- active main ruleset: 22026679 (protected exact-head delivery)
+- ruleset canonical snapshot SHA-256:
+  d6a0160c6d4fc0360a9d269f911765f653dba2414bc9d75d36e40167dddf2f16
+- ruleset requires PR, one fresh approval, resolved discussions,
+  onedev/local-verify, governance/enforce and governance/remote lifecycle;
+  force-push and deletion are denied; Validator App 4344831 can bypass only
+  through a pull request
+- initial overlap finding: durable audit clone
+  koru-audits/v0.19.19-812cd145 duplicated the adoption payload
+- audit clone recovery stash: 7b521b61abdcc5dd71b6d77efcf2c72acb5c146d;
+  clone moved to recoverable system trash
+- repeated 430-checkout overlap audit: PASS, 0 findings
+- continuity capture and verify: matches-observed-state;
+  receipt:continuity.ticket-028.1.d6c68f77aadf3d545a06e15f7471aa3f7b135c13f284ff83a9c61d906297a1fe
+- host activation/check: PASS; required-checks mapping: PASS
+- project governance: GOV-PASS, 0 errors / 0 warnings
+- Koru CI-equivalent Ruff src/koru: PASS
+- Koru CI-equivalent pytest subset: 83 passed
+- docker compose --profile '*' config --quiet: PASS
+- docker build --check .: PASS, no warnings
+- standard-pack remains audit and reports seven missing HOME-pack adoptions;
+  no unsupported S3/S4 enforcement was claimed
+- broader Docker audit: external contexts are commit-pinned, but nested and
+  upstream Dockerfiles/dependency installers need a separate hardening ticket
+- lifecycle: IN_PROGRESS / VALIDATION

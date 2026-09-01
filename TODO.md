@@ -2,8 +2,8 @@
 
 - [ ] [`ticket-028`](project/ticket-028/README.md) — adopt immutable
   `new-project` 0.19.19 and its resumable, conflict-safe delivery contracts.
-  State: `IN_PROGRESS / EDIT`; ticket 027 is terminal and the user authorized
-  implementation and protected deployment in the active session.
+  State: `IN_PROGRESS / VALIDATION`; adoption commit `ec0a0663` is streamed to
+  Draft PR #62 and protected final publication is pending.
 - [x] [`ticket-027`](project/ticket-027/README.md) — expose work-commit desktop
   notifications and LLM provenance with registry-driven profile ordering.
   State: `DONE / DONE`; exact head `ea0afa9c` passed OneDev and protected

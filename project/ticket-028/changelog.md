@@ -15,3 +15,12 @@
   byte-identical staged plan evidence and a recovery stash.
 - Record terminal ticket-027 evidence and the user's explicit session
   authorization to continue, implement and deploy; enter `IN_PROGRESS / EDIT`.
+- Adopt the complete managed new-project 0.19.19 payload atomically with the
+  approved intent and stream it to Draft PR #62.
+- Add target-owned package, host-hook and immutable root Docker/Compose
+  bindings; preserve the standard-pack seed in truthful audit mode.
+- Activate ruleset 22026679 and clean verified merged ticket-027 refs/worktrees.
+- Remove the duplicate Koru audit clone through recoverable trash after saving
+  its dirty state, then pass the focused overlap and continuity checks.
+- Enter `IN_PROGRESS / VALIDATION` with Goal, governance, host, CI-equivalent
+  Python and Docker checks passing.

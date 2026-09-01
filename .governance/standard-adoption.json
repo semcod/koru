@@ -2,6 +2,6 @@
   "schema": "wellmanifest.standard-adoption/v1",
   "mode": "audit",
   "profile": "baseline",
-  "repositoryRole": "unclassified",
+  "repositoryRole": "standalone-application",
   "adoptions": []
 }

@@ -3,7 +3,7 @@
 - **ID**: ticket-028
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: VALIDATION
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -20,6 +20,11 @@ add `packages/**` application ownership required by issue #37 and make
 `.gitignore` an explicit governance path so the four managed host files can be
 tracked. Required package metadata, agent-host hooks and immutable Docker
 configuration are part of the same reviewed atomic adoption.
+
+The role-based standard-pack seed remains in `audit` until every HOME pack has
+its own immutable projection provenance and protected S3/S4 receipt. The audit
+therefore reports seven explicit missing pack adoptions instead of converting
+workflow URLs or empty artifact lists into unsupported enforcement claims.
 
 Future delivery uses one canonical worktree under
 `<workspace>/.worktrees/<repo>--ticket-NNN--<slug>`, never a system temporary
@@ -45,19 +50,19 @@ stashes are outside this ticket's write scope.
 
 - [x] AC-01: The active user explicitly requested continuation, implementation
   and deployment of this scope on 2026-09-01.
-- [ ] AC-02: Goal adopts published `new-project` 0.19.19 at exact SHA
+- [x] AC-02: Goal adopts published `new-project` 0.19.19 at exact SHA
   `43999c793a86084b4c3198fe07be350105db59ec`; its post-write check reports
   up-to-date and the managed lock matches every managed target.
-- [ ] AC-03: The approved intent migrates to intent/v3 with the atomic standard
+- [x] AC-03: The approved intent migrates to intent/v3 with the atomic standard
   adoption binding before Goal changes implementation paths; no managed payload
   is hidden as an ordinary local rewrite.
-- [ ] AC-04: The target manifest assigns `packages/**` to application, allows
+- [x] AC-04: The target manifest assigns `packages/**` to application, allows
   up to four disjoint tickets per workstream and preserves Koru's explicit
   Python/Docker requirements.
-- [ ] AC-05: Canonical worktree planning, overlap guard, remote-aware ticket
+- [x] AC-05: Canonical worktree planning, overlap guard, remote-aware ticket
   allocation and work-continuity capture/verify pass; `/tmp`, ad-hoc parallel
   roots and duplicate clones are rejected for publishable ticket work.
-- [ ] AC-06: Package metadata, host hook activation and Docker image contracts
+- [x] AC-06: Package metadata, host hook activation and Docker image contracts
   satisfy all new deterministic governance checks without disabling a stack or
   suppressing a finding.
 - [ ] AC-07: An active GitHub `main` ruleset blocks a direct human push and
@@ -67,9 +72,11 @@ stashes are outside this ticket's write scope.
   receives intermediate commits, one final refreshed HEAD is frozen, no
   self-binding closure commit is created, and protected publication completes
   within the five-minute Validator SLO.
-- [ ] AC-09: Governance, standard-pack, worktree, branch-lifecycle, Python and
-  Docker/Compose checks pass; issue #41 closes only after protected merge and
-  issue #37 becomes unblocked without being implemented here.
+- [ ] AC-09: Governance, worktree, branch-lifecycle, Python and Docker/Compose
+  checks pass; the standard-pack audit records its seven unproven HOME-pack
+  requirements without false enforcement; issue #41 closes only after
+  protected merge and issue #37 becomes unblocked without being implemented
+  here.
 
 ## Non-goals
 
@@ -79,6 +86,11 @@ stashes are outside this ticket's write scope.
 - Add a second merge daemon or bypass `subactor/validator-agent`.
 - Enable GitHub merge queue before it binds the validator's reviewed subject.
 - Use `/tmp` for any linked worktree or durable work checkpoint.
+- Claim S3/S4 conformance for a HOME pack without its own protected receipt and
+  projection provenance.
+- Harden nested or externally fetched Docker build dependencies; the bounded
+  root Docker/Compose contract is enforced here and deeper supply-chain
+  hardening remains a separate ticket.
 
 ## Publication plan
 
