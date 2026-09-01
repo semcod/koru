@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-039",
+  "summary": "Assign nested Docker build paths to infrastructure",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-039/**",
+    "project/TICKETS.md",
+    ".governance/manifest.json"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "71e186dc0630df6d9e11f8e06dcfa7e7dcb9ed1b",
+    "targetBranch": "main",
+    "outcome": "Nested Docker build declarations consumed by Koru have narrow, explicit workstream ownership before their supply-chain inputs are changed.",
+    "nonGoals": [
+      "Modify Dockerfiles, Compose services or application tests",
+      "Change dependency manifests or runtime behavior",
+      "Change ownership of existing application, integration, governance or interface paths",
+      "Close issue #64 before the owned implementation tickets merge"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Complete coordination classification for previously unowned Docker build declarations without moving any runtime component or existing workstream responsibility; leave tests/docker under application ownership.",
+      "components": [
+        {
+          "name": "workstream-ownership",
+          "paths": [".governance/manifest.json"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected ticket merge; no Docker runtime declaration changes in this ticket."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh",
+          "python3 .governance/worktree_overlap_check.py --help"
+        ],
+        "evidence": "managed ownership and overlap checks"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "docker compose --profile '*' config --quiet",
+          "docker build --check .",
+          "git diff --check"
+        ],
+        "evidence": "Docker and repository gates"
+      }
+    ]
+  }
+}
