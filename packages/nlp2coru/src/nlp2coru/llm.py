@@ -23,7 +23,7 @@ def _parse_llm_json(text: str) -> dict:
 def llm_plan(
     text: str,
     *,
-    model: str = "openrouter/qwen/qwen3-coder-next",
+    model: str | None = None,
     backend: LLMBackend | None = None,
 ) -> CoruPlan:
     try:
@@ -40,7 +40,7 @@ def llm_plan(
     )
     try:
         content = llm.complete(
-            model=model,
+            model=model or "",
             messages=[
                 {"role": "system", "content": "You map user intent to CORU control actions."},
                 {"role": "user", "content": prompt},

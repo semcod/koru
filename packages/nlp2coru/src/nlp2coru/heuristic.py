@@ -6,12 +6,22 @@ import re
 
 from .models import CoruIntent, CoruPlan
 
-
 _REFACTOR_MARKERS = (
     "refactor",
     "refaktoryz",
     "refakotryz",
 )
+_SETUP_ACTIONS = {
+    "auto",
+    "calibration",
+    "chat",
+    "doctor",
+    "ensure",
+    "lane",
+    "manage",
+    "status",
+    "sync",
+}
 
 
 def _refactor_intent(text: str) -> bool:
@@ -82,7 +92,12 @@ def heuristic_plan(text: str) -> CoruPlan:
     return _heuristic_intent(action=action, ide=ide, instance=instance, install=install)
 
 
-def to_dsl_lines(text: str, *, use_llm: bool = False, llm_model: str = "openrouter/qwen/qwen3-coder-next") -> list[str]:
+def to_dsl_lines(
+    text: str,
+    *,
+    use_llm: bool = False,
+    llm_model: str | None = None,
+) -> list[str]:
     from .llm import llm_plan
 
     if use_llm:
@@ -126,14 +141,10 @@ def to_dsl_lines(text: str, *, use_llm: bool = False, llm_model: str = "openrout
 
     first_text = text.strip()
     wants_setup = _refactor_intent(text) or detect_setup_intent(text)
-    if first.action in {"auto", "ensure", "lane", "status", "doctor", "calibration", "sync", "chat", "manage"} and wants_setup:
-        tokens.extend([
-            "ENSURE --install",
-            "LANE" + (f" --ide {first.ide}" if first.ide else "") + (f" --instance {first.instance}" if first.instance else ""),
-            "DOCTOR",
-            "DIAGNOSE",
-            "AUTO",
-        ])
+    if first.action in _SETUP_ACTIONS and wants_setup:
+        lane = "LANE" + (f" --ide {first.ide}" if first.ide else "")
+        lane += f" --instance {first.instance}" if first.instance else ""
+        tokens.extend(["ENSURE --install", lane, "DOCTOR", "DIAGNOSE", "AUTO"])
         if first.action == "auto":
             return tokens
 

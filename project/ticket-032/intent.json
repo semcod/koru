@@ -1,0 +1,98 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-032",
+  "summary": "Route NLP adapters through central SubLLM policy",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-032/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/nlp2koru/src/nlp2koru/__init__.py",
+    "packages/nlp2koru/src/nlp2koru/llm_backend.py",
+    "packages/nlp2koru/src/nlp2koru/openrouter_config.py",
+    "packages/nlp2koru/src/nlp2koru/to_dsl.py",
+    "packages/nlp2koru/tests/test_nlp2koru.py",
+    "packages/nlp2coru/src/nlp2coru/__init__.py",
+    "packages/nlp2coru/src/nlp2coru/apply.py",
+    "packages/nlp2coru/src/nlp2coru/cli.py",
+    "packages/nlp2coru/src/nlp2coru/heuristic.py",
+    "packages/nlp2coru/src/nlp2coru/llm.py",
+    "packages/nlp2coru/src/nlp2coru/llm_backend.py",
+    "packages/nlp2coru/src/nlp2coru/openrouter_config.py",
+    "packages/nlp2coru/src/nlp2coru/rewrite.py",
+    "packages/nlp2coru/src/nlp2coru/to_dsl.py",
+    "packages/nlp2coru/tests/test_nlp2coru.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-028"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8786b6ff08aeb21b3691fbaea4d24d62212206f5",
+    "targetBranch": "main",
+    "outcome": "The nlp2koru and nlp2coru adapters delegate model and provider selection to their registered central SubLLM routes while retaining injected backends and bounded offline behavior.",
+    "nonGoals": [
+      "Change SubLLM provider ordering or credentials",
+      "Remove the model compatibility parameters in this release",
+      "Update standalone package dependency metadata or README files",
+      "Change deterministic DSL validation or dispatch semantics",
+      "Modify repositories outside semcod/koru"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 120,
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use korullm.run_subllm_messages as the only default remote completion boundary and keep each adapter's existing LLMBackend protocol for deterministic injection.",
+      "components": [
+        {
+          "name": "nlp2koru-adapter",
+          "paths": ["packages/nlp2koru/**"]
+        },
+        {
+          "name": "nlp2coru-adapter",
+          "paths": ["packages/nlp2coru/**"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Existing model arguments remain accepted but no longer select a provider or model"
+      ],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected ticket merge; no persisted state or remote policy is changed."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=packages/nlp2koru/src:packages/nlp2coru/src:packages/dsl2coru/src:packages/uri2coru/src python -m pytest -q packages/nlp2koru/tests packages/nlp2coru/tests"
+        ],
+        "evidence": "focused pytest output and protected checks"
+      },
+      {
+        "criterion": "AC-06",
+        "commands": [
+          "python -m ruff check packages/nlp2koru/src/nlp2koru/__init__.py packages/nlp2koru/src/nlp2koru/llm_backend.py packages/nlp2koru/src/nlp2koru/to_dsl.py packages/nlp2koru/tests/test_nlp2koru.py packages/nlp2coru/src/nlp2coru/__init__.py packages/nlp2coru/src/nlp2coru/apply.py packages/nlp2coru/src/nlp2coru/cli.py packages/nlp2coru/src/nlp2coru/heuristic.py packages/nlp2coru/src/nlp2coru/llm.py packages/nlp2coru/src/nlp2coru/llm_backend.py packages/nlp2coru/src/nlp2coru/rewrite.py packages/nlp2coru/src/nlp2coru/to_dsl.py packages/nlp2coru/tests/test_nlp2coru.py",
+          "rg -n 'litellm|openrouter|ollama|CORU_LLM_MODEL' packages/nlp2koru/src packages/nlp2coru/src",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "local deterministic gate output and protected checks"
+      }
+    ]
+  }
+}
