@@ -42,6 +42,7 @@ plan, grant authority, contact a registry, or add a runtime dependency.
   for `ticket-023` and merged PR #47 as `d79665ef`.
 - The optional advisory LLM review exceeded its chunk budget; deterministic
   checks remained the sole approval authority and passed.
+- Governance-only lifecycle closure is published as PR #50.
 
 ## Participants
 

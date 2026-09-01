@@ -20,3 +20,4 @@
 - Record current-base OneDev success and protected exact-head validation for
   PR #47.
 - Close ticket-023 after protected merge commit `d79665ef`.
+- Bind the governance-only closure to PR #50.

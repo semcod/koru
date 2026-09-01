@@ -90,3 +90,5 @@ Validation evidence follows.
   deterministic validation remained authoritative
 - PR #47 merged at 2026-09-01T11:29:47Z as
   d79665ef2cb29a0221204ed12eb8220dbbe81f4f
+- closure PR #50 opened; initial closure head 699e2e8d is superseded by this
+  PR-binding evidence before exact-head verification
