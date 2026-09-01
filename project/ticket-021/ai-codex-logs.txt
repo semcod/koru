@@ -15,6 +15,18 @@
 - PR #46 opened from ticket/021-ci-selfcheck at 4fc4eb39
 - this documentation-only follow-up binds the PR number before exact-head
   OneDev and protected validator publication; prior-head checks are superseded
+- final PR #46 head: d12f7884493a62ed92a1475782d73240aed6ee98
+- GitHub smoke run 33498314401: SUCCESS at exact head
+- onedev/local-verify: SUCCESS at exact head; 1 local test gate passed against
+  base e94f3aa7
+- Koru publication status: published; frozen_head=d12f7884; exit_code=0
+- protected validator run 33498969168: SUCCESS in 1m58s
+- protected review 5077039641: APPROVED and bound repository semcod/koru,
+  PR #46, ticket-021, exact head d12f7884 and validator-agent bot actor
+- PR #46 merged at 2026-09-01T10:46:34Z as
+  fac3639e10e647f871ddd386890e4c020702993f
+- governance-only closure PR #48 opened; this follow-up binds its PR number and
+  supersedes closure head b2ee8567 before exact-head checks
 - no implementation files changed during PLAN
 
 2026-09-01 EDIT authorization
