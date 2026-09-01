@@ -8,16 +8,28 @@ ticket: ticket-027
 
 ## Understanding
 
-To be completed after reading human-owned input and the ticket preprompt.
+The requested first delivery slice adds operator-visible LLM provenance and
+desktop commit notifications while keeping profile selection data-driven.
+Publication must bind the exact reviewed head and may not rely on an
+unprotected direct push.
 
 ## Execution plan
 
 1. Validate the ticket scope and acceptance evidence before implementation.
+2. Add provenance and notification tests plus registry-driven profile order.
+3. Run governance, focused stack checks, the full Python suite and Docker
+   checks.
+4. Publish the repair head through OneDev and validator-agent.
 
 ## Actual changes
 
-- None; waiting for approval.
+- Added desktop notification support for Planfile/work commits.
+- Added resolved LLM provenance to `koru work next` and execution-plan signals.
+- Moved profile ordering and fallback selection into `task_profiles.yaml`.
+- Made notification success reflect the actual `notify-send` exit code.
+- Isolated provenance tests from inherited planning-model environment state.
 
 ## Blockers
 
-- Human approval is required before implementation.
+- The initial implementation was pushed directly to unprotected `main`; an
+  exact-head validation-repair publication is required before closure.

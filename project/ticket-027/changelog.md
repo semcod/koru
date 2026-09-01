@@ -4,3 +4,8 @@
 
 - Initial governance scaffold created.
 - No human participant identity or content was generated.
+- Added registry-driven work-plan profile resolution and LLM provenance.
+- Added optional desktop notifications after Koru-managed commits.
+- Added deterministic notification and provenance test coverage.
+- Kept protected validator publication open after detecting a direct merge to
+  unprotected `main`.

@@ -13,6 +13,7 @@
     "src/koru/autonomy/task_profiles.yaml",
     "tests/test_llm_provenance.py",
     "tests/test_desktop_notify.py",
+    "tests/test_execution_plan.py",
     "tests/test_work_lifecycle.py",
     "TODO.md",
     "project/TICKETS.md"
@@ -21,5 +22,83 @@
   "stacks": [],
   "dependsOn": [],
   "conflictsWith": [],
-  "integrationTicket": null
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "703dc7a2aa452adc7b4d336e8fc800ef6e2a8ae7",
+    "targetBranch": "main",
+    "outcome": "Desktop notification results and LLM provenance tests are deterministic, registry ordering is covered, and the correction is published through exact-head OneDev and Validator evidence.",
+    "nonGoals": [
+      "Implement lease, SLA or Living Status synchronization",
+      "Implement the pyqual self-healing loop",
+      "Implement Subactor Chat /tickets or /watch",
+      "Repair unrelated full-suite failures",
+      "Add or change runtime dependencies"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep notification delivery optional and best-effort, report success only for a successful notify-send process, and test profile/provenance resolution without changing public CLI grammar.",
+      "components": [
+        {
+          "name": "work-observability",
+          "paths": [
+            "src/koru/notifications/desktop.py",
+            "tests/test_desktop_notify.py",
+            "tests/test_execution_plan.py",
+            "tests/test_llm_provenance.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "multi-state",
+        "states": ["empty", "success", "error"],
+        "evidence": ["tests/test_desktop_notify.py"]
+      },
+      "rollback": "Revert the validation-repair commit; the already delivered provenance and notification foundation remains on main."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_desktop_notify.py tests/test_work_lifecycle.py"
+        ],
+        "evidence": "project/ticket-027/ai-cursor-auto-logs.txt"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_llm_provenance.py"
+        ],
+        "evidence": "project/ticket-027/ai-cursor-auto-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_execution_plan.py"
+        ],
+        "evidence": "project/ticket-027/ai-cursor-auto-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python -m ruff check src/koru/notifications/desktop.py tests/test_desktop_notify.py tests/test_execution_plan.py tests/test_llm_provenance.py",
+          "./project/governance-check.sh",
+          "git diff --check",
+          "docker compose config --quiet"
+        ],
+        "evidence": "project/ticket-027/ai-cursor-auto-logs.txt"
+      }
+    ]
+  }
 }
