@@ -1,10 +1,10 @@
 # Governance roadmap
 
-- [ ] [`ticket-023`](project/ticket-023/README.md) — standardize POA planning
+- [x] [`ticket-023`](project/ticket-023/README.md) — standardize POA planning
   and Wellmanifest Logs using hash-pinned Subactor Config evidence for dynamic
   Registry/Strategy resolution and a separately bound Policy decision. State:
-  `IN_PROGRESS / PUBLICATION`; implementation and focused validation are
-  complete, correctly reallocated after the concurrent ticket-022 collision.
+  `DONE / DONE`; exact head `c5a51b47` passed OneDev and protected validation
+  before PR #47 merged as `d79665ef`.
 - [x] [`ticket-013`](project/ticket-013/README.md) — reconcile merged tickets
   and park incomplete concurrent work without changing runtime code. State:
   `DONE / DONE`; PR #44 merged exact protected head `b9aa5190`.

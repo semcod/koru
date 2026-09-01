@@ -2,8 +2,8 @@
 
 - **ID**: ticket-023
 - **Owner**: agent:codex under SESSION_EXECUTION_AUTHORIZATION
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -33,6 +33,15 @@ plan, grant authority, contact a registry, or add a runtime dependency.
 - [x] AC-06: Focused tests, type/lint checks, governance, diff and Docker
   configuration checks pass; unrelated repository-wide baseline failures are
   recorded without expanding this ticket.
+
+## Delivery
+
+- PR #47 final head: `c5a51b470ce5f8e05361dcd5c5a730ae53337135`.
+- `onedev/local-verify` passed against current base `dbe43a7a`.
+- Protected validator run `33502635123` created exact-head review `5077433713`
+  for `ticket-023` and merged PR #47 as `d79665ef`.
+- The optional advisory LLM review exceeded its chunk budget; deterministic
+  checks remained the sole approval authority and passed.
 
 ## Participants
 
