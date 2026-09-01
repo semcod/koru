@@ -25,6 +25,7 @@ dependency. The cleanup request authorizes this narrow integration change.
   `main`; all four current Koru modules importing `korullm` pass Ruff locally.
 - Later lint findings in `execution_plan.py` and `cli_work.py` are unrelated
   additions outside this ticket's one-file integration scope.
+- Governance-only lifecycle closure is published as PR #49.
 
 ## Participants
 

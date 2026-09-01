@@ -10,3 +10,5 @@
 - scoped Ruff over all four current `korullm` import consumers: pass
 - repository source Ruff has two later, unrelated application findings in
   execution_plan.py and cli_work.py; neither is an import-classification drift
+- closure PR #49 opened; initial head 129f80f8 is superseded by this PR-binding
+  evidence before exact-head verification

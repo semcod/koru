@@ -15,3 +15,4 @@
 - Reconcile the stale lifecycle state with protected PR #35 delivery evidence.
 - Close ticket-016 after confirming the classification and its current
   consumers remain valid on `main`.
+- Bind the governance-only closure to PR #49.
