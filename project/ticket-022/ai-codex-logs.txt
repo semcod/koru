@@ -19,6 +19,9 @@ Narrowed estimatedMinutes to 10; the two-file implementation budget and allowed 
 `docker compose config --quiet` -> exit 0.
 `governance-check.sh` after XS estimate correction -> GOV-PASS (0 errors, 0 warnings).
 Transitioned workflow state to IN_PROGRESS / VALIDATION.
+2026-09-01T14:23:05+02:00
+Opened https://github.com/semcod/koru/pull/51 from ticket/022-decide-smoke.
+Transitioned workflow state to IN_PROGRESS / PUBLICATION; protected exact-head review and merge remain pending.
 Full `pytest -q` -> 8 failed, 3637 passed, 15 skipped, 164 deselected, 946 subtests passed in 498.19s.
 Seven failures match the pre-existing backlog: three stale src/korullm inventory references, IDE auto-instance socket selection, two pyproject metadata expectations, and the volume-map header parser.
 The eighth failure is directly related to delivered decide routing: tests/test_cli.py::TestSubcommandDispatch::test_table_contains_all_documented_subcommands.

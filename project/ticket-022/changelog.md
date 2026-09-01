@@ -47,3 +47,4 @@
   behavior boundaries.
 - Reconcile the static CLI dispatch expectation with the delivered `decide`
   command and validate that only the seven independent baseline failures remain.
+- Open PR #51 and transition to protected exact-head publication.

@@ -36,6 +36,8 @@ semantics.
   with 11 tests and 48 subtests.
 - A targeted residual run confirms the seven independent baseline failures are
   unchanged and the eighth work/decide regression is gone.
+- Opened PR #51 and entered PUBLICATION pending exact-head checks and protected
+  validator review.
 
 ## Blockers
 

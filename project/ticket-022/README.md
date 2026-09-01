@@ -3,7 +3,7 @@
 - **ID**: ticket-022
 - **Owner**: agent:codex
 - **Status**: IN_PROGRESS
-- **Workflow state**: VALIDATION
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -49,3 +49,9 @@ test failures require separate scopes.
   no user-* file was created.
 - Agent participant: [ai-codex.md](ai-codex.md)
 - Agent participant: [ai-cursor.md](ai-cursor.md)
+
+## Publication
+
+- Pull request: [#51](https://github.com/semcod/koru/pull/51)
+- Required boundary: successful exact-head checks followed by protected
+  validator review and explicit merge.

@@ -22,8 +22,8 @@
   OneDev and protected exact-head validation before merge `fac3639e`.
 - [ ] [`ticket-022`](project/ticket-022/README.md) — stabilize the delivered
   `koru work/decide` integration by repairing its two source Ruff findings.
-  State: `IN_PROGRESS / VALIDATION`; source smoke and the amended `decide`
-  dispatch regression are green pending exact-head publication.
+  State: `IN_PROGRESS / PUBLICATION`; source smoke and the amended `decide`
+  dispatch regression are green in PR #51 pending exact-head publication.
 - [x] [`ticket-017`](project/ticket-017/README.md) — make MCP ticket execution
   exact-target and preflight the central SubLLM route before Planfile lifecycle
   mutation. State: `DONE`; classification:
