@@ -155,7 +155,7 @@ class TestIdeWork(unittest.TestCase):
             self.assertEqual(prompt, "continue with the next ticket")
             self.assertFalse((project / ".planfile" / "sprints" / "current.yaml").exists())
 
-    def test_release_stale_in_progress_reopens_old_ticket(self) -> None:
+    def test_release_stale_in_progress_triages_old_ticket(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             old = "2020-01-01T00:00:00+00:00"
@@ -185,7 +185,7 @@ class TestIdeWork(unittest.TestCase):
             self.assertEqual(count, 1)
             self.assertTrue(
                 any(
-                    c[:4] == ["planfile", "ticket", "update", "PLF-7"] and "open" in c
+                    c[1:4] == ["ticket", "block", "PLF-7"]
                     for c in updates
                 ),
             )

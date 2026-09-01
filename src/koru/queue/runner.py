@@ -12,7 +12,8 @@ from typing import Any
 from koru.queue.context import build_project_context
 from koru.queue.evidence import completion_gap
 from koru.queue.human import default_human_prompt
-from koru.queue.locking import queue_runner_lock, ticket_claim_or_error
+from koru.queue.living_status import lease_expiry_text, update_living_status
+from koru.queue.locking import claim_lease_seconds_str, queue_runner_lock, ticket_claim_or_error
 from koru.queue.patch_mode import (
     PROMOTION_ARTIFACT,
     PROMOTION_BRANCH,
@@ -98,9 +99,25 @@ def _handle_human_ticket(
         ["ticket", "start", ticket_id],
         runner=planfile_runner,
     )
+    update_living_status(
+        project,
+        ticket,
+        state="in_progress",
+        actor=actor,
+        lease_expires_at=lease_expiry_text(lease_seconds=int(claim_lease_seconds_str())),
+        runner=planfile_runner,
+    )
     planfile_lifecycle_command(
         project,
         ["ticket", "done", ticket_id],
+        runner=planfile_runner,
+    )
+    update_living_status(
+        project,
+        ticket,
+        state="done",
+        actor=actor,
+        lease_expires_at=None,
         runner=planfile_runner,
     )
     return QueueRunResult(
@@ -145,6 +162,7 @@ def _handle_dry_run(
 
 def _claim_and_start(
     project: Path,
+    ticket: dict[str, Any],
     ticket_id: str,
     actor: str,
     planfile_runner: Callable[[list[str], Path], CommandResult],
@@ -155,6 +173,14 @@ def _claim_and_start(
     planfile_lifecycle_command(
         project,
         ["ticket", "start", ticket_id],
+        runner=planfile_runner,
+    )
+    update_living_status(
+        project,
+        ticket,
+        state="in_progress",
+        actor=actor,
+        lease_expires_at=lease_expiry_text(lease_seconds=int(claim_lease_seconds_str())),
         runner=planfile_runner,
     )
     return None
@@ -415,6 +441,7 @@ def _finalize_ticket(
     executor_kind: str,
     result: CommandResult,
     action_label: str,
+    actor: str,
     planfile_runner: Callable[[list[str], Path], CommandResult],
     verification_error: str | None = None,
 ) -> QueueRunResult:
@@ -453,10 +480,27 @@ def _finalize_ticket(
             runner=planfile_runner,
         )
         status = "completed"
+        update_living_status(
+            project,
+            ticket,
+            state="done",
+            actor=actor,
+            lease_expires_at=None,
+            runner=planfile_runner,
+        )
     else:
         reason = result.stderr[-500:].strip() or f"Command exited with {result.returncode}"
         _record_failed_attempt(project, ticket, ticket_id, reason, planfile_runner)
         status = "failed"
+        update_living_status(
+            project,
+            ticket,
+            state="failed",
+            actor=actor,
+            lease_expires_at=None,
+            message=reason,
+            runner=planfile_runner,
+        )
 
     return QueueRunResult(
         status=status,
@@ -753,7 +797,7 @@ def _run_next_planfile_task_impl(
                     stderr=message,
                 )
 
-        claimed = _claim_and_start(project, ticket_id, actor, planfile_runner)
+        claimed = _claim_and_start(project, ticket, ticket_id, actor, planfile_runner)
         if claimed:
             return claimed
 
@@ -832,6 +876,7 @@ def _run_next_planfile_task_impl(
             executor_kind,
             result,
             action_label,
+            actor,
             planfile_runner,
             verification_error,
         )

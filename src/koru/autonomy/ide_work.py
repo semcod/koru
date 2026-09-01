@@ -363,36 +363,46 @@ def release_stale_in_progress_tickets(
     stale_minutes: float,
     runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]],
 ) -> int:
-    """Reopen ``in_progress`` tickets older than ``stale_minutes``. Returns count."""
+    """Escalate expired ``in_progress`` tickets to bounded human triage."""
     if stale_minutes <= 0:
         return 0
-    cutoff = datetime.now(UTC) - timedelta(minutes=stale_minutes)
+    now = datetime.now(UTC)
+    cutoff = now - timedelta(minutes=stale_minutes)
     released = 0
     for ticket in _list_in_progress_tickets(project, runner=runner):
         ticket_id = str(ticket.get("id") or "").strip()
         if not ticket_id:
             continue
+        execution = ticket.get("execution") if isinstance(ticket.get("execution"), dict) else {}
+        lease_expires = _parse_iso_datetime(execution.get("lease_expires_at"))
         started = _ticket_in_progress_started_at(ticket)
-        if started is None or started > cutoff:
-            continue
-        note = (
-            f"koru: stale in_progress (>{stale_minutes:.0f}m since "
-            f"{started.isoformat()}) — reopened for queue/IDE"
+        expired = lease_expires <= now if lease_expires is not None else bool(
+            started is not None and started <= cutoff
         )
-        result = runner(
-            [
-                "planfile",
-                "ticket",
-                "update",
-                ticket_id,
-                "--status",
-                "open",
-                "--note",
-                note,
-            ],
+        if not expired:
+            continue
+        observed = lease_expires or started
+        note = f"SLA expired at {observed.isoformat()}; waiting_human_triage sla:urgent"
+        from koru.queue.planfile_sdk import planfile_lifecycle_command
+
+        result = planfile_lifecycle_command(
             project,
+            ["ticket", "block", ticket_id, "--reason", note],
+            runner=runner,
         )
         if result.returncode == 0:
+            from koru.queue.living_status import update_living_status
+
+            update_living_status(
+                project,
+                ticket,
+                state="waiting_human_triage",
+                actor="koru",
+                lease_expires_at=None,
+                urgent=True,
+                message=note,
+                runner=runner,
+            )
             released += 1
     return released
 
@@ -407,16 +417,18 @@ def resolve_in_progress_stale_minutes(project: Path | None = None) -> float | No
         except ValueError:
             return None
     if project is None:
+        return 120.0
+    if not (project / ".planfile").exists():
         return None
     raw = load_koru_project_pipeline(project)
     if not isinstance(raw, dict):
-        return None
+        return 120.0
     queue = raw.get("queue")
     if not isinstance(queue, dict):
-        return None
+        return 120.0
     yaml_val = queue.get("in_progress_stale_minutes")
     if yaml_val is None:
-        return None
+        return 120.0
     try:
         value = float(yaml_val)
     except (TypeError, ValueError):

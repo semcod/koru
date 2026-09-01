@@ -1,0 +1,22 @@
+2026-09-01 baseline
+- accepted base: 8bc9775c76e64289886f09783b7568631ed99873
+- existing queue order: local lock -> Planfile claim -> Planfile start -> execute
+- existing default lease: 3600 seconds
+- existing stale policy: optional cutoff followed by silent reopen
+- Planfile sync is the declared owner of GitHub/OneDev publication credentials
+- lifecycle: IN_PROGRESS / EDIT under session execution authorization
+
+2026-09-01 implementation validation
+- queue lease default: 7200 seconds; env clamp remains 60..604800
+- Living Status transport: one marker-delimited Planfile description block;
+  no GitHub client or credential added to Koru
+- expired ticket policy: blocked + waiting_human_triage + sla:urgent projection
+- focused queue/triage/watch tests: 117 passed
+- OneDev-equivalent tests: 110 passed, 16 deselected
+- scoped Ruff: PASS
+- governance: GOV-PASS, 0 errors / 0 warnings
+- worktree overlap: PASS, 0 findings
+- Docker Compose config and Dockerfile build check: PASS
+- broad autonomous regression: 528 passed, 2 deselected; the hygiene query is
+  skipped for projects without a `.planfile` store
+- lifecycle: IN_PROGRESS / VALIDATION

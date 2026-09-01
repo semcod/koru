@@ -32,6 +32,7 @@ class TestWatch(unittest.TestCase):
                 "execution": {
                     "state": "ready",
                     "assigned_to": "koru-shell",
+                    "lease_expires_at": "2026-09-01T12:00:00Z",
                 },
             },
         }
@@ -41,7 +42,7 @@ class TestWatch(unittest.TestCase):
         self.assertEqual(
             line,
             "ticket.execution.changed | claim | PLF-001 | Bootstrap project | "
-            "state=ready | assigned_to=koru-shell",
+            "state=ready | assigned_to=koru-shell | lease_expires_at=2026-09-01T12:00:00Z",
         )
 
     def test_format_management_event(self) -> None:

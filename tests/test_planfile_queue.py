@@ -473,7 +473,7 @@ class TestPlanfileQueue(unittest.TestCase):
                 "--assigned-to",
                 "koru-test",
                 "--lease-seconds",
-                "3600",
+                "7200",
             ]
             self.assertIn(claim, tail_args)
             self.assertLess(tail_args.index(claim), tail_args.index(["ticket", "start", "PLF-001"]))
@@ -570,7 +570,7 @@ class TestPlanfileQueue(unittest.TestCase):
                     "--assigned-to",
                     "koru-test",
                     "--lease-seconds",
-                    "3600",
+                    "7200",
                 ],
                 tail_args,
             )
@@ -890,7 +890,7 @@ class TestPlanfileQueue(unittest.TestCase):
                 "--assigned-to",
                 "koru-api",
                 "--lease-seconds",
-                "3600",
+                "7200",
             ]
             self.assertIn(claim, tail_args)
             self.assertLess(tail_args.index(claim), tail_args.index(["ticket", "start", "PLF-004"]))
@@ -1166,7 +1166,7 @@ def test_run_next_planfile_task_persists_queue_event(tmp_path: Path) -> None:
                 "--assigned-to",
                 "koru-i",
                 "--lease-seconds",
-                "3600",
+                "7200",
             ]
             self.assertIn(claim, tail_calls)
             self.assertLess(
@@ -1314,7 +1314,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
                 "--assigned-to",
                 "koru-llm",
                 "--lease-seconds",
-                "3600",
+                "7200",
             ]
             self.assertIn(claim, tail)
             self.assertLess(tail.index(claim), tail.index(["ticket", "start", "LLM-001"]))
@@ -1359,6 +1359,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
                 _ticket_args(c)
                 for c in calls
                 if _ticket_args(c)[:3] == ["ticket", "update", "LLM-001"]
+                and _ticket_args(c)[3] in {"--note", "-n"}
             ]
             self.assertTrue(notes, "expected a ticket update --note call with the answer")
             note_text = notes[0][4]
