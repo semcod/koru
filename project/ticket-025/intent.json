@@ -1,0 +1,92 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-025",
+  "summary": "Deduplicate scan tickets across Planfile history",
+  "workstream": "application",
+  "allowedPaths": [
+    "project/ticket-025/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/scan.py",
+    "src/koru/scan_dedupe_policy.py",
+    "tests/test_scan.py",
+    "tests/test_scan_split.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8d5a5a39583f89d4220b262be6d6de65cd03f89f",
+    "targetBranch": "main",
+    "outcome": "Repeated scan application does not recreate identical findings from Planfile history while changed evidence can open a new regression ticket.",
+    "nonGoals": [
+      "Rewrite or delete Planfile history",
+      "Automatically reopen or close a ticket",
+      "Deduplicate unrelated ticket producers",
+      "Change the work start/finish lifecycle owned by ticket-022"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Build a read-only dedupe index from trusted current/history Planfile entries keyed by producer, stable dedupe key and evidence fingerprint; terminal history is authoritative only for an identical fingerprint.",
+      "components": [
+        {
+          "name": "scan-ticket-dedupe",
+          "paths": [
+            "src/koru/scan.py",
+            "src/koru/scan_dedupe_policy.py",
+            "tests/test_scan.py",
+            "tests/test_scan_split.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the dedupe-index change; active-ticket-only behavior returns without altering Planfile data."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["python -m pytest -q tests/test_scan.py tests/test_scan_split.py -k history"],
+        "evidence": "project/ticket-025/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": ["python -m pytest -q tests/test_scan.py tests/test_scan_split.py -k fingerprint"],
+        "evidence": "project/ticket-025/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["python -m pytest -q tests/test_scan.py tests/test_scan_split.py -k changed_evidence"],
+        "evidence": "project/ticket-025/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["python -m pytest -q tests/test_scan.py tests/test_scan_split.py -k malformed_history"],
+        "evidence": "project/ticket-025/ai-codex-logs.txt"
+      },
+      {
+        "criterion": "AC-06",
+        "commands": [
+          "python -m ruff check src/koru/scan.py src/koru/scan_dedupe_policy.py tests/test_scan.py tests/test_scan_split.py",
+          "./project/governance-check.sh",
+          "git diff --check",
+          "docker compose config --quiet"
+        ],
+        "evidence": "project/ticket-025/ai-codex-logs.txt"
+      }
+    ]
+  }
+}

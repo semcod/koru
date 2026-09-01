@@ -722,6 +722,66 @@ class TestRunScan(unittest.TestCase):
             self.assertEqual(payload.get("decision"), "skipped")
             self.assertEqual(payload.get("reason"), "duplicate_reused")
 
+    def test_apply_skips_identical_evidence_from_terminal_history(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            history = project / ".planfile" / "sprints" / "history-one.yaml"
+            history.parent.mkdir(parents=True)
+            history.write_text(
+                """\
+sprint:
+  id: history-one
+  tickets:
+    - name: Historical finding
+      status: done
+      source:
+        tool: koru-scan
+        context:
+          signal: code2llm_god
+          dedupe_key: semcod:code2llm:refactor:src/app.py
+          evidence:
+            schema: koru.ticket_evidence.v1
+            kind: code2llm_analysis
+            artifact:
+              path: project/analysis.toon.yaml
+              sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+""",
+                encoding="utf-8",
+            )
+            suggestions = [
+                Suggestion(
+                    signal="code2llm_god",
+                    title="Renamed historical finding",
+                    description="unchanged evidence",
+                    files=["src/app.py"],
+                    source_context={
+                        "dedupe_key": "semcod:code2llm:refactor:src/app.py",
+                        "evidence": {
+                            "schema": "koru.ticket_evidence.v1",
+                            "kind": "code2llm_analysis",
+                            "artifact": {
+                                "path": "project/analysis.toon.yaml",
+                                "sha256": "a" * 64,
+                            },
+                        },
+                    },
+                ),
+            ]
+
+            with mock.patch("koru.scan.collect_suggestions", return_value=suggestions):
+                with mock.patch("koru.scan._create_ticket") as create_ticket:
+                    result = run_scan(
+                        project,
+                        apply=True,
+                        skip_pytest=True,
+                        include_semcod_artifacts=False,
+                    )
+
+            create_ticket.assert_not_called()
+            self.assertEqual(result.applied, [])
+            self.assertEqual(result.skipped, ["Renamed historical finding"])
+            self.assertEqual(result.skipped_as_duplicate, ["Renamed historical finding"])
+
     def test_apply_creates_human_executor_tickets_without_custom_runner(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
