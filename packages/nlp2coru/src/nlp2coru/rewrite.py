@@ -10,7 +10,7 @@ def rewrite_chat_prompt(
     *,
     ide: str,
     instance: str,
-    model: str = "openrouter/qwen/qwen3-coder-next",
+    model: str | None = None,
     backend: LLMBackend | None = None,
 ) -> str:
     try:
@@ -25,7 +25,7 @@ def rewrite_chat_prompt(
     payload = f"ide={ide} instance={instance}\nmessage={text}"
     try:
         rewritten = llm.complete(
-            model=model,
+            model=model or "",
             messages=[
                 {"role": "system", "content": instruction},
                 {"role": "user", "content": payload},

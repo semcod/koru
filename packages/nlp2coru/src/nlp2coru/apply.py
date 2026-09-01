@@ -19,7 +19,7 @@ def apply_prompt(
     text: str,
     *,
     use_llm: bool = False,
-    llm_model: str = "openrouter/qwen/qwen3-coder-next",
+    llm_model: str | None = None,
     default_file: str | None = None,
     single_action: bool = False,
 ) -> ApplyResult:

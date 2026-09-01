@@ -1,21 +1,12 @@
-"""LLM backend for nlp2koru NL → DSL translation.
-
-Isolates litellm dependency behind an injectable LLMBackend Protocol
-(mirrors nlp2coru.llm_backend for consistency across the monorepo).
-"""
+"""Policy-routed LLM backend for nlp2koru NL → DSL translation."""
 
 from __future__ import annotations
 
 import json
-import os
+from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
-from .openrouter_config import (
-    get_openrouter_headers,
-    get_fallback_model,
-    get_ollama_base_url,
-    should_use_ollama_fallback,
-)
+_ROUTE_FUNCTION = "nl-to-koru-dsl"
 
 
 @runtime_checkable
@@ -34,8 +25,11 @@ class LLMBackend(Protocol):
         ...
 
 
-class LitellmBackend:
-    """Default backend: thin wrapper around litellm.completion."""
+class SubLlmBackend:
+    """Default backend resolved by the central SubLLM policy."""
+
+    def __init__(self, project: str | Path | None = None) -> None:
+        self._project = Path(project or ".").resolve()
 
     def complete(
         self,
@@ -45,53 +39,29 @@ class LitellmBackend:
         temperature: float = 0.2,
         response_format: dict[str, Any] | None = None,
     ) -> str:
-        import litellm  # type: ignore
+        from korullm import run_subllm_messages
 
-        kwargs: dict[str, Any] = {
-            "model": model,
-            "messages": messages,
-            "temperature": temperature,
-        }
-        if response_format is not None:
-            kwargs["response_format"] = response_format
-        
-        # Add OpenRouter headers for app identification
-        headers = get_openrouter_headers()
-        if headers:
-            kwargs["headers"] = headers
-        
-        # Try OpenRouter first, fallback to Ollama if configured
-        try:
-            response = litellm.completion(**kwargs)
-            return (response.choices[0].message.content or "").strip()
-        except Exception:
-            # Check if we should use Ollama fallback
-            if should_use_ollama_fallback() and model.startswith("openrouter/"):
-                # Convert to Ollama model format
-                ollama_model = get_fallback_model()
-                ollama_base_url = get_ollama_base_url()
-                
-                kwargs["model"] = ollama_model
-                kwargs["api_base"] = ollama_base_url
-                # Remove OpenRouter headers for Ollama
-                kwargs.pop("headers", None)
-                
-                try:
-                    response = litellm.completion(**kwargs)
-                    return (response.choices[0].message.content or "").strip()
-                except Exception:
-                    # If Ollama also fails, re-raise the original error
-                    pass
-            
-            # Re-raise the original exception
-            raise
+        # Compatibility-only inputs are deliberately not policy selectors.
+        _ = model, temperature, response_format
+        result = run_subllm_messages(
+            messages,
+            self._project,
+            route_function=_ROUTE_FUNCTION,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr or "central SubLLM route failed")
+        return result.stdout.strip()
 
 
-def get_backend(backend: LLMBackend | None = None) -> LLMBackend:
-    """Return the provided backend or a LitellmBackend instance."""
+def get_backend(
+    backend: LLMBackend | None = None,
+    *,
+    project: str | Path | None = None,
+) -> LLMBackend:
+    """Return the injected backend or the central policy backend."""
     if backend is not None:
         return backend
-    return LitellmBackend()
+    return SubLlmBackend(project)
 
 
 def nl_to_dsl_line(
@@ -105,8 +75,7 @@ def nl_to_dsl_line(
 
     Returns the DSL string or None if conversion fails.
     """
-    resolved_model = model or os.getenv("CORU_LLM_MODEL", "openrouter/qwen/qwen3-coder-next")
-    llm = get_backend(backend)
+    llm = get_backend(backend, project=project)
     system = (
         "Convert user request to ONE dsl2koru command line. "
         "Allowed verbs: QUERY_REPAIR_HISTORY, QUERY_LANE_STATUS, VALIDATE_LANE, REPAIR_RUN, RESOLVE. "
@@ -114,7 +83,7 @@ def nl_to_dsl_line(
     )
     try:
         content = llm.complete(
-            model=resolved_model,
+            model=model or "",
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": json.dumps({"prompt": prompt, "project": project or "."})},

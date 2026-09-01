@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
 from uri2koru.nlp2uri import best_uri
@@ -17,7 +16,7 @@ def to_dsl(
     use_llm: bool = False,
     llm_backend: LLMBackend | None = None,
 ) -> str:
-    if use_llm or os.getenv("OPENROUTER_API_KEY"):
+    if use_llm:
         llm_line = nl_to_dsl_line(prompt, project=project, backend=llm_backend)
         if llm_line:
             return llm_line

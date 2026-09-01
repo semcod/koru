@@ -1,9 +1,9 @@
 """nlp2coru — natural-language to CORU DSL bridge."""
 
 from .apply import ApplyResult, apply_prompt
-from .heuristic import _refactor_intent, heuristic_plan, detect_setup_intent, to_dsl_lines
+from .heuristic import _refactor_intent, detect_setup_intent, heuristic_plan, to_dsl_lines
 from .llm import llm_plan
-from .llm_backend import LLMBackend, LitellmBackend, get_backend
+from .llm_backend import LLMBackend, SubLlmBackend, get_backend
 from .models import CoruIntent, CoruPlan
 from .rewrite import rewrite_chat_prompt
 
@@ -13,7 +13,7 @@ __all__ = [
     "CoruIntent",
     "CoruPlan",
     "LLMBackend",
-    "LitellmBackend",
+    "SubLlmBackend",
     "get_backend",
     "llm_plan",
     "_refactor_intent",

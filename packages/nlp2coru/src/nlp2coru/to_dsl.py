@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import os
-from typing import Any
-
 from uri2coru.nlp2uri import best_uri
 
 from nlp2coru.heuristic import to_dsl_lines
@@ -16,10 +13,10 @@ def to_dsl(
     project: str | None = None,
     default_file: str | None = None,
     use_llm: bool = False,
-    llm_model: str = "openrouter/qwen/qwen3-coder-next",
+    llm_model: str | None = None,
 ) -> str:
     ctx = default_file or project
-    if use_llm or os.getenv("OPENROUTER_API_KEY"):
+    if use_llm:
         try:
             from nlp2coru.llm import llm_plan
 

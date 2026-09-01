@@ -29,20 +29,20 @@ def main(argv: list[str] | None = None) -> int:
     to_dsl = sub.add_parser("to-dsl", help="Convert prompt to CORU DSL")
     to_dsl.add_argument("prompt")
     to_dsl.add_argument("--llm", action="store_true")
-    to_dsl.add_argument("--model", default="openrouter/qwen/qwen3-coder-next")
+    to_dsl.add_argument("--model", help="deprecated compatibility hint; central policy selects the model")
     to_dsl.add_argument("--json", action="store_true")
 
     apply = sub.add_parser("apply", help="Convert+execute NL through CORU DSL")
     apply.add_argument("prompt")
     apply.add_argument("--llm", action="store_true")
-    apply.add_argument("--model", default="openrouter/qwen/qwen3-coder-next")
+    apply.add_argument("--model", help="deprecated compatibility hint; central policy selects the model")
     apply.add_argument("--json", action="store_true")
 
     rewrite = sub.add_parser("rewrite-chat", help="Rewrite NL prompt for chat")
     rewrite.add_argument("prompt")
     rewrite.add_argument("--ide", default="")
     rewrite.add_argument("--instance", default="")
-    rewrite.add_argument("--model", default="openrouter/qwen/qwen3-coder-next")
+    rewrite.add_argument("--model", help="deprecated compatibility hint; central policy selects the model")
 
     args = parser.parse_args(argv)
 
