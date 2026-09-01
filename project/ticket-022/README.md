@@ -2,8 +2,8 @@
 
 - **ID**: ticket-022
 - **Owner**: agent:codex
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -53,5 +53,11 @@ test failures require separate scopes.
 ## Publication
 
 - Pull request: [#51](https://github.com/semcod/koru/pull/51)
-- Required boundary: successful exact-head checks followed by protected
-  validator review and explicit merge.
+- Exact head: `8184170855e491f656d4e2710331c37c7a192241`
+- GitHub smoke: run `33507425413`, successful.
+- OneDev: `onedev/local-verify` passed against
+  `main@37cd8021034680b6bee7d7ef27c628fef12dddab`.
+- Protected validator: run `33507843823`, result `approved`; review
+  `5078036982` by `ifuri-validator-agent` targets the exact head.
+- Merge: `8d8531e665c98aa995f53d099ebfb051821ad42e` at
+  `2026-09-01T12:31:16Z`.

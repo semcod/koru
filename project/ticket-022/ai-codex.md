@@ -38,6 +38,11 @@ semantics.
   unchanged and the eighth work/decide regression is gone.
 - Opened PR #51 and entered PUBLICATION pending exact-head checks and protected
   validator review.
+- Exact head `8184170855e491f656d4e2710331c37c7a192241` passed GitHub smoke,
+  OneDev and protected validator run `33507843823`.
+- Review `5078036982` bound the validator identity to that head before PR #51
+  merged as `8d8531e665c98aa995f53d099ebfb051821ad42e`.
+- Ticket lifecycle is closed as `DONE / DONE`.
 
 ## Blockers
 
