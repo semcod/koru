@@ -22,8 +22,8 @@
   OneDev and protected exact-head validation before merge `fac3639e`.
 - [ ] [`ticket-022`](project/ticket-022/README.md) — stabilize the delivered
   `koru work/decide` integration by repairing its two source Ruff findings.
-  State: `IN_PROGRESS / VALIDATION`; the bounded two-file plan is approved and
-  focused behavior tests are green.
+  State: `PLAN / WAIT_FOR_APPROVAL`; the source smoke is repaired, while a
+  one-test amendment awaits approval for the stale `decide` dispatch registry.
 - [x] [`ticket-017`](project/ticket-017/README.md) — make MCP ticket execution
   exact-target and preflight the central SubLLM route before Planfile lifecycle
   mutation. State: `DONE`; classification:

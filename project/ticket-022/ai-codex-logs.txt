@@ -24,3 +24,7 @@ Seven failures match the pre-existing backlog: three stale src/korullm inventory
 The eighth failure is directly related to delivered decide routing: tests/test_cli.py::TestSubcommandDispatch::test_table_contains_all_documented_subcommands.
 Exact dispatch delta: actual_only=['decide']; expected_only=[].
 `ruff check src tests` after the source repair -> one unrelated UP037 remains at tests/test_autonomous.py:5600; both repaired source findings are gone.
+2026-09-01T14:08:27+02:00
+Committed the approved source-smoke slice as e02bf463.
+Returned ticket-022 to PLAN / WAIT_FOR_APPROVAL after proposing a one-file test amendment.
+No edit to tests/test_cli.py has been made; fresh approval is required.

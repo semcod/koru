@@ -31,3 +31,11 @@
 - Restore the complete source Ruff smoke gate with two import-only changes.
 - Record a full-suite validation that exposed one additional stale `decide`
   dispatch expectation requiring a separately approved scope amendment.
+
+## [0.5.0] - 2026-09-01
+
+- Preserve the approved source-smoke repair in commit `e02bf463`.
+- Return to `PLAN / WAIT_FOR_APPROVAL` and propose adding only
+  `tests/test_cli.py` to reconcile the delivered `decide` registry.
+- Keep the seven independent test failures and test-only Ruff finding outside
+  this amendment.

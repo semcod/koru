@@ -8,7 +8,8 @@
     "project/TICKETS.md",
     "TODO.md",
     "src/koru/autonomy/execution_plan.py",
-    "src/koru/cli_work.py"
+    "src/koru/cli_work.py",
+    "tests/test_cli.py"
   ],
   "forbiddenPaths": ["project/ticket-*/user-*.md"],
   "stacks": ["python"],
@@ -18,7 +19,7 @@
   "delivery": {
     "acceptedBaseSha": "37cd8021034680b6bee7d7ef27c628fef12dddab",
     "targetBranch": "main",
-    "outcome": "The delivered Koru work/decide integration passes the complete source Ruff smoke gate without changing runtime behavior or authority boundaries.",
+    "outcome": "The delivered Koru work/decide integration passes the complete source Ruff smoke gate and its static CLI dispatch registry matches the delivered decide command without changing runtime behavior or authority boundaries.",
     "nonGoals": [
       "Change the public work or decide CLI",
       "Repair the unrelated Ruff finding in tests/test_autonomous.py",
@@ -28,20 +29,21 @@
     "complexity": "XS",
     "estimatedMinutes": 10,
     "budgets": {
-      "maxImplementationFiles": 2,
+      "maxImplementationFiles": 3,
       "maxAffectedComponents": 1,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
     },
     "architecture": {
-      "status": "accepted",
+      "status": "proposed",
       "decision": "Apply only Ruff-prescribed import cleanup to the two source modules while preserving the delivered work/decide behavior and exact-head validator boundary.",
       "components": [
         {
           "name": "work-decide-cli",
           "paths": [
             "src/koru/autonomy/execution_plan.py",
-            "src/koru/cli_work.py"
+            "src/koru/cli_work.py",
+            "tests/test_cli.py"
           ]
         }
       ],
@@ -64,7 +66,7 @@
       {
         "criterion": "AC-03",
         "commands": [
-          "python -m pytest -q tests/test_execution_plan.py tests/test_work_lifecycle.py"
+          "python -m pytest -q tests/test_execution_plan.py tests/test_work_lifecycle.py tests/test_cli.py::TestSubcommandDispatch"
         ],
         "evidence": "project/ticket-022/ai-codex-logs.txt"
       },
