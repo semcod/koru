@@ -32,6 +32,10 @@ Merge commit: 144ef64d44167d382444ab8dd43cbed8b3ed6983.
 The earlier b0b41998 validation was rejected as STALE_HEAD_CHANGED and is not
 used as approval evidence.
 
+2026-09-01T12:16:00+02:00
+Closure evidence is published for review as semcod/koru#45. This follow-up
+contains governance records only and leaves runtime code unchanged.
+
 2026-09-01T00:03:00+02:00
 Concurrent target movement: main advanced cd95ca6c..d40f6fd9.
 The new main allocated ticket-022 for the Koru work lifecycle while the local POA/Logs plan used the same unpublished ID.
