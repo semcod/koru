@@ -9,6 +9,7 @@ from pathlib import Path
 
 from koru.events import emit_management_event
 from koru.work.lifecycle import finish_work, start_work
+from koru.autonomy.execution_plan import compile_execution_plan, resolve_ticket_repo, run_auto_steps
 
 
 def _print(payload: dict, fmt: str) -> None:
@@ -40,6 +41,46 @@ def _action_start(args: argparse.Namespace) -> int:
         status="completed",
         message=f"{result.get('ticket_id')} on {result.get('branch')}",
         details=result,
+    )
+    return 0
+
+
+def _action_next(args: argparse.Namespace) -> int:
+    plan = compile_execution_plan(args.project)
+    payload: dict = {"status": "planned", "plan": plan.to_dict()}
+    if args.run_gates:
+        payload["auto_run"] = run_auto_steps(plan, dry_run=False)
+    if args.start_branch and plan.selected_ticket:
+        repo = Path(resolve_ticket_repo(args.project, plan.selected_ticket) or args.project)
+        title = str(plan.selected_ticket.get("name") or plan.selected_ticket.get("id"))
+        ticket_id = str(plan.selected_ticket.get("id") or "")
+        work = start_work(
+            repo,
+            title=title,
+            ticket_id=ticket_id,
+            base_branch=args.base,
+            push=not args.no_push,
+            remote=args.remote,
+        )
+        payload["work"] = work
+        payload["status"] = work.get("status", "started")
+    if args.format == "json":
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(f"koru work next: {plan.summary}")
+        if plan.selected_ticket:
+            ticket = plan.to_dict().get("selected_ticket") or {}
+            print(f"  selected: {ticket.get('id')} @ {ticket.get('repo')}")
+        for step in plan.steps:
+            print(f"  step {step.id}: {step.kind} ({step.profile_id})")
+            for command in step.commands:
+                print(f"    $ {command}")
+    emit_management_event(
+        tool="koru.work",
+        action="next",
+        status="completed",
+        message=plan.summary,
+        details=payload,
     )
     return 0
 
@@ -103,6 +144,17 @@ def build_parser() -> argparse.ArgumentParser:
     finish.add_argument("--no-publish", action="store_true", help="Skip validator-agent dispatch.")
     finish.add_argument("--dry-run", action="store_true")
     finish.set_defaults(func=_action_finish)
+
+    next_cmd = sub.add_parser(
+        "next",
+        help="Decide the next refactor ticket and optionally start a work branch.",
+    )
+    next_cmd.add_argument("--run-gates", action="store_true", help="Run auto steps from decide plan.")
+    next_cmd.add_argument("--start-branch", action="store_true", help="koru work start on selected ticket.")
+    next_cmd.add_argument("--base", default="main")
+    next_cmd.add_argument("--no-push", action="store_true")
+    next_cmd.add_argument("--remote", default="origin")
+    next_cmd.set_defaults(func=_action_next)
 
     return parser
 

@@ -1,0 +1,85 @@
+# Built-in task profiles for koru decide / koru work next (schema koru.task_profiles/v1)
+schema: koru.task_profiles/v1
+profiles:
+  god_module_split:
+    description: Split a god module into focused submodules by responsibility.
+    match:
+      labels_any: [god-module, refactor]
+      signals_any: [code2llm_god, god_module]
+      name_patterns: ['Split god module*', 'Split large module*']
+    workflow:
+      - id: inspect
+        kind: shell
+        auto: true
+        command: sh -c 'cd {repo} && koru ci gates'
+      - id: refactor
+        kind: ide_work
+        auto: false
+        hint: >-
+          Split the flagged module into focused submodules; keep public API stable;
+          run local gates before commit.
+      - id: verify
+        kind: shell
+        auto: true
+        command: sh -c 'cd {repo} && koru ci gates'
+      - id: publish
+        kind: shell
+        auto: false
+        command: koru work finish --ticket {ticket_id} --no-publish --project {repo}
+
+  cc_hotspot_refactor:
+    description: Reduce cyclomatic complexity via dispatch maps / extraction.
+    match:
+      labels_any: [cyclomatic, refactor, regix]
+      signals_any: [regix_cc, cyclomatic_complexity]
+      name_patterns: ['Reduce cyclomatic complexity*']
+    workflow:
+      - id: baseline
+        kind: shell
+        auto: true
+        command: sh -c 'cd {repo} && koru ci gates'
+      - id: refactor
+        kind: ide_work
+        auto: false
+        hint: >-
+          Extract helpers or dispatch tables until CC is below the gate limit;
+          avoid behavior changes.
+      - id: verify
+        kind: shell
+        auto: true
+        command: sh -c 'cd {repo} && koru ci gates'
+
+  idle_scan:
+    description: Turn repo signals into planfile tickets when the queue is idle.
+    match:
+      phase: idle_scan
+    workflow:
+      - id: scan_dry
+        kind: shell
+        auto: true
+        command: koru scan --project {project}
+      - id: scan_apply
+        kind: shell
+        auto: true
+        command: koru scan --apply --semcod-artifacts --project {project}
+
+  whole_project_discovery:
+    description: Broad code2llm discovery when no runnable refactor tickets remain.
+    match:
+      phase: whole_project_discovery
+    workflow:
+      - id: code2llm
+        kind: shell
+        auto: true
+        command: >-
+          code2llm {project} -f all -o {project}/project --no-chunk --exclude '*.md'
+          --planfile-apply --planfile-source koru-project-discovery
+          --planfile-sprint current --planfile-project {project} --planfile-limit 20
+
+phases:
+  planfile_queue:
+    description: Execute the highest-priority runnable planfile ticket.
+  idle_scan:
+    description: Scan for new signals when no refactor tickets are runnable.
+  whole_project_discovery:
+    description: Run code2llm discovery to regenerate the backlog.
