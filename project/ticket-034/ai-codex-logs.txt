@@ -1,0 +1,3 @@
+2026-09-01: ticket allocated after ticket-032 merged through protected PR #68.
+2026-09-01: both package TOML documents parse; provider-reference scan,
+governance, Docker Compose, diff and repository overlap checks pass.

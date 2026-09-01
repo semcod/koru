@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-034",
+  "summary": "Align NLP package metadata with SubLLM runtime",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-034/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/nlp2koru/README.md",
+    "packages/nlp2koru/pyproject.toml",
+    "packages/nlp2coru/README.md",
+    "packages/nlp2coru/pyproject.toml"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-032"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "db8cd2e3c4706615388d4fbf8219ebeacd0c918a",
+    "targetBranch": "main",
+    "outcome": "Standalone nlp2koru and nlp2coru installations obtain the central korullm transport and their documentation describes the policy-owned routes delivered by ticket-032.",
+    "nonGoals": [
+      "Change runtime adapter code delivered by ticket-032",
+      "Change central SubLLM provider ordering or credentials",
+      "Remove deprecated model compatibility parameters"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 1
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Make each package's optional dependency and README reflect the central korullm boundary already merged in ticket-032.",
+      "components": [
+        {
+          "name": "nlp2koru-package-contract",
+          "paths": ["packages/nlp2koru/README.md", "packages/nlp2koru/pyproject.toml"]
+        },
+        {
+          "name": "nlp2coru-package-contract",
+          "paths": ["packages/nlp2coru/README.md", "packages/nlp2coru/pyproject.toml"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected ticket merge; ticket-032 runtime remains available to root Koru installations."
+    },
+    "runtimeDependencies": ["korullm>=0.1.0,<2.0"],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -c \"import tomllib; from pathlib import Path; [tomllib.loads(Path(path).read_text()) for path in ('packages/nlp2koru/pyproject.toml','packages/nlp2coru/pyproject.toml')]\"",
+          "rg -n -i 'litellm|openrouter|ollama|qwen' packages/nlp2koru/README.md packages/nlp2koru/pyproject.toml packages/nlp2coru/README.md packages/nlp2coru/pyproject.toml"
+        ],
+        "evidence": "TOML parse and no-match provider scan"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "local deterministic gate output and protected checks"
+      }
+    ]
+  }
+}
