@@ -2,8 +2,8 @@
 
 - **ID**: ticket-021
 - **Owner**: unresolved:human
-- **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Status**: DONE
+- **Workflow state**: DONE
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -74,9 +74,10 @@ Or set `KORU_VALIDATOR_CHECKOUT`.
 ## Delivery
 
 - Pull request: #46
-- Protected publication target: exact current PR head for `ticket-021`.
-- Merge remains disabled until local OneDev succeeds and the protected
-  validator binds its approval to that exact head.
+- Protected publication target: exact PR head `d12f7884` for `ticket-021`.
+- GitHub smoke and `onedev/local-verify` passed on that head.
+- Protected validator run `33498969168` created exact-head review `5077039641`
+  and merged PR #46 as `fac3639e`.
 
 ## MCP
 

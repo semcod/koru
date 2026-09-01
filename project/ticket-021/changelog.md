@@ -44,3 +44,9 @@
 ## [0.7.0] - 2026-09-01
 
 - Bind delivery to PR #46 before requesting exact-head protected validation.
+
+## [0.8.0] - 2026-09-01
+
+- Record successful GitHub smoke, OneDev verification and protected exact-head
+  validator review for PR #46.
+- Close the ticket after protected merge commit `fac3639e`.

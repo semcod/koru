@@ -43,6 +43,11 @@ unfinished scope that owns those defects.
   pre-existing files outside this ticket's write scope.
 - Entered `PUBLICATION` after governance, focused Python checks, Docker Compose
   validation and diff validation passed on the delivery worktree.
+- Koru dispatched protected validator run `33498969168`, which bound its
+  approval to `ticket-021`, PR #46 and exact head `d12f7884`; the resolver
+  merged that head as `fac3639e` after the required checks passed.
+- Closed the ticket as `DONE / DONE`; this final follow-up changes governance
+  evidence only.
 
 ## Blockers
 
