@@ -1,0 +1,33 @@
+{
+  "schema": "new-project.intent/v2",
+  "ticket": "ticket-021",
+  "summary": "Koru CI publish pipeline",
+  "workstream": "ci",
+  "allowedPaths": [
+    "project/ticket-021/**",
+    "project/TICKETS.md",
+    "src/koru/ci/**",
+    "src/koru/cli_ci.py",
+    "src/koru/cli.py",
+    "src/koru/init.py",
+    "src/koru/project_pipeline.py",
+    "src/koruapi/mcp_server_planfile.py",
+    "src/koruapi/mcp_server.py",
+    "tests/test_ci_pipeline.py",
+    "README.md",
+    "tests/test_cli.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "db65f25999112b87be3e967f06b267d7fa7fc1dc",
+    "targetBranch": "main",
+    "outcome": "Koru exposes koru ci run/gates/publish for local CI and validator-agent publication.",
+    "nonGoals": ["Replace validator-agent as merge trust root", "Auto-merge without explicit --merge"],
+    "complexity": "M",
+    "estimatedMinutes": 90
+  }
+}

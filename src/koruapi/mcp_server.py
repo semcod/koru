@@ -38,6 +38,7 @@ from koruapi.mcp_server_planfile import (
     tool_list_tickets,
     tool_propose_edits,
     tool_run_quality_gates,
+    tool_run_ci,
     tool_run_ticket,
 )
 from koruapi.mcp_server_runtime import (

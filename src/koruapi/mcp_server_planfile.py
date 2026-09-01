@@ -10,9 +10,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from koru.quality_gate_commands import sumr_scan_command, vallm_batch_command
+from koru.ci.gates import DEFAULT_GATES, gate_commands, run_quality_gates
 from koru.queue.koru_queue_argv import build_koru_queue_argv
-from koru.redup_integration import redup_check_command
 
 try:
     import psutil
@@ -21,7 +20,8 @@ try:
 except ImportError:
     _PSUTIL_AVAILABLE = False
 
-DEFAULT_GATES = ["regix", "redup"]
+DEFAULT_GATES = list(DEFAULT_GATES)
+_gate_commands = gate_commands
 RUN_TICKET_TIMEOUT_SECONDS = 300
 JOB_STORE_FILE = ".planfile/.koru/jobs.json"
 PATCH_BUDGET_LINES = 80
@@ -212,6 +212,41 @@ def build_tool_schemas(*, project_root_description: str) -> list[dict[str, Any]]
                         "description": (
                             "Action when OOM is detected: kill subprocess, warn only, or continue."
                         ),
+                    },
+                },
+                "required": ["project_root"],
+            },
+        },
+        {
+            "name": "koru_run_ci",
+            "description": (
+                "Run Koru CI pipeline: policy ci.command plus quality gates, or "
+                "dispatch validator-agent publication for an open PR."
+            ),
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    **_project_root_schema_props(project_root_description),
+                    "action": {
+                        "type": "string",
+                        "enum": ["run", "gates", "publish"],
+                        "default": "run",
+                    },
+                    "ticket_id": {
+                        "type": "string",
+                        "description": "Required for action=publish.",
+                    },
+                    "pr": {"type": "integer", "description": "Optional PR number for publish."},
+                    "merge": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Pass --merge to validator dispatch (publish only).",
+                    },
+                    "dry_run": {"type": "boolean", "default": False},
+                    "gates": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Subset of gates for run/gates actions.",
                     },
                 },
                 "required": ["project_root"],
@@ -692,157 +727,20 @@ def tool_job_status(arguments: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _gate_commands(project: Path) -> dict[str, list[str]]:
-    return {
-        "regix": ["regix", "gates", "--workdir", str(project)],
-        "redup": redup_check_command(project),
-        "vallm": vallm_batch_command(project),
-        "sumr": sumr_scan_command(project),
-        "testql": [
-            "testql",
-            "suite",
-            "--path",
-            str(project),
-            "--pattern",
-            "*.testql.toon.yaml",
-            "--output",
-            "console",
-        ],
-        "security": ["bandit", "-r", str(project), "-f", "json"],
-    }
-
-
-def _detect_enabled_gates(project: Path, known_gates: list[str]) -> list[str]:
-    try:
-        from koru.topology import load_topology
-
-        topo = load_topology(project)
-        detected: list[str] = []
-        for gate_name in known_gates:
-            comp = topo.get("components", {}).get(gate_name, {})
-            if comp.get("enabled", False) and comp.get("available", False):
-                detected.append(gate_name)
-        return detected
-    except Exception:
-        return []
-
-
-def _resolve_gates(
-    project: Path,
-    requested: list[str],
-    commands: dict[str, list[str]],
-) -> list[str]:
-    if requested:
-        return requested
-    detected = _detect_enabled_gates(project, list(commands.keys()))
-    if detected:
-        return detected
-    return list(commands.keys()) or list(DEFAULT_GATES)
-
-
-def _run_single_gate(
-    project: Path,
-    gate_name: str,
-    cmd: list[str],
-    oom_threshold_mb: int = 2048,
-    oom_interval_seconds: int = 5,
-    oom_action: str = "kill",
-) -> tuple[str, dict[str, Any]]:
-    try:
-        proc = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            cwd=str(project),
-        )
-
-        oom_state = _launch_oom_monitor(proc, oom_threshold_mb, oom_interval_seconds, oom_action)
-
-        try:
-            stdout, stderr = proc.communicate(timeout=120)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            stdout, stderr = proc.communicate()
-            return "timeout", {
-                "gate": gate_name,
-                "status": "timeout",
-                "issues": ["Gate timed out after 120 seconds."],
-            }
-
-        oom_killed, oom_logs = oom_state[0], oom_state[1]
-        if oom_killed:
-            output_lines = (stdout or "").strip().split("\n")
-            error_lines = (stderr or "").strip().split("\n")
-            issues = oom_logs + (output_lines + error_lines)[-10:]
-            return "killed", {
-                "gate": gate_name,
-                "status": "killed",
-                "issues": issues,
-                "reason": "oom",
-            }
-
-        if proc.returncode == 0:
-            return "passed", {"gate": gate_name, "status": "passed", "issues": []}
-        issues = ((stdout or "").strip().split("\n") + (stderr or "").strip().split("\n"))[-10:]
-        return "failed", {"gate": gate_name, "status": "failed", "issues": issues}
-    except FileNotFoundError:
-        return "not_installed", {
-            "gate": gate_name,
-            "status": "not_installed",
-            "issues": [],
-            "message": f"{cmd[0]} not found in PATH",
-        }
-    except Exception as exc:
-        return "error", {"gate": gate_name, "status": "error", "issues": [str(exc)]}
-
-
 def tool_run_quality_gates(arguments: dict[str, Any]) -> dict[str, Any]:
     """Run quality gates for the project."""
     try:
         project = resolve_mcp_project_root(arguments)
     except KeyError as exc:
         return {"overall_status": "error", "results": [], "error": str(exc)}
-    requested_gates = arguments.get("gates") or []
-    fail_fast = arguments.get("fail_fast", True)
-    oom_threshold = arguments.get("oom_kill_threshold_mb", 2048)
-    oom_interval = arguments.get("oom_monitor_interval_seconds", 5)
-    oom_action = arguments.get("oom_action", "kill")
-
-    gate_commands = _gate_commands(project)
-    gates = _resolve_gates(project, requested_gates, gate_commands)
-
-    results: list[dict[str, Any]] = []
-    overall = "passed"
-    for gate_name in gates:
-        cmd = gate_commands.get(gate_name)
-        if cmd is None:
-            results.append(
-                {
-                    "gate": gate_name,
-                    "status": "skipped",
-                    "issues": [],
-                    "message": f"Unknown gate: {gate_name}",
-                }
-            )
-            continue
-
-        status, payload = _run_single_gate(
-            project,
-            gate_name,
-            cmd,
-            oom_threshold_mb=oom_threshold,
-            oom_interval_seconds=oom_interval,
-            oom_action=oom_action,
-        )
-        results.append(payload)
-
-        if status in {"failed", "timeout", "killed"}:
-            overall = "failed"
-            if fail_fast:
-                break
-
-    return {"overall_status": overall, "results": results}
+    return run_quality_gates(
+        project,
+        gates=arguments.get("gates") or None,
+        fail_fast=arguments.get("fail_fast", True),
+        oom_kill_threshold_mb=arguments.get("oom_kill_threshold_mb", 2048),
+        oom_monitor_interval_seconds=arguments.get("oom_monitor_interval_seconds", 5),
+        oom_action=arguments.get("oom_action", "kill"),
+    )
 
 
 def _find_ticket(all_tickets: list[dict[str, Any]], ticket_id: str) -> dict[str, Any] | None:
@@ -936,6 +834,34 @@ def _collect_edit_contexts(
     return edits_context
 
 
+def tool_run_ci(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Run local CI or validator publication dispatch."""
+    from koru.ci.publication import dispatch_validator_merge
+    from koru.ci.runner import run_local_ci
+
+    try:
+        project = resolve_mcp_project_root(arguments)
+    except KeyError as exc:
+        return {"overall_status": "error", "error": str(exc)}
+    action = str(arguments.get("action") or "run")
+    if action == "gates":
+        return run_quality_gates(project, gates=arguments.get("gates") or None)
+    if action == "publish":
+        ticket_id = arguments.get("ticket_id")
+        if not ticket_id:
+            return {"status": "error", "error": "ticket_id is required for publish"}
+        try:
+            return dispatch_validator_merge(
+                project,
+                ticket_id=str(ticket_id),
+                pr_number=arguments.get("pr"),
+                dry_run=bool(arguments.get("dry_run", False)),
+            )
+        except Exception as exc:
+            return {"status": "error", "error": str(exc)}
+    return run_local_ci(project, gates=arguments.get("gates") or None)
+
+
 def tool_propose_edits(arguments: dict[str, Any]) -> dict[str, Any]:
     """Generate proposed file edits for a ticket (read-only, no writes)."""
     try:
@@ -977,5 +903,6 @@ TOOL_DISPATCH: dict[str, Any] = {
     "koru_run_ticket": tool_run_ticket,
     "koru_job_status": tool_job_status,
     "koru_run_quality_gates": tool_run_quality_gates,
+    "koru_run_ci": tool_run_ci,
     "koru_propose_edits": tool_propose_edits,
 }

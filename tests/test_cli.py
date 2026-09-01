@@ -875,6 +875,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "serve",
             "scan",
             "gate",
+            "ci",
             "queue",
             "replay",
             "gc",

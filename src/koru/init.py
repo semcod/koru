@@ -182,6 +182,15 @@ ci:
     echo "=== Quality Gates Complete ==="
   timeout_seconds: 600
 
+# Optional publication config for `koru ci publish` (validator-agent dispatch).
+# Copy to `.planfile/.koru/ci-publication.yaml` when you want Koru to freeze PR
+# head and dispatch subactor/validator-agent. Koru never self-approves merges.
+#
+# publication:
+#   validator_checkout: /path/to/subactor/validator-agent
+#   wait_checks: true
+#   merge: false
+
 # Free-form notes embedded in every `koru --context` brief.
 # Use these to teach the LLM project-specific conventions.
 notes: []

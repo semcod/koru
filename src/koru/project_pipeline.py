@@ -93,7 +93,12 @@ when:
   before_complete_ticket:
     description: Right before `planfile ticket done` / policy CI hook.
     commands:
-      - task quality:regix:local
+      - koru ci run --project .
+
+  publication:
+    description: After CI passes, dispatch validator-agent for protected merge.
+    commands:
+      - koru ci publish --ticket <TICKET_ID> --merge
 
 {autonomy_block}
 """
