@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-036",
+  "summary": "Run target standard-pack conformance CI",
+  "workstream": "infrastructure",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-036/**",
+    "project/TICKETS.md",
+    ".github/workflows/standard-pack-conformance.yml"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-035"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "73969ed83173dbbe3d9909fbde70297a4a352028",
+    "targetBranch": "main",
+    "outcome": "Koru publishes one stable read-only conformance check over its locally adopted worktrees and Logs projections so a later governance ticket can bind a real immutable S3 receipt.",
+    "nonGoals": [
+      "Promote standard-pack evidence levels or switch adoption to enforce",
+      "Edit governance-owned check registries or ignore rules",
+      "Fetch mutable upstream evidence during CI",
+      "Modify external repositories"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use a target-owned GitHub Actions job with immutable action pins to execute only checked-in deterministic conformance code and local projection contracts.",
+      "components": [
+        {
+          "name": "standard-pack-conformance-ci",
+          "paths": [".github/workflows/standard-pack-conformance.yml"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected ticket merge; adoption remains in audit mode and no evidence claim is promoted."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 .governance/standard_pack_check.py --root . --format json",
+          "python3 .governance/standard_pack_projection_check.py --root . --format json",
+          "python3 .governance/worktree_path_check.py validate <generated-record>"
+        ],
+        "evidence": "deterministic local standard-pack reports"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "local gates plus exact-head hosted checks"
+      }
+    ]
+  }
+}
