@@ -1,0 +1,4 @@
+2026-09-01T00:00:00+02:00
+Reconciliation evidence: initial implementation is present on main at 9789e437, followed by cd95ca6c.
+Current-main Ruff: FAIL; `replace` is undefined in src/koru/cli_ci.py and unused in src/koru/ci/publication.py.
+Ticket state reset to PLAN / WAIT_FOR_APPROVAL; no implementation repair performed by ticket-013.

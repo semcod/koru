@@ -1,11 +1,24 @@
 {
   "schema": "new-project.intent/v2",
   "ticket": "ticket-013",
-  "summary": "Close merged SubLLM migration tickets",
+  "summary": "Reconcile merged implementation tickets",
   "workstream": "governance",
   "allowedPaths": [
     "project/ticket-011/README.md",
     "project/ticket-012/README.md",
+    "project/ticket-019/README.md",
+    "project/ticket-019/ai-codex.md",
+    "project/ticket-019/ai-codex-logs.txt",
+    "project/ticket-019/changelog.md",
+    "project/ticket-020/README.md",
+    "project/ticket-020/ai-codex.md",
+    "project/ticket-020/ai-codex-logs.txt",
+    "project/ticket-020/changelog.md",
+    "project/ticket-021/README.md",
+    "project/ticket-021/intent.json",
+    "project/ticket-021/ai-cursor.md",
+    "project/ticket-021/ai-cursor-logs.txt",
+    "project/ticket-021/changelog.md",
     "project/ticket-013/**",
     "TODO.md",
     "project/TICKETS.md"
@@ -16,27 +29,30 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "642a6c40823c1208beb97da78fc0dfe75edc7d6a",
+    "acceptedBaseSha": "cd95ca6c314bcc2e214db7eeb5918c87b195ae71",
     "targetBranch": "main",
-    "outcome": "Close the two SubLLM migration tickets after their protected merges",
+    "outcome": "Close merged tickets 019 and 020 and park incomplete ticket 021 without changing runtime code",
     "nonGoals": ["Change runtime code", "Change dependency policy"],
     "complexity": "XS",
     "estimatedMinutes": 5,
     "budgets": {
-      "maxImplementationFiles": 8,
+      "maxImplementationFiles": 19,
       "maxAffectedComponents": 1,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Apply a governance-only post-merge reconciliation",
+      "decision": "Apply a governance-only reconciliation bound to exact merged heads and protected check evidence",
       "components": [
         {
           "name": "repository-governance",
           "paths": [
             "project/ticket-011/README.md",
             "project/ticket-012/README.md",
+            "project/ticket-019/**",
+            "project/ticket-020/**",
+            "project/ticket-021/**",
             "project/ticket-013/**",
             "TODO.md",
             "project/TICKETS.md"
@@ -52,7 +68,7 @@
     "runtimeDependencies": [],
     "validation": [
       {
-        "criterion": "AC-03",
+        "criterion": "AC-05",
         "commands": ["./project/governance-check.sh", "git diff --check"],
         "evidence": "project/ticket-013/ai-codex-logs.txt"
       }

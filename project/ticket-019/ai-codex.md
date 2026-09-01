@@ -21,6 +21,9 @@ reported the same 33 safe import-order violations.
 
 - Applied 33 import-order fixes without changing executable statements.
 - Confirmed the exact lint command reports no errors.
+- Confirmed PR #39 merged exact head
+  `381e68086ab4926285fcd14491b5691eccf18f8b` with protected
+  `smoke` and `onedev/local-verify` success evidence.
 
 ## Blockers
 

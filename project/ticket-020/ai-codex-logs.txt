@@ -1,0 +1,5 @@
+2026-09-01T00:00:00+02:00
+PR #42 exact head: f77af46c2cb1ccae87d60d2238afb4d1c4e2f16b
+Merge commit: e40b907d9871cfa8533d5405188f60e40e178f04
+Protected evidence: smoke=SUCCESS; onedev/local-verify=SUCCESS; ifuri-validator-agent exact-head review=APPROVED
+Ticket reconciliation: DONE / DONE

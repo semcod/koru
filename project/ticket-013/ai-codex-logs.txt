@@ -8,3 +8,17 @@ semcod/koru#32: MERGED at 2026-08-26T07:13:47Z, exact head ba3a0057e3fc9339572f1
 GOV-PASS: passed (0 errors, 0 warnings)
 git diff --check
 PASS
+
+2026-09-01T00:00:00+02:00
+SESSION_EXECUTION_AUTHORIZATION: active user request approved continuation, testing and GitHub publication.
+semcod/koru#39: MERGED at 2026-08-28T14:50:50Z; exact head 381e68086ab4926285fcd14491b5691eccf18f8b; merge db65f25999112b87be3e967f06b267d7fa7fc1dc; onedev/local-verify=SUCCESS.
+semcod/koru#42: MERGED at 2026-08-28T16:02:20Z; exact head f77af46c2cb1ccae87d60d2238afb4d1c4e2f16b; merge e40b907d9871cfa8533d5405188f60e40e178f04; onedev/local-verify=SUCCESS; exact-head validator review=APPROVED.
+Current-main Ruff is not used as ticket-019 evidence: it reports later ticket-021 defects, including an undefined `replace` in src/koru/cli_ci.py and an unused import in src/koru/ci/publication.py.
+
+2026-09-01T00:01:00+02:00
+./project/governance-check.sh
+GOV-PASS: passed (0 errors, 0 warnings)
+git diff --check
+PASS
+docker compose config --quiet
+PASS

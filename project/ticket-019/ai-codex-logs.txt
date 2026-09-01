@@ -1,2 +1,7 @@
 2026-08-28: ruff check src tests --fix: 33 fixed.
 2026-08-28: ruff check src tests: passed.
+2026-09-01T00:00:00+02:00
+PR #39 exact head: 381e68086ab4926285fcd14491b5691eccf18f8b
+Merge commit: db65f25999112b87be3e967f06b267d7fa7fc1dc
+Protected evidence: smoke=SUCCESS; onedev/local-verify=SUCCESS
+Ticket reconciliation: DONE / DONE

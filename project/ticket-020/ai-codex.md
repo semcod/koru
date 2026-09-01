@@ -20,7 +20,10 @@ trusted merge approval.
 
 ## Actual changes
 
-- Work started from the exact failing `main` CI evidence in issue #40.
+- Extracted the shared helpers to `koru.queue.todo2code_support` while
+  preserving the compatibility imports used by autonomy callers.
+- Confirmed exact-head protected checks and validator approval for PR #42 at
+  `f77af46c2cb1ccae87d60d2238afb4d1c4e2f16b` before merge.
 
 ## Blockers
 

@@ -16,8 +16,11 @@ To be completed after reading human-owned input and the ticket preprompt.
 
 ## Actual changes
 
-- None; waiting for approval.
+- Initial CI command implementation commits are present on `main`, but the
+  ticket has no complete exact-head validation record.
+- Reconciliation returned the ticket to planning after Ruff identified a
+  misplaced `dataclasses.replace` import.
 
 ## Blockers
 
-- Human approval is required before implementation.
+- Approval of the amended bounded intent is required before repair work.
