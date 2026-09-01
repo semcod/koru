@@ -3,7 +3,7 @@
 - [ ] [`ticket-026`](project/ticket-026/README.md) — neutralize the
   authorization-order violation in governance-only PR #56, then reapply the
   ticket-025 closure through protected exact-head review. State:
-  `PLAN / WAIT_FOR_APPROVAL`; implementation files remain unchanged.
+  `IN_PROGRESS / EDIT`; the user approved the two-stage repair on 2026-09-01.
 - [x] [`ticket-025`](project/ticket-025/README.md) — prevent repeated
   `koru scan --apply` cycles from recreating unchanged findings after their
   Planfile tickets move into history. State: `DONE / DONE`; exact head

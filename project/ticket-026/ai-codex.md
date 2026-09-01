@@ -36,8 +36,9 @@ protected PR. The trusted implementation merge from PR #55 remains untouched.
 
 ## Actual changes
 
-- None; waiting for approval.
+- The user explicitly approved ticket 026 and the workflow moved to
+  `IN_PROGRESS / EDIT` before changing any ticket-025 lifecycle file.
 
 ## Blockers
 
-- Human approval is required before implementation.
+- None.

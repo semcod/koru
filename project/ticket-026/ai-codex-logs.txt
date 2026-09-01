@@ -32,3 +32,9 @@
   safely allocated ticket
 - implementation files changed: none
 - lifecycle remains PLAN / WAIT_FOR_APPROVAL
+
+2026-09-01 approval transition
+- user explicitly approved ticket 026
+- accepted base and five-path repair scope remain unchanged
+- lifecycle moved from PLAN / WAIT_FOR_APPROVAL to IN_PROGRESS / EDIT before
+  changing any ticket-025 lifecycle file

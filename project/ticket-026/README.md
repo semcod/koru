@@ -2,8 +2,8 @@
 
 - **ID**: ticket-026
 - **Owner**: unresolved:human
-- **Status**: PLAN
-- **Workflow state**: WAIT_FOR_APPROVAL
+- **Status**: IN_PROGRESS
+- **Workflow state**: EDIT
 - **Created**: 2026-09-01
 
 ## Goal and scope
@@ -38,10 +38,10 @@ behavior is changed.
 
 ## Acceptance criteria
 
-- [ ] AC-01: A human owner explicitly approves the two-stage repair before any
+- [x] AC-01: A human owner explicitly approves the two-stage repair before any
   ticket-025 lifecycle file is changed.
-- [ ] AC-02: The first PR is the exact first-parent reversal of merge
-  `665bc68e` and touches only its five governance paths.
+- [ ] AC-02: Apart from the ticket-026 governance scaffold, the first PR is the
+  exact first-parent reversal of merge `665bc68e` on its five paths.
 - [ ] AC-03: Protected exact-head review and merge complete for the revert
   before any closure evidence is reapplied.
 - [ ] AC-04: The second PR restores ticket-025 as `DONE / DONE`, records both

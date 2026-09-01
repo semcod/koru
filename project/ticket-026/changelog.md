@@ -11,3 +11,5 @@
 - Record validator failure `POST_APPROVAL_RECEIPT_MISSING` and the bounded
   two-stage revert/reclosure remedy; implementation remains in
   `WAIT_FOR_APPROVAL`.
+- The user explicitly approved ticket 026; workflow moved to
+  `IN_PROGRESS / EDIT` before the first-stage reversal.
