@@ -133,3 +133,14 @@ def test_fallback_profile_uses_registry_default() -> None:
     assert execution_plan_module._fallback_profile_id(
         {"defaults": {"fallback_profile": "custom"}},
     ) == "custom"
+
+
+def test_task_profiles_verify_runs_full_ci() -> None:
+    profiles = execution_plan_module._load_task_profiles()
+    for profile_id in ("god_module_split", "cc_hotspot_refactor"):
+        profile = profiles["profiles"][profile_id]
+        verify = next(step for step in profile["workflow"] if step["id"] == "verify")
+        assert "koru ci run" in verify["command"]
+        assert "koru ci gates" not in verify["command"]
+        baseline = next(step for step in profile["workflow"] if step["id"] in {"inspect", "baseline"})
+        assert "koru ci run --skip-gates" in baseline["command"]

@@ -1,0 +1,1 @@
+ticket-030 session: task_profiles verify -> koru ci run; resolve_gates -> DEFAULT_GATES; doctor pyqual/ci-test probes; pytest focused suite.

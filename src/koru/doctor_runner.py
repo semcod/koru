@@ -53,6 +53,8 @@ def probe_specs(project: Path) -> list[tuple[str, str]]:
     if (project / ".git").exists():
         probes.append(("gitignore", "_check_gitignore"))
     probes.append(("ci_command", "_check_ci_command"))
+    probes.append(("pyqual_pipeline", "_check_pyqual_pipeline"))
+    probes.append(("ci_test_script", "_check_ci_test_script"))
     if (project / "tests").exists() or (project / "pyproject.toml").exists():
         probes.append(("pytest_collect", "_check_pytest_collect"))
     return probes

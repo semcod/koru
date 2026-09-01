@@ -76,7 +76,7 @@ def resolve_gates(
     detected = _detect_enabled_gates(project, list(commands.keys()))
     if detected:
         return detected
-    return list(commands.keys()) or list(DEFAULT_GATES)
+    return list(DEFAULT_GATES)
 
 
 def _monitor_subprocess_oom(

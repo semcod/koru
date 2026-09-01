@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from koru.ci.gates import run_quality_gates
+from koru.ci.gates import DEFAULT_GATES, gate_commands, resolve_gates, run_quality_gates
 from koru.ci.publication import (
     PublicationConfig,
     dispatch_validator_merge,
@@ -83,6 +83,14 @@ class TestPublication(unittest.TestCase):
 
 
 class TestCiGates(unittest.TestCase):
+    def test_resolve_gates_defaults_without_topology(self) -> None:
+        project = Path("/tmp/koru-gates-default")
+        project.mkdir(parents=True, exist_ok=True)
+        commands = gate_commands(project)
+        with patch("koru.ci.gates._detect_enabled_gates", return_value=[]):
+            selected = resolve_gates(project, None, commands)
+        self.assertEqual(selected, list(DEFAULT_GATES))
+
     def test_skips_testql_when_no_scenarios(self) -> None:
         project = Path("/tmp/koru-testql-skip")
         project.mkdir(parents=True, exist_ok=True)

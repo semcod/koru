@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-030",
+  "summary": "Koru CI verify uses ci run and default gates fallback",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-030/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/task_profiles.yaml",
+    "src/koru/ci/gates.py",
+    "src/koru/doctor.py",
+    "src/koru/doctor_project_health.py",
+    "src/koru/doctor_runner.py",
+    "tests/test_ci_pipeline.py",
+    "tests/test_execution_plan.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "25c0a191c73d9a6231550d35d7bafd0ec540ec30",
+    "targetBranch": "main",
+    "outcome": "Koru task profiles verify with full policy CI plus gates, and gate resolution defaults to regix+redup when topology is absent.",
+    "nonGoals": [
+      "Integrate pyqual into koru ci run",
+      "Change publication freeze semantics",
+      "Enable testql by default without scenarios"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Task profile verify steps call koru ci run; resolve_gates falls back to DEFAULT_GATES; doctor surfaces pyqual.yaml and scripts/ci-test.sh hints.",
+      "components": [
+        {
+          "name": "task-profile-ci",
+          "paths": ["src/koru/autonomy/task_profiles.yaml", "tests/test_execution_plan.py"]
+        },
+        {
+          "name": "gate-resolution",
+          "paths": ["src/koru/ci/gates.py", "tests/test_ci_pipeline.py"]
+        },
+        {
+          "name": "doctor-quality-hints",
+          "paths": ["src/koru/doctor.py", "src/koru/doctor_project_health.py", "src/koru/doctor_runner.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the ticket branch; task profiles return to koru ci gates only."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_ci_pipeline.py tests/test_execution_plan.py"
+        ],
+        "evidence": "focused pytest output"
+      }
+    ]
+  }
+}
