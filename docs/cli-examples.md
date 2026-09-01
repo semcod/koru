@@ -208,7 +208,7 @@ Tier 2+ (multi-tier with LLM-as-judge — uses OpenRouter):
 task quality:vallm FILE=backend/app/foo.py
 
 # With semantic check (LLM)
-export OPENROUTER_API_KEY=sk-or-v1-xxxxx
+export OPENROUTER_API_KEY=<your-openrouter-key>
 task quality:vallm:semantic FILE=backend/app/foo.py
 ```
 
@@ -217,6 +217,33 @@ task quality:vallm:semantic FILE=backend/app/foo.py
 ## Ticket workflow
 
 koru integrates with `planfile` for ticket-driven development.
+
+See **[`auto-execute-commands.md`](./auto-execute-commands.md)** for when Koru runs
+shell commands headlessly (`koru --queue`, `koru ci run`, `post_run_verify`) versus
+when `koru.yaml` `when:` blocks are brief-only.
+
+### Auto-run a shell command via the queue
+
+```yaml
+# .planfile/sprints/current.yaml (excerpt)
+CI-001:
+  id: CI-001
+  name: Run local CI
+  status: open
+  executor:
+    kind: shell
+    handler: koru ci run --project .
+    mode: automatic
+  execution:
+    queue: default
+    state: ready
+  sprint: current
+```
+
+```bash
+koru --queue --project .           # one runnable ticket
+koru --queue --loop --project .    # drain shell tickets
+```
 
 ### List and show tickets
 
@@ -405,7 +432,7 @@ koru --queue --project . --loop --interactive --actor c2004-koru
 Or pipe answers in for scripted runs:
 
 ```bash
-{ echo "yes — proceed"; echo "sk-or-v1-MY-KEY"; } | \
+{ echo "yes — proceed"; echo "<your-openrouter-key>"; } | \
   koru --queue --project . --loop --interactive --actor ci-bot
 ```
 
@@ -512,10 +539,10 @@ Required environment:
 
 ```bash
 # OpenRouter (default endpoint):
-export OPENROUTER_API_KEY="sk-or-v1-..."
+export OPENROUTER_API_KEY="<your-openrouter-key>"
 
 # Or use OpenAI directly via inputs.llm_endpoint or KORU_LLM_ENDPOINT:
-export OPENAI_API_KEY="sk-..."
+export OPENAI_API_KEY="<your-openai-key>"
 export KORU_LLM_ENDPOINT="https://api.openai.com/v1/chat/completions"
 
 # Optional OpenRouter ranking metadata:
@@ -791,7 +818,7 @@ the full client × provider matrix (`KORU_TILLM_CLIENT`, `TILLM_PROVIDER`,
 `urirun/.env`).
 
 ```bash
-export OPENROUTER_API_KEY=sk-or-v1-xxxxx
+export OPENROUTER_API_KEY=<your-openrouter-key>
 export TILLM_PROVIDER=openrouter
 export KORU_TILLM_CLIENT=aider
 export KORU_TILLM_MODEL=openrouter/deepseek/deepseek-v4-pro
