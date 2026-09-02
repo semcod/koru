@@ -49,6 +49,13 @@
             "scripts/publish-local-onedev-validator.sh",
             "docs/publication-local-onedev-validator.md"
           ]
+        },
+        {
+          "name": "governance-ownership",
+          "paths": [
+            ".governance/manifest.json",
+            "project/ticket-065/intent.json"
+          ]
         }
       ],
       "responsibilityChanges": false,

@@ -30,6 +30,8 @@ export GITHUB_TOKEN="$(gh auth token)"
 
 Użyj `--dry-run`, aby wykonać checki i OneDev bez statusu REST ani dispatchu Validatora.
 
+Intent `delivery.architecture` also records `.governance/manifest.json` under the governance-ownership component for this ticket.
+
 ### Alternatywa: `koru ci publish`
 
 W katalogu Koru wrapper `koru ci publish --ticket ticket-NNN` deleguje głównie do
