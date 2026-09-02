@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-045",
+  "summary": "Untrack generated analysis state",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-045/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".gitignore",
+    "README.md",
+    "config/artifact-registry.json"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b6c8432e882efe181cb4999131f551d3a43ce985",
+    "targetBranch": "main",
+    "outcome": "Koru defines the governed ignore and reproducibility boundary needed to move generated analysis, coverage, tree and media output out of Git.",
+    "nonGoals": [
+      "Delete project governance scripts, ticket history or ticket indexes",
+      "Rewrite Git history or delete remote artifacts",
+      "Change runtime behavior or dependency manifests",
+      "Delete generated files owned by a dependent integration delivery",
+      "Modify documentation or CI paths owned by other workstreams"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Treat bulky analysis, coverage, tree and media files as reproducible external artifacts while retaining governance carriers and one compact hash/version registry in Git.",
+      "components": [
+        {
+          "name": "generated-artifact-policy",
+          "paths": [".gitignore", "README.md", "config/artifact-registry.json"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore the exact generated baseline; removed files remain recoverable from acceptedBaseSha without rewriting history."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python -m json.tool config/artifact-registry.json",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "local deterministic gate output and protected checks"
+      }
+    ]
+  }
+}

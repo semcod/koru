@@ -1,6 +1,6 @@
-![koru.mp4](koru.mp4)
+> The release demo is published as a CI artifact; generated media is not kept
+> in the source checkout.
 
-[koru.mp4](koru.mp4)
 # koru
 
 <img src="maori-koru-bold-400w.png" width="200" alt="koru">
