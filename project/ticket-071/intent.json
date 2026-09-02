@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-071",
+  "summary": "Collapse protobuf verb codecs",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-071/**",
+    "project/TICKETS.md",
+    "packages/dsl2koru/src/dsl2koru/pb_codec.py",
+    "packages/dsl2koru/tests/test_pb_codec_matrix.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-068", "ticket-070"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5c8bbf7c5fb62bcf375c1eb0740655dbcfb09246",
+    "targetBranch": "main",
+    "outcome": "Canonical protobuf command conversion uses one descriptor-driven implementation while preserving all native and compatibility round trips with fewer production lines.",
+    "nonGoals": [
+      "Do not change the protobuf schema or generated modules",
+      "Do not change text grammar, dispatch or event-store behavior",
+      "Do not remove the one-release legacy namespace aliases",
+      "Do not modify or publish ticket-069 or Draft PR 101"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 75,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use protobuf descriptors for field discovery and a small explicit default map for the only semantics not represented by proto3 field defaults.",
+      "components": [
+        {
+          "name": "canonical-protobuf-codec",
+          "paths": [
+            "packages/dsl2koru/src/dsl2koru/pb_codec.py",
+            "packages/dsl2koru/tests/test_pb_codec_matrix.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore the per-verb codec functions."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python -m pytest -q packages/dsl2koru/tests packages/dsl2coru/tests tests/test_namespace_pair_conformance.py"
+        ],
+        "evidence": "Full canonical and compatibility DSL suites plus the all-verb codec matrix"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python -m ruff check packages/dsl2koru/src/dsl2koru/pb_codec.py packages/dsl2koru/tests/test_pb_codec_matrix.py",
+          "python -m compileall -q packages/dsl2koru/src/dsl2koru packages/dsl2koru/tests/test_pb_codec_matrix.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "Changed-file and managed repository gates"
+      }
+    ]
+  }
+}
