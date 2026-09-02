@@ -1,0 +1,5 @@
+2026-09-02T12:20:00Z SESSION_EXECUTION_AUTHORIZATION observed from the user's instruction to continue and publish all completed work.
+2026-09-02T12:21:00Z PR #96 smoke failure reproduced: accepted base c672cb29 is a reachable main ancestor but absent from the default shallow GitHub checkout.
+2026-09-02T12:22:00Z Selected one-file infrastructure repair; PR #96, its intent and GitHub permissions remain unchanged.
+2026-09-02T12:25:00Z Workflow YAML contract, git ancestry, docker compose config and governance passed with 0 errors and 0 warnings.
+2026-09-02T12:26:00Z GitHub-equivalent smoke subset passed 83/83 with the repository virtualenv and worktree source on PYTHONPATH; the global interpreter baseline lacked the declared korullm dependency.

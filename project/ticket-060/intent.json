@@ -1,0 +1,62 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-060",
+  "summary": "Consolidate DSL result and event aliases",
+  "workstream": "application",
+  "classification": {"kind": "FEATURE", "priority": "P0", "origin": "requested"},
+  "allowedPaths": [
+    "project/ticket-060/**",
+    "project/TICKETS.md",
+    "packages/dsl2koru/proto/dsl2koru/v1/command.proto",
+    "packages/dsl2koru/proto/dsl2koru/v1/result.proto",
+    "packages/dsl2koru/src/dsl2koru/pb_codec.py",
+    "packages/dsl2koru/src/dsl2koru/result.py",
+    "packages/dsl2koru/src/dsl2koru/events.py",
+    "packages/dsl2koru/src/dsl2koru/v1/command_pb2.py",
+    "packages/dsl2koru/src/dsl2koru/v1/result_pb2.py",
+    "packages/dsl2coru/src/dsl2coru/pb_codec.py",
+    "packages/dsl2coru/src/dsl2coru/result.py",
+    "packages/dsl2coru/src/dsl2coru/events.py",
+    "packages/dsl2coru/src/dsl2coru/v1/command_pb2.py",
+    "packages/dsl2coru/src/dsl2coru/v1/result_pb2.py",
+    "packages/dsl2coru/tests/test_dsl2coru_protobuf.py",
+    "packages/dsl2coru/tests/test_dsl2coru_adapter_parity.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-059"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "7b19cf8222f6d175e1d4b4eaa47c065337dfa1c4",
+    "targetBranch": "main",
+    "outcome": "dsl2koru owns the shared result, protobuf and event-store implementation while dsl2coru exposes compatibility aliases and thin text wrappers.",
+    "nonGoals": [
+      "Change either DSL command grammar or dispatch semantics",
+      "Edit dependency manifests or documentation",
+      "Remove the dsl2coru distribution or console entry point",
+      "Consolidate JSON Schema files in this slice"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 120,
+    "budgets": {"maxImplementationFiles": 15, "maxAffectedComponents": 2, "maxPublicInterfaceChanges": 2, "maxRuntimeDependencies": 0},
+    "architecture": {
+      "status": "accepted",
+      "decision": "Merge both protobuf dialects and result/event compatibility into dsl2koru, then replace the bounded dsl2coru foundation with aliases.",
+      "components": [
+        {"name": "canonical-dsl-foundation", "paths": ["packages/dsl2koru/proto/**", "packages/dsl2koru/src/dsl2koru/**"]},
+        {"name": "legacy-dsl-foundation-facade", "paths": ["packages/dsl2coru/src/dsl2coru/**", "packages/dsl2coru/tests/test_dsl2coru_protobuf.py", "packages/dsl2coru/tests/test_dsl2coru_adapter_parity.py"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": ["dsl2koru protobuf envelope accepts the legacy verb family without renumbering existing fields", "dsl2coru foundation types alias dsl2koru"],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore separate result, protobuf and event implementations."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-04", "commands": ["PYTHONPATH=packages/dsl2koru/src:packages/dsl2coru/src python -m pytest -q packages/dsl2koru/tests packages/dsl2coru/tests"], "evidence": "focused package suites and alias identity tests"},
+      {"criterion": "AC-05", "commands": ["python -m ruff check packages/dsl2koru/src/dsl2koru packages/dsl2coru/src/dsl2coru", "python -m compileall -q packages/dsl2koru/src packages/dsl2coru/src", "./project/governance-check.sh", "docker compose config --quiet", "git diff --check"], "evidence": "local deterministic gates and protected checks"}
+    ]
+  }
+}

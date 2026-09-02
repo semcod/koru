@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-062",
+  "summary": "Synchronous planfile GitHub sync on Koru ticket changes",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-062/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/planfile_sync.py",
+    "src/koru/queue/living_status.py",
+    "src/koru/task_intake.py",
+    "src/koru/scan_ticket_emission.py",
+    "src/koru/work/lifecycle.py",
+    "src/koru/init.py",
+    "tests/test_planfile_sync.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [
+    "ticket-029"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "c672cb29e456ab763e5256cb82051421415a64eb",
+    "targetBranch": "main",
+    "outcome": "Koru synchronously publishes Planfile ticket create/update and living-status changes to configured GitHub (or other Planfile) integrations so remote issues show where work is running.",
+    "nonGoals": [
+      "Call GitHub APIs directly from Koru workers",
+      "Poll GitHub Issues as a work source"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep Planfile as the sync boundary; Koru stamps integration routes and invokes planfile sync after local ticket mutations.",
+      "components": [
+        {
+          "name": "planfile-sync-bridge",
+          "paths": [
+            "src/koru/queue/planfile_sync.py",
+            "tests/test_planfile_sync.py",
+            "src/koru/init.py"
+          ]
+        },
+        {
+          "name": "ticket-hooks",
+          "paths": [
+            "src/koru/queue/living_status.py",
+            "src/koru/task_intake.py",
+            "src/koru/scan_ticket_emission.py",
+            "src/koru/work/lifecycle.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "policy.yaml documents optional planfile_sync block"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert merge; remote issues stop updating but local Planfile remains canonical."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_planfile_sync.py tests/test_queue_living_status.py"
+        ],
+        "evidence": "pytest green"
+      }
+    ]
+  }
+}
