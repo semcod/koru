@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-from dsl2koru.pb_codec import encode_protobuf, envelope_to_dict, result_to_pb
+from dsl2koru.pb_codec import encode_protobuf, envelope_to_dict, pb_to_result, result_to_pb
 from dsl2koru.result import DslResult
 from dsl2koru.v1 import result_pb2
 
@@ -47,6 +47,16 @@ class EventStore:
             return cls(events_dir / "dsl.events.pb", fmt="protobuf")
         return cls(events_dir / "dsl.events.jsonl", fmt="jsonl")
 
+    @classmethod
+    def for_default(cls, default_file: str | None = None, *, prefer_pb: bool = True) -> EventStore:
+        """Build the one-release Coru-compatible event-store location."""
+        root = Path(default_file or ".").expanduser().resolve().parent
+        events_dir = root / ".coru" / "events"
+        events_dir.mkdir(parents=True, exist_ok=True)
+        if prefer_pb:
+            return cls(events_dir / "dsl.events.pb", fmt="protobuf")
+        return cls(events_dir / "dsl.events.jsonl", fmt="jsonl")
+
     def append_command(self, command: dict[str, Any], result: dict[str, Any], *, correlation_id: str = "") -> str:
         event_id = uuid.uuid4().hex
         event = StoredEvent(
@@ -67,6 +77,7 @@ class EventStore:
                 ok=bool(result.get("ok")),
                 verb=str(result.get("verb", command.get("verb", ""))),
                 command=str(result.get("command", "")),
+                action=str(result.get("action", "")),
                 output=str(result.get("output", "")),
                 data=dict(result.get("data") or {}),
                 error=result.get("error"),
@@ -101,14 +112,7 @@ class EventStore:
                         id=pb.id,
                         ts_unix=int(pb.ts_unix),
                         command=envelope_to_dict(pb.command),
-                        result={
-                            "ok": pb.result.ok,
-                            "verb": pb.result.verb,
-                            "command": pb.result.command,
-                            "output": pb.result.output,
-                            "error": pb.result.error or None,
-                            "event_id": pb.result.event_id or None,
-                        },
+                        result=pb_to_result(pb.result).to_dict(),
                         correlation_id=pb.correlation_id,
                     ),
                 )
@@ -148,14 +152,7 @@ class EventStore:
                     id=pb.id,
                     ts_unix=int(pb.ts_unix),
                     command=envelope_to_dict(pb.command),
-                    result={
-                        "ok": pb.result.ok,
-                        "verb": pb.result.verb,
-                        "command": pb.result.command,
-                        "output": pb.result.output,
-                        "error": pb.result.error or None,
-                        "event_id": pb.result.event_id or None,
-                    },
+                    result=pb_to_result(pb.result).to_dict(),
                     correlation_id=pb.correlation_id,
                 ),
             )

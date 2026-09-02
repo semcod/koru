@@ -1,0 +1,70 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-063",
+  "summary": "Fetch accepted base history in pull-request smoke CI",
+  "workstream": "infrastructure",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-063/**",
+    ".github/workflows/koru-ci.yml"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "15a3252db9ff80f4e5f9f17e3d72c72f9ff973a1",
+    "targetBranch": "main",
+    "outcome": "Pull-request smoke CI retains enough Git history for the governance plugin to resolve an exact accepted base without changing that base.",
+    "nonGoals": [
+      "Rewrite delivery.acceptedBaseSha values",
+      "Relax or skip governance checks",
+      "Change GitHub token permissions"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Set actions/checkout fetch-depth to zero in the existing PR smoke job so the unchanged fail-closed governance plugin can resolve ancestor commits.",
+      "components": [
+        {
+          "name": "pull-request-smoke",
+          "paths": [
+            ".github/workflows/koru-ci.yml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the workflow change; shallow checkout behavior returns and older accepted bases fail closed."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -c 'import pathlib; text=pathlib.Path(\".github/workflows/koru-ci.yml\").read_text(); assert \"fetch-depth: 0\" in text'",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "workflow contract and governance gate green"
+      }
+    ]
+  }
+}
