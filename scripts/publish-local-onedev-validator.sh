@@ -49,6 +49,8 @@ done
 
 ONEDEV_AGENT="${ONEDEV_AGENT:-$HOME/github/subactor/onedev-agent}"
 VALIDATOR_AGENT="${VALIDATOR_AGENT:-$HOME/github/subactor/validator-agent}"
+SUBLLM_ROOT="${SUBLLM_ROOT:-$HOME/github/subactor/subllm}"
+SUBLLM_POLICY_FILE="${SUBLLM_POLICY_FILE:-${SUBLLM_ROOT}/subllm.toml}"
 REPO_SLUG="${OWNER}/${NAME}"
 WORK_ROOT=""
 RUNNER_TEMP=""
@@ -93,21 +95,18 @@ wait_for_commit_status() {
 
 run_onedev_agent() {
   local subcommand="$1"
-  if command -v onedev-agent >/dev/null 2>&1; then
-    onedev-agent --config config/repositories.toml "$subcommand"
-    return
-  fi
-  if command -v uv >/dev/null 2>&1 && [[ -f "${ONEDEV_AGENT}/pyproject.toml" ]]; then
-    uv run --directory "$ONEDEV_AGENT" onedev-agent --config config/repositories.toml "$subcommand"
-    return
-  fi
-  PYTHONPATH="${ONEDEV_AGENT}/src:${PYTHONPATH:-}" \
-    python3 -m onedev_agent.cli --config "${ONEDEV_AGENT}/config/repositories.toml" "$subcommand"
+  [[ -d "$SUBLLM_ROOT/src" ]] || die "SUBLLM_ROOT not found: $SUBLLM_ROOT"
+  [[ -f "$SUBLLM_POLICY_FILE" ]] || die "SUBLLM_POLICY_FILE not found: $SUBLLM_POLICY_FILE"
+  export SUBLLM_POLICY_FILE
+  export PYTHONPATH="${SUBLLM_ROOT}/src:${ONEDEV_AGENT}/src:${PYTHONPATH:-}"
+  python3 -m onedev_agent --config "${ONEDEV_AGENT}/config/repositories.toml" "$subcommand"
 }
 
 echo "=== Resolve agent paths ==="
 [[ -d "$ONEDEV_AGENT" ]] || die "ONEDEV_AGENT not found: $ONEDEV_AGENT"
 [[ -d "$VALIDATOR_AGENT" ]] || die "VALIDATOR_AGENT not found: $VALIDATOR_AGENT"
+[[ -d "$SUBLLM_ROOT/src" ]] || die "SUBLLM_ROOT not found: $SUBLLM_ROOT"
+[[ -f "$SUBLLM_POLICY_FILE" ]] || die "SUBLLM_POLICY_FILE not found: $SUBLLM_POLICY_FILE"
 [[ -x "${VALIDATOR_AGENT}/bin/dispatch-direct-pr.sh" ]] || die "missing ${VALIDATOR_AGENT}/bin/dispatch-direct-pr.sh"
 command -v gh >/dev/null || die "gh CLI is required"
 command -v python3 >/dev/null || die "python3 is required"

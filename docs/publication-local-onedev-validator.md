@@ -12,6 +12,9 @@ Ta ścieżka publikuje PR **bez uruchamiania GitHub Actions na repozytorium doce
 2. **OneDev** — lokalny `onedev-agent` (`pr-coordinate-once`, `pr-execute-once`) publikuje
    dowód `onedev/local-verify` na tym samym SHA (wymaga `GITHUB_TOKEN` i skonfigurowanego
    `config/repositories.toml`).
+   Requires sibling checkout `subactor/subllm` (override `SUBLLM_ROOT`) so local
+   policy matches the installed SubLLM sources — pinned `uv` venv alone rejects
+   newer `subllm.toml` defaults such as `gemini-3.1-pro-high`.
 3. **Validator** — jedyne zaufane workflow GitHub Actions to dispatch na
    `subactor/validator-agent` (`bin/dispatch-direct-pr.sh`), który czeka na checki i
    opcjonalnie merge (`--merge --watch`).
@@ -21,6 +24,7 @@ Ta ścieżka publikuje PR **bez uruchamiania GitHub Actions na repozytorium doce
 ```bash
 export ONEDEV_AGENT="$HOME/github/subactor/onedev-agent"
 export VALIDATOR_AGENT="$HOME/github/subactor/validator-agent"
+export SUBLLM_ROOT="$HOME/github/subactor/subllm"
 export GITHUB_TOKEN="$(gh auth token)"
 
 ./scripts/publish-local-onedev-validator.sh \
@@ -47,6 +51,7 @@ This path publishes a PR **without running GitHub Actions on the target reposito
    same steps as `.github/workflows/standard-pack-conformance.yml`, then posts
    `standard packs / conformance` via GitHub REST.
 2. **OneDev** — local `onedev-agent` publishes `onedev/local-verify` on that SHA.
+   Use sibling `subactor/subllm` (`SUBLLM_ROOT`) so policy and SubLLM sources align.
 3. **Validator** — trusted merge path is only `subactor/validator-agent`
    `dispatch-direct-pr.sh` (optional `--merge --watch`).
 
