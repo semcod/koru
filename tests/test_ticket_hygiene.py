@@ -27,6 +27,8 @@ def test_ticket_is_junk_for_venv_paths() -> None:
 
 
 def test_hygiene_archives_junk(tmp_path: Path) -> None:
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "a.py").write_text("x = 1\n", encoding="utf-8")
     _write_sprint(
         tmp_path,
         {
@@ -72,3 +74,17 @@ def test_hygiene_dry_run(tmp_path: Path) -> None:
     )
     outcome = th.run_ticket_hygiene(tmp_path, dry_run=True)
     assert outcome.archived == ["PLF-JUNK (dry-run)"]
+
+
+def test_ticket_has_stale_paths(tmp_path: Path) -> None:
+    stale = tmp_path / "src" / "env2llm" / "doql" / "parse.py"
+    assert th.ticket_has_stale_paths(
+        {"files": ["src/env2llm/doql/parse.py"]},
+        project=tmp_path,
+    ) is True
+    stale.parent.mkdir(parents=True)
+    stale.write_text("# moved\n", encoding="utf-8")
+    assert th.ticket_has_stale_paths(
+        {"files": ["src/env2llm/doql/parse.py"]},
+        project=tmp_path,
+    ) is False

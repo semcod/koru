@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from koru.ci.github import GitHubCliError
 from koru.ci.gates import DEFAULT_GATES, gate_commands, resolve_gates, run_quality_gates
 from koru.ci.publication import (
     PublicationConfig,
@@ -91,6 +92,40 @@ class TestPublication(unittest.TestCase):
         self.assertIn("--ticket", result["command"])
         self.assertIn("ticket-021", result["command"])
 
+    def test_dispatch_blocks_conflicting_pr(self) -> None:
+        project = Path("/tmp/koru-ci-publish-conflict")
+        cfg = PublicationConfig(
+            validator_checkout=Path("/tmp/validator-agent"),
+            validator_repo="subactor/validator-agent",
+            validator_ref="main",
+            merge=False,
+            wait_checks=True,
+            watch=False,
+            update_branch=False,
+        )
+        with (
+            patch("koru.ci.publication.gh_available", return_value=True),
+            patch("koru.ci.publication.resolve_github_repo") as repo_mock,
+            patch(
+                "koru.ci.publication.wait_for_pr_mergeable",
+                return_value={
+                    "mergeable": "CONFLICTING",
+                    "mergeStateStatus": "DIRTY",
+                    "headRefOid": "abc123",
+                },
+            ),
+        ):
+            repo_mock.return_value = type("Repo", (), {"owner": "semcod", "name": "koru", "slug": "semcod/koru"})()
+            with self.assertRaises(GitHubCliError) as ctx:
+                dispatch_validator_merge(
+                    project,
+                    ticket_id="ticket-046",
+                    pr_number=99,
+                    config=cfg,
+                    dry_run=False,
+                )
+        self.assertIn("not mergeable", str(ctx.exception))
+
 
 class TestCiGates(unittest.TestCase):
     def test_resolve_gates_defaults_without_topology(self) -> None:
@@ -107,10 +142,18 @@ class TestCiGates(unittest.TestCase):
         with patch("koru.ci.gates.has_testql_scenarios", return_value=False):
             result = run_quality_gates(project, gates=["testql"])
         self.assertEqual(result["overall_status"], "passed")
-        self.assertEqual(result["results"][0]["status"], "skipped")
+        self.assertEqual(result["results"][0]["status"], "skipped"        )
 
 
 class TestCiCli(unittest.TestCase):
+    def test_ci_run_accepts_project_after_subcommand(self) -> None:
+        with (
+            patch("koru.cli_ci.run_local_ci", return_value={"overall_status": "passed", "stages": []}),
+            patch("koru.cli_ci.emit_management_event"),
+        ):
+            code = ci_main(["run", "--project", "/tmp/project", "--skip-gates"])
+        self.assertEqual(code, 0)
+
     def test_ci_gates_help(self) -> None:
         with patch("koru.cli_ci.run_quality_gates", return_value={"overall_status": "passed", "results": []}):
             code = ci_main(["--project", "/tmp", "gates", "--format", "json"])

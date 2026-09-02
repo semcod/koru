@@ -73,6 +73,7 @@ def parse_next_ticket(
     *,
     queue_name: str | None = None,
     ticket_id: str | None = None,
+    interactive: bool = False,
 ) -> dict | None:
     """Pick the first runnable ticket from planfile output.
 
@@ -117,8 +118,25 @@ def parse_next_ticket(
             ),
         )
 
-        return runnable_tickets[0]
+        return next(
+            (
+                entry
+                for entry in runnable_tickets
+                if interactive or not _should_skip_deferred_human(entry)
+            ),
+            None,
+        )
     return None
+
+
+def _should_skip_deferred_human(ticket: dict) -> bool:
+    executor = ticket.get("executor") or {}
+    if str(executor.get("kind") or "").lower() != "human":
+        return False
+    execution = ticket.get("execution") if isinstance(ticket.get("execution"), dict) else {}
+    queue = str(execution.get("queue") or "default").lower()
+    labels = {str(label).lower() for label in (ticket.get("labels") or [])}
+    return queue == "operator" or "operator" in labels
 
 
 def ticket_command(ticket: dict) -> str | None:

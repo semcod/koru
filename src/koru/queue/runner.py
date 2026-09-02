@@ -518,6 +518,8 @@ def _next_ticket_or_result(
     planfile_runner: Callable[[list[str], Path], CommandResult],
     queue_name: str | None = None,
     target_ticket_id: str | None = None,
+    *,
+    interactive: bool = False,
 ) -> tuple[dict[str, Any] | None, QueueRunResult | None]:
     next_result = planfile_command(
         project,
@@ -546,6 +548,7 @@ def _next_ticket_or_result(
         next_result.stdout,
         queue_name=queue_name,
         ticket_id=target_ticket_id,
+        interactive=interactive,
     )
     if ticket is None:
         if target_ticket_id is not None:
@@ -744,6 +747,7 @@ def _run_next_planfile_task_impl(
             planfile_runner,
             queue_name=queue_name,
             target_ticket_id=target_ticket_id,
+            interactive=interactive,
         )
         if early_result is not None:
             return early_result

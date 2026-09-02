@@ -17,6 +17,7 @@ from koru.ci.github import (
     gh_available,
     resolve_github_repo,
     resolve_pr_head_sha,
+    wait_for_pr_mergeable,
 )
 from koru.utils.subprocess_runner import resolve_planfile_subpath
 
@@ -114,6 +115,22 @@ def dispatch_validator_merge(
         resolved_pr = find_open_pr_for_branch(repo, branch)
         if resolved_pr is None:
             raise GitHubCliError(f"no open PR found for branch {branch!r}")
+
+    if not dry_run:
+        merge_state = wait_for_pr_mergeable(repo, resolved_pr)
+        mergeable = merge_state.get("mergeable", "UNKNOWN")
+        merge_status = merge_state.get("mergeStateStatus", "UNKNOWN")
+        if mergeable == "CONFLICTING" or merge_status == "DIRTY":
+            raise GitHubCliError(
+                "pull request is not mergeable at the current head "
+                f"(mergeable={mergeable} merge_state_status={merge_status}); "
+                "rebase onto main and refresh acceptedBaseSha before dispatch",
+            )
+        if mergeable == "UNKNOWN" or merge_status == "UNKNOWN":
+            raise GitHubCliError(
+                "pull request mergeability is still UNKNOWN after polling; "
+                "retry after GitHub computes merge state or pass --update-branch",
+            )
 
     frozen_head = resolve_pr_head_sha(repo, resolved_pr)
     script = _resolve_validator_script(cfg)

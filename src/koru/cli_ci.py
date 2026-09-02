@@ -107,17 +107,27 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
     sub = parser.add_subparsers(dest="subcommand", required=True)
 
+    def _add_project_to_sub(subparser: argparse.ArgumentParser) -> None:
+        subparser.add_argument(
+            "--project",
+            type=Path,
+            default=argparse.SUPPRESS,
+            help="Project root (also accepted before subcommand: koru ci --project . run).",
+        )
+
     run = sub.add_parser("run", help="Run policy ci.command then quality gates.")
     run.add_argument("--skip-gates", action="store_true", help="Only run policy ci.command.")
     run.add_argument("--gates", nargs="+", help="Subset of gates (regix, redup, vallm, …).")
     run.add_argument("--no-fail-fast", action="store_true", help="Run all gates even after failure.")
     run.add_argument("--format", choices=("text", "json"), default="text")
+    _add_project_to_sub(run)
     run.set_defaults(func=_action_run)
 
     gates = sub.add_parser("gates", help="Run Koru quality gates only.")
     gates.add_argument("--gates", nargs="+", help="Subset of gates.")
     gates.add_argument("--no-fail-fast", action="store_true")
     gates.add_argument("--format", choices=("text", "json"), default="text")
+    _add_project_to_sub(gates)
     gates.set_defaults(func=_action_gates)
 
     publish = sub.add_parser(
@@ -134,6 +144,7 @@ def build_parser() -> argparse.ArgumentParser:
     publish.add_argument("--no-wait-checks", action="store_true", help="Skip --wait-checks on dispatch.")
     publish.add_argument("--dry-run", action="store_true", help="Print frozen head and dispatch argv only.")
     publish.add_argument("--format", choices=("text", "json"), default="text")
+    _add_project_to_sub(publish)
     publish.set_defaults(func=_action_publish)
 
     return parser
@@ -141,6 +152,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def ci_main(argv: list[str]) -> int:
     args = build_parser().parse_args(argv)
+    if not hasattr(args, "project"):
+        args.project = Path.cwd()
     try:
         return int(args.func(args))
     except Exception as exc:
