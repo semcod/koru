@@ -1,24 +1,41 @@
-"""nlp2coru — natural-language to CORU DSL bridge."""
+"""One-release compatibility aliases for :mod:`nlp2koru`."""
 
-from .apply import ApplyResult, apply_prompt
-from .heuristic import _refactor_intent, detect_setup_intent, heuristic_plan, to_dsl_lines
-from .llm import llm_plan
-from .llm_backend import LLMBackend, SubLlmBackend, get_backend
-from .models import CoruIntent, CoruPlan
-from .rewrite import rewrite_chat_prompt
+import warnings
+
+warnings.warn(
+    "nlp2coru is deprecated; import nlp2koru instead",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+import nlp2koru as _canonical  # noqa: E402
+
+ApplyResult = _canonical.ApplyResult
+CoruIntent = _canonical.KoruIntent
+CoruPlan = _canonical.KoruPlan
+LLMBackend = _canonical.LLMBackend
+SubLlmBackend = _canonical.SubLlmBackend
+_refactor_intent = _canonical._refactor_intent
+apply_prompt = _canonical.apply_prompt
+detect_setup_intent = _canonical.detect_setup_intent
+get_backend = _canonical.get_backend
+heuristic_plan = _canonical.heuristic_plan
+llm_plan = _canonical.legacy_llm_plan
+rewrite_chat_prompt = _canonical.rewrite_chat_prompt
+to_dsl_lines = _canonical.to_dsl_lines
 
 __all__ = [
     "ApplyResult",
-    "apply_prompt",
     "CoruIntent",
     "CoruPlan",
     "LLMBackend",
     "SubLlmBackend",
-    "get_backend",
-    "llm_plan",
     "_refactor_intent",
-    "heuristic_plan",
+    "apply_prompt",
     "detect_setup_intent",
-    "to_dsl_lines",
+    "get_backend",
+    "heuristic_plan",
+    "llm_plan",
     "rewrite_chat_prompt",
+    "to_dsl_lines",
 ]
