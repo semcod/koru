@@ -9,7 +9,10 @@ description = "Interactive shell for dsl2coru"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "Apache-2.0"
-dependencies = ["dsl2coru>=0.1.0"]
+dependencies = [
+    "cli2koru>=0.1.0",
+    "dsl2coru>=0.1.0",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
