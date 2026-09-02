@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-068",
+  "summary": "Complete namespace compatibility conformance",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-068/**",
+    "project/TICKETS.md",
+    "packages/dsl2koru/src/dsl2koru/pb_codec.py",
+    "packages/dsl2coru/src/dsl2coru/pb_codec.py",
+    "tests/test_namespace_pair_conformance.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-067"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "60d86b5a563eff53a82cd5de3953d6e998ce0008",
+    "targetBranch": "main",
+    "outcome": "All six legacy adapter namespaces are executable compatibility facades over canonical Koru implementations, with no remaining protobuf helper behavior in dsl2coru.",
+    "nonGoals": [
+      "Delete legacy distributions before the required compatibility release",
+      "Edit dependency manifests or integration-owned documentation",
+      "Change DSL grammar, protobuf wire fields or command semantics",
+      "Resolve or modify Draft PR 101"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 75,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Let canonical protobuf text helpers select project or file context, expose them as direct legacy aliases and enforce all namespace pairs through one AST-and-entrypoint conformance matrix.",
+      "components": [
+        {"name": "canonical-protobuf-codec", "paths": ["packages/dsl2koru/src/dsl2koru/pb_codec.py"]},
+        {"name": "legacy-protobuf-facade", "paths": ["packages/dsl2coru/src/dsl2coru/pb_codec.py"]},
+        {"name": "namespace-conformance", "paths": ["tests/test_namespace_pair_conformance.py"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": ["dsl2koru.pb_codec.encode_text_to_protobuf accepts an optional default_file compatibility context"],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore the legacy protobuf wrappers and remove the cross-family conformance suite."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["PYTHONPATH=<all adapter source roots> python -m pytest -q tests/test_namespace_pair_conformance.py packages/dsl2koru/tests packages/dsl2coru/tests"],
+        "evidence": "canonical and compatibility protobuf plus namespace matrix"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python -m ruff check <changed Python files>",
+          "python -m compileall -q <changed source roots>",
+          "./project/governance-check.sh",
+          "python .governance/worktree_overlap_check.py --root .",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "deterministic local and protected delivery gates"
+      }
+    ]
+  }
+}

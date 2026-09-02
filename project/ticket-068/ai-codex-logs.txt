@@ -1,0 +1,4 @@
+2026-09-02 SESSION_EXECUTION_AUTHORIZATION: user requested continued work and push.
+2026-09-02 SCOPE: canonicalize protobuf text context and add six-pair namespace conformance.
+2026-09-02 IMPLEMENTATION: dsl2koru accepts both context fields; legacy protobuf helpers are aliases; conformance covers all pairs.
+2026-09-02 VALIDATION: 65 tests, Ruff, compileall, governance, Docker Compose, diff and repo-scoped overlap pass.

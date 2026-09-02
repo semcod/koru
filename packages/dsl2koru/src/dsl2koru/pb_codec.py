@@ -346,11 +346,26 @@ def decode_protobuf(data: bytes) -> dict[str, Any]:
     return envelope_to_dict(envelope)
 
 
-def encode_text_to_protobuf(line: str, *, default_project: str = "", correlation_id: str = "") -> bytes:
-    payload = parse_line(line, default_project=default_project or None)
+def encode_text_to_protobuf(
+    line: str,
+    *,
+    default_project: str = "",
+    default_file: str = "",
+    correlation_id: str = "",
+) -> bytes:
+    payload = parse_line(
+        line,
+        default_project=default_project or None,
+        default_file=default_file or None,
+    )
     if not payload:
         raise ValueError("empty command")
-    return encode_protobuf(payload, default_project=default_project, correlation_id=correlation_id)
+    return encode_protobuf(
+        payload,
+        default_project=default_project,
+        default_file=default_file,
+        correlation_id=correlation_id,
+    )
 
 
 def decode_protobuf_to_text(data: bytes) -> str:
