@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-072",
+  "summary": "Collapse Order 30 DSL grammar tables",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-072/**",
+    "project/TICKETS.md",
+    "packages/dsl2koru/src/dsl2koru/grammar.py",
+    "packages/dsl2koru/tests/test_grammar_matrix.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-068", "ticket-070", "ticket-071"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b3a3dfa455ea4971697611459c1cbb83924afdcf",
+    "targetBranch": "main",
+    "outcome": "Canonical DSL text conversion uses declarative field tables while preserving all native and compatibility grammar behavior with fewer production lines.",
+    "nonGoals": [
+      "Do not change public DSL spellings, aliases or defaults",
+      "Do not change protobuf conversion, dispatch or event-store behavior",
+      "Do not remove the one-release legacy namespace aliases",
+      "Do not modify or publish ticket-069 or Draft PR 101"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 75,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Represent common boolean, scalar and positional grammar fields as immutable per-verb specifications; retain dedicated handlers only for forms whose ordering or compatibility defaults are semantic.",
+      "components": [
+        {
+          "name": "canonical-text-grammar",
+          "paths": [
+            "packages/dsl2koru/src/dsl2koru/grammar.py",
+            "packages/dsl2koru/tests/test_grammar_matrix.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore the per-verb grammar wrappers."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python -m pytest -q packages/dsl2koru/tests packages/dsl2coru/tests tests/test_namespace_pair_conformance.py"
+        ],
+        "evidence": "Full canonical and compatibility DSL suites plus the all-verb grammar matrix"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python -m ruff check packages/dsl2koru/src/dsl2koru/grammar.py packages/dsl2koru/tests/test_grammar_matrix.py",
+          "python -m compileall -q packages/dsl2koru/src/dsl2koru packages/dsl2koru/tests/test_grammar_matrix.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "Changed-file and managed repository gates"
+      }
+    ]
+  }
+}
