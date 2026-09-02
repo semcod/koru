@@ -1,0 +1,78 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-042",
+  "summary": "Enforce complete Docker supply-chain inventory",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-042/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "tests/docker/ide-matrix.Dockerfile",
+    "tests/test_docker_supply_chain.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-043", "ticket-044"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f0bceb076974505c8729977ab902ef4be2e5cb47",
+    "targetBranch": "main",
+    "outcome": "Koru continuously rejects any unreviewed or mutable consumed Docker build input and its test-owned IDE matrix installs only from reviewed immutable inputs.",
+    "nonGoals": [
+      "Rewrite the root Koru Dockerfile dependency model",
+      "Inspect upstream repository contents at test runtime",
+      "Change application behavior or public interfaces"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use an explicit repository inventory and syntax-level deterministic assertions; allow a dynamic test base only when its default and every canonical caller value carry a sha256 digest.",
+      "components": [
+        {
+          "name": "docker-supply-chain-audit",
+          "paths": ["tests/test_docker_supply_chain.py"]
+        },
+        {
+          "name": "ide-matrix-test-image",
+          "paths": ["tests/docker/ide-matrix.Dockerfile"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge; no persistent data or runtime interface changes are involved."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["python -m pytest -q tests/test_docker_supply_chain.py tests/test_docker_ide_matrix_config.py"],
+        "evidence": "exhaustive deterministic inventory and immutable-input assertions"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": ["docker build --check -f tests/docker/ide-matrix.Dockerfile .", "KORU_DOCKER_SYSTEMS=debian-slim KORU_DOCKER_IDES=vscode bash scripts/docker-ide-matrix.sh"],
+        "evidence": "test-owned frozen install and runtime smoke"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["./project/governance-check.sh", "docker compose --profile '*' config --quiet", "git diff --check"],
+        "evidence": "managed gates and protected validator receipt"
+      }
+    ]
+  }
+}
