@@ -91,6 +91,20 @@ wait_for_commit_status() {
   die "timed out waiting for ${context}=${want} on ${sha} (last=${state:-pending})"
 }
 
+run_onedev_agent() {
+  local subcommand="$1"
+  if command -v onedev-agent >/dev/null 2>&1; then
+    onedev-agent --config config/repositories.toml "$subcommand"
+    return
+  fi
+  if command -v uv >/dev/null 2>&1 && [[ -f "${ONEDEV_AGENT}/pyproject.toml" ]]; then
+    uv run --directory "$ONEDEV_AGENT" onedev-agent --config config/repositories.toml "$subcommand"
+    return
+  fi
+  PYTHONPATH="${ONEDEV_AGENT}/src:${PYTHONPATH:-}" \
+    python3 -m onedev_agent.cli --config "${ONEDEV_AGENT}/config/repositories.toml" "$subcommand"
+}
+
 echo "=== Resolve agent paths ==="
 [[ -d "$ONEDEV_AGENT" ]] || die "ONEDEV_AGENT not found: $ONEDEV_AGENT"
 [[ -d "$VALIDATOR_AGENT" ]] || die "VALIDATOR_AGENT not found: $VALIDATOR_AGENT"
@@ -214,8 +228,8 @@ if [[ -z "${GITHUB_TOKEN:-}" ]]; then
 fi
 (
   cd "$ONEDEV_AGENT"
-  python3 -m onedev_agent --config config/repositories.toml pr-coordinate-once
-  python3 -m onedev_agent --config config/repositories.toml pr-execute-once
+  run_onedev_agent pr-coordinate-once
+  run_onedev_agent pr-execute-once
 )
 
 echo "=== Verify onedev/local-verify on frozen head ==="
