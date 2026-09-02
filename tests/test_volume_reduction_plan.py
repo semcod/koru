@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -14,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PLAN_PATH = ROOT / "docs/architecture/volume-reduction-plan.yaml"
 SCHEMA_PATH = ROOT / "schemas/volume-reduction-plan.schema.json"
 BOUNDARY_INVENTORY_PATH = ROOT / "docs/architecture/dependency-boundary-inventory.yaml"
+ARTIFACT_REGISTRY_PATH = ROOT / "config/artifact-registry.json"
 
 
 class TestVolumeReductionPlan(unittest.TestCase):
@@ -62,6 +64,8 @@ class TestVolumeReductionPlan(unittest.TestCase):
             for source in stage["source_paths"]:
                 with self.subTest(stage=stage["id"], source=source):
                     source_path = ROOT / source
+                    if stage["action"] == "untrack_generated":
+                        continue
                     if stage["status"] == "complete" and stage["action"] == "move_to_test_support":
                         self.assertFalse(source_path.exists(), source)
                         self.assertTrue((ROOT / "tests/fakes" / source_path.name).is_dir(), source)
@@ -71,6 +75,21 @@ class TestVolumeReductionPlan(unittest.TestCase):
                 with self.subTest(stage=stage["id"], blocker=blocker):
                     self.assertIn(blocker, stages)
                     self.assertLess(stages[blocker]["order"], stage["order"])
+
+    def test_generated_artifact_registry_paths_are_untracked(self) -> None:
+        registry = json.loads(ARTIFACT_REGISTRY_PATH.read_text(encoding="utf-8"))
+        tracked: set[str] = set()
+        for group in registry["artifactGroups"]:
+            for pathspec in group["paths"]:
+                result = subprocess.run(
+                    ["git", "ls-files", "--", pathspec],
+                    cwd=ROOT,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                tracked.update(result.stdout.splitlines())
+        self.assertEqual(sorted(tracked), [])
 
     def test_moves_do_not_claim_ecosystem_deletion(self) -> None:
         for stage in self.plan["stages"]:
