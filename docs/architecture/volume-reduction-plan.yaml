@@ -148,7 +148,7 @@ stages:
   - id: namespaces.coru_koru_pairs
     order: 30
     priority: P0
-    status: planned
+    status: dual_run
     action: delete_duplicate
     source_paths:
       - packages/cli2coru
@@ -178,6 +178,7 @@ stages:
     acceptance:
       - One conformance suite runs against both command names.
       - Legacy namespaces contain only warnings and re-exports for one release.
+      - Completion requires at least 3000 net production lines removed from the exact pre-Order-30 baseline; compatibility consolidation alone is not completion.
     blocked_by:
       - runtime.shadow_packages
 
