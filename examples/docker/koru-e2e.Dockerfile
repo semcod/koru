@@ -8,7 +8,10 @@
 #     --build-arg E2E_SCRIPT=examples/ci/headless-autonomous-jsonl/e2e.sh \
 #     -t koru:e2e-smoke .
 
-FROM python:3.12-slim
+FROM ghcr.io/astral-sh/uv:0.11.28@sha256:0f36cb9361a3346885ca3677e3767016687b5a170c1a6b88465ec14aefec90aa AS uv
+FROM python:3.12.14-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254
+
+COPY --from=uv /uv /uvx /bin/
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git curl ca-certificates \
@@ -16,26 +19,29 @@ RUN apt-get update \
 
 WORKDIR /opt/koru
 
-COPY pyproject.toml README.md LICENSE VERSION ./
+ENV UV_PROJECT_ENVIRONMENT=/opt/koru/.venv \
+    VIRTUAL_ENV=/opt/koru/.venv \
+    PATH="/opt/koru/.venv/bin:${PATH}" \
+    PYTHONUNBUFFERED=1
+
+COPY pyproject.toml uv.lock README.md LICENSE VERSION ./
+
+# Validate the reviewed lock without local sibling overrides before copying
+# frequently changed sources, then install exactly that frozen resolution.
+RUN uv lock --check --no-sources \
+    && uv sync --frozen --no-dev --no-editable \
+        --extra planfile --extra api --extra browser --no-install-project
+
 COPY src ./src/
 COPY packages ./packages/
 COPY templates ./templates/
 COPY docs ./docs/
 
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -e ".[planfile,api]" \
-    && pip install --no-cache-dir \
-        "planfile>=0.1.100" \
-        "uvicorn[standard]>=0.30" \
-        "fastapi>=0.115" \
-        "wup>=0.2.60"
-
-# Example-specific extra packages (e.g. "nlp2uri>=0.4.7 testql>=1.2.55")
-ARG EXTRA_PIP=""
-RUN if [ -n "$EXTRA_PIP" ]; then pip install --no-cache-dir $EXTRA_PIP; fi
-
 # Examples that ship helper scripts / scenario files need the tree in-image
 COPY examples ./examples/
+
+RUN uv sync --frozen --no-dev --no-editable \
+        --extra planfile --extra api --extra browser
 
 # Optional cache-bust when iterating on examples without touching src
 ARG CACHE_BUST=0
@@ -46,6 +52,5 @@ COPY ${E2E_SCRIPT} /opt/e2e-script.sh
 RUN chmod +x /opt/e2e-script.sh
 
 WORKDIR /workspace
-ENV PYTHONUNBUFFERED=1
 ENTRYPOINT []
 CMD ["/bin/bash", "-euo", "pipefail", "/opt/e2e-script.sh"]
