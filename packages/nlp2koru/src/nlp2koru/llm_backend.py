@@ -7,11 +7,10 @@ import re
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
+from nlp2koru.to_dsl import _VALID_ACTIONS, KoruIntent, KoruPlan, heuristic_plan
+
 _ROUTE_FUNCTION = "nl-to-koru-dsl"
 _LEGACY_ROUTE_FUNCTION = "nl-to-coru-dsl"
-_VALID_ACTIONS = frozenset(
-    {"auto", "ensure", "lane", "status", "doctor", "calibration", "chat", "repair", "sync"}
-)
 
 
 @runtime_checkable
@@ -110,8 +109,6 @@ def _plan_with_route(
     backend: LLMBackend | None,
     route_function: str,
 ):
-    from nlp2koru.to_dsl import KoruIntent, KoruPlan, heuristic_plan
-
     llm = backend or SubLlmBackend(route_function=route_function)
     prompt = (
         "Return JSON only, without fences. Format: "
