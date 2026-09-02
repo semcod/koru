@@ -68,9 +68,11 @@
           "docker-compose.yaml",
           "docker/**",
           "examples/**/Dockerfile*",
+          "examples/**/*.Dockerfile",
           "examples/**/docker-compose*.yml",
           "examples/**/docker-compose*.yaml",
           "services/**/Dockerfile*",
+          "scripts/docker-ide-matrix.sh",
           "infra/**",
           ".github/**"
         ]

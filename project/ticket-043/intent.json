@@ -1,0 +1,63 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-043",
+  "summary": "Assign remaining Docker input ownership",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-043/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".governance/manifest.json"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f6472a8e7bdf8f4dff7a1ea6d43b33464c216085",
+    "targetBranch": "main",
+    "outcome": "Every remaining consumed Docker build input has a declared owner without widening application or integration responsibility.",
+    "nonGoals": [
+      "Modify Dockerfiles, scripts or tests",
+      "Change application behavior or public interfaces",
+      "Broaden ownership beyond the two discovered gaps"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add one suffix-Dockerfile glob and one exact script path to the existing infrastructure registry.",
+      "components": [
+        {
+          "name": "workstream-ownership",
+          "paths": [".governance/manifest.json"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore the prior ownership registry."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-04",
+        "commands": ["./project/governance-check.sh", "python3 .governance/worktree_guard.py --root . --once --scope repository", "docker compose --profile '*' config --quiet", "git diff --check"],
+        "evidence": "managed gates and protected validator receipt"
+      }
+    ]
+  }
+}
