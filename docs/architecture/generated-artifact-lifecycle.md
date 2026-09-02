@@ -50,6 +50,8 @@ not inputs that grant execution or merge authority.
 - Ticket-048 removed the root analysis, coverage, Code2LLM, tree and release
   media groups.
 - Ticket-050 removed the first fourteen plugin-analysis files.
-- Ticket-051 removes the remaining four plugin-analysis files and the first ten
-  project-analysis files. Nine project-analysis outputs remain for the final
-  cleanup batch.
+- Ticket-051 removed the remaining four plugin-analysis files and the first ten
+  project-analysis files.
+- Ticket-052 removes the final nine project-analysis outputs. All 49 paths in
+  the generated-state baseline are now out of source control; CI artifact
+  publication remains the final stage acceptance item.
