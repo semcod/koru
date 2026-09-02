@@ -1,0 +1,4 @@
+2026-09-02T12:25:00Z SESSION_EXECUTION_AUTHORIZATION recorded; bounded order-30 slice entered EDIT.
+2026-09-02T12:45:00Z Canonical union grammar/schema/codec implemented; 48 DSL tests and both 22-model codegen checks pass.
+2026-09-02T12:46:00Z Governance, overlap, Docker, changed-file Ruff, compile and diff gates pass; entered PUBLICATION.
+2026-09-02T12:50:00Z Full package Ruff reports 14 findings only in files unchanged from accepted base; the exact changed Python set passes without suppression or scope expansion.
