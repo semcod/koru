@@ -8,11 +8,13 @@
 
 ## Goal and scope
 
-Add a bounded Koru supervisor for Goal governance failures. Koru runs Goal in
-the target repository, resolves stable `GOV-*` diagnostics from the target's
-own catalog and runbook, and can hand `GOV-TICKET-001` to one selected agent
-before retrying Goal exactly once. Goal remains the policy authority and Koru
-must fail closed instead of bypassing governance or widening ticket scope.
+Add a bounded Koru supervisor for Goal governance failures. Bare `koru goal`
+runs `goal -a` and enables one-shot remediation by default, while
+`--no-auto-remediate` provides diagnostic-only supervision. Koru resolves
+stable `GOV-*` diagnostics from the target's own catalog and runbook and can
+hand `GOV-TICKET-001` to one selected agent before retrying Goal exactly once.
+Goal remains the policy authority and Koru must fail closed instead of
+bypassing governance or widening ticket scope.
 
 ## Acceptance criteria
 
@@ -20,15 +22,16 @@ must fail closed instead of bypassing governance or widening ticket scope.
       `SESSION_EXECUTION_AUTHORIZATION` for this bounded feature.
 - [x] AC-02: `koru goal` runs Goal in the selected project and preserves its
       terminal result while exposing detected governance diagnostics.
-- [x] AC-03: `--auto-remediate` launches at most one selected agent only for
-      the allowlisted `GOV-TICKET-001` code, then retries Goal exactly once.
+- [x] AC-03: Bare `koru goal` launches at most one selected agent only for the
+      allowlisted `GOV-TICKET-001` code, then retries Goal exactly once;
+      `--no-auto-remediate` never launches an agent.
 - [x] AC-04: The handoff embeds target-owned diagnostic/runbook evidence and
       explicitly forbids destructive changes, scope bypass, push and merge.
 - [x] AC-05: Focused tests, Ruff, governance and Docker configuration pass.
 
 ## Validation
 
-- 70 focused tests and 52 subtests pass.
+- 71 focused tests and 52 subtests pass.
 - Scoped Ruff, compileall, managed governance, Docker Compose configuration
   and whitespace validation pass.
 - A broader run reached 1242 passing tests before an order-dependent,

@@ -24,7 +24,7 @@
   "delivery": {
     "acceptedBaseSha": "7b19cf8222f6d175e1d4b4eaa47c065337dfa1c4",
     "targetBranch": "main",
-    "outcome": "Koru supervises a Goal governance run, emits target-owned diagnostic evidence, and can perform one fail-closed agent remediation cycle for GOV-TICKET-001.",
+    "outcome": "Bare `koru goal` runs `goal -a`, emits target-owned diagnostic evidence, and performs at most one fail-closed agent remediation cycle for GOV-TICKET-001 unless the operator selects `--no-auto-remediate`.",
     "nonGoals": [
       "Do not make Goal depend on or invoke Koru",
       "Do not bypass governance, create arbitrary shell remediation, push, merge, tag or publish",
@@ -40,7 +40,7 @@
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Keep Goal authoritative and place orchestration in Koru: capture one Goal process result, resolve only target-published GOV diagnostics, launch one existing agent backend for the allowlisted ticket-owner repair, then perform one observable retry.",
+      "decision": "Keep Goal authoritative and place orchestration in Koru: bare `koru goal` captures one `goal -a` result, resolves only target-published GOV diagnostics, launches one existing agent backend for the allowlisted ticket-owner repair by default, then performs one observable retry; a negative flag disables the launch.",
       "components": [
         {
           "name": "goal-supervisor",
@@ -52,7 +52,7 @@
         }
       ],
       "responsibilityChanges": false,
-      "interfaceChanges": ["Add the `koru goal` command"],
+      "interfaceChanges": ["Add `koru goal` with default one-shot remediation and an explicit `--no-auto-remediate` diagnostic mode"],
       "dataChanges": [],
       "ui": {"impact": "none", "states": [], "evidence": []},
       "rollback": "Remove the command and supervisor; direct Goal invocation remains unchanged."

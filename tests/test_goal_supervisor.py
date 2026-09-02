@@ -4,11 +4,17 @@ import json
 import subprocess
 from pathlib import Path
 
+from koru.cli_goal import _build_parser
 from koru.goal_supervisor import (
     build_remediation_prompt,
     resolve_diagnostics,
     supervise_goal,
 )
+
+
+def test_goal_cli_enables_remediation_by_default() -> None:
+    assert _build_parser().parse_args([]).auto_remediate is True
+    assert _build_parser().parse_args(["--no-auto-remediate"]).auto_remediate is False
 
 
 def _governed_project(tmp_path: Path) -> Path:

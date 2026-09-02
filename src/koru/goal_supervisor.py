@@ -184,7 +184,7 @@ Project: {project.resolve()}
 Command: {' '.join(run.command)}
 Exit code: {run.returncode}
 
-The operator invoked `koru goal --auto-remediate`; record this as
+The operator invoked `koru goal` with remediation enabled; record this as
 `SESSION_EXECUTION_AUTHORIZATION` only for the bounded local repair needed to
 make the command pass. Read and follow the target `AGENTS.md` before acting.
 

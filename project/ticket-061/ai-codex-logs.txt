@@ -10,3 +10,5 @@ Managed governance: GOV-PASS (0 errors, 0 warnings).
 Docker Compose config: passed.
 Broader suite: 1242 passed before out-of-scope order-dependent command-picker failure.
 Clean accepted-base command-picker module: 19 passed.
+Bare-command default follow-up: 71 passed, 52 subtests passed; Ruff,
+governance and Docker Compose configuration passed.

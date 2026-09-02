@@ -20,8 +20,12 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--agent", dest="agent_id", default=None, help="Agent lane to launch.")
     parser.add_argument(
         "--auto-remediate",
-        action="store_true",
-        help="Launch one agent for GOV-TICKET-001 and retry Goal once.",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Launch one agent for GOV-TICKET-001 and retry Goal once "
+            "(default: enabled)."
+        ),
     )
     parser.add_argument(
         "--format",

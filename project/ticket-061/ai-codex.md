@@ -35,3 +35,12 @@ expansion, direct push, merge, tag or publication.
 - Isolated the broader suite's unrelated command-picker ordering failure: the
   clean accepted base passes all 19 module tests, while the ticket does not
   modify or import that implementation.
+
+## Follow-up authority
+
+The user explicitly requested that bare `koru goal` imply both `goal -a` and
+one-shot auto-remediation. The bounded interface now defaults to remediation
+and retains `--no-auto-remediate` for diagnosis without agent launch.
+
+The follow-up validation passes 71 focused tests and 52 subtests, scoped Ruff,
+managed governance and Docker Compose configuration.
