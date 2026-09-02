@@ -1,0 +1,11 @@
+{
+  "schema":"new-project.intent/v3","ticket":"ticket-058","summary":"Replace uri2coru with uri2koru aliases","workstream":"application",
+  "classification":{"kind":"SERVICE","priority":"P0","origin":"requested"},
+  "allowedPaths":["project/ticket-058/**","project/TICKETS.md","packages/uri2coru/src/uri2coru/__init__.py","packages/uri2coru/src/uri2coru/cli.py","packages/uri2coru/src/uri2coru/decode.py","packages/uri2coru/src/uri2coru/nlp2uri.py","packages/uri2coru/src/uri2coru/run.py","packages/uri2coru/src/uri2coru/uri.py","packages/uri2coru/tests/test_uri2coru.py"],
+  "forbiddenPaths":["project/ticket-*/user-*.md"],"stacks":["python","docker"],"dependsOn":["ticket-056","ticket-057"],"conflictsWith":[],"integrationTicket":null,
+  "delivery":{"acceptedBaseSha":"dc67bd5bd1672d4fe849ff1930727396f29e7507","targetBranch":"main","outcome":"The uri2coru namespace warns and aliases uri2koru while canonical URI behavior has a single implementation.",
+    "nonGoals":["Change uri2koru behavior","Retain the coru URI scheme as a second parser","Remove the uri2coru distribution or console entry point"],"complexity":"M","estimatedMinutes":60,
+    "budgets":{"maxImplementationFiles":7,"maxAffectedComponents":1,"maxPublicInterfaceChanges":1,"maxRuntimeDependencies":0},
+    "architecture":{"status":"accepted","decision":"Replace all six legacy URI source modules with warnings and direct canonical re-exports.","components":[{"name":"uri-adapter","paths":["packages/uri2coru/src/uri2coru/**","packages/uri2coru/tests/**"]}],"responsibilityChanges":false,"interfaceChanges":["uri2coru aliases uri2koru"],"dataChanges":[],"ui":{"impact":"none","states":[],"evidence":[]},"rollback":"Revert the protected merge to restore the legacy URI implementation."},
+    "runtimeDependencies":[],"validation":[{"criterion":"AC-04","commands":["python -m pytest packages/uri2coru/tests packages/uri2koru/tests"],"evidence":"legacy/canonical object identity and console behavior"},{"criterion":"AC-05","commands":["./project/governance-check.sh","python3 .governance/worktree_guard.py --root . --once --scope repository","docker compose config --quiet","git diff --check"],"evidence":"managed local gates"}]}
+}
