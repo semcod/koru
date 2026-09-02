@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-076",
+  "summary": "Deduplicate Order 30 event replay",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-076/**",
+    "project/TICKETS.md",
+    "packages/dsl2koru/src/dsl2koru/events.py",
+    "packages/dsl2koru/tests/test_event_store_matrix.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-068", "ticket-070", "ticket-071", "ticket-072", "ticket-073", "ticket-074"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d94f17963d74fd4b587c60cca756fada88a58e3c",
+    "targetBranch": "main",
+    "outcome": "Canonical DSL event storage uses one location factory and one protobuf replay decoder while preserving native and compatibility behavior with fewer production lines.",
+    "nonGoals": [
+      "Do not change EventStore public methods, serialized bytes, JSON fields or replay ordering",
+      "Do not change dispatch, protobuf schemas, codecs or event retention policy",
+      "Do not remove the one-release dsl2coru compatibility namespace",
+      "Do not modify documentation metrics, dependency manifests, ticket-069, ticket-075 or Draft PR 101"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 75,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Route project and compatibility store paths through one private constructor and route every framed protobuf read through one private decoder.",
+      "components": [
+        {
+          "name": "canonical-dsl-event-store",
+          "paths": [
+            "packages/dsl2koru/src/dsl2koru/events.py",
+            "packages/dsl2koru/tests/test_event_store_matrix.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore separate location constructors and protobuf replay loops."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python -m pytest -q packages/dsl2koru/tests packages/dsl2coru/tests tests/test_namespace_pair_conformance.py"
+        ],
+        "evidence": "Canonical and compatibility DSL suites plus the event-store location and replay matrix"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python -m ruff check packages/dsl2koru/src/dsl2koru/events.py packages/dsl2koru/tests/test_event_store_matrix.py",
+          "python -m compileall -q packages/dsl2koru/src/dsl2koru packages/dsl2koru/tests/test_event_store_matrix.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "Changed-file and managed repository gates"
+      }
+    ]
+  }
+}

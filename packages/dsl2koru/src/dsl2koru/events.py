@@ -39,23 +39,21 @@ class EventStore:
             self.fmt = "jsonl"
 
     @classmethod
-    def for_project(cls, project_root: Path, *, prefer_pb: bool = True) -> EventStore:
-        root = project_root.expanduser().resolve()
-        events_dir = root / ".koru" / "events"
+    def _for_root(cls, root: Path, namespace: str, prefer_pb: bool) -> EventStore:
+        events_dir = root.expanduser().resolve() / namespace / "events"
         events_dir.mkdir(parents=True, exist_ok=True)
-        if prefer_pb:
-            return cls(events_dir / "dsl.events.pb", fmt="protobuf")
-        return cls(events_dir / "dsl.events.jsonl", fmt="jsonl")
+        fmt: StoreFormat = "protobuf" if prefer_pb else "jsonl"
+        return cls(events_dir / f"dsl.events.{('pb' if prefer_pb else 'jsonl')}", fmt=fmt)
+
+    @classmethod
+    def for_project(cls, project_root: Path, *, prefer_pb: bool = True) -> EventStore:
+        return cls._for_root(project_root, ".koru", prefer_pb)
 
     @classmethod
     def for_default(cls, default_file: str | None = None, *, prefer_pb: bool = True) -> EventStore:
         """Build the one-release Coru-compatible event-store location."""
         root = Path(default_file or ".").expanduser().resolve().parent
-        events_dir = root / ".coru" / "events"
-        events_dir.mkdir(parents=True, exist_ok=True)
-        if prefer_pb:
-            return cls(events_dir / "dsl.events.pb", fmt="protobuf")
-        return cls(events_dir / "dsl.events.jsonl", fmt="jsonl")
+        return cls._for_root(root, ".coru", prefer_pb)
 
     def append_command(self, command: dict[str, Any], result: dict[str, Any], *, correlation_id: str = "") -> str:
         event_id = uuid.uuid4().hex
@@ -93,30 +91,33 @@ class EventStore:
                 fh.write(json.dumps(event.to_dict(), ensure_ascii=False) + "\n")
         return event_id
 
+    @staticmethod
+    def _read_protobuf(path: Path) -> list[StoredEvent]:
+        events: list[StoredEvent] = []
+        data = path.read_bytes()
+        offset = 0
+        while offset + 4 <= len(data):
+            size = int.from_bytes(data[offset : offset + 4], "big")
+            offset += 4
+            pb = result_pb2.DslEvent()
+            pb.ParseFromString(data[offset : offset + size])
+            offset += size
+            events.append(
+                StoredEvent(
+                    id=pb.id,
+                    ts_unix=int(pb.ts_unix),
+                    command=envelope_to_dict(pb.command),
+                    result=pb_to_result(pb.result).to_dict(),
+                    correlation_id=pb.correlation_id,
+                ),
+            )
+        return events
+
     def read_all(self) -> list[StoredEvent]:
         if not self.path.is_file():
             return []
         if self.fmt == "protobuf":
-            events: list[StoredEvent] = []
-            data = self.path.read_bytes()
-            offset = 0
-            while offset + 4 <= len(data):
-                size = int.from_bytes(data[offset : offset + 4], "big")
-                offset += 4
-                chunk = data[offset : offset + size]
-                offset += size
-                pb = result_pb2.DslEvent()
-                pb.ParseFromString(chunk)
-                events.append(
-                    StoredEvent(
-                        id=pb.id,
-                        ts_unix=int(pb.ts_unix),
-                        command=envelope_to_dict(pb.command),
-                        result=pb_to_result(pb.result).to_dict(),
-                        correlation_id=pb.correlation_id,
-                    ),
-                )
-            return events
+            return self._read_protobuf(self.path)
         events = []
         for line in self.path.read_text(encoding="utf-8").splitlines():
             if not line.strip():
@@ -135,28 +136,7 @@ class EventStore:
 
     def replay_pb(self) -> list[StoredEvent]:
         pb_path = self.path if self.path.suffix == ".pb" else self.path.with_suffix(".pb")
-        if not pb_path.is_file():
-            return []
-        events: list[StoredEvent] = []
-        data = pb_path.read_bytes()
-        offset = 0
-        while offset + 4 <= len(data):
-            size = int.from_bytes(data[offset : offset + 4], "big")
-            offset += 4
-            chunk = data[offset : offset + size]
-            offset += size
-            pb = result_pb2.DslEvent()
-            pb.ParseFromString(chunk)
-            events.append(
-                StoredEvent(
-                    id=pb.id,
-                    ts_unix=int(pb.ts_unix),
-                    command=envelope_to_dict(pb.command),
-                    result=pb_to_result(pb.result).to_dict(),
-                    correlation_id=pb.correlation_id,
-                ),
-            )
-        return events
+        return self._read_protobuf(pb_path) if pb_path.is_file() else []
 
     def replay(self, *, prefer_pb: bool = True) -> list[StoredEvent]:
         if prefer_pb and self.fmt == "protobuf":

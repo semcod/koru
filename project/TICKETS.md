@@ -79,4 +79,5 @@ project analysis or human-owned ticket inputs.
 | **ticket-072** | [`README.md`](./ticket-072/README.md) | [`preprompt.md`](./ticket-072/preprompt.md) | - |  [`ai-codex.md`](./ticket-072/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-072/ai-codex-logs.txt) | [`changelog.md`](./ticket-072/changelog.md) |
 | **ticket-073** | [`README.md`](./ticket-073/README.md) | [`preprompt.md`](./ticket-073/preprompt.md) | - |  [`ai-codex.md`](./ticket-073/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-073/ai-codex-logs.txt) | [`changelog.md`](./ticket-073/changelog.md) |
 | **ticket-074** | [`README.md`](./ticket-074/README.md) | [`preprompt.md`](./ticket-074/preprompt.md) | - |  [`ai-codex.md`](./ticket-074/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-074/ai-codex-logs.txt) | [`changelog.md`](./ticket-074/changelog.md) |
+| **ticket-076** | [`README.md`](./ticket-076/README.md) | [`preprompt.md`](./ticket-076/preprompt.md) | - |  [`ai-codex.md`](./ticket-076/ai-codex.md) |  [`ai-codex-logs.txt`](./ticket-076/ai-codex-logs.txt) | [`changelog.md`](./ticket-076/changelog.md) |
 <!-- AUTO:TICKET_INDEX:END -->
