@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-048",
+  "summary": "Untrack root generated analysis artifacts",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-048/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "docs/architecture/generated-artifact-lifecycle.md",
+    ".coverage_data/coverage.json",
+    "SUMD.md",
+    "SUMR.md",
+    "code2llm_output/README.md",
+    "code2llm_output/analysis.json",
+    "code2llm_output/analysis.toon.yaml",
+    "code2llm_output/context.md",
+    "code2llm_output/map.toon.yaml",
+    "code2llm_output/root/analysis.toon.yaml",
+    "coverage.json",
+    "koru.mp4",
+    "tree.txt"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["docker"],
+  "dependsOn": ["ticket-045", "ticket-049"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0b02cf2634b47f48f8163af03640ac2180dfeae8",
+    "targetBranch": "main",
+    "outcome": "Root analysis, coverage, Code2LLM, tree and demo outputs are reproducible external artifacts instead of tracked repository state.",
+    "nonGoals": [
+      "Rewrite Git history or delete remote artifacts",
+      "Remove project governance carriers or plugin/project analysis groups",
+      "Change runtime behavior, dependencies or CI workflows"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Remove only the generated files whose reproduction metadata and ignore boundary are already present in the compact ticket-045 artifact registry.",
+      "components": [
+        {
+          "name": "root-generated-artifacts",
+          "paths": [".coverage_data/coverage.json", "SUMD.md", "SUMR.md", "code2llm_output/**", "coverage.json", "koru.mp4", "tree.txt", "docs/architecture/generated-artifact-lifecycle.md"]
+        }
+      ],
+      "responsibilityChanges": true,
+      "interfaceChanges": [],
+      "dataChanges": [
+        "Generated root snapshots move from Git storage to the governed external artifact lifecycle; their accepted baseline remains content-addressed in config/artifact-registry.json."
+      ],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore the exact generated files from acceptedBaseSha without rewriting history."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python -m json.tool config/artifact-registry.json",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "local deterministic gate output and protected checks"
+      }
+    ]
+  }
+}
