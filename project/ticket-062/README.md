@@ -3,7 +3,7 @@
 - **ID**: ticket-062
 - **Owner**: agent:cursor
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-09-02
 
 ## Goal and scope
@@ -22,3 +22,5 @@ boundary (ticket-029 architecture).
 - [x] AC-02: Living status updates push to configured integrations after description write.
 - [x] AC-03: `koru scan --apply` passes `--sync` to `planfile ticket create`.
 - [x] AC-04: `policy.yaml` documents the `planfile_sync` block.
+- [x] AC-05: focused tests, Ruff, Docker Compose and governance pass after
+  rebasing the delivery on the protected CI-history repair.
