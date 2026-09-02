@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-074",
+  "summary": "Compress Order 30 NLP intent translation",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-074/**",
+    "project/TICKETS.md",
+    "packages/nlp2koru/src/nlp2koru/llm_backend.py",
+    "packages/nlp2koru/src/nlp2koru/to_dsl.py",
+    "packages/nlp2koru/tests/test_intent_matrix.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-068", "ticket-070", "ticket-071", "ticket-072", "ticket-073"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d2c880a71de5bca8a24b1eb5c8fe6651d05646f7",
+    "targetBranch": "main",
+    "outcome": "Canonical NLP translation uses ordered specifications and one LLM plan builder while preserving native and compatibility behavior with fewer production lines.",
+    "nonGoals": [
+      "Do not change public imports, command names, action precedence or rendered DSL",
+      "Do not change central SubLLM route names, provider policy or failure fallback",
+      "Do not remove the one-release nlp2coru compatibility namespace",
+      "Do not modify documentation metrics, dependency manifests, ticket-069 or Draft PR 101"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 75,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Encode heuristic precedence as immutable ordered rules, render fixed actions from a lookup, and construct canonical and legacy LLM plans through one validated payload helper.",
+      "components": [
+        {
+          "name": "canonical-nlp-translation",
+          "paths": [
+            "packages/nlp2koru/src/nlp2koru/llm_backend.py",
+            "packages/nlp2koru/src/nlp2koru/to_dsl.py",
+            "packages/nlp2koru/tests/test_intent_matrix.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore explicit action branches and inline LLM plan construction."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python -m pytest -q packages/nlp2koru/tests packages/nlp2coru/tests tests/test_namespace_pair_conformance.py"
+        ],
+        "evidence": "Canonical and compatibility NLP suites plus the action, rendering and route matrix"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python -m ruff check packages/nlp2koru/src/nlp2koru/llm_backend.py packages/nlp2koru/src/nlp2koru/to_dsl.py packages/nlp2koru/tests/test_intent_matrix.py",
+          "python -m compileall -q packages/nlp2koru/src/nlp2koru packages/nlp2koru/tests/test_intent_matrix.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "Changed-file and managed repository gates"
+      }
+    ]
+  }
+}

@@ -4,23 +4,34 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from uri2koru.nlp2uri import best_uri
 
-from nlp2koru.llm_backend import LLMBackend, nl_to_dsl_line
+if TYPE_CHECKING:
+    from nlp2koru.llm_backend import LLMBackend
 
-_REFACTOR_MARKERS = ("refactor", "refaktoryz", "refakotryz")
-_SETUP_ACTIONS = {
-    "auto",
-    "calibration",
-    "chat",
-    "doctor",
-    "ensure",
-    "lane",
-    "manage",
-    "status",
-    "sync",
+_REFACTOR_PATTERN = r"refactor|refak\w*ryz"
+_ACTION_RULES = (
+    (r"ensure|zainstal|install|napraw|sprawdz", "ensure", True),
+    (r"calibration|kalibrac", "calibration", False),
+    (r"doctor|diagnost", "doctor", False),
+    (r"lane|instanc|ustaw", "lane", False),
+    (r"sync|synchroniz|syncuj", "sync", False),
+    (_REFACTOR_PATTERN, "auto", False),
+    (r"status|stan", "status", False),
+    (r"chat|wyslij|wyślij", "chat", False),
+    (r"auto|autonomous|autopilot|run|execute", "auto", False),
+)
+_VALID_ACTIONS = frozenset((*{action for _, action, _ in _ACTION_RULES}, "repair"))
+_SETUP_ACTIONS = (_VALID_ACTIONS - {"repair"}) | {"manage"}
+_FIXED_LINES = {
+    "status": "STATUS",
+    "doctor": "DOCTOR",
+    "calibration": "CALIBRATION",
+    "sync": "SYNC",
+    "auto": "AUTO",
+    "manage": "DIAGNOSE",
 }
 
 
@@ -44,8 +55,7 @@ class KoruPlan:
 
 
 def _refactor_intent(text: str) -> bool:
-    lower = text.strip().lower()
-    return any(marker in lower for marker in _REFACTOR_MARKERS) or bool(re.search(r"refak\w*ryz", lower))
+    return bool(re.search(_REFACTOR_PATTERN, text.strip().lower()))
 
 
 def detect_setup_intent(text: str) -> bool:
@@ -65,36 +75,17 @@ def _parse_lane_mentions(text: str) -> tuple[str | None, str | None]:
     return ide, instance
 
 
-def _contains_any(text: str, *needles: str) -> bool:
-    return any(needle in text for needle in needles)
-
-
-def _resolve_heuristic_action(lower: str, text: str) -> tuple[str, bool]:
-    if _contains_any(lower, "ensure", "zainstal", "install", "napraw", "sprawdz"):
-        return "ensure", True
-    if _contains_any(lower, "calibration") or "kalibrac" in lower:
-        return "calibration", False
-    if _contains_any(lower, "doctor", "diagnost"):
-        return "doctor", False
-    if _contains_any(lower, "lane", "instanc", "ustaw"):
-        return "lane", False
-    if _contains_any(lower, "sync", "synchroniz", "syncuj"):
-        return "sync", False
-    if _refactor_intent(text):
-        return "auto", False
-    if _contains_any(lower, "status", "stan"):
-        return "status", False
-    if _contains_any(lower, "chat", "wyslij", "wyślij"):
-        return "chat", False
-    if _contains_any(lower, "auto", "autonomous", "autopilot", "run", "execute"):
-        return "auto", False
-    return "status", False
+def _resolve_heuristic_action(lower: str) -> tuple[str, bool]:
+    return next(
+        ((action, install) for pattern, action, install in _ACTION_RULES if re.search(pattern, lower)),
+        ("status", False),
+    )
 
 
 def heuristic_plan(text: str) -> KoruPlan:
     lower = text.strip().lower()
     ide, instance = _parse_lane_mentions(lower)
-    action, install = _resolve_heuristic_action(lower, text)
+    action, install = _resolve_heuristic_action(lower)
     return KoruPlan([KoruIntent(action=action, ide=ide, instance=instance, install=install)])
 
 
@@ -109,15 +100,9 @@ def _intent_line(intent: KoruIntent, text: str) -> str:
         if intent.instance:
             pieces.extend(["--instance", intent.instance])
         return " ".join(pieces)
-    if action in {"status", "doctor", "calibration", "sync"}:
-        return action.upper()
     if action == "chat":
         return f"CHAT --text {text.strip()!r}".replace("\\'", "'")
-    if action == "auto":
-        return "AUTO"
-    if action == "manage":
-        return "DIAGNOSE"
-    return f"TEXT {text!r}"
+    return _FIXED_LINES.get(action, f"TEXT {text!r}")
 
 
 def to_dsl_lines(
@@ -163,6 +148,8 @@ def to_dsl(
     """Return one canonical DSL line without dispatching it."""
     context = default_file or project
     if use_llm:
+        from nlp2koru.llm_backend import nl_to_dsl_line
+
         llm_line = nl_to_dsl_line(prompt, project=context, model=llm_model, backend=llm_backend)
         if llm_line:
             return llm_line
