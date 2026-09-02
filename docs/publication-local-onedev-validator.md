@@ -58,6 +58,8 @@ Same command block as above.
 
 Use `--dry-run` to run checks and OneDev without REST status or Validator dispatch.
 
+Before a full or dry-run publication, pin `delivery.acceptedBaseSha` in the active ticket `intent.json` to the current `origin/main` commit (merge-base gate).
+
 ### Alternative: `koru ci publish`
 
 `koru ci publish` focuses on Validator dispatch from the Koru CLI; use this shell script

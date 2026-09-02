@@ -24,6 +24,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
+    "acceptedBaseSha": "d94f17963d74fd4b587c60cca756fada88a58e3c",
     "targetBranch": "main",
     "outcome": "Operators can publish semcod/koru pull requests locally with standard-pack conformance, onedev profile gates, and validator-agent merge without target-repo GitHub Actions.",
     "nonGoals": [
