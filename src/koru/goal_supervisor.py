@@ -12,7 +12,9 @@ from typing import Any
 
 _DIAGNOSTIC_PATTERN = re.compile(r"\bGOV-[A-Z0-9]+(?:-[A-Z0-9]+)*\b")
 _CATALOG_SCHEMAS = {"new-project.diagnostics/v1", "new-project.diagnostics/v2"}
-AUTO_REMEDIATION_CODES = frozenset({"GOV-TICKET-001"})
+AUTO_REMEDIATION_CODES = frozenset(
+    {"GOV-STANDARD-UPDATE-001", "GOV-TICKET-001"}
+)
 _MAX_OUTPUT_CHARS = 12_000
 _MAX_RUNBOOK_CHARS = 8_000
 
@@ -177,6 +179,19 @@ def build_remediation_prompt(project: Path, run: GoalRun) -> str:
             )
         )
     diagnostics = "\n\n".join(diagnostic_sections) or "(none)"
+    standard_update_guidance = ""
+    if any(item.code == "GOV-STANDARD-UPDATE-001" for item in run.diagnostics):
+        standard_update_guidance = """
+
+Standard-update boundary:
+
+- Do not expand or rewrite the interrupted implementation ticket to absorb
+  governance-owned managed files.
+- Reuse a matching governance adoption ticket or allocate one through the
+  target's managed allocator, then work only in its canonical worktree.
+- Prepare and validate the exact latest published standard adoption. The
+  interrupted commit remains fail-closed until that adoption is integrated.
+"""
     output = f"{run.stdout}\n{run.stderr}".strip()
     return f"""# Koru handoff: repair a Goal governance failure
 
@@ -198,6 +213,7 @@ Constraints:
 - Do not push, merge, tag, release or otherwise publish.
 - Stop and report when the repair needs a material product choice or scope expansion.
 - Run the target governance and stack checks after the bounded repair.
+{standard_update_guidance}
 
 ## Resolved diagnostics
 

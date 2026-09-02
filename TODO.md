@@ -1,5 +1,11 @@
 # Governance roadmap
 
+- [ ] [`ticket-075`](project/ticket-075/README.md) — route the target-published
+  `GOV-STANDARD-UPDATE-001` diagnostic through one bounded agent handoff and
+  one Goal retry while preserving a separate governance adoption ticket.
+  State: `IN_PROGRESS / PUBLICATION`; 8 focused tests, Ruff, governance,
+  Docker Compose and compileall pass; classification: `BUG / P1 / requested`.
+
 - [ ] [`ticket-029`](project/ticket-029/README.md) — implement two-hour leased
   Planfile execution, one Living Status projection and SLA human triage.
   State: `IN_PROGRESS / VALIDATION`; local deterministic gates pass and
