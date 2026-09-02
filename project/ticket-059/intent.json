@@ -1,0 +1,78 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-059",
+  "summary": "Replace nlp2coru with canonical nlp2koru aliases",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-059/**",
+    "project/TICKETS.md",
+    "packages/nlp2koru/src/nlp2koru/**",
+    "packages/nlp2coru/src/nlp2coru/**"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-032", "ticket-034", "ticket-058"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "c672cb29e456ab763e5256cb82051421415a64eb",
+    "targetBranch": "main",
+    "outcome": "nlp2koru is the only implementation for both NLP command names, while nlp2coru remains a one-release warning and direct alias facade.",
+    "nonGoals": [
+      "Create another provider route or heuristic engine",
+      "Change dependency manifests or package documentation",
+      "Remove either console-script name in this release",
+      "Change dsl2koru or uri2koru semantics"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 120,
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 2,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Move compatibility behavior into the five canonical nlp2koru modules and reduce all ten nlp2coru modules to warning/re-export aliases.",
+      "components": [
+        {"name": "canonical-nlp-adapter", "paths": ["packages/nlp2koru/src/nlp2koru/**"]},
+        {"name": "legacy-nlp-facade", "paths": ["packages/nlp2coru/src/nlp2coru/**"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "nlp2koru exports compatibility planning helpers",
+        "nlp2coru symbols and console handler directly alias nlp2koru"
+      ],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore the independent nlp2coru implementation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "PYTHONPATH=packages/nlp2koru/src:packages/nlp2coru/src:packages/dsl2koru/src:packages/uri2koru/src python -m pytest -q packages/nlp2koru/tests packages/nlp2coru/tests"
+        ],
+        "evidence": "focused pytest output and protected checks"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python -m ruff check packages/nlp2koru/src/nlp2koru packages/nlp2coru/src/nlp2coru",
+          "python -m compileall -q packages/nlp2koru/src packages/nlp2coru/src",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "local deterministic gate output and protected checks"
+      }
+    ]
+  }
+}
