@@ -1,3 +1,4 @@
 2026-09-02 SESSION_EXECUTION_AUTHORIZATION: user requested execution of the plan under docs/*.
 2026-09-02 VALIDATION: three read-only SHA-pinned jobs parse successfully; registry generator versions exist; accepted media group digest matches; governance, overlap, Docker Compose and diff gates passed.
 2026-09-02 CI: run 33611316995 uploaded analysis and media; coverage exposed workflow_dispatch base inference in the pytest governance bridge, so coverage now overrides only pytest addopts while the separate managed CI governance gate remains authoritative.
+2026-09-02 CI: run 33611697703 proved analysis and media again; its unbounded full-suite coverage was cancelled and aligned with the repository's stable smoke subset before publication.
