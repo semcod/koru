@@ -1,0 +1,11 @@
+{
+  "schema":"new-project.intent/v3","ticket":"ticket-054","summary":"Validate completed generated-state cleanup against artifact registry","workstream":"application",
+  "classification":{"kind":"SERVICE","priority":"P0","origin":"requested"},
+  "allowedPaths":["project/ticket-054/**","TODO.md","project/TICKETS.md","tests/test_volume_reduction_plan.py"],
+  "forbiddenPaths":["project/ticket-*/user-*.md"],"stacks":["python","docker"],"dependsOn":["ticket-045","ticket-048","ticket-049","ticket-050","ticket-051","ticket-052","ticket-053"],"conflictsWith":[],"integrationTicket":null,
+  "delivery":{"acceptedBaseSha":"245675027a268ec22c297a4d149c1c134076edf5","targetBranch":"main","outcome":"The volume-plan contract validates completed generated-state cleanup from the exact artifact registry instead of filesystem presence.",
+    "nonGoals":["Change the volume plan status","Modify generated outputs","Change runtime behavior"],"complexity":"S","estimatedMinutes":60,
+    "budgets":{"maxImplementationFiles":1,"maxAffectedComponents":1,"maxPublicInterfaceChanges":0,"maxRuntimeDependencies":0},
+    "architecture":{"status":"accepted","decision":"Skip filesystem-existence semantics for completed untrack stages and assert registry path absence from the Git index in a dedicated contract test.","components":[{"name":"volume-plan-contract","paths":["tests/test_volume_reduction_plan.py"]}],"responsibilityChanges":false,"interfaceChanges":[],"dataChanges":[],"ui":{"impact":"none","states":[],"evidence":[]},"rollback":"Revert the protected merge to restore the prior test semantics."},
+    "runtimeDependencies":[],"validation":[{"criterion":"AC-04","commands":["python -m pytest -o addopts='' tests/test_volume_reduction_plan.py -q","./project/governance-check.sh","python3 .governance/worktree_guard.py --root . --once --scope repository","docker compose config --quiet","git diff --check"],"evidence":"focused tests, managed gates and protected checks"}]}
+}
