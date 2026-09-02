@@ -1,0 +1,83 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-065",
+  "summary": "Local onedev+validator publication script",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "TODO.md",
+    ".governance/manifest.json",
+    "docs/publication-local-onedev-validator.md",
+    "project/TICKETS.md",
+    "project/ticket-065/**",
+    "scripts/publish-local-onedev-validator.sh"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d94f17963d74fd4b587c60cca756fada88a58e3c",
+    "targetBranch": "main",
+    "outcome": "Operators can publish semcod/koru pull requests locally with standard-pack conformance, onedev profile gates, and validator-agent merge without target-repo GitHub Actions.",
+    "nonGoals": [
+      "Change Koru runtime behavior",
+      "Modify validator-agent or onedev-agent repositories"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Shell orchestration runs frozen-head conformance checks, executes the OneDev repository profile locally, posts REST commit statuses, then dispatches validator-agent direct-pr.",
+      "components": [
+        {
+          "name": "local-publication-script",
+          "paths": [
+            "scripts/publish-local-onedev-validator.sh",
+            "docs/publication-local-onedev-validator.md"
+          ]
+        },
+        {
+          "name": "governance-ownership",
+          "paths": [
+            ".governance/manifest.json",
+            "project/ticket-065/intent.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the protected merge and continue using hosted checks where available."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "bash -n scripts/publish-local-onedev-validator.sh",
+          "./scripts/publish-local-onedev-validator.sh --owner semcod --name koru --pr 101 --ticket ticket-065 --dry-run"
+        ],
+        "evidence": "local dry-run publishes conformance and onedev profile evidence on the frozen PR head"
+      }
+    ]
+  }
+}

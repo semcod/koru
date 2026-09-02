@@ -56,7 +56,9 @@
           "project/readme.sh",
           "project/ticket-*/**",
           "project.sh",
-          "project.bat"
+          "project.bat",
+          "scripts/publish-local-onedev-validator.sh",
+          "docs/publication-local-onedev-validator.md"
         ]
       },
       "infrastructure": {

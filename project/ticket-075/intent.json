@@ -1,0 +1,71 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-075",
+  "summary": "Route standard-update remediation",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/goal_supervisor.py",
+    "tests/test_goal_supervisor.py",
+    "project/ticket-075/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d2c880a71de5bca8a24b1eb5c8fe6651d05646f7",
+    "targetBranch": "main",
+    "outcome": "Koru recognizes the target-published standard-update diagnostic, launches at most one bounded agent handoff for a separate governance adoption, retries Goal once, and keeps the interrupted commit fail-closed until integration.",
+    "nonGoals": [
+      "Do not trust diagnostics absent from the target-owned catalog",
+      "Do not mutate the interrupted implementation ticket into an adoption ticket",
+      "Do not grant push, merge, tag or release authority",
+      "Do not add more than one agent attempt or Goal retry"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extend the existing closed remediation allowlist and specialize only the handoff guidance; preserve target-catalog resolution and the one-agent/one-retry execution bound.",
+      "components": [
+        {
+          "name": "goal-supervision-policy",
+          "paths": ["src/koru/goal_supervisor.py", "tests/test_goal_supervisor.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Remove the standard-update allowlist entry and specialized handoff while retaining GOV-TICKET-001 supervision."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_goal_supervisor.py",
+          "python -m ruff check src/koru/goal_supervisor.py tests/test_goal_supervisor.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "Focused supervisor behavior plus managed repository gates"
+      }
+    ]
+  }
+}
