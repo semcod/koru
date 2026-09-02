@@ -1,25 +1,13 @@
-"""MCP tool implementations — offline parity with bus."""
+"""Legacy MCP tool names are aliases, not parallel implementations."""
 
-from unittest.mock import MagicMock
+import importlib
 
-from dsl2coru.result import DslResult
-from mcp2coru import tools
-
-
-def test_coru_run_command(monkeypatch) -> None:
-    mock = MagicMock(return_value=DslResult(ok=True, verb="STATUS", action="status", output="ok"))
-    monkeypatch.setattr("dsl2coru.bus.dispatch", mock)
-    out = tools.coru_run_command("STATUS")
-    assert out["ok"] is True
-    assert out["action"] == "status"
+from mcp2koru import tools as canonical_tools
 
 
-def test_coru_to_dsl(monkeypatch) -> None:
-    import importlib
-
-    def _fake(prompt: str, *, project: str = ".", **kwargs: object) -> str:
-        return "STATUS"
-
-    mod = importlib.import_module("nlp2coru.to_dsl")
-    monkeypatch.setattr(mod, "to_dsl", _fake)
-    assert tools.coru_to_dsl("status") == "STATUS"
+def test_legacy_tool_names_alias_canonical_tools() -> None:
+    tools = importlib.import_module("mcp2coru.tools")
+    assert tools.coru_run_command is canonical_tools.koru_run_command
+    assert tools.coru_run_command_pb is canonical_tools.koru_run_command_pb
+    assert tools.coru_run_dsl is canonical_tools.koru_run_dsl
+    assert tools.coru_to_dsl is canonical_tools.koru_to_dsl

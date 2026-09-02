@@ -1,0 +1,4 @@
+2026-09-02T10:16:00Z SESSION_EXECUTION_AUTHORIZATION observed from the user's instruction to continue.
+2026-09-02T10:24:00Z Implemented 14-file CLI/MCP/REST compatibility slice; 246 production lines removed.
+2026-09-02T10:26:00Z Four compatibility tests and isolated canonical MCP test passed; local deterministic gates entered validation.
+2026-09-02T10:34:00Z Hosted checks and onedev/local-verify passed; ticket advanced to PUBLICATION before exact-head freeze.

@@ -1,12 +1,22 @@
-from pathlib import Path
+import importlib
+import sys
 
-from dsl2coru.bus import dispatch
+import pytest
 
 
-def test_parity_cli_uri_rest_payloads(tmp_path: Path) -> None:
-    line = "REPAIR_HISTORY"
-    text = dispatch(line, default_project=str(tmp_path))
-    json_payload = {"verb": "REPAIR_HISTORY"}
-    json_result = dispatch(json_payload, default_project=str(tmp_path))
-    assert text.ok == json_result.ok
-    assert text.verb == json_result.verb
+def test_legacy_cli_warns_and_reexports_canonical_entrypoints(monkeypatch) -> None:
+    sys.modules.pop("cli2coru", None)
+    sys.modules.pop("cli2coru.cli", None)
+    with pytest.warns(DeprecationWarning, match="cli2coru is deprecated"):
+        legacy_cli = importlib.import_module("cli2coru.cli")
+    legacy_shell = importlib.import_module("cli2coru.shell")
+    canonical_cli = importlib.import_module("cli2koru.cli")
+    canonical_shell = importlib.import_module("cli2koru.shell")
+
+    assert legacy_cli.main is canonical_cli.main
+    assert legacy_shell.run_shell is canonical_shell.run_shell
+
+    monkeypatch.setitem(canonical_cli._HANDLERS, "exec", lambda _args: 23)
+    argv = ["exec", "VALIDATE_LANE IDE auto INSTANCE default"]
+    assert canonical_cli.main(argv) == 23
+    assert legacy_cli.main(argv) == 23
