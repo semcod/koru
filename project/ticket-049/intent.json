@@ -1,0 +1,68 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-049",
+  "summary": "Route generated artifacts to integration workstream",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-049/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".governance/manifest.json"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["docker"],
+  "dependsOn": ["ticket-045"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0cb58806ff39203e9baaea84edbae7691fe00436",
+    "targetBranch": "main",
+    "outcome": "Every generated file recorded by the VOL-1 artifact registry has an explicit integration owner, enabling separately budgeted cleanup tickets.",
+    "nonGoals": [
+      "Delete generated files or rewrite Git history",
+      "Transfer ownership of governance carriers or project/readme.sh",
+      "Change runtime behavior, dependencies, documentation or CI"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Route only the exact generated groups enumerated by config/artifact-registry.json to integration ownership.",
+      "components": [
+        {
+          "name": "workstream-ownership",
+          "paths": [".governance/manifest.json"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore the prior workstream registry."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh",
+          "python3 .governance/worktree_guard.py --root . --once --scope repository",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "managed gates and protected validator receipt"
+      }
+    ]
+  }
+}
