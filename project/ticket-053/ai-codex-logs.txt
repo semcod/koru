@@ -1,0 +1,2 @@
+2026-09-02 SESSION_EXECUTION_AUTHORIZATION: user requested execution of the plan under docs/*.
+2026-09-02 VALIDATION: three read-only SHA-pinned jobs parse successfully; registry generator versions exist; accepted media group digest matches; governance, overlap, Docker Compose and diff gates passed.
