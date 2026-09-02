@@ -1,0 +1,2 @@
+Bounded validation evidence is recorded in acceptance criteria and external
+continuity receipts; raw command transcripts are intentionally omitted.
