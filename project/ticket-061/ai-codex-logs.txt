@@ -1,0 +1,14 @@
+Ticket initialized; validation evidence will be appended after implementation.
+Focused supervisor: 6 passed.
+Focused CLI: 64 passed, 52 subtests passed.
+Scoped Ruff: passed.
+Diff whitespace check: passed.
+Live read-only FixOS probe: fail-closed with no_governance_diagnostic; no agent launched.
+Final focused run: 70 passed, 52 subtests passed.
+Compileall: passed.
+Managed governance: GOV-PASS (0 errors, 0 warnings).
+Docker Compose config: passed.
+Broader suite: 1242 passed before out-of-scope order-dependent command-picker failure.
+Clean accepted-base command-picker module: 19 passed.
+Bare-command default follow-up: 71 passed, 52 subtests passed; Ruff,
+governance and Docker Compose configuration passed.

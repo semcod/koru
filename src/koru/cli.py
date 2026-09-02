@@ -163,6 +163,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     ),
     "task": lambda argv: _lazy_module_main("koru.cli_task", "_task_main", argv),
     "agent": lambda argv: _lazy_module_main("koru.cli_agent", "_agent_main", argv),
+    "goal": lambda argv: _lazy_module_main("koru.cli_goal", "goal_main", argv),
     "local-serve": lambda argv: _lazy_module_main(
         "koru.cli_local_serve",
         "_local_serve_main",
@@ -405,6 +406,7 @@ def _handle_parser_exit(exc: SystemExit, raw_args: list[str], subcommand: str) -
 _GLOBAL_CONTROL_SUBCOMMANDS: frozenset[str] = frozenset(
     {"on", "off", "status", "agent-availability"}
 )
+_NO_PROJECT_REEXEC_SUBCOMMANDS: frozenset[str] = frozenset({"goal"})
 
 
 def _dispatch_before_parse(subcommand: str, raw_args: list[str]) -> int | None:
@@ -414,7 +416,8 @@ def _dispatch_before_parse(subcommand: str, raw_args: list[str]) -> int | None:
         return _SUBCOMMANDS[subcommand](raw_args[1:])
     if subcommand and (rc := _refuse_when_globally_disabled(subcommand)) is not None:
         return rc
-    _maybe_reexec_for_project_venv(raw_args)
+    if subcommand not in _NO_PROJECT_REEXEC_SUBCOMMANDS:
+        _maybe_reexec_for_project_venv(raw_args)
     if (auto_rc := _dispatch_auto_alias(raw_args)) is not None:
         return auto_rc
     if subcommand in _SUBCOMMANDS:
