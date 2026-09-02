@@ -5,4 +5,3 @@ services:
       dockerfile: examples/docker/koru-e2e.Dockerfile
       args:
         E2E_SCRIPT: examples/nlp2uri-testql-browser/e2e-docker.sh
-        EXTRA_PIP: "nlp2uri>=0.4.7 testql>=1.2.55"

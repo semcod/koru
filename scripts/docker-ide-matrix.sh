@@ -7,11 +7,11 @@ IMAGE_PREFIX="${KORU_DOCKER_MATRIX_IMAGE_PREFIX:-koru-ide-matrix}"
 KEEP_IMAGES="${KORU_DOCKER_MATRIX_KEEP_IMAGES:-0}"
 
 DEFAULT_SYSTEMS=(
-    "debian-slim=python:3.12-slim-bookworm"
-    "debian-bookworm=python:3.12-bookworm"
-    "ubuntu-noble=ubuntu:24.04"
-    "fedora=fedora:latest"
-    "alpine=python:3.12-alpine"
+    "debian-slim=python:3.12.14-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254"
+    "debian-bookworm=python:3.12.14-bookworm@sha256:581429e3df12d76e6af4be5ab7d0e7fc2013eb57dc23d2de691411c8efdbb970"
+    "ubuntu-noble=ubuntu:24.04@sha256:33ceb71981b602c1a7443a53469e4dba065f7503eab3078a2d7a57a2ab987517"
+    "fedora=fedora:44@sha256:43b29f65a41eb9c35e1cd5323e3bdf3b655c2357a9f4f1ff2f9c2798e5045d80"
+    "alpine=python:3.12.14-alpine3.24@sha256:1887c114801a8c82a4ec01daa52cfe7fc3f63573640e2247320289807ac1c3bb"
 )
 DEFAULT_IDES=("vscode" "vscodium" "cursor" "windsurf" "jetbrains" "zed")
 
@@ -29,11 +29,11 @@ system_spec_for() {
         return 0
     fi
     case "${raw}" in
-        debian-slim) printf '%s\n' "debian-slim=python:3.12-slim-bookworm" ;;
-        debian|debian-bookworm) printf '%s\n' "debian-bookworm=python:3.12-bookworm" ;;
-        ubuntu|ubuntu-noble) printf '%s\n' "ubuntu-noble=ubuntu:24.04" ;;
-        fedora) printf '%s\n' "fedora=fedora:latest" ;;
-        alpine) printf '%s\n' "alpine=python:3.12-alpine" ;;
+        debian-slim) printf '%s\n' "${DEFAULT_SYSTEMS[0]}" ;;
+        debian|debian-bookworm) printf '%s\n' "${DEFAULT_SYSTEMS[1]}" ;;
+        ubuntu|ubuntu-noble) printf '%s\n' "${DEFAULT_SYSTEMS[2]}" ;;
+        fedora) printf '%s\n' "${DEFAULT_SYSTEMS[3]}" ;;
+        alpine) printf '%s\n' "${DEFAULT_SYSTEMS[4]}" ;;
         *:*) printf '%s\n' "custom-${raw//[^A-Za-z0-9_.-]/-}=${raw}" ;;
         *)
             echo "unknown KORU_DOCKER_SYSTEMS item: ${raw}" >&2
@@ -68,6 +68,11 @@ fi
 for spec in "${system_specs[@]}"; do
     system_id="${spec%%=*}"
     base_image="${spec#*=}"
+    if [[ ! "${base_image}" =~ @sha256:[0-9a-f]{64}$ ]]; then
+        echo "mutable Docker base rejected for ${system_id}: ${base_image}" >&2
+        echo "supply an image reference ending in @sha256:<64 lowercase hex characters>" >&2
+        exit 2
+    fi
     tag="${IMAGE_PREFIX}:${system_id}"
     echo "==> build ${tag} from ${base_image}"
     "${DOCKER}" build \

@@ -1,0 +1,92 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-044",
+  "summary": "Harden remaining Docker build inputs",
+  "workstream": "infrastructure",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-044/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "examples/docker/koru-e2e.Dockerfile",
+    "examples/nlp2uri-testql-browser/docker-compose.yml",
+    "scripts/docker-ide-matrix.sh"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-043"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b14eeaec9c38b66085c079e42d94b5f60b091119",
+    "targetBranch": "main",
+    "outcome": "Every remaining infrastructure-owned Docker build input consumes immutable base images and the reviewed Python lock without mutable package injection.",
+    "nonGoals": [
+      "Change Koru application behavior or public interfaces",
+      "Rewrite the application-owned IDE matrix Dockerfile",
+      "Refresh dependency versions or the uv lockfile"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reuse the reviewed uv.lock for the example image and bind every Docker base selector to an immutable multi-platform manifest digest.",
+      "components": [
+        {
+          "name": "example-e2e-image",
+          "paths": [
+            "examples/docker/koru-e2e.Dockerfile",
+            "examples/nlp2uri-testql-browser/docker-compose.yml"
+          ]
+        },
+        {
+          "name": "ide-matrix-launcher",
+          "paths": ["scripts/docker-ide-matrix.sh"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge; no persistent data or public interface changes are involved."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "docker build --check -f examples/docker/koru-e2e.Dockerfile .",
+          "docker build --no-cache -f examples/docker/koru-e2e.Dockerfile --build-arg E2E_SCRIPT=examples/ci/headless-autonomous-jsonl/e2e.sh -t koru-ticket-044-e2e ."
+        ],
+        "evidence": "immutable stages and frozen lock-based example build"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash -n scripts/docker-ide-matrix.sh",
+          "KORU_DOCKER_SYSTEMS='custom=python:3.12-slim' bash scripts/docker-ide-matrix.sh"
+        ],
+        "evidence": "syntax check and fail-closed mutable custom base rejection"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "./project/governance-check.sh",
+          "docker compose --profile '*' config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "managed repository, stack and exact-head publication gates"
+      }
+    ]
+  }
+}
