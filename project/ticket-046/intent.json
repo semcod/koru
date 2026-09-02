@@ -1,0 +1,84 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-046",
+  "summary": "Koru CI project flag, publication preflight, scan staleness",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-046/**",
+    "src/koru/cli_ci.py",
+    "src/koru/ci/github.py",
+    "src/koru/ci/publication.py",
+    "src/koru/autonomy/ticket_hygiene.py",
+    "src/koru/queue/ticket.py",
+    "src/koru/queue/runner.py",
+    "tests/test_ci_pipeline.py",
+    "tests/test_ticket_hygiene.py",
+    "tests/test_queue_ticket_selection.py",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f5692855605ff3a7fae9ec671ebb7b5537dfd2a8",
+    "targetBranch": "main",
+    "outcome": "Koru accepts koru ci run --project ., blocks validator dispatch on unmergeable PRs, archives stale scan tickets, and skips operator human tickets in non-interactive queue loops.",
+    "nonGoals": [
+      "Rewrite validator-agent itself",
+      "Auto-refresh acceptedBaseSha in intent.json"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 12,
+      "maxAffectedComponents": 4,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Preflight and hygiene gates fail closed with actionable errors; queue skips deferrable operator tickets instead of waiting_input stalls.",
+      "components": [
+        {
+          "name": "ci-cli",
+          "paths": ["src/koru/cli_ci.py", "tests/test_ci_pipeline.py"]
+        },
+        {
+          "name": "publication-preflight",
+          "paths": ["src/koru/ci/github.py", "src/koru/ci/publication.py"]
+        },
+        {
+          "name": "scan-hygiene",
+          "paths": ["src/koru/autonomy/ticket_hygiene.py", "tests/test_ticket_hygiene.py"]
+        },
+        {
+          "name": "queue-selection",
+          "paths": ["src/koru/queue/ticket.py", "src/koru/queue/runner.py", "tests/test_queue_ticket_selection.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the ticket branch."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_ci_pipeline.py tests/test_ticket_hygiene.py tests/test_queue_ticket_selection.py"
+        ],
+        "evidence": "focused pytest output"
+      }
+    ]
+  }
+}

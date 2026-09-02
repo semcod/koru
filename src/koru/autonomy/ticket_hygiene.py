@@ -79,6 +79,23 @@ def _ticket_paths(ticket: dict[str, Any]) -> list[str]:
     return [str(p).strip().replace("\\", "/") for p in raw if str(p).strip()]
 
 
+def _path_exists_in_project(project: Path, rel_path: str) -> bool:
+    candidate = Path(rel_path)
+    if candidate.is_file():
+        return True
+    return (project / rel_path).is_file()
+
+
+def ticket_has_stale_paths(ticket: dict[str, Any], *, project: Path | None = None) -> bool:
+    """True when declared ticket paths no longer exist (common after refactors)."""
+    if project is None:
+        return False
+    paths = _ticket_paths(ticket)
+    if not paths:
+        return False
+    return any(not _path_exists_in_project(project, path) for path in paths)
+
+
 def ticket_is_junk(ticket: dict[str, Any], *, project: Path | None = None) -> bool:
     """True when every declared path is non-implementable (or a bare glob)."""
     paths = _ticket_paths(ticket)
@@ -166,6 +183,18 @@ def run_ticket_hygiene(
             if not (name.startswith("[todo2code]") or "todo2code" in tool):
                 continue
         if not ticket_is_junk(ticket, project=project):
+            if ticket_has_stale_paths(ticket, project=project):
+                paths = _ticket_paths(ticket)
+                reason = f"stale declared paths after refactor: {', '.join(paths[:6])}"
+                if dry_run:
+                    outcome.archived.append(f"{ticket_id} (dry-run stale)")
+                    continue
+                try:
+                    _archive_ticket(project, ticket_id, reason=reason, actor=actor)
+                    outcome.archived.append(ticket_id)
+                except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
+                    outcome.errors.append(f"{ticket_id}: {exc}")
+                continue
             outcome.kept.append(ticket_id)
             continue
         paths = _ticket_paths(ticket)
@@ -198,5 +227,6 @@ __all__ = [
     "HygieneOutcome",
     "format_hygiene_summary",
     "run_ticket_hygiene",
+    "ticket_has_stale_paths",
     "ticket_is_junk",
 ]
