@@ -101,7 +101,11 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "${ARTIFACT_ROOT}"
-          python -m coverage run -m pytest tests/ -q
+          # Coverage collection is diagnostic. The managed governance gate runs
+          # separately in CI; overriding addopts prevents the pytest bridge from
+          # trying to infer a PR base during workflow_dispatch.
+          python -m coverage run -m pytest \
+            -o 'addopts=-m "not slow"' tests/ -q
           python -m coverage json -o "${ARTIFACT_ROOT}/coverage.json"
           python -m coverage xml -o "${ARTIFACT_ROOT}/coverage.xml"
           cp .coverage "${ARTIFACT_ROOT}/coverage.data"
