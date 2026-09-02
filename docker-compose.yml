@@ -55,7 +55,7 @@ services:
   # External dependencies for testing
   planfile:
     build:
-      context: https://github.com/semcod/planfile.git#8e5e19c40a464f49844a6c9df542173cd67876a7
+      context: https://github.com/semcod/planfile.git#853a0d640b16a5b61b8d8ced1bf9a61f7475c102
     container_name: planfile-test
     volumes:
       - ./test-data:/workspace
@@ -69,10 +69,16 @@ services:
     build:
       context: https://github.com/semcod/regix.git#ca098059ee97dc4b81d44f42fd24ec72f899c9e8
       dockerfile_inline: |
-        FROM python@sha256:e5c9fa26ffb76e11e0f054f30dc2523a2f9693f0c36c0cf1e39b27e152d899fc
+        FROM ghcr.io/astral-sh/uv:0.11.28@sha256:0f36cb9361a3346885ca3677e3767016687b5a170c1a6b88465ec14aefec90aa AS uv
+        FROM python:3.12.14-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254
+        COPY --from=uv /uv /uvx /bin/
         WORKDIR /app
-        COPY . .
-        RUN pip install --no-cache-dir .
+        COPY pyproject.toml uv.lock README.md ./
+        RUN uv lock --check --no-sources \
+            && uv sync --frozen --no-dev --no-editable --no-install-project
+        COPY regix ./regix
+        RUN uv sync --frozen --no-dev --no-editable
+        ENV PATH="/app/.venv/bin:$${PATH}"
     container_name: regix-test
     volumes:
       - ./test-data:/workspace
@@ -84,7 +90,7 @@ services:
 
   testql:
     build:
-      context: https://github.com/autogrammar/testql.git#cc9171f2c702caa363b17f1a529ec41a88d038aa
+      context: https://github.com/autogrammar/testql.git#d08d033607eb57f9c094856d0fb0d1adef88c8d5
     container_name: testql-test
     volumes:
       - ./test-data:/workspace
@@ -96,7 +102,8 @@ services:
 
   healing-webhook:
     build:
-      context: ./services/healing-webhook
+      context: .
+      dockerfile: services/healing-webhook/Dockerfile
     container_name: healing-webhook-test
     ports:
       - "8810:8810"

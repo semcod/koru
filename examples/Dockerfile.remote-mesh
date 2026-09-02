@@ -1,0 +1,17 @@
+FROM ghcr.io/astral-sh/uv:0.11.28@sha256:0f36cb9361a3346885ca3677e3767016687b5a170c1a6b88465ec14aefec90aa AS uv
+FROM python:3.12.14-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254
+
+COPY --from=uv /uv /uvx /bin/
+
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
+    PATH="/opt/venv/bin:${PATH}" \
+    PYTHONPATH=/app/src:/app/packages/coru/src:/app/packages/koruide/src
+
+WORKDIR /build
+COPY pyproject.toml uv.lock README.md VERSION ./
+COPY LICENSE* ./
+RUN uv lock --check --no-sources \
+    && uv sync --frozen --no-dev --extra api --extra mesh --no-editable --no-install-project
+
+WORKDIR /app
+CMD ["python", "-m", "koru", "serve", "--host", "0.0.0.0", "--port", "8765", "--no-open"]
