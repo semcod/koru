@@ -1,6 +1,6 @@
 # Package Extraction Plan (map-driven, dependency-first)
 
-> Updated 2026-09-01. The old rule “move `src` to `packages/*`” did not reduce
+> Updated 2026-09-02. The old rule “move `src` to `packages/*`” did not reduce
 > the repository and encouraged parallel namespaces. The quantitative source
 > of truth is now
 > [`architecture/volume-reduction-plan.yaml`](architecture/volume-reduction-plan.yaml),
@@ -17,6 +17,15 @@ Move reusable mechanisms only to an existing, already-used dependency that owns
 the capability. Moving code from `src/` to `packages/` in this repository is
 not an extraction. Prefer deletion of generated state and duplicate namespaces,
 then dependency-first releases with one compatibility release.
+
+## Program progress
+
+Order 10, `repository.generated_state`, is complete. The 49-file,
+17,172,638-byte generated baseline is absent from the Git index, its versions
+and digests remain in `config/artifact-registry.json`, and artifact workflow
+run `33612230881` proved separate analysis, coverage and media publication.
+Order 20, `runtime.shadow_packages`, was already complete; the next planned
+local reduction is order 30, `namespaces.coru_koru_pairs`.
 
 ## Current state (top-level under `src`)
 
