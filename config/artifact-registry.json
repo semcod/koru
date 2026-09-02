@@ -1,0 +1,106 @@
+{
+  "schema": "koru.generated-artifact-registry/v1",
+  "governanceTicket": "ticket-045",
+  "baseline": {
+    "sourceCommit": "f5692855605ff3a7fae9ec671ebb7b5537dfd2a8",
+    "capturedOn": "2026-09-02",
+    "digestAlgorithm": "sha256",
+    "digestInput": "lexicographically sorted sha256sum records in '<digest><two spaces><path>' form",
+    "fileCount": 49,
+    "bytes": 17172638,
+    "digest": "8aed8022b9271cd44dee21b82b205faf2dbd9acc20594313d8a43fc538494e25"
+  },
+  "generators": {
+    "code2llm": {
+      "baselineVersion": "0.5.176",
+      "command": "code2llm . -f all -o project --no-chunk --exclude '*.md'"
+    },
+    "sumd": {
+      "baselineVersion": "0.3.60",
+      "command": "sumd map . --stdout"
+    },
+    "coverage": {
+      "baselineVersion": "7.13.5",
+      "command": "python -m coverage json -o coverage.json"
+    },
+    "tree": {
+      "baselineVersion": "2.2.1",
+      "command": "./tree.sh"
+    },
+    "media": {
+      "baselineVersion": "ffmpeg 7.1.1",
+      "command": "Produce koru.mp4 from the approved release-demo source in CI"
+    }
+  },
+  "artifactGroups": [
+    {
+      "id": "coverage",
+      "paths": [".coverage_data/coverage.json", "coverage.json"],
+      "fileCount": 2,
+      "bytes": 2239248,
+      "digest": "681a2632926ff0da96feb486669a0e141534ec71812e0ef954161dae0b470904"
+    },
+    {
+      "id": "root-analysis",
+      "paths": ["SUMD.md", "SUMR.md"],
+      "fileCount": 2,
+      "bytes": 2601532,
+      "digest": "d42fe73184e304efc780c6170de0fbedbb48e35cf5812afae30f3dc9232de294"
+    },
+    {
+      "id": "code2llm-output",
+      "paths": ["code2llm_output/**"],
+      "fileCount": 6,
+      "bytes": 254451,
+      "digest": "364a00c9bf60c568d2bd9bfb33c337a90299d18b34f7791dca015ffd53783f8a"
+    },
+    {
+      "id": "plugin-analysis",
+      "paths": [".tmp/code2llm-plugins/**"],
+      "fileCount": 18,
+      "bytes": 1294582,
+      "digest": "d9658a8da1a5fefe938fedbfd3ecbd535b4f122e1563400e075078d550106b27"
+    },
+    {
+      "id": "project-analysis",
+      "paths": [
+        "project/analysis.toon.yaml",
+        "project/calls.mmd",
+        "project/calls.png",
+        "project/calls.toon.yaml",
+        "project/calls.yaml",
+        "project/compact_flow.mmd",
+        "project/compact_flow.png",
+        "project/context.md",
+        "project/duplication.toon.yaml",
+        "project/evolution.toon.yaml",
+        "project/flow.mmd",
+        "project/flow.png",
+        "project/index.html",
+        "project/logic.pl",
+        "project/map.toon.yaml",
+        "project/mermaid.export",
+        "project/planfile-tickets.yaml",
+        "project/project.toon.yaml",
+        "project/prompt.txt"
+      ],
+      "fileCount": 19,
+      "bytes": 8409130,
+      "digest": "03ddcb322d230591413259d054d7c710c13f050fb64f236193f764c9e259f8b2"
+    },
+    {
+      "id": "release-media",
+      "paths": ["koru.mp4"],
+      "fileCount": 1,
+      "bytes": 2236237,
+      "digest": "9a7fc5df15a6a0a5a0c4f0fe4d1955058dbeccc821748d44a4c287f26ec2c03b"
+    },
+    {
+      "id": "tree-snapshot",
+      "paths": ["tree.txt"],
+      "fileCount": 1,
+      "bytes": 137458,
+      "digest": "2eaad0a906199c9cecba1226121c71ed544ab8413130ee871cc288b75f9fe6f2"
+    }
+  ]
+}
