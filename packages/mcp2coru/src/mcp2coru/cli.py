@@ -1,26 +1,5 @@
-"""MCP server CLI."""
+"""Deprecated alias of the canonical :mod:`mcp2koru.cli` entry point."""
 
-from __future__ import annotations
+from mcp2koru.cli import main
 
-import argparse
-import sys
-
-from mcp2coru.server import create_server
-
-
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="mcp2coru MCP server")
-    parser.add_argument("--name", default="coru")
-    sub = parser.add_subparsers(dest="cmd")
-    sub.add_parser("serve")
-    sub.add_parser("server")
-    args = parser.parse_args(argv or sys.argv[1:])
-    if (args.cmd or "serve") in {"serve", "server"}:
-        create_server(name=args.name).run()
-        return 0
-    parser.print_help()
-    return 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+__all__ = ["main"]
