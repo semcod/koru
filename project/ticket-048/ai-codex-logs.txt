@@ -1,0 +1,4 @@
+2026-09-02 SESSION_EXECUTION_AUTHORIZATION: user requested execution of the plan under docs/*.
+2026-09-02 GOV-WORKSTREAM-003: first deletion attempt restored; ticket paused with a secret-scanned external snapshot.
+2026-09-02 RESUME: ticket-049 merged exact generated-path integration ownership; ticket rebased to 0b02cf2634b47f48f8163af03640ac2180dfeae8.
+2026-09-02 VALIDATION: all 12 paths untracked and ignored; governance, overlap, Docker Compose, registry JSON and diff checks passed.
