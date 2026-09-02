@@ -94,12 +94,16 @@ wait_for_commit_status() {
 }
 
 run_onedev_agent() {
-  local subcommand="$1"
   [[ -d "$SUBLLM_ROOT/src" ]] || die "SUBLLM_ROOT not found: $SUBLLM_ROOT"
   [[ -f "$SUBLLM_POLICY_FILE" ]] || die "SUBLLM_POLICY_FILE not found: $SUBLLM_POLICY_FILE"
   export SUBLLM_POLICY_FILE
+  export ONEDEV_AGENT_PR_VERIFICATION=true
   export PYTHONPATH="${SUBLLM_ROOT}/src:${ONEDEV_AGENT}/src:${PYTHONPATH:-}"
-  python3 -m onedev_agent --config "${ONEDEV_AGENT}/config/repositories.toml" "$subcommand"
+  python3 -m onedev_agent --config "${ONEDEV_AGENT}/config/repositories.toml" "$@"
+}
+
+run_onedev_pr_retry() {
+  run_onedev_agent pr-retry --repository "$REPO_SLUG" --pull-number "$PR"
 }
 
 echo "=== Resolve agent paths ==="
@@ -227,8 +231,21 @@ if [[ -z "${GITHUB_TOKEN:-}" ]]; then
 fi
 (
   cd "$ONEDEV_AGENT"
-  run_onedev_agent pr-coordinate-once
-  run_onedev_agent pr-execute-once
+  echo "ONEDEV_AGENT_PR_VERIFICATION=${ONEDEV_AGENT_PR_VERIFICATION:-unset}"
+  run_onedev_pr_retry || true
+  for attempt in 1 2 3 4 5 6; do
+    coord="$(run_onedev_agent pr-coordinate-once)"
+    echo "$coord"
+    exec_out="$(run_onedev_agent pr-execute-once)"
+    echo "$exec_out"
+    if [[ "$coord" != "[]" || "$exec_out" != "null" ]]; then
+      break
+    fi
+    if (( attempt == 6 )); then
+      die "onedev-agent did not queue PR #${PR}; set ONEDEV_AGENT_PR_VERIFICATION=true and check ${ONEDEV_AGENT}/secrets/github-token"
+    fi
+    sleep 5
+  done
 )
 
 echo "=== Verify onedev/local-verify on frozen head ==="
