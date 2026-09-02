@@ -102,8 +102,63 @@ run_onedev_agent() {
   python3 -m onedev_agent --config "${ONEDEV_AGENT}/config/repositories.toml" "$@"
 }
 
-run_onedev_pr_retry() {
-  run_onedev_agent pr-retry --repository "$REPO_SLUG" --pull-number "$PR"
+prepare_onedev_scan_cursor() {
+  local queue_root="${ONEDEV_AGENT}/data/pr-state"
+  local index=""
+  index="$(python3 <<PY
+import tomllib
+from pathlib import Path
+
+config = tomllib.load(Path("${ONEDEV_AGENT}/config/repositories.toml").open("rb"))
+repos = config["pull_request_verification"]["repositories"]
+for i, row in enumerate(repos):
+    if row.get("full_name") == "${REPO_SLUG}":
+        print(i)
+        break
+else:
+    raise SystemExit("repository profile not found: ${REPO_SLUG}")
+PY
+)"
+  mkdir -p "$queue_root"
+  printf '{"next_index": %s}\n' "$index" > "${queue_root}/scan-cursor.json"
+}
+
+clear_onedev_reported_state() {
+  local state_path="${ONEDEV_AGENT}/data/pr-state/reported-state.json"
+  [[ -f "$state_path" ]] || return 0
+  python3 <<PY
+import json
+from pathlib import Path
+
+path = Path("${state_path}")
+state = json.loads(path.read_text(encoding="utf-8"))
+if isinstance(state, dict):
+    state.pop("${REPO_SLUG}#${PR}", None)
+    path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
+run_onedev_until_local_verify() {
+  local deadline=$((SECONDS + 1800))
+  local state=""
+  prepare_onedev_scan_cursor
+  clear_onedev_reported_state
+  while (( SECONDS < deadline )); do
+    coord="$(run_onedev_agent pr-coordinate-once)"
+    echo "$coord"
+    exec_out="$(run_onedev_agent pr-execute-once)"
+    echo "$exec_out"
+    state="$(commit_status_context_state "$FROZEN_HEAD" "onedev/local-verify" || true)"
+    if [[ "$state" == "success" ]]; then
+      echo "onedev/local-verify=${state}"
+      return 0
+    fi
+    if [[ "$state" == "failure" || "$state" == "error" ]]; then
+      die "onedev/local-verify=${state} on ${FROZEN_HEAD}"
+    fi
+    sleep 10
+  done
+  die "timed out waiting for onedev/local-verify=success on ${FROZEN_HEAD} (last=${state:-pending})"
 }
 
 echo "=== Resolve agent paths ==="
@@ -122,7 +177,7 @@ FROZEN_HEAD="$(gh api "repos/${REPO_SLUG}/pulls/${PR}" --jq .head.sha)"
 echo "frozen_head=${FROZEN_HEAD}"
 
 echo "=== Standard packs / conformance (local worktree at frozen head) ==="
-WORK_ROOT="/tmp/koru-pr-verify-$$"
+WORK_ROOT="${HOME}/.cache/koru-pr-verify-$$"
 RUNNER_TEMP="${WORK_ROOT}/runner-temp"
 mkdir -p "$RUNNER_TEMP"
 git clone --filter=blob:none "https://github.com/${REPO_SLUG}.git" "${WORK_ROOT}/repo"
@@ -231,26 +286,14 @@ if [[ -z "${GITHUB_TOKEN:-}" ]]; then
 fi
 (
   cd "$ONEDEV_AGENT"
-  echo "ONEDEV_AGENT_PR_VERIFICATION=${ONEDEV_AGENT_PR_VERIFICATION:-unset}"
-  run_onedev_pr_retry || true
-  for attempt in 1 2 3 4 5 6; do
-    coord="$(run_onedev_agent pr-coordinate-once)"
-    echo "$coord"
-    exec_out="$(run_onedev_agent pr-execute-once)"
-    echo "$exec_out"
-    if [[ "$coord" != "[]" || "$exec_out" != "null" ]]; then
-      break
-    fi
-    if (( attempt == 6 )); then
-      die "onedev-agent did not queue PR #${PR}; set ONEDEV_AGENT_PR_VERIFICATION=true and check ${ONEDEV_AGENT}/secrets/github-token"
-    fi
-    sleep 5
-  done
+  echo "ONEDEV_AGENT_PR_VERIFICATION=true"
+  run_onedev_until_local_verify
 )
 
 echo "=== Verify onedev/local-verify on frozen head ==="
-ONEDEV_STATE="$(wait_for_commit_status "$FROZEN_HEAD" "onedev/local-verify" success)"
+ONEDEV_STATE="$(commit_status_context_state "$FROZEN_HEAD" "onedev/local-verify")"
 echo "onedev/local-verify=${ONEDEV_STATE}"
+[[ "$ONEDEV_STATE" == "success" ]] || die "onedev/local-verify is not success on ${FROZEN_HEAD}"
 
 if [[ "$DRY_RUN" == true ]]; then
   echo "=== Dry run: skipping validator-agent dispatch ==="
