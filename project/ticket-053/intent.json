@@ -1,0 +1,11 @@
+{
+  "schema":"new-project.intent/v3","ticket":"ticket-053","summary":"Publish generated analysis coverage and media as CI artifacts","workstream":"infrastructure",
+  "classification":{"kind":"SERVICE","priority":"P0","origin":"requested"},
+  "allowedPaths":["project/ticket-053/**","TODO.md","project/TICKETS.md",".github/workflows/sumr-weekly.yml"],
+  "forbiddenPaths":["project/ticket-*/user-*.md"],"stacks":["docker"],"dependsOn":["ticket-045","ticket-048","ticket-049","ticket-050","ticket-051","ticket-052"],"conflictsWith":[],"integrationTicket":null,
+  "delivery":{"acceptedBaseSha":"262d9c1317a46878105c882565060c3b9f8740ef","targetBranch":"main","outcome":"Scheduled and manually dispatched CI publishes analysis, coverage and hash-verified media artifacts without repository writes.",
+    "nonGoals":["Commit regenerated outputs","Change runtime dependencies","Create new release media without an approved source"],"complexity":"S","estimatedMinutes":90,
+    "budgets":{"maxImplementationFiles":1,"maxAffectedComponents":1,"maxPublicInterfaceChanges":0,"maxRuntimeDependencies":0},
+    "architecture":{"status":"accepted","decision":"Use three isolated read-only CI jobs and SHA-pinned actions; recover the accepted media baseline from its registry-bound source commit.","components":[{"name":"generated-artifact-ci","paths":[".github/workflows/sumr-weekly.yml"]}],"responsibilityChanges":false,"interfaceChanges":[],"dataChanges":[],"ui":{"impact":"none","states":[],"evidence":[]},"rollback":"Revert the protected merge to restore the previous weekly workflow."},
+    "runtimeDependencies":[],"validation":[{"criterion":"AC-04","commands":["./project/governance-check.sh","python3 .governance/worktree_guard.py --root . --once --scope repository","docker compose config --quiet","ruby -e YAML.load_file(...) or actionlint","git diff --check"],"evidence":"managed gates, YAML parse and protected checks"}]}
+}

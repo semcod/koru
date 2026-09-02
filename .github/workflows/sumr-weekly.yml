@@ -1,185 +1,156 @@
-# .github/workflows/sumr-weekly.yml
-#
-# Weekly refresh of SUMR.md (LLM refactor snapshot).
-#
-# Runs every Monday 04:00 UTC. Uses the same debounced helper as the local
-# post-merge hook — if the repo is already fresh (e.g. a contributor just
-# regenerated), the workflow skips the expensive parts and exits green
-# without opening a PR.
-#
-# If regeneration produces changes, the workflow opens (or updates) a single
-# long-lived PR on branch `automation/sumr-refresh`. Landing the PR is a
-# plain `Squash and merge` — no bot review required.
-#
-# Token strategy:
-#   * Default uses GITHUB_TOKEN (no extra setup). PRs from GITHUB_TOKEN do
-#     not trigger downstream workflow runs — which is fine here since no
-#     workflow keys off SUMR.md changes.
-#   * For richer behaviour (reviewers, status-check re-triggers), set a PAT
-#     in repo secrets as `SUMR_PAT`; the workflow auto-prefers it if present.
-
-name: SUMR Weekly Refresh
+name: Generated Artifact Snapshot
 
 on:
   schedule:
-    # Monday 04:00 UTC — low-activity window across CET/UTC/EST.
     - cron: "0 4 * * 1"
   workflow_dispatch:
-    inputs:
-      force:
-        description: "Ignore debounce (always regenerate)"
-        required: false
-        type: boolean
-        default: false
-      skip_deps:
-        description: "Skip sumd/code2llm/redup/doql upgrade (use last installed)"
-        required: false
-        type: boolean
-        default: false
 
-# Only one SUMR refresh at a time; cancel-in-progress keeps the PR in sync
-# with the latest main rather than racing against it.
 concurrency:
-  group: sumr-refresh
+  group: generated-artifacts-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
-  contents: write         # required to push the refresh branch
-  pull-requests: write    # required to open / update the PR
+  contents: read
 
 jobs:
-  refresh:
-    name: Regenerate SUMR.md
+  analysis:
+    name: Generate analysis artifact
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
+    timeout-minutes: 30
     steps:
-      - name: Checkout main
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0          # sumr-refresh.sh reads git history for debounce
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.12"
+
+      - name: Install registry-pinned generators
+        run: |
+          python -m pip install --disable-pip-version-check \
+            "code2llm==0.5.176" \
+            "sumd==0.3.60"
+
+      - name: Generate analysis outside the checkout
+        env:
+          ARTIFACT_ROOT: ${{ runner.temp }}/koru-analysis
+        run: |
+          set -euo pipefail
+          mkdir -p "${ARTIFACT_ROOT}/project"
+          code2llm . -f all -o "${ARTIFACT_ROOT}/project" \
+            --no-chunk --exclude '*.md'
+          sumd map . --stdout > "${ARTIFACT_ROOT}/SUMD.md"
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+
+          root = Path(os.environ["ARTIFACT_ROOT"])
+          payload = {
+              "schema": "koru.generated-analysis-run/v1",
+              "sourceSha": os.environ["GITHUB_SHA"],
+              "generators": {
+                  "code2llm": "0.5.176",
+                  "sumd": "0.3.60",
+              },
+              "gitStatus": subprocess.check_output(
+                  ["git", "status", "--porcelain", "--untracked-files=no"],
+                  text=True,
+              ),
+          }
+          (root / "run.json").write_text(
+              json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+          )
+          PY
+          test -z "$(git status --porcelain --untracked-files=no)"
+
+      - name: Upload analysis
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: koru-analysis-${{ github.sha }}
+          path: ${{ runner.temp }}/koru-analysis
+          if-no-files-found: error
+          retention-days: 14
+
+  coverage:
+    name: Generate coverage artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: "3.12"
           cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            uv.lock
 
-      - name: Pick token (prefer SUMR_PAT when configured)
-        id: token
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -e ".[dev]"
+
+      - name: Generate coverage outside the checkout
         env:
-          SUMR_PAT: ${{ secrets.SUMR_PAT }}
+          ARTIFACT_ROOT: ${{ runner.temp }}/koru-coverage
         run: |
-          if [ -n "${SUMR_PAT}" ]; then
-            echo "use_pat=true" >> "$GITHUB_OUTPUT"
-            echo "Using repo secret SUMR_PAT"
-          else
-            echo "use_pat=false" >> "$GITHUB_OUTPUT"
-            echo "Using default GITHUB_TOKEN"
-          fi
+          set -euo pipefail
+          mkdir -p "${ARTIFACT_ROOT}"
+          # Coverage collection is diagnostic. The managed governance gate runs
+          # separately in CI; overriding addopts prevents the pytest bridge from
+          # trying to infer a PR base during workflow_dispatch.
+          python -m coverage run -m pytest \
+            -o 'addopts=-m "not slow"' \
+            tests/test_init.py tests/test_autopilot_cli.py -q
+          python -m coverage json -o "${ARTIFACT_ROOT}/coverage.json"
+          python -m coverage xml -o "${ARTIFACT_ROOT}/coverage.xml"
+          cp .coverage "${ARTIFACT_ROOT}/coverage.data"
+          test -z "$(git status --porcelain --untracked-files=no)"
 
-      - name: Run debounced sumr-refresh
-        id: refresh
-        env:
-          SUMR_FORCE: ${{ inputs.force && '1' || '0' }}
-          SUMR_SKIP_DEPS: ${{ inputs.skip_deps && '1' || '0' }}
-          # Scheduled weekly runs always hit the 7-day threshold, so the
-          # default env does the right thing; inputs only matter for manual
-          # dispatches.
-        run: |
-          set -e
-          mkdir -p .sumr
-          bash scripts/sumr-refresh.sh | tee .sumr/weekly.log
-          # Propagate whether the helper actually regenerated SUMR.md
-          if grep -q "up-to-date — skipping" .sumr/weekly.log; then
-            echo "regenerated=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "regenerated=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Inspect git diff
-        id: diff
-        run: |
-          # Treat SUMR.md + app.doql.* as the PR payload. Ignore any noise
-          # the helper may leave behind in venv/ or .sumr/ (gitignored).
-          git status --short
-          if git diff --quiet -- SUMR.md app.doql.less app.doql.css 2>/dev/null; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "No tracked SUMR changes — nothing to PR."
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            {
-              echo "stat<<EOF"
-              git diff --shortstat -- SUMR.md app.doql.less app.doql.css
-              echo "EOF"
-            } >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Capture sumd version
-        id: versions
-        if: steps.diff.outputs.changed == 'true'
-        run: |
-          pip show sumd 2>/dev/null | awk -F': ' '/^Version/ {print "sumd=" $2}' >> "$GITHUB_OUTPUT" || true
-          pip show code2llm 2>/dev/null | awk -F': ' '/^Version/ {print "code2llm=" $2}' >> "$GITHUB_OUTPUT" || true
-          pip show redup 2>/dev/null | awk -F': ' '/^Version/ {print "redup=" $2}' >> "$GITHUB_OUTPUT" || true
-          pip show doql 2>/dev/null | awk -F': ' '/^Version/ {print "doql=" $2}' >> "$GITHUB_OUTPUT" || true
-
-      - name: Open / update refresh PR
-        if: steps.diff.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v7
+      - name: Upload coverage
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          token: ${{ steps.token.outputs.use_pat == 'true' && secrets.SUMR_PAT || secrets.GITHUB_TOKEN }}
-          branch: automation/sumr-refresh
-          base: main
-          commit-message: "chore(sumr): weekly SUMR.md refresh"
-          title: "chore(sumr): weekly SUMR.md refresh"
-          author: "sumr-bot <sumr-bot@users.noreply.github.com>"
-          committer: "sumr-bot <sumr-bot@users.noreply.github.com>"
-          add-paths: |
-            SUMR.md
-            app.doql.less
-            app.doql.css
-          labels: |
-            automated
-            sumr
-            llm-snapshot
-          delete-branch: true
-          body: |
-            ## Weekly SUMR.md refresh
+          name: koru-coverage-${{ github.sha }}
+          path: ${{ runner.temp }}/koru-coverage
+          if-no-files-found: error
+          retention-days: 14
 
-            Regenerated by `scripts/sumr-refresh.sh` (see
-            `.github/workflows/sumr-weekly.yml`).
+  media:
+    name: Publish verified baseline media
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout source and accepted history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
 
-            **Diff stat:** ${{ steps.diff.outputs.stat }}
-
-            **Tooling versions:**
-            - sumd: `${{ steps.versions.outputs.sumd || 'n/a' }}`
-            - code2llm: `${{ steps.versions.outputs.code2llm || 'n/a' }}`
-            - redup: `${{ steps.versions.outputs.redup || 'n/a' }}`
-            - doql: `${{ steps.versions.outputs.doql || 'n/a' }}`
-
-            **Trigger:** `${{ github.event_name }}`
-            **HEAD when regenerated:** `${{ github.sha }}`
-
-            ### How to review
-            - SUMR.md is an LLM-oriented refactor descriptor — diffs tend to
-              reflect code complexity & duplication drift, not hand-edits.
-            - Safe to `Squash and merge` after a quick sanity scan.
-            - To regenerate manually before merge:
-              ```bash
-              task quality:sumr:refresh
-              ```
-
-            ### Opt-out
-            Disable the schedule by editing `.github/workflows/sumr-weekly.yml`
-            or uninstall the local hook:
-            ```bash
-            task quality:sumr:uninstall-hook
-            ```
-
-      - name: No changes — summary
-        if: steps.diff.outputs.changed != 'true'
+      - name: Recover and verify accepted media
+        env:
+          ARTIFACT_ROOT: ${{ runner.temp }}/koru-media
         run: |
-          echo "::notice::SUMR.md is already up-to-date — no PR needed."
-          echo "regenerated=${{ steps.refresh.outputs.regenerated }}"
+          set -euo pipefail
+          mkdir -p "${ARTIFACT_ROOT}"
+          source_commit=$(python -c \
+            'import json; print(json.load(open("config/artifact-registry.json"))["baseline"]["sourceCommit"])')
+          expected_digest=$(python -c \
+            'import json; data=json.load(open("config/artifact-registry.json")); print(next(group["digest"] for group in data["artifactGroups"] if group["id"] == "release-media"))')
+          git show "${source_commit}:koru.mp4" > "${ARTIFACT_ROOT}/koru.mp4"
+          file_digest=$(sha256sum "${ARTIFACT_ROOT}/koru.mp4" | cut -d' ' -f1)
+          group_digest=$(printf '%s  koru.mp4\n' "${file_digest}" | sha256sum | cut -d' ' -f1)
+          test "${group_digest}" = "${expected_digest}"
+          printf '%s  koru.mp4\n' "${file_digest}" > "${ARTIFACT_ROOT}/SHA256SUMS"
+          test -z "$(git status --porcelain --untracked-files=no)"
+
+      - name: Upload verified media
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: koru-media-${{ github.sha }}
+          path: ${{ runner.temp }}/koru-media
+          if-no-files-found: error
+          retention-days: 14
