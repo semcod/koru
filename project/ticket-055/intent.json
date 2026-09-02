@@ -1,0 +1,11 @@
+{
+  "schema":"new-project.intent/v3","ticket":"ticket-055","summary":"Complete generated-state reduction stage","workstream":"integration",
+  "classification":{"kind":"SERVICE","priority":"P0","origin":"requested"},
+  "allowedPaths":["project/ticket-055/**","project/TICKETS.md","docs/architecture/volume-reduction-plan.yaml","docs/architecture/generated-artifact-lifecycle.md","docs/package-extraction-plan.md"],
+  "forbiddenPaths":["project/ticket-*/user-*.md"],"stacks":["docker"],"dependsOn":["ticket-045","ticket-048","ticket-049","ticket-050","ticket-051","ticket-052","ticket-053","ticket-054"],"conflictsWith":[],"integrationTicket":null,
+  "delivery":{"acceptedBaseSha":"8c36ee13072051df4881e0444e8ead09d07a7d15","targetBranch":"main","outcome":"The normative volume plan records completion of generated-state cleanup with exact registry, Git-index and artifact-workflow evidence.",
+    "nonGoals":["Change the immutable reduction baseline","Modify generated outputs or runtime code","Start the next namespace-reduction stage"],"complexity":"S","estimatedMinutes":60,
+    "budgets":{"maxImplementationFiles":3,"maxAffectedComponents":1,"maxPublicInterfaceChanges":0,"maxRuntimeDependencies":0},
+    "architecture":{"status":"accepted","decision":"Mark only the fully evidenced generated-state stage complete and synchronize its two explanatory documents.","components":[{"name":"volume-reduction-plan","paths":["docs/architecture/volume-reduction-plan.yaml","docs/architecture/generated-artifact-lifecycle.md","docs/package-extraction-plan.md"]}],"responsibilityChanges":false,"interfaceChanges":[],"dataChanges":["repository.generated_state advances from ready to complete without changing its immutable baseline."],"ui":{"impact":"none","states":[],"evidence":[]},"rollback":"Revert the protected merge to restore the prior ready status and progress wording."},
+    "runtimeDependencies":[],"validation":[{"criterion":"AC-04","commands":["python -m pytest -o addopts='' tests/test_volume_reduction_plan.py -q","./project/governance-check.sh","python3 .governance/worktree_guard.py --root . --once --scope repository","docker compose config --quiet","git diff --check"],"evidence":"focused tests, managed gates and protected checks"}]}
+}

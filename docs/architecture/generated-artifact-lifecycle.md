@@ -52,6 +52,19 @@ not inputs that grant execution or merge authority.
 - Ticket-050 removed the first fourteen plugin-analysis files.
 - Ticket-051 removed the remaining four plugin-analysis files and the first ten
   project-analysis files.
-- Ticket-052 removes the final nine project-analysis outputs. All 49 paths in
-  the generated-state baseline are now out of source control; CI artifact
-  publication remains the final stage acceptance item.
+- Ticket-052 removed the final nine project-analysis outputs. All 49 files in
+  the generated-state baseline, totalling 17,172,638 bytes, are now out of
+  source control.
+- Ticket-053 replaced the write-capable weekly automation with the read-only
+  `.github/workflows/sumr-weekly.yml` artifact workflow. Proof run
+  `33612230881` published separate analysis, coverage and hash-verified media
+  artifacts with 14-day retention.
+- Ticket-054 made the plan contract verify every exact and wildcard registry
+  path against the Git index. Its 8 tests and 68 subtests passed with no
+  generated output tracked.
+
+The `repository.generated_state` stage is complete. Relative to the plan's
+tracked-checkout baseline, the repository at merge commit `8c36ee13` is down
+16,266,309 bytes and 127,412 net tracked lines. The net figures include new
+registry, tests and delivery evidence; the immutable registry remains the
+source of truth for the removed generated payload itself.

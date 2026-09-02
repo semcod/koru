@@ -210,7 +210,7 @@ stages:
   - id: repository.generated_state
     order: 10
     priority: P0
-    status: ready
+    status: complete
     action: untrack_generated
     source_paths:
       - .coverage_data
