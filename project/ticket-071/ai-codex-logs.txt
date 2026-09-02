@@ -1,0 +1,5 @@
+2026-09-02: Selected the 406-line canonical protobuf codec as the next bounded
+Order 30 reduction; ticket-069 and Draft PR 101 are explicitly out of scope.
+2026-09-02: Descriptor-driven codec and 33-case all-body matrix pass 99 focused
+tests; pb_codec.py is 213 lines, a 193-line production reduction. Ruff,
+compile, governance, Docker Compose, overlap and diff gates pass.
