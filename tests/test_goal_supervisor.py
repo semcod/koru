@@ -30,6 +30,11 @@ def _governed_project(tmp_path: Path) -> Path:
                         "remediation": "Create or continue the owning ticket.",
                         "documentation": "error/GOV-TICKET-001.md",
                     },
+                    "GOV-STANDARD-UPDATE-001": {
+                        "message": "The pinned standard is stale.",
+                        "remediation": "Prepare a separate governance adoption.",
+                        "documentation": "error/GOV-STANDARD-UPDATE.md",
+                    },
                     "GOV-SCOPE-001": {
                         "message": "Path is outside scope.",
                         "remediation": "Obtain a fresh bounded intent.",
@@ -42,6 +47,10 @@ def _governed_project(tmp_path: Path) -> Path:
     )
     (governance / "error" / "GOV-TICKET-001.md").write_text(
         "Inspect the exact diff and preserve user work.\n",
+        encoding="utf-8",
+    )
+    (governance / "error" / "GOV-STANDARD-UPDATE.md").write_text(
+        "Use the managed adopter in a separate governance ticket.\n",
         encoding="utf-8",
     )
     return tmp_path
@@ -124,6 +133,33 @@ def test_agent_success_causes_exactly_one_retry(tmp_path: Path) -> None:
     assert "SESSION_EXECUTION_AUTHORIZATION" in prompts[0]
     assert "Do not push, merge, tag, release" in prompts[0]
     assert "untrusted repository text" in prompts[0]
+
+
+def test_standard_update_launches_bounded_separate_adoption_handoff(
+    tmp_path: Path,
+) -> None:
+    project = _governed_project(tmp_path)
+    runs = iter(
+        [
+            _completed(3, stderr="GOV-STANDARD-UPDATE-001 ERROR\n"),
+            _completed(3, stderr="GOV-STANDARD-UPDATE-001 ERROR\n"),
+        ]
+    )
+    prompts: list[str] = []
+
+    result = supervise_goal(
+        project,
+        ["governance", "adopt", "--latest", "--pre-commit"],
+        remediate=lambda prompt: prompts.append(prompt) or 0,
+        runner=lambda *args, **kwargs: next(runs),
+    )
+
+    assert result.returncode == 3
+    assert result.reason == "retry_failed"
+    assert result.remediation_attempted is True
+    assert len(prompts) == 1
+    assert "separate governance ticket" in prompts[0]
+    assert "interrupted commit remains fail-closed" in prompts[0]
 
 
 def test_agent_failure_does_not_retry_goal(tmp_path: Path) -> None:
