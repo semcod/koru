@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-066",
+  "summary": "Consolidate DSL dispatch and handlers",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-066/**",
+    "project/TICKETS.md",
+    "packages/dsl2koru/src/dsl2koru/bus.py",
+    "packages/dsl2koru/src/dsl2koru/handlers/__init__.py",
+    "packages/dsl2koru/src/dsl2koru/handlers/argv.py",
+    "packages/dsl2koru/src/dsl2koru/handlers/command.py",
+    "packages/dsl2koru/src/dsl2koru/handlers/query.py",
+    "packages/dsl2koru/src/dsl2koru/handlers/runner.py",
+    "packages/dsl2koru/src/dsl2koru/handlers/ui.py",
+    "packages/dsl2coru/src/dsl2coru/bus.py",
+    "packages/dsl2coru/src/dsl2coru/handlers/__init__.py",
+    "packages/dsl2coru/src/dsl2coru/handlers/argv.py",
+    "packages/dsl2coru/src/dsl2coru/handlers/command.py",
+    "packages/dsl2coru/src/dsl2coru/handlers/query.py",
+    "packages/dsl2coru/src/dsl2coru/handlers/runner.py",
+    "packages/dsl2coru/src/dsl2coru/handlers/ui.py",
+    "packages/dsl2coru/tests/test_dsl2coru_adapter_parity.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-064"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1994ed4df5a6d1f4f3baf77733904a45ccc2e615",
+    "targetBranch": "main",
+    "outcome": "dsl2koru owns the union dispatch bus and CLI/UI handler implementations while dsl2coru exposes compatibility aliases.",
+    "nonGoals": [
+      "Change the DSL grammar, schemas or protobuf transport",
+      "Delete the legacy distribution or either console-script name",
+      "Edit dependency manifests or documentation projections",
+      "Change Coru CLI or IMGL behavior"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 120,
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 2,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Route the combined verb registry through one canonical bus, move compatibility handlers under dsl2koru, and make every legacy bus/handler module a direct alias facade.",
+      "components": [
+        {
+          "name": "canonical-dsl-dispatch",
+          "paths": ["packages/dsl2koru/src/dsl2koru/bus.py", "packages/dsl2koru/src/dsl2koru/handlers/**"]
+        },
+        {
+          "name": "legacy-dsl-dispatch-facade",
+          "paths": ["packages/dsl2coru/src/dsl2coru/bus.py", "packages/dsl2coru/src/dsl2coru/handlers/**", "packages/dsl2coru/tests/test_dsl2coru_adapter_parity.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "dsl2koru dispatch accepts the legacy default_file and runner compatibility parameters",
+        "dsl2coru dispatch and handlers alias the canonical implementations"
+      ],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore separate dispatch and handler implementations."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["PYTHONPATH=packages/dsl2koru/src:packages/dsl2coru/src python -m pytest -q packages/dsl2koru/tests packages/dsl2coru/tests"],
+        "evidence": "focused package suites and explicit public alias identity coverage"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python -m ruff check <changed Python files>",
+          "python -m compileall -q packages/dsl2koru/src packages/dsl2coru/src",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "changed-file deterministic gates and protected checks"
+      }
+    ]
+  }
+}
