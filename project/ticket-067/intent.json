@@ -1,0 +1,77 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-067",
+  "summary": "Consolidate DSL command-line interface",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-067/**",
+    "project/TICKETS.md",
+    "packages/dsl2koru/src/dsl2koru/cli.py",
+    "packages/dsl2coru/src/dsl2coru/cli.py",
+    "packages/dsl2coru/tests/test_dsl2coru_cli.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-066"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a03ca6b3c09e5dec72e5d1bc5e1bc16440ca0834",
+    "targetBranch": "main",
+    "outcome": "dsl2koru owns one dialect-aware CLI while dsl2coru.cli exposes direct compatibility aliases.",
+    "nonGoals": [
+      "Change the DSL grammar, schemas, dispatch behavior or protobuf transport",
+      "Delete either distribution or console-script declaration",
+      "Edit dependency manifests or documentation projections",
+      "Change event-store wire formats"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 2,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the invoked console name to select native or compatibility defaults in one canonical parser and handler table, then alias the legacy CLI module to it.",
+      "components": [
+        {"name": "canonical-dsl-cli", "paths": ["packages/dsl2koru/src/dsl2koru/cli.py"]},
+        {"name": "legacy-dsl-cli-facade", "paths": ["packages/dsl2coru/src/dsl2coru/cli.py", "packages/dsl2coru/tests/test_dsl2coru_cli.py"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "dsl2koru CLI recognizes both --project and --file context flags plus exec",
+        "dsl2coru CLI callables alias dsl2koru CLI callables"
+      ],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore separate CLI implementations."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["PYTHONPATH=packages/dsl2koru/src:packages/dsl2coru/src python -m pytest -q packages/dsl2koru/tests packages/dsl2coru/tests"],
+        "evidence": "focused package suites and dialect/alias coverage"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python -m ruff check <changed Python files>",
+          "python -m compileall -q packages/dsl2koru/src packages/dsl2coru/src",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "changed-file deterministic gates and protected checks"
+      }
+    ]
+  }
+}
