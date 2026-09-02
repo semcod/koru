@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from dsl2coru.cli import _build_subcommand_parser
 
 
@@ -23,6 +22,7 @@ def test_encode_defaults_and_overrides() -> None:
     assert parsed["format"] == "json"
     assert parsed["output"] == "/tmp/o"
     assert parsed["file"] == "f"
+    assert parsed["project"] == "."
 
 
 def test_decode_requires_input() -> None:
@@ -65,3 +65,32 @@ def test_validate_schema_subcommand() -> None:
 def test_subcommand_is_required() -> None:
     with pytest.raises(SystemExit):
         _parse([])
+
+
+def test_legacy_cli_is_the_canonical_cli() -> None:
+    from dsl2coru import cli as legacy_cli
+    from dsl2koru import cli as canonical_cli
+
+    assert legacy_cli.main is canonical_cli.main
+    assert legacy_cli._build_subcommand_parser is canonical_cli._build_subcommand_parser
+
+
+def test_parser_accepts_native_project_context() -> None:
+    parsed = _parse(["run", "-c", "VALIDATE_LANE", "--project", "/workspace"])
+    assert parsed["project"] == "/workspace"
+    assert parsed["file"] == ""
+
+
+def test_context_selection_preserves_both_console_dialects() -> None:
+    from dsl2koru.cli import _build_subcommand_parser as build_parser
+    from dsl2koru.cli import _selected_context
+
+    native = build_parser(program="dsl2koru").parse_args(["replay"])
+    compat = build_parser(program="dsl2coru").parse_args(["replay"])
+    explicit_file = build_parser(program="dsl2koru").parse_args(["replay", "--file", "."])
+    explicit_project = build_parser(program="dsl2coru").parse_args(["replay", "--project", "."])
+
+    assert _selected_context(native) == ("native", ".")
+    assert _selected_context(compat) == ("compat", ".")
+    assert _selected_context(explicit_file) == ("compat", ".")
+    assert _selected_context(explicit_project) == ("native", ".")
