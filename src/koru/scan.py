@@ -663,6 +663,37 @@ def _resolve_module_path(project: Path, module: str) -> str | None:
     return str(match.relative_to(project)) if match else None
 
 
+def _code2llm_module_paths(project: Path) -> dict[str, str]:
+    """Map short module names from LAYERS rows to concrete source files."""
+    candidates = (project / "project" / "calls.yaml", project / "calls.yaml")
+    payload = _load_yaml_mapping(candidates)
+    if payload is None:
+        return {}
+
+    nodes = payload.get("nodes")
+    if not isinstance(nodes, dict):
+        return {}
+
+    resolved_modules: dict[str, str | None] = {}
+    out: dict[str, str] = {}
+    for node in nodes.values():
+        if not isinstance(node, dict):
+            continue
+        module = str(node.get("module") or "").strip()
+        if not module:
+            continue
+        if module not in resolved_modules:
+            resolved_modules[module] = _resolve_module_path(project, module)
+        rel_path = resolved_modules[module]
+        if not rel_path:
+            continue
+        short = module.rsplit(".", 1)[-1]
+        out.setdefault(short, rel_path)
+        stem = Path(rel_path).stem
+        out.setdefault(stem, rel_path)
+    return out
+
+
 def _merge_call_graph_locations(project: Path, locations: dict[str, list[str]]) -> None:
     """Fill location gaps from the code2llm call graph.
 
@@ -1125,6 +1156,8 @@ def _parse_layer_hotspot_suggestions(
     rel: str,
     *,
     source_context: dict[str, object] | None = None,
+    project: Path | None = None,
+    module_paths: dict[str, str] | None = None,
 ) -> list[Suggestion]:
     """Parse large ``LAYERS`` module rows from newer code2llm output."""
     suggestions: list[Suggestion] = []
@@ -1143,6 +1176,10 @@ def _parse_layer_hotspot_suggestions(
         if loc < 500 and cc < 12:
             continue
         priority = "high" if loc >= 800 or cc >= 14 else "normal"
+        src_path = (module_paths or {}).get(module)
+        if src_path is None and project is not None:
+            src_path = _resolve_module_path(project, module)
+        ticket_files = tuple(dict.fromkeys(p for p in (src_path, rel) if p))
         suggestions.append(
             _with_source_context(
                 Suggestion(
@@ -1156,7 +1193,7 @@ def _parse_layer_hotspot_suggestions(
                 ),
                 priority=priority,
                 labels=("code2llm", "architecture", "large-module", "refactor", "scan"),
-                files=(rel,),
+                files=ticket_files or (rel,),
                 ),
                 source_context,
             ),
@@ -1203,7 +1240,15 @@ def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
             skip_duplicate_items=skip_mirror_dups,
         ),
     )
-    suggestions.extend(_parse_layer_hotspot_suggestions(text, rel, source_context=source_context))
+    suggestions.extend(
+        _parse_layer_hotspot_suggestions(
+            text,
+            rel,
+            source_context=source_context,
+            project=project,
+            module_paths=_code2llm_module_paths(project),
+        ),
+    )
     return suggestions
 
 

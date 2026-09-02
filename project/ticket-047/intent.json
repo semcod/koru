@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-047",
+  "summary": "Scan layer hotspots include source paths for hygiene",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-047/**",
+    "src/koru/scan.py",
+    "tests/test_scan.py",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e3c437c2ed1853a58b763e167f8b8b4b641715fb",
+    "targetBranch": "main",
+    "outcome": "code2llm layer hotspot scan tickets declare concrete source paths so ticket hygiene keeps them in the backlog.",
+    "nonGoals": [
+      "Change hygiene rules for todo2code tickets",
+      "Auto-refresh acceptedBaseSha after rebase"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reuse calls.yaml module graph to map short LAYERS module names to filesystem paths, mirroring CC location indexing.",
+      "components": [
+        {
+          "name": "scan-layer-hotspots",
+          "paths": ["src/koru/scan.py", "tests/test_scan.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the ticket branch."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_scan.py -k layer_hotspot -q"
+        ],
+        "evidence": "layer hotspot tests include source path assertion"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_scan.py -q"
+        ],
+        "evidence": "full scan test module passes"
+      }
+    ]
+  }
+}
