@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-061",
+  "summary": "Supervise Goal governance remediation",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-061/**",
+    "src/koru/goal_supervisor.py",
+    "src/koru/cli_goal.py",
+    "src/koru/cli.py",
+    "tests/test_goal_supervisor.py",
+    "tests/test_cli.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "7b19cf8222f6d175e1d4b4eaa47c065337dfa1c4",
+    "targetBranch": "main",
+    "outcome": "Koru supervises a Goal governance run, emits target-owned diagnostic evidence, and can perform one fail-closed agent remediation cycle for GOV-TICKET-001.",
+    "nonGoals": [
+      "Do not make Goal depend on or invoke Koru",
+      "Do not bypass governance, create arbitrary shell remediation, push, merge, tag or publish",
+      "Do not auto-remediate unknown diagnostics or retry more than once"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 6,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep Goal authoritative and place orchestration in Koru: capture one Goal process result, resolve only target-published GOV diagnostics, launch one existing agent backend for the allowlisted ticket-owner repair, then perform one observable retry.",
+      "components": [
+        {
+          "name": "goal-supervisor",
+          "paths": ["src/koru/goal_supervisor.py", "src/koru/cli_goal.py"]
+        },
+        {
+          "name": "koru-cli",
+          "paths": ["src/koru/cli.py", "tests/test_cli.py", "tests/test_goal_supervisor.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": ["Add the `koru goal` command"],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Remove the command and supervisor; direct Goal invocation remains unchanged."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": ["python -m pytest -q tests/test_goal_supervisor.py tests/test_cli.py"],
+        "evidence": "Focused subprocess, diagnostic, launch and retry tests"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": ["python -m ruff check src/koru/goal_supervisor.py src/koru/cli_goal.py src/koru/cli.py tests/test_goal_supervisor.py tests/test_cli.py", "./project/governance-check.sh --actor agent --base 7b19cf8222f6d175e1d4b4eaa47c065337dfa1c4", "docker compose config --quiet"],
+        "evidence": "Local deterministic gates"
+      }
+    ]
+  }
+}

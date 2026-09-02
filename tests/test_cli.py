@@ -871,6 +871,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "agent-availability",
             "task",
             "agent",
+            "goal",
             "local-serve",
             "serve",
             "scan",
@@ -928,6 +929,16 @@ class TestSubcommandDispatch(unittest.TestCase):
                         # Assert INSIDE the patch context so the mock is still bound.
                         fake.assert_called_once_with(["a", "b", "c"])
                     self.assertEqual(code, 0)
+
+    def test_goal_supervisor_does_not_reexec_into_target_project_venv(self) -> None:
+        handler = mock.Mock(return_value=0)
+        with mock.patch.dict(_SUBCOMMANDS, {"goal": handler}):
+            with mock.patch("koru._legacy_cli_impl._maybe_reexec_for_project_venv") as reexec:
+                with mock.patch("sys.argv", ["koru", "goal", "--project", "/tmp/target"]):
+                    code = main()
+        self.assertEqual(code, 0)
+        handler.assert_called_once_with(["--project", "/tmp/target"])
+        reexec.assert_not_called()
 
     def test_unknown_first_arg_falls_through_to_argparse(self) -> None:
         """A non-subcommand argv MUST NOT trigger any handler."""
