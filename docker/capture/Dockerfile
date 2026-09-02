@@ -7,14 +7,20 @@
 # Wayland-in-docker (cage + grim + wlroots) is intentionally out of scope here
 # because it triples build time. The plan covers it as Phase 6 future work.
 
+# ---------- installer stage ----------
+FROM ghcr.io/astral-sh/uv:0.11.28@sha256:0f36cb9361a3346885ca3677e3767016687b5a170c1a6b88465ec14aefec90aa AS uv
+
 # ---------- base stage ----------
-FROM python:3.12-slim AS capture-base
+FROM python:3.12.14-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254 AS capture-base
+
+COPY --from=uv /uv /uvx /bin/
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
     KORU_VISION_SCALE=0.5 \
-    KORU_VISION_INTERVAL_MIN=0
+    KORU_VISION_INTERVAL_MIN=0 \
+    PATH="/opt/koru/.venv/bin:${PATH}" \
+    VIRTUAL_ENV=/opt/koru/.venv
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
@@ -22,13 +28,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/koru
-COPY pyproject.toml ./
+COPY pyproject.toml uv.lock README.md VERSION ./
+COPY LICENSE* ./
+
+RUN uv lock --check --no-sources \
+    && uv sync --frozen --no-dev --extra vision --no-editable --no-install-project
+
 COPY src ./src
+COPY packages ./packages
 COPY docker/capture/smoke.py ./docker/capture/smoke.py
 
-RUN pip install --no-cache-dir -e .
-
-ENV PYTHONPATH=/opt/koru/src
+ENV PYTHONPATH=/opt/koru/src:/opt/koru/packages/coru/src:/opt/koru/packages/koruide/src
 
 # ---------- headless target ----------
 # No DISPLAY / WAYLAND_DISPLAY / DBUS — providers must surface a blocked status.
@@ -48,9 +58,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         xauth \
         dbus-x11 \
     && rm -rf /var/lib/apt/lists/*
-
-# mss requires libxext, libxfixes (already pulled in by Xvfb deps), python-xlib.
-RUN pip install --no-cache-dir "mss>=9.0,<11.0"
 
 ENV DISPLAY=:99 \
     KORU_CAPTURE_MODE=x11

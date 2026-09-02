@@ -4,14 +4,16 @@
 # Build context: repository root
 #   docker compose -f docker/novnc/docker-compose.yml up --build
 
-FROM python:3.12-bookworm
+FROM ghcr.io/astral-sh/uv:0.11.28@sha256:0f36cb9361a3346885ca3677e3767016687b5a170c1a6b88465ec14aefec90aa AS uv
+FROM python:3.12.14-bookworm@sha256:581429e3df12d76e6af4be5ab7d0e7fc2013eb57dc23d2de691411c8efdbb970
+
+COPY --from=uv /uv /uvx /bin/
 
 ENV DEBIAN_FRONTEND=noninteractive \
     DISPLAY=:1 \
     VNC_PORT=5901 \
     NOVNC_PORT=6080 \
     VNC_RESOLUTION=1280x800 \
-    VNC_PASSWORD=koru \
     PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -29,8 +31,7 @@ RUN useradd -m -s /bin/bash koru \
 USER koru
 WORKDIR /home/koru
 
-RUN python -m venv /home/koru/venv \
-    && /home/koru/venv/bin/pip install --no-cache-dir -U pip setuptools wheel
+RUN uv venv /home/koru/venv
 
 COPY --chown=koru:koru docker/novnc/start-vnc.sh /home/koru/start-vnc.sh
 COPY --chown=koru:koru docker/novnc/smoke-desktop.sh /home/koru/smoke-desktop.sh

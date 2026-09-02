@@ -13,7 +13,7 @@ install_koru_from_mount() {
   local src=/opt/koru
   [[ -f "$src/pyproject.toml" ]] || return 0
 
-  echo "Installing koru from $src (copy → writable build dir)..."
+  echo "Synchronizing koru from $src (copy → writable build dir)..."
   local build
   build="$(mktemp -d /tmp/koru-build.XXXXXX)"
   # Minimal tree for setuptools; skip venv/node/build/egg-info
@@ -34,13 +34,18 @@ install_koru_from_mount() {
     cp -a "$src"/LICENSE* "$build/" 2>/dev/null || true
   fi
 
-  if /home/koru/venv/bin/pip install --no-cache-dir "$build[planfile,api]" 2>/tmp/koru-pip.log; then
-    echo "OK: koru installed (planfile,api)"
-  elif /home/koru/venv/bin/pip install --no-cache-dir "$build" 2>>/tmp/koru-pip.log; then
-    echo "OK: koru installed (base)"
+  if uv lock --project "$build" --check --no-sources \
+    && UV_PROJECT_ENVIRONMENT=/home/koru/venv uv sync \
+      --project "$build" \
+      --frozen \
+      --no-dev \
+      --extra planfile \
+      --extra api \
+      --no-editable 2>/tmp/koru-uv.log; then
+    echo "OK: koru installed from frozen lock (planfile,api)"
   else
-    echo "WARN: pip install failed — using PYTHONPATH" >&2
-    tail -15 /tmp/koru-pip.log >&2 || true
+    echo "WARN: frozen uv sync failed — using PYTHONPATH" >&2
+    tail -15 /tmp/koru-uv.log >&2 || true
     export PYTHONPATH="/opt/koru/src:/opt/koru/packages/coru/src${PYTHONPATH:+:$PYTHONPATH}"
     # shim CLI
     cat > /home/koru/venv/bin/koru << 'SH'

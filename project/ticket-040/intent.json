@@ -1,0 +1,111 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-040",
+  "summary": "Harden consumed Docker build inputs",
+  "workstream": "infrastructure",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-040/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "docker-compose.yml",
+    "services/healing-webhook/Dockerfile",
+    "docker/novnc/Dockerfile",
+    "docker/novnc/start-vnc.sh",
+    "docker/novnc/docker-compose.yml",
+    "docker/capture/Dockerfile",
+    "examples/Dockerfile.remote-mesh",
+    "examples/docker-compose-remote-mesh.yml"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3ddd6264974b3e591e50e82a88ee0fff6350c906",
+    "targetBranch": "main",
+    "outcome": "All nested and external Docker build inputs consumed by Koru are immutable and dependency installation is reproducible from reviewed lock data.",
+    "nonGoals": [
+      "Change the root Koru Dockerfile or dependency manifests",
+      "Change application behavior or public interfaces",
+      "Add the application-owned repository-wide supply-chain audit",
+      "Close issue #64 before the separate audit ticket merges"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 110,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 5,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use digest-pinned Python and uv images, frozen source-independent uv synchronization, and immutable upstream Git revisions while keeping lockfile and application-test ownership unchanged.",
+      "components": [
+        {
+          "name": "external-build-contexts",
+          "paths": ["docker-compose.yml"]
+        },
+        {
+          "name": "healing-webhook",
+          "paths": ["services/healing-webhook/Dockerfile"]
+        },
+        {
+          "name": "novnc-desktop",
+          "paths": ["docker/novnc/**"]
+        },
+        {
+          "name": "capture-harness",
+          "paths": ["docker/capture/Dockerfile"]
+        },
+        {
+          "name": "remote-mesh",
+          "paths": ["examples/Dockerfile.remote-mesh", "examples/docker-compose-remote-mesh.yml"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected ticket merge to restore the previous build declarations; no persistent data migration is involved."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "docker compose --profile deps config --quiet",
+          "docker compose --profile deps build --no-cache planfile regix testql"
+        ],
+        "evidence": "immutable external revisions and frozen Regix build"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "docker compose --profile deps build --no-cache healing-webhook",
+          "docker build --no-cache -f docker/capture/Dockerfile --target capture-headless .",
+          "docker build --no-cache -f docker/capture/Dockerfile --target capture-x11 .",
+          "docker build --no-cache -f docker/novnc/Dockerfile .",
+          "docker compose -f examples/docker-compose-remote-mesh.yml build --no-cache"
+        ],
+        "evidence": "clean-cache nested image builds"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "./project/governance-check.sh",
+          "docker compose --profile '*' config --quiet",
+          "docker build --check .",
+          "git diff --check"
+        ],
+        "evidence": "managed governance, stack and repository gates"
+      }
+    ]
+  }
+}

@@ -14,14 +14,12 @@ services:
     build:
       context: ../..
       dockerfile: docker/novnc/Dockerfile
-    image: koru-novnc:local
     container_name: koru-novnc
     ports:
       - "6080:6080"
       - "5901:5901"
     environment:
       - VNC_RESOLUTION=1280x800
-      - VNC_PASSWORD=koru
       - DISPLAY=:1
     volumes:
       # Editable koru install at container start
