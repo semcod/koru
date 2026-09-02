@@ -5,18 +5,24 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from collections.abc import Callable
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, Literal
 
 from dsl2koru.bus import dispatch, execute_dsl
-from dsl2koru.codec import envelope_from_bytes, envelope_to_bytes, parse_text, roundtrip_text
+from dsl2koru.codec import (
+    envelope_from_bytes,
+    envelope_from_json,
+    envelope_to_bytes,
+    envelope_to_json,
+    parse_text,
+    roundtrip_text,
+)
 from dsl2koru.events import EventStore
 from dsl2koru.schema_registry import validate_schemas
 
 Dialect = Literal["native", "compat"]
 ArgumentSpec = tuple[tuple[str, ...], dict[str, Any]]
-SubcommandSpec = tuple[str, str | None, list[ArgumentSpec]]
 
 
 class _ContextAction(argparse.Action):
@@ -32,68 +38,20 @@ class _ContextAction(argparse.Action):
         namespace._context_explicit = self.dest
 
 
-_SUBCOMMAND_SPECS: list[SubcommandSpec] = [
-    ("validate-schema", None, []),
-    (
-        "encode",
-        None,
-        [
-            (("line",), {}),
-            (("--project",), {"default": ".", "action": _ContextAction}),
-            (("--file",), {"default": "", "action": _ContextAction}),
-            (("--format",), {"choices": ["protobuf", "json"], "default": "protobuf"}),
-            (("--output",), {}),
-        ],
-    ),
-    (
-        "decode",
-        None,
-        [
-            (("--input",), {"required": True}),
-            (("--format",), {"choices": ["protobuf", "json"], "default": "protobuf"}),
-        ],
-    ),
-    (
-        "roundtrip",
-        None,
-        [
-            (("line",), {}),
-            (("--project",), {"default": ".", "action": _ContextAction}),
-            (("--file",), {"default": "", "action": _ContextAction}),
-        ],
-    ),
-    (
-        "replay",
-        None,
-        [
-            (("--project",), {"default": ".", "action": _ContextAction}),
-            (("--file",), {"default": ".", "action": _ContextAction}),
-            (("--format",), {"choices": ["jsonl", "protobuf", "auto"], "default": "auto"}),
-        ],
-    ),
-    (
-        "run",
-        None,
-        [
-            (("script",), {"nargs": "?"}),
-            (("-c", "--command"), {}),
-            (("--project",), {"default": ".", "action": _ContextAction}),
-            (("--file",), {"default": "", "action": _ContextAction}),
-            (("--json",), {"action": "store_true"}),
-        ],
-    ),
-    (
-        "exec",
-        "Execute one DSL line (alias for run -c)",
-        [
-            (("command",), {}),
-            (("--project",), {"default": ".", "action": _ContextAction}),
-            (("--file",), {"default": "", "action": _ContextAction}),
-            (("--json",), {"action": "store_true"}),
-        ],
-    ),
-]
-_SUBCOMMANDS = frozenset(spec[0] for spec in _SUBCOMMAND_SPECS)
+def _arg(*flags: str, **kwargs: Any) -> ArgumentSpec:
+    return flags, kwargs
+
+
+def _context_specs(*, documented: bool = False, file_default: str = "") -> tuple[ArgumentSpec, ...]:
+    help_text = ({"help": "Default project root"}, {"help": "Default file context"}) if documented else ({}, {})
+    return (
+        _arg("--project", default=".", action=_ContextAction, **help_text[0]),
+        _arg("--file", default=file_default, action=_ContextAction, **help_text[1]),
+    )
+
+
+_JSON = _arg("--json", action="store_true")
+_PROTOBUF_FORMAT = _arg("--format", choices=["protobuf", "json"], default="protobuf")
 
 
 def _console_dialect(program: str) -> Dialect:
@@ -127,8 +85,16 @@ def main(argv: list[str] | None = None) -> int:
     raw = argv if argv is not None else sys.argv[1:]
     dialect = _console_dialect(sys.argv[0])
     if raw and raw[0] in _SUBCOMMANDS:
-        return _main_subcommand(raw, dialect=dialect)
-    return _main_legacy(raw, dialect=dialect)
+        parser = _build_subcommand_parser(program=sys.argv[0], dialect=dialect)
+        args = parser.parse_args(raw)
+        return args._handler(args)
+    parser = _build_legacy_parser(dialect)
+    return _execute_input(parser.parse_args(raw), empty_parser=parser)
+
+
+def _add_arguments(parser: argparse.ArgumentParser, specs: Sequence[ArgumentSpec]) -> None:
+    for flags, kwargs in specs:
+        parser.add_argument(*flags, **kwargs)
 
 
 def _build_subcommand_parser(
@@ -139,17 +105,11 @@ def _build_subcommand_parser(
     selected = dialect or _console_dialect(program)
     parser = argparse.ArgumentParser(prog=_program_name(program, selected))
     sub = parser.add_subparsers(dest="cmd", required=True)
-    for name, help_text, argument_specs in _SUBCOMMAND_SPECS:
+    for name, help_text, handler, specs in _SUBCOMMAND_SPECS:
         sub_parser = sub.add_parser(name, help=help_text)
-        sub_parser.set_defaults(_dialect=selected)
-        for flags, kwargs in argument_specs:
-            sub_parser.add_argument(*flags, **kwargs)
+        sub_parser.set_defaults(_dialect=selected, _handler=handler)
+        _add_arguments(sub_parser, specs)
     return parser
-
-
-def _main_subcommand(argv: list[str], *, dialect: Dialect) -> int:
-    parser = _build_subcommand_parser(program=sys.argv[0], dialect=dialect)
-    return _handle_subcommand(parser.parse_args(argv))
 
 
 def _build_legacy_parser(dialect: Dialect) -> argparse.ArgumentParser:
@@ -162,51 +122,55 @@ def _build_legacy_parser(dialect: Dialect) -> argparse.ArgumentParser:
             else "Koru control DSL (QUERY_REPAIR_HISTORY, REPAIR_RUN, …)"
         ),
     )
-    parser.add_argument("script", nargs="?", help="Optional .dsl script file")
-    parser.add_argument("-c", "--command", help="Execute single DSL command")
-    parser.add_argument("--project", default=".", action=_ContextAction, help="Default project root")
-    parser.add_argument("--file", default="", action=_ContextAction, help="Default file context")
-    parser.add_argument("--json", action="store_true")
+    _add_arguments(
+        parser,
+        (
+            _arg("script", nargs="?", help="Optional .dsl script file"),
+            _arg("-c", "--command", help="Execute single DSL command"),
+            *_context_specs(documented=True),
+            _JSON,
+        ),
+    )
     parser.set_defaults(_dialect=dialect)
     return parser
 
 
-def _main_legacy(argv: list[str], *, dialect: Dialect) -> int:
-    parser = _build_legacy_parser(dialect)
-    args = parser.parse_args(argv)
-    if args.command:
-        return _run_results([dispatch(args.command, **_context_kwargs(args))], json_out=args.json)
-    if args.script:
-        text = Path(args.script).read_text(encoding="utf-8")
-    else:
-        text = sys.stdin.read()
-        if not text.strip():
-            parser.print_help()
-            return 1
-    return _run_results(execute_dsl(text, **_context_kwargs(args)), json_out=args.json)
-
-
 def _selected_context(args: argparse.Namespace) -> tuple[Dialect, str]:
-    explicit = getattr(args, "_context_explicit", None)
-    if explicit == "file":
-        return "compat", str(args.file)
-    if explicit == "project":
-        return "native", str(args.project)
-    if getattr(args, "file", ""):
-        dialect: Dialect = getattr(args, "_dialect", "native")
-        if dialect == "compat":
-            return dialect, str(args.file)
-    if getattr(args, "project", ".") != ".":
-        return "native", str(args.project)
     dialect: Dialect = getattr(args, "_dialect", "native")
-    return (dialect, "" if dialect == "compat" else ".")
+    explicit = getattr(args, "_context_explicit", None)
+    if explicit:
+        return ("compat" if explicit == "file" else "native"), str(getattr(args, explicit))
+    file = getattr(args, "file", "")
+    if dialect == "compat" and file:
+        return dialect, str(file)
+    project = getattr(args, "project", ".")
+    if project != ".":
+        return "native", str(project)
+    return dialect, "" if dialect == "compat" else "."
 
 
 def _context_kwargs(args: argparse.Namespace) -> dict[str, str | None]:
     dialect, context = _selected_context(args)
-    if dialect == "compat":
-        return {"default_file": context or None}
-    return {"default_project": context or "."}
+    return {"default_file": context or None} if dialect == "compat" else {"default_project": context or "."}
+
+
+def _execute_input(
+    args: argparse.Namespace,
+    *,
+    empty_parser: argparse.ArgumentParser | None = None,
+) -> int:
+    kwargs = _context_kwargs(args)
+    if args.command:
+        results = [dispatch(args.command, **kwargs)]
+    elif args.script:
+        results = execute_dsl(Path(args.script).read_text(encoding="utf-8"), **kwargs)
+    else:
+        text = sys.stdin.read()
+        if empty_parser and not text.strip():
+            empty_parser.print_help()
+            return 1
+        results = execute_dsl(text, **kwargs)
+    return _run_results(results, json_out=args.json)
 
 
 def _cmd_validate_schema(_args: argparse.Namespace) -> int:
@@ -222,16 +186,15 @@ def _cmd_validate_schema(_args: argparse.Namespace) -> int:
 def _cmd_encode(args: argparse.Namespace) -> int:
     kwargs = _context_kwargs(args)
     payload = parse_text(args.line, **kwargs)
-    if args.format == "json":
-        from dsl2koru.codec import envelope_to_json
-
-        data = envelope_to_json(payload)
-    else:
-        data = envelope_to_bytes(
+    data = (
+        envelope_to_json(payload)
+        if args.format == "json"
+        else envelope_to_bytes(
             payload,
             default_project=str(kwargs.get("default_project") or ""),
             default_file=str(kwargs.get("default_file") or ""),
         )
+    )
     if args.output:
         Path(args.output).write_bytes(data)
     else:
@@ -241,12 +204,7 @@ def _cmd_encode(args: argparse.Namespace) -> int:
 
 def _cmd_decode(args: argparse.Namespace) -> int:
     raw = Path(args.input).read_bytes()
-    if args.format == "json":
-        from dsl2koru.codec import envelope_from_json
-
-        payload = envelope_from_json(raw)
-    else:
-        payload = envelope_from_bytes(raw)
+    payload = envelope_from_json(raw) if args.format == "json" else envelope_from_bytes(raw)
     print(json.dumps(payload, indent=2, ensure_ascii=False))
     return 0
 
@@ -259,50 +217,53 @@ def _cmd_roundtrip(args: argparse.Namespace) -> int:
 def _cmd_replay(args: argparse.Namespace) -> int:
     dialect, context = _selected_context(args)
     store = (
-        EventStore.for_default(context or None)
-        if dialect == "compat"
-        else EventStore.for_project(Path(context or "."))
+        EventStore.for_default(context or None) if dialect == "compat" else EventStore.for_project(Path(context or "."))
     )
-    if args.format == "protobuf":
-        events = store.replay_pb()
-    elif args.format == "jsonl":
-        events = store.read_all()
-    else:
-        events = store.replay()
-    for event in events:
+    replay = {"protobuf": store.replay_pb, "jsonl": store.read_all, "auto": store.replay}[args.format]
+    for event in replay():
         print(json.dumps(event.to_dict(), indent=2, ensure_ascii=False))
     return 0
 
 
 def _cmd_run(args: argparse.Namespace) -> int:
-    kwargs = _context_kwargs(args)
-    if args.command:
-        results = [dispatch(args.command, **kwargs)]
-    elif args.script:
-        results = execute_dsl(Path(args.script).read_text(encoding="utf-8"), **kwargs)
-    else:
-        results = execute_dsl(sys.stdin.read(), **kwargs)
-    return _run_results(results, json_out=args.json)
+    return _execute_input(args)
 
 
 def _cmd_exec(args: argparse.Namespace) -> int:
     return _run_results([dispatch(args.command, **_context_kwargs(args))], json_out=args.json)
 
 
-_SUBCOMMAND_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
-    "validate-schema": _cmd_validate_schema,
-    "encode": _cmd_encode,
-    "decode": _cmd_decode,
-    "roundtrip": _cmd_roundtrip,
-    "replay": _cmd_replay,
-    "run": _cmd_run,
-    "exec": _cmd_exec,
-}
+def _command(
+    name: str,
+    handler: Any,
+    *specs: ArgumentSpec,
+    help_text: str | None = None,
+) -> tuple[str, str | None, Any, tuple[ArgumentSpec, ...]]:
+    return name, help_text, handler, specs
 
 
-def _handle_subcommand(args: argparse.Namespace) -> int:
-    handler = _SUBCOMMAND_HANDLERS.get(args.cmd)
-    return handler(args) if handler else 1
+_SUBCOMMAND_SPECS = (
+    _command("validate-schema", _cmd_validate_schema),
+    _command("encode", _cmd_encode, _arg("line"), *_context_specs(), _PROTOBUF_FORMAT, _arg("--output")),
+    _command("decode", _cmd_decode, _arg("--input", required=True), _PROTOBUF_FORMAT),
+    _command("roundtrip", _cmd_roundtrip, _arg("line"), *_context_specs()),
+    _command(
+        "replay",
+        _cmd_replay,
+        *_context_specs(file_default="."),
+        _arg("--format", choices=["jsonl", "protobuf", "auto"], default="auto"),
+    ),
+    _command("run", _cmd_run, _arg("script", nargs="?"), _arg("-c", "--command"), *_context_specs(), _JSON),
+    _command(
+        "exec",
+        _cmd_exec,
+        _arg("command"),
+        *_context_specs(),
+        _JSON,
+        help_text="Execute one DSL line (alias for run -c)",
+    ),
+)
+_SUBCOMMANDS = frozenset(spec[0] for spec in _SUBCOMMAND_SPECS)
 
 
 if __name__ == "__main__":
