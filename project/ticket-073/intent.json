@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-073",
+  "summary": "Collapse Order 30 DSL CLI dispatch",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-073/**",
+    "project/TICKETS.md",
+    "packages/dsl2koru/src/dsl2koru/cli.py",
+    "packages/dsl2koru/tests/test_cli_matrix.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-068", "ticket-070", "ticket-071", "ticket-072"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "7c1df602a9f16aea5e2a78c06ca51ef411265a88",
+    "targetBranch": "main",
+    "outcome": "The canonical DSL CLI uses shared argument specifications and one input execution path while preserving native and compatibility console behavior with fewer production lines.",
+    "nonGoals": [
+      "Do not change public subcommands, flags, defaults, output formats or exit codes",
+      "Do not change DSL parsing, protobuf conversion, dispatch or event-store behavior",
+      "Do not remove the one-release legacy namespace aliases",
+      "Do not modify documentation metrics, ticket-069 or Draft PR 101"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 75,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Represent repeated CLI options as immutable specifications, build parsers through one argument installer, and share command/script/stdin execution while retaining the legacy empty-input help contract.",
+      "components": [
+        {
+          "name": "canonical-dsl-cli",
+          "paths": [
+            "packages/dsl2koru/src/dsl2koru/cli.py",
+            "packages/dsl2koru/tests/test_cli_matrix.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore the separate CLI declarations and execution branches."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python -m pytest -q packages/dsl2koru/tests packages/dsl2coru/tests tests/test_namespace_pair_conformance.py"
+        ],
+        "evidence": "Full canonical and compatibility DSL suites plus the CLI command and dialect matrix"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python -m ruff check packages/dsl2koru/src/dsl2koru/cli.py packages/dsl2koru/tests/test_cli_matrix.py",
+          "python -m compileall -q packages/dsl2koru/src/dsl2koru packages/dsl2koru/tests/test_cli_matrix.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "Changed-file and managed repository gates"
+      }
+    ]
+  }
+}
