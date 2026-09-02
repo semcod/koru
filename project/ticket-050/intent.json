@@ -1,0 +1,53 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-050",
+  "summary": "Untrack generated plugin analysis batch one",
+  "workstream": "integration",
+  "classification": {"kind": "SERVICE", "priority": "P0", "origin": "requested"},
+  "allowedPaths": [
+    "project/ticket-050/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "docs/architecture/generated-artifact-lifecycle.md",
+    ".tmp/code2llm-plugins/README.md",
+    ".tmp/code2llm-plugins/analysis.toon.yaml",
+    ".tmp/code2llm-plugins/calls.mmd",
+    ".tmp/code2llm-plugins/calls.png",
+    ".tmp/code2llm-plugins/calls.toon.yaml",
+    ".tmp/code2llm-plugins/calls.yaml",
+    ".tmp/code2llm-plugins/compact_flow.mmd",
+    ".tmp/code2llm-plugins/compact_flow.png",
+    ".tmp/code2llm-plugins/context.md",
+    ".tmp/code2llm-plugins/evolution.toon.yaml",
+    ".tmp/code2llm-plugins/flow.mmd",
+    ".tmp/code2llm-plugins/flow.png",
+    ".tmp/code2llm-plugins/index.html",
+    ".tmp/code2llm-plugins/map.toon.yaml"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["docker"],
+  "dependsOn": ["ticket-045", "ticket-048", "ticket-049"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2d41430e2f37bc32d2140dee69e2c92c1b7b050d",
+    "targetBranch": "main",
+    "outcome": "Fourteen generated plugin-analysis files leave source control while their reproducibility and baseline digest remain documented.",
+    "nonGoals": ["Rewrite Git history", "Delete the four remaining plugin artifacts", "Delete project-analysis artifacts", "Change runtime, dependencies or CI"],
+    "complexity": "L",
+    "estimatedMinutes": 90,
+    "budgets": {"maxImplementationFiles": 15, "maxAffectedComponents": 1, "maxPublicInterfaceChanges": 0, "maxRuntimeDependencies": 0},
+    "architecture": {
+      "status": "accepted",
+      "decision": "Delete a reviewable 14-file prefix of the content-addressed plugin-analysis group and record the batch boundary in lifecycle documentation.",
+      "components": [{"name": "plugin-generated-artifacts", "paths": [".tmp/code2llm-plugins/**", "docs/architecture/generated-artifact-lifecycle.md"]}],
+      "responsibilityChanges": true,
+      "interfaceChanges": [],
+      "dataChanges": ["Generated plugin snapshots move from Git to the governed external artifact lifecycle; the baseline digest remains in config/artifact-registry.json."],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore the exact files from acceptedBaseSha."
+    },
+    "runtimeDependencies": [],
+    "validation": [{"criterion": "AC-04", "commands": ["./project/governance-check.sh", "python3 .governance/worktree_guard.py --root . --once --scope repository", "docker compose config --quiet", "git diff --check"], "evidence": "managed gates and protected checks"}]
+  }
+}

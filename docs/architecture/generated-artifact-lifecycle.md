@@ -44,3 +44,10 @@ git show f5692855605ff3a7fae9ec671ebb7b5537dfd2a8:project/map.toon.yaml > projec
 CI publishes regenerated analysis, coverage and available release media as
 retained workflow artifacts. Those artifacts are evidence and diagnostics,
 not inputs that grant execution or merge authority.
+
+## Migration progress
+
+- Ticket-048 removed the root analysis, coverage, Code2LLM, tree and release
+  media groups.
+- Ticket-050 removes the first fourteen plugin-analysis files. The four
+  remaining plugin outputs stay tracked until their own reviewed batch.
