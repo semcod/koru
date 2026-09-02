@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-041",
+  "summary": "Assign root Docker Compose to infrastructure",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-041/**",
+    "project/TICKETS.md",
+    ".governance/manifest.json"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "db95324295435ebede90367a6cf7d0de7e391a65",
+    "targetBranch": "main",
+    "outcome": "Root Docker Compose declarations have explicit infrastructure ownership before their external build inputs are changed.",
+    "nonGoals": [
+      "Modify any Docker or Compose runtime declaration",
+      "Change application-test ownership",
+      "Change dependency manifests or application behavior",
+      "Close issue #64"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add exact root docker-compose filename ownership to infrastructure without moving existing workstream responsibilities.",
+      "components": [
+        {
+          "name": "workstream-ownership",
+          "paths": [".governance/manifest.json"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge; no Docker runtime declaration changes in this ticket."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh",
+          "python3 .governance/worktree_overlap_check.py --help"
+        ],
+        "evidence": "managed ownership and overlap checks"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "docker compose --profile '*' config --quiet",
+          "docker build --check .",
+          "git diff --check"
+        ],
+        "evidence": "Docker and repository gates"
+      }
+    ]
+  }
+}
