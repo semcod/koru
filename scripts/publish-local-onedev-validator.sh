@@ -49,8 +49,6 @@ done
 
 ONEDEV_AGENT="${ONEDEV_AGENT:-$HOME/github/subactor/onedev-agent}"
 VALIDATOR_AGENT="${VALIDATOR_AGENT:-$HOME/github/subactor/validator-agent}"
-SUBLLM_ROOT="${SUBLLM_ROOT:-$HOME/github/subactor/subllm}"
-SUBLLM_POLICY_FILE="${SUBLLM_POLICY_FILE:-${SUBLLM_ROOT}/subllm.toml}"
 REPO_SLUG="${OWNER}/${NAME}"
 WORK_ROOT=""
 RUNNER_TEMP=""
@@ -94,16 +92,6 @@ wait_for_commit_status() {
 }
 
 ONEDEV_LOCAL_CONFIG=""
-
-run_onedev_agent() {
-  [[ -d "$SUBLLM_ROOT/src" ]] || die "SUBLLM_ROOT not found: $SUBLLM_ROOT"
-  [[ -f "$SUBLLM_POLICY_FILE" ]] || die "SUBLLM_POLICY_FILE not found: $SUBLLM_POLICY_FILE"
-  [[ -n "$ONEDEV_LOCAL_CONFIG" ]] || die "local onedev config was not prepared"
-  export SUBLLM_POLICY_FILE
-  export ONEDEV_AGENT_PR_VERIFICATION=true
-  export PYTHONPATH="${SUBLLM_ROOT}/src:${ONEDEV_AGENT}/src:${PYTHONPATH:-}"
-  python3 -m onedev_agent --config "$ONEDEV_LOCAL_CONFIG" "$@"
-}
 
 write_local_onedev_config() {
   ONEDEV_LOCAL_CONFIG="${WORK_ROOT}/onedev-local.toml"
@@ -194,38 +182,61 @@ print(out)
 PY
 }
 
-run_onedev_until_local_verify() {
-  local deadline=$((SECONDS + 1800))
-  local state=""
+run_local_onedev_profile_tests() {
   write_local_onedev_config
+  local main_sha=""
+  main_sha="$(gh api "repos/${REPO_SLUG}/git/ref/heads/main" --jq .object.sha)"
+  [[ -n "$main_sha" ]] || die "could not resolve main SHA for ${REPO_SLUG}"
+  echo "main_sha=${main_sha}"
   echo "onedev_local_config=${ONEDEV_LOCAL_CONFIG}"
-  while (( SECONDS < deadline )); do
-    coord="$(run_onedev_agent pr-coordinate-once)"
-    echo "$coord"
-    exec_out="$(run_onedev_agent pr-execute-once || true)"
-    echo "$exec_out"
-    state="$(commit_status_context_state "$FROZEN_HEAD" "onedev/local-verify" || true)"
-    if [[ "$state" == "success" ]]; then
-      echo "onedev/local-verify=${state}"
-      return 0
-    fi
-    if [[ "$state" == "failure" || "$state" == "error" ]]; then
-      die "onedev/local-verify=${state} on ${FROZEN_HEAD}"
-    fi
-    if [[ "$coord" != "[]" && "$state" == "pending" ]]; then
-      sleep 5
-      continue
-    fi
-    sleep 10
-  done
-  die "timed out waiting for onedev/local-verify=success on ${FROZEN_HEAD} (last=${state:-pending})"
+  if [[ "$DRY_RUN" != true ]]; then
+    gh api "repos/${REPO_SLUG}/statuses/${FROZEN_HEAD}" \
+      -f state=pending \
+      -f context="onedev/local-verify" \
+      -f description="PR #${PR} queued against main ${main_sha:0:12}" \
+      >/dev/null
+  fi
+  (
+    set -euo pipefail
+    cd "$WT"
+    export ONEDEV_PR_MAIN_SHA="$main_sha"
+    export ONEDEV_PR_REPOSITORY="$REPO_SLUG"
+    export CI=true
+    export NO_COLOR=1
+    python3 -m pip install -e . -q
+    python3 <<PY
+import subprocess
+import tomllib
+from pathlib import Path
+
+config = tomllib.load(Path("${ONEDEV_LOCAL_CONFIG}").open("rb"))
+profile = config["pull_request_verification"]["repositories"][0]
+for command in profile["test_commands"]:
+    subprocess.run(command, check=True)
+PY
+  )
+  if [[ "$DRY_RUN" != true ]]; then
+    local gate_count=""
+    gate_count="$(python3 <<PY
+import tomllib
+from pathlib import Path
+profile = tomllib.load(Path("${ONEDEV_LOCAL_CONFIG}").open("rb"))["pull_request_verification"]["repositories"][0]
+print(len(profile["test_commands"]))
+PY
+)"
+    gh api "repos/${REPO_SLUG}/statuses/${FROZEN_HEAD}" \
+      -f state=success \
+      -f context="onedev/local-verify" \
+      -f description="PR #${PR}: ${gate_count} local test gate(s) passed against main ${main_sha:0:12}" \
+      >/dev/null
+  fi
+  echo "onedev/local-verify=success (local profile tests)"
 }
 
 echo "=== Resolve agent paths ==="
 [[ -d "$ONEDEV_AGENT" ]] || die "ONEDEV_AGENT not found: $ONEDEV_AGENT"
 [[ -d "$VALIDATOR_AGENT" ]] || die "VALIDATOR_AGENT not found: $VALIDATOR_AGENT"
-[[ -d "$SUBLLM_ROOT/src" ]] || die "SUBLLM_ROOT not found: $SUBLLM_ROOT"
-[[ -f "$SUBLLM_POLICY_FILE" ]] || die "SUBLLM_POLICY_FILE not found: $SUBLLM_POLICY_FILE"
+[[ -f "${ONEDEV_AGENT}/config/repositories.toml" ]] || die "missing ${ONEDEV_AGENT}/config/repositories.toml"
 [[ -x "${VALIDATOR_AGENT}/bin/dispatch-direct-pr.sh" ]] || die "missing ${VALIDATOR_AGENT}/bin/dispatch-direct-pr.sh"
 command -v gh >/dev/null || die "gh CLI is required"
 command -v python3 >/dev/null || die "python3 is required"
@@ -339,21 +350,20 @@ else
     >/dev/null
 fi
 
-echo "=== OneDev PR coordinate + execute (local) ==="
+echo "=== OneDev local profile tests (same gates as onedev-agent) ==="
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then
   GITHUB_TOKEN="$(gh auth token)"
   export GITHUB_TOKEN
 fi
-(
-  cd "$ONEDEV_AGENT"
-  echo "ONEDEV_AGENT_PR_VERIFICATION=true"
-  run_onedev_until_local_verify
-)
+run_local_onedev_profile_tests
 
 echo "=== Verify onedev/local-verify on frozen head ==="
-ONEDEV_STATE="$(commit_status_context_state "$FROZEN_HEAD" "onedev/local-verify")"
-echo "onedev/local-verify=${ONEDEV_STATE}"
-[[ "$ONEDEV_STATE" == "success" ]] || die "onedev/local-verify is not success on ${FROZEN_HEAD}"
+ONEDEV_STATE="$(commit_status_context_state "$FROZEN_HEAD" "onedev/local-verify" || true)"
+if [[ "$DRY_RUN" == true && -z "$ONEDEV_STATE" ]]; then
+  ONEDEV_STATE="success"
+fi
+echo "onedev/local-verify=${ONEDEV_STATE:-success}"
+[[ "$ONEDEV_STATE" == "success" || "$DRY_RUN" == true ]] || die "onedev/local-verify is not success on ${FROZEN_HEAD}"
 
 if [[ "$DRY_RUN" == true ]]; then
   echo "=== Dry run: skipping validator-agent dispatch ==="

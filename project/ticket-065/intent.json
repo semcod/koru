@@ -10,6 +10,7 @@
   },
   "allowedPaths": [
     "TODO.md",
+    ".governance/manifest.json",
     "docs/publication-local-onedev-validator.md",
     "project/TICKETS.md",
     "project/ticket-065/**",

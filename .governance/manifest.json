@@ -73,6 +73,8 @@
           "examples/**/docker-compose*.yaml",
           "services/**/Dockerfile*",
           "scripts/docker-ide-matrix.sh",
+          "scripts/publish-local-onedev-validator.sh",
+          "docs/publication-local-onedev-validator.md",
           "infra/**",
           ".github/**"
         ]
