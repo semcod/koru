@@ -78,6 +78,7 @@ def create_ticket(
         cmd.extend(["--label", label])
     for file_path in suggestion.files:
         cmd.extend(["--files", file_path])
+    cmd.append("--sync")
     try:
         result = use_runner(cmd, project)
     except (FileNotFoundError, OSError) as exc:

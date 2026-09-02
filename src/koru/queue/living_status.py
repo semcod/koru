@@ -100,11 +100,16 @@ def update_living_status(
         message=message,
     )
     description = upsert_living_status(str(ticket.get("description") or ""), block)
-    return planfile_lifecycle_command(
+    result = planfile_lifecycle_command(
         project,
         ["ticket", "update", str(ticket["id"]), "--description", description],
         runner=runner,
     )
+    if result.returncode == 0:
+        from koru.queue.planfile_sync import sync_after_ticket_update
+
+        sync_after_ticket_update(project, str(ticket["id"]))
+    return result
 
 
 __all__ = [
