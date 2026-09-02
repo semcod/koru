@@ -192,9 +192,19 @@ def _persist_new_nl_task(
     ticket: dict[str, Any],
     executor_kind: str,
 ) -> CreatedTask:
+    from koru.queue.planfile_sync import (
+        resolve_sync_integrations,
+        stamp_ticket_integrations,
+        sync_after_ticket_create,
+    )
+
+    integrations = resolve_sync_integrations(storage.project)
+    if integrations:
+        stamp_ticket_integrations(ticket, integrations)
     storage.tickets[ticket_id] = ticket
     _write_yaml(storage.sprint_path, storage.sprint_data)
     _log_nl_task_creation(ticket_id, request.name, request.text, queue_name, executor_kind)
+    sync_after_ticket_create(storage.project, ticket_id)
     return CreatedTask(
         ticket_id=ticket_id,
         sprint=sprint,

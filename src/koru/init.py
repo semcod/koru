@@ -196,6 +196,18 @@ ci:
 notes: []
 #   - "Always run `task lint` before completing a ticket."
 #   - "Never edit migrations under alembic/versions/."
+
+# Synchronous publication of Planfile tickets to external trackers (GitHub Issues,
+# GitLab, Jira, OneDev). Koru delegates to Planfile sync — it never calls GitHub
+# APIs directly. Requires a Planfile integration config such as
+# `.planfile/integrations.github.planfile.yaml` and credentials (e.g. GITHUB_TOKEN).
+#
+# planfile_sync:
+#   enabled: true
+#   integrations: [github]
+#   direction: to
+#   on_create: true
+#   on_update: true
 """
 
 

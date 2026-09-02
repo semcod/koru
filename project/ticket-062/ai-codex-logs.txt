@@ -1,0 +1,3 @@
+2026-09-02T12:30:10Z Existing clean branch merged protected main e31aae78 and resolved only the generated ticket-index conflict.
+2026-09-02T12:31:00Z Governance and Docker Compose passed; focused tests passed 6/6; Ruff found one unused pytest import in tests/test_planfile_sync.py.
+2026-09-02T12:32:00Z Removed the unused import; focused Ruff, 6/6 tests, Docker Compose, diff checks and governance all passed on the merged-base candidate.

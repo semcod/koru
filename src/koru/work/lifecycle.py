@@ -191,6 +191,10 @@ def start_work(
     if _current_branch(project) != branch:
         _ensure_branch(project, branch, base_branch)
 
+    from koru.queue.planfile_sync import sync_after_ticket_create
+
+    sync_after_ticket_create(project, created_id)
+
     planfile_sha = _commit_planfile_sync(
         project,
         created_id,
