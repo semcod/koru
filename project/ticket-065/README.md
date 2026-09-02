@@ -12,7 +12,8 @@ To be completed from human-owned input.
 
 ## Acceptance criteria
 
-- [ ] AC-01: Scope is approved by a human owner.
+- [x] AC-01: Dry-run executes standard packs and OneDev profile gates on the frozen PR head.
+- [x] AC-02: Full run posts REST statuses and dispatches validator-agent direct-pr merge.
 
 ## Tracking boundary
 

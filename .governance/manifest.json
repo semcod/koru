@@ -56,7 +56,9 @@
           "project/readme.sh",
           "project/ticket-*/**",
           "project.sh",
-          "project.bat"
+          "project.bat",
+          "scripts/publish-local-onedev-validator.sh",
+          "docs/publication-local-onedev-validator.md"
         ]
       },
       "infrastructure": {
@@ -73,8 +75,6 @@
           "examples/**/docker-compose*.yaml",
           "services/**/Dockerfile*",
           "scripts/docker-ide-matrix.sh",
-          "scripts/publish-local-onedev-validator.sh",
-          "docs/publication-local-onedev-validator.md",
           "infra/**",
           ".github/**"
         ]
