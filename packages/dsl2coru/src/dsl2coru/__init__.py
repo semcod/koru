@@ -1,5 +1,7 @@
 """dsl2coru — CORU control DSL with JSON Schema + protobuf wire codec."""
 
+import warnings
+
 from dsl2coru.bus import dispatch, dispatch_text, execute_dsl, execute_dsl_line
 from dsl2coru.codec import (
     envelope_from_bytes,
@@ -15,6 +17,12 @@ from dsl2coru.pb_codec import decode_protobuf, encode_protobuf, encode_result_pr
 from dsl2coru.result import DslResult
 from dsl2coru.schema_registry import all_verbs, validate_schemas
 from dsl2coru.serializer import to_text
+
+warnings.warn(
+    "dsl2coru is deprecated for one compatibility release; import dsl2koru instead",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 __all__ = [
     "DslResult",

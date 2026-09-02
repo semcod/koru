@@ -1,0 +1,62 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-064",
+  "summary": "Consolidate DSL text and schema registry",
+  "workstream": "application",
+  "classification": {"kind": "FEATURE", "priority": "P0", "origin": "requested"},
+  "allowedPaths": [
+    "project/ticket-064/**",
+    "project/TICKETS.md",
+    "packages/dsl2koru/src/dsl2koru/grammar.py",
+    "packages/dsl2koru/src/dsl2koru/codec.py",
+    "packages/dsl2koru/src/dsl2koru/schema_registry.py",
+    "packages/dsl2koru/src/dsl2koru/schema/compat_commands.json",
+    "packages/dsl2koru/src/dsl2koru/codegen.py",
+    "packages/dsl2coru/src/dsl2coru/grammar.py",
+    "packages/dsl2coru/src/dsl2coru/__init__.py",
+    "packages/dsl2coru/src/dsl2coru/parser.py",
+    "packages/dsl2coru/src/dsl2coru/serializer.py",
+    "packages/dsl2coru/src/dsl2coru/codec.py",
+    "packages/dsl2coru/src/dsl2coru/schema_registry.py",
+    "packages/dsl2coru/src/dsl2coru/codegen.py",
+    "packages/dsl2koru/tests/test_codec.py",
+    "packages/dsl2coru/tests/test_dsl2coru_codec.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": ["ticket-060"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "27a313b74becce4f6fc6d7f5f18ce7a276fa815c",
+    "targetBranch": "main",
+    "outcome": "dsl2koru owns the union text grammar, schema registry, validation codec and schema model generator while dsl2coru exposes compatibility facades.",
+    "nonGoals": [
+      "Change command dispatch or handler semantics",
+      "Delete the legacy distribution or its dormant per-command schema data in this slice",
+      "Edit dependency manifests or docs plan projections",
+      "Remove either console-script name"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 120,
+    "budgets": {"maxImplementationFiles": 14, "maxAffectedComponents": 2, "maxPublicInterfaceChanges": 2, "maxRuntimeDependencies": 0},
+    "architecture": {
+      "status": "accepted",
+      "decision": "Merge both text dialects and their schema definitions into canonical dsl2koru, then replace the bounded dsl2coru text/schema implementation with imports and aliases.",
+      "components": [
+        {"name": "canonical-dsl-text-schema", "paths": ["packages/dsl2koru/src/dsl2koru/**", "packages/dsl2koru/tests/test_codec.py"]},
+        {"name": "legacy-dsl-text-schema-facade", "paths": ["packages/dsl2coru/src/dsl2coru/**", "packages/dsl2coru/tests/test_dsl2coru_codec.py"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": ["dsl2koru parses and validates the union verb family", "dsl2coru text/schema APIs alias dsl2koru"],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore separate text grammar and schema implementations."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-02", "commands": ["PYTHONPATH=packages/dsl2koru/src:packages/dsl2coru/src python -m pytest -q packages/dsl2koru/tests packages/dsl2coru/tests"], "evidence": "AC-02 through AC-04 focused package suites and explicit alias/union coverage"},
+      {"criterion": "AC-05", "commands": ["python -m ruff check packages/dsl2coru/src/dsl2coru/__init__.py packages/dsl2coru/src/dsl2coru/codec.py packages/dsl2coru/src/dsl2coru/codegen.py packages/dsl2coru/src/dsl2coru/grammar.py packages/dsl2coru/src/dsl2coru/parser.py packages/dsl2coru/src/dsl2coru/schema_registry.py packages/dsl2coru/src/dsl2coru/serializer.py packages/dsl2coru/tests/test_dsl2coru_codec.py packages/dsl2koru/src/dsl2koru/codec.py packages/dsl2koru/src/dsl2koru/grammar.py packages/dsl2koru/src/dsl2koru/schema_registry.py packages/dsl2koru/tests/test_codec.py", "python -m compileall -q packages/dsl2koru/src packages/dsl2coru/src", "./project/governance-check.sh", "docker compose config --quiet", "git diff --check"], "evidence": "changed-file deterministic gates and protected checks; unchanged accepted-base Ruff findings remain out of scope"}
+    ]
+  }
+}
