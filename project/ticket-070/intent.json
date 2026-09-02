@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-070",
+  "summary": "Record namespace consolidation dual run",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P0",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-070/**",
+    "project/TICKETS.md",
+    "docs/architecture/volume-reduction-plan.yaml",
+    "docs/package-extraction-plan.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["docker"],
+  "dependsOn": [
+    "ticket-057",
+    "ticket-058",
+    "ticket-060",
+    "ticket-066",
+    "ticket-067",
+    "ticket-068"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "7fb4129fecfa767eaa2360ef14fe41f7d76ef699",
+    "targetBranch": "main",
+    "outcome": "The normative plan truthfully records Order 30 as a measured compatibility dual run, with executable consolidation complete and its quantitative completion deficit explicit.",
+    "nonGoals": [
+      "Do not change runtime code or compatibility behavior",
+      "Do not lower the 3000-line completion threshold",
+      "Do not mark Order 30 complete before its compatibility-release and quantitative gates pass",
+      "Do not modify or publish ticket-069 or Draft PR 101"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Advance only the lifecycle state justified by exact Git measurements: dual_run, not complete, and preserve the immutable reduction target.",
+      "components": [
+        {
+          "name": "volume-reduction-plan",
+          "paths": [
+            "docs/architecture/volume-reduction-plan.yaml",
+            "docs/package-extraction-plan.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [
+        "namespaces.coru_koru_pairs advances from planned to dual_run",
+        "Order 30 records a measured 1249-line net production reduction and 1751-line deficit"
+      ],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the protected merge to restore the prior planned status and stale progress wording."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -o addopts='' tests/test_volume_reduction_plan.py -q"
+        ],
+        "evidence": "Schema-valid plan plus deterministic Git source-line measurement from 4ce83062 to 7fb4129f"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "./project/governance-check.sh",
+          "python3 .governance/worktree_overlap_check.py --workspace-root . --focus-checkout . --format json",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "Focused test and managed local gates"
+      }
+    ]
+  }
+}

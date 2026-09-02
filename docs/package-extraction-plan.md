@@ -24,8 +24,21 @@ Order 10, `repository.generated_state`, is complete. The 49-file,
 17,172,638-byte generated baseline is absent from the Git index, its versions
 and digests remain in `config/artifact-registry.json`, and artifact workflow
 run `33612230881` proved separate analysis, coverage and media publication.
-Order 20, `runtime.shadow_packages`, was already complete; the next planned
-local reduction is order 30, `namespaces.coru_koru_pairs`.
+Order 20, `runtime.shadow_packages`, was already complete. Order 30,
+`namespaces.coru_koru_pairs`, is now in `dual_run`: the six legacy command and
+import namespaces warn and delegate to canonical `*2koru` implementations, and
+one conformance suite covers every pair. The compatibility boundary is
+complete, but the stage is not.
+
+The reproducible production-Python measurement compares accepted Order 30 base
+`4ce83062eeb0162cd951e91bf6e94b10f3f5bfc8` with consolidated head
+`7fb4129fecfa767eaa2360ef14fe41f7d76ef699` across the twelve declared
+`packages/*2{coru,koru}/src` roots. It falls from 5,474 to 4,225 lines: a net
+reduction of 1,249 lines. The immutable 3,000-line minimum therefore still has
+a 1,751-line shortfall. Order 30 may advance to `complete` only after one
+compatibility release and a fresh exact-range measurement meet that minimum;
+moving behavior between the paired packages does not count as ecosystem
+deletion.
 
 ## Current state (top-level under `src`)
 

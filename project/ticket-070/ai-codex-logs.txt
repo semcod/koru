@@ -1,0 +1,4 @@
+2026-09-02: Measured declared Python source roots at 5474 baseline lines and
+4225 consolidated lines: 1249 removed, 1751 short of the immutable minimum.
+2026-09-02: Volume-plan tests passed (8 tests, 68 subtests); governance,
+repository-scoped overlap, Docker Compose and diff gates passed.
