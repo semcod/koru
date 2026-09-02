@@ -93,60 +93,116 @@ wait_for_commit_status() {
   die "timed out waiting for ${context}=${want} on ${sha} (last=${state:-pending})"
 }
 
+ONEDEV_LOCAL_CONFIG=""
+
 run_onedev_agent() {
   [[ -d "$SUBLLM_ROOT/src" ]] || die "SUBLLM_ROOT not found: $SUBLLM_ROOT"
   [[ -f "$SUBLLM_POLICY_FILE" ]] || die "SUBLLM_POLICY_FILE not found: $SUBLLM_POLICY_FILE"
+  [[ -n "$ONEDEV_LOCAL_CONFIG" ]] || die "local onedev config was not prepared"
   export SUBLLM_POLICY_FILE
   export ONEDEV_AGENT_PR_VERIFICATION=true
   export PYTHONPATH="${SUBLLM_ROOT}/src:${ONEDEV_AGENT}/src:${PYTHONPATH:-}"
-  python3 -m onedev_agent --config "${ONEDEV_AGENT}/config/repositories.toml" "$@"
+  python3 -m onedev_agent --config "$ONEDEV_LOCAL_CONFIG" "$@"
 }
 
-prepare_onedev_scan_cursor() {
-  local queue_root="${ONEDEV_AGENT}/data/pr-state"
-  local index=""
-  index="$(python3 <<PY
+write_local_onedev_config() {
+  ONEDEV_LOCAL_CONFIG="${WORK_ROOT}/onedev-local.toml"
+  python3 <<PY
 import tomllib
 from pathlib import Path
 
-config = tomllib.load(Path("${ONEDEV_AGENT}/config/repositories.toml").open("rb"))
-repos = config["pull_request_verification"]["repositories"]
-for i, row in enumerate(repos):
-    if row.get("full_name") == "${REPO_SLUG}":
-        print(i)
-        break
-else:
-    raise SystemExit("repository profile not found: ${REPO_SLUG}")
-PY
-)"
-  mkdir -p "$queue_root"
-  printf '{"next_index": %s}\n' "$index" > "${queue_root}/scan-cursor.json"
-}
+onedev = Path("${ONEDEV_AGENT}")
+work = Path("${WORK_ROOT}")
+repo = "${REPO_SLUG}"
+out = Path("${ONEDEV_LOCAL_CONFIG}")
+data = tomllib.load((onedev / "config/repositories.toml").open("rb"))
+svc = data["service"]
+base = onedev / "config"
 
-clear_onedev_reported_state() {
-  local state_path="${ONEDEV_AGENT}/data/pr-state/reported-state.json"
-  [[ -f "$state_path" ]] || return 0
-  python3 <<PY
-import json
-from pathlib import Path
+def resolve(path_value: str) -> Path:
+    candidate = Path(path_value)
+    return candidate if candidate.is_absolute() else (base / candidate).resolve()
 
-path = Path("${state_path}")
-state = json.loads(path.read_text(encoding="utf-8"))
-if isinstance(state, dict):
-    state.pop("${REPO_SLUG}#${PR}", None)
-    path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+def q(value: str) -> str:
+    return value.replace("\\\\", "\\\\\\\\").replace('"', '\\\\"')
+
+profile = next(
+    row for row in data["pull_request_verification"]["repositories"]
+    if row.get("full_name") == repo
+)
+queue = work / "pr-state"
+pr_work = work / "pr-work"
+for directory in (queue, pr_work, pr_work / "mirrors", pr_work / "unused", queue / "git-state"):
+    directory.mkdir(parents=True, exist_ok=True)
+
+lines = [
+    "[service]",
+    f'poll_interval_seconds = {int(svc.get("poll_interval_seconds", 300))}',
+    f'mirror_root = "{pr_work / "mirrors"}"',
+    f'work_root = "{pr_work / "unused"}"',
+    f'state_root = "{queue / "git-state"}"',
+    'process_root = "processes"',
+    f'github_api_url = "{svc.get("github_api_url", "https://api.github.com")}"',
+    f'github_token_file = "{resolve(str(svc["github_token_file"]))}"',
+    f'gitlab_token_file = "{resolve(str(svc["gitlab_token_file"]))}"',
+    f'git_askpass_file = "{resolve(str(svc["git_askpass_file"]))}"',
+    f'onedev_url = "{svc.get("onedev_url", "http://127.0.0.1:6610")}"',
+    f'onedev_user = "{svc.get("onedev_user", "onedev-admin")}"',
+    f'onedev_password_file = "{resolve(str(svc["onedev_password_file"]))}"',
+    f'bootstrap_validation_secret_file = "{resolve(str(svc["bootstrap_validation_secret_file"]))}"',
+    f'bootstrap_validation_github_token_file = "{resolve(str(svc["bootstrap_validation_github_token_file"]))}"',
+    f'bootstrap_validation_github_app_id = {int(svc.get("bootstrap_validation_github_app_id", 4344831))}',
+    f'bootstrap_validation_github_app_private_key_file = "{resolve(str(svc["bootstrap_validation_github_app_private_key_file"]))}"',
+    f'bootstrap_desired_inventory_file = "{resolve(str(svc["bootstrap_desired_inventory_file"]))}"',
+    "automation_enabled = false",
+    "publish_enabled = false",
+    "",
+    "[pull_request_verification]",
+    "enabled = false",
+    "poll_interval_seconds = 30",
+    'context = "onedev/local-verify"',
+    "max_open_per_repository = 10",
+    "max_profiles_per_cycle = 5",
+    "api_publication_reserve = 250",
+    "api_scan_cost_per_profile = 4",
+    "api_recovery_profiles_per_cycle = 1",
+    f'work_root = "{pr_work}"',
+    f'queue_root = "{queue}"',
+    "",
+    "[[pull_request_verification.repositories]]",
+    f'full_name = "{profile["full_name"]}"',
+    "test_commands = [",
+]
+for command in profile["test_commands"]:
+    rendered = ", ".join(f'"{q(str(part))}"' for part in command)
+    lines.append(f"  [{rendered}],")
+lines.append("]")
+lines.append(f"timeout_seconds = {int(profile.get('timeout_seconds', 1800))}")
+if profile.get("github_branch_lifecycle"):
+    lines.append("github_branch_lifecycle = true")
+if profile.get("include_drafts"):
+    lines.append("include_drafts = true")
+for link in profile.get("dependency_links", []):
+    lines.extend([
+        "",
+        "[[pull_request_verification.repositories.dependency_links]]",
+        f'path = "{q(str(link["path"]))}"',
+        f'target = "{q(str(link["target"]))}"',
+    ])
+out.write_text("\\n".join(lines) + "\\n", encoding="utf-8")
+print(out)
 PY
 }
 
 run_onedev_until_local_verify() {
   local deadline=$((SECONDS + 1800))
   local state=""
-  prepare_onedev_scan_cursor
-  clear_onedev_reported_state
+  write_local_onedev_config
+  echo "onedev_local_config=${ONEDEV_LOCAL_CONFIG}"
   while (( SECONDS < deadline )); do
     coord="$(run_onedev_agent pr-coordinate-once)"
     echo "$coord"
-    exec_out="$(run_onedev_agent pr-execute-once)"
+    exec_out="$(run_onedev_agent pr-execute-once || true)"
     echo "$exec_out"
     state="$(commit_status_context_state "$FROZEN_HEAD" "onedev/local-verify" || true)"
     if [[ "$state" == "success" ]]; then
@@ -155,6 +211,10 @@ run_onedev_until_local_verify() {
     fi
     if [[ "$state" == "failure" || "$state" == "error" ]]; then
       die "onedev/local-verify=${state} on ${FROZEN_HEAD}"
+    fi
+    if [[ "$coord" != "[]" && "$state" == "pending" ]]; then
+      sleep 5
+      continue
     fi
     sleep 10
   done
