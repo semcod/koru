@@ -1,5 +1,22 @@
 # Local publication: OneDev + Validator (PL / EN)
 
+## Przygotowanie zakresu / Scope preparation
+
+Commit musi powstać w osobnym worktree na gałęzi `ticket/NNN-...`, powiązanej
+z rzeczywistym `IN_PROGRESS` ticketem. Hook odrzuca commit z `main`.
+`intent.json` musi obejmować dokładnie dostarczane pliki i ich workstream.
+Zmiany spoza zakresu należy rozdzielić do osobnych ticketów; sama zmiana
+nazwy gałęzi nie naprawia błędów `GOV-SCOPE` ani `GOV-WORKSTREAM`.
+
+Odśwież `origin/main`, sprawdź nakładanie zakresów i uruchom zarządzaną bramkę.
+Nie przepinaj `acceptedBaseSha` automatycznie na najnowszy SHA: zmieniaj go
+wyłącznie po rzeczywistym odświeżeniu bazy i ponownym przeglądzie zakresu.
+
+Create commits in a dedicated ticket worktree. Use the same ticket for the
+intent, branch, PR and Validator dispatch. Preserve local queue/environment
+snapshots separately from implementation changes. A passing local check or
+this guide is not trusted merge approval.
+
 ## Polski
 
 Ta ścieżka publikuje PR **bez uruchamiania GitHub Actions na repozytorium docelowym**
@@ -30,7 +47,7 @@ export GITHUB_TOKEN="$(gh auth token)"
 
 Użyj `--dry-run`, aby wykonać checki i OneDev bez statusu REST ani dispatchu Validatora.
 
-Intent `delivery.architecture` also records `.governance/manifest.json` under the governance-ownership component for this ticket.
+Szczegółowy raport z testów i publikacji (2026-09-02): [publication-local-onedev-validator-report.md](./publication-local-onedev-validator-report.md).
 
 ### Alternatywa: `koru ci publish`
 
@@ -60,7 +77,7 @@ Same command block as above.
 
 Use `--dry-run` to run checks and OneDev without REST status or Validator dispatch.
 
-Before a full or dry-run publication, pin `delivery.acceptedBaseSha` in the active ticket `intent.json` to the current `origin/main` commit (merge-base gate).
+Operational report (2026-09-02 tests and merges): [publication-local-onedev-validator-report.md](./publication-local-onedev-validator-report.md).
 
 ### Alternative: `koru ci publish`
 
