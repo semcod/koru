@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-085",
+  "summary": "Publish Koru 0.1.461 queue and portable-install repairs",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "VERSION",
+    "pyproject.toml",
+    "uv.lock",
+    "package.json",
+    "package-lock.json",
+    "project/ticket-085/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [
+    "ticket-081",
+    "ticket-084"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "268f1be08742e8a8beab688379850cc01d39abdb",
+    "targetBranch": "main",
+    "outcome": "Publish immutable Koru 0.1.461 with merged queue migration, IDE command-policy and portable install repairs.",
+    "nonGoals": [
+      "No new runtime or dependency-set changes",
+      "No local queue/environment data publication",
+      "No release effects before protected merge"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Synchronize the five integration-owned release carriers, then publish from validated exact merged main through Goal publish-only.",
+      "components": [
+        {
+          "name": "release-metadata",
+          "paths": [
+            "VERSION",
+            "pyproject.toml",
+            "uv.lock",
+            "package.json",
+            "package-lock.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Publish a later patch; never replace an immutable registry artifact."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "goal -a --delivery-mode pull-request",
+          "pytest critical profile",
+          "python -m build",
+          "goal -a --delivery-mode publish-only --force-publish"
+        ],
+        "evidence": "project/ticket-085/ai-codex-logs.txt"
+      }
+    ]
+  }
+}
