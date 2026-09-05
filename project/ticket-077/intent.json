@@ -1,0 +1,77 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-077",
+  "summary": "Restore clean test lint checks",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "tests/test_autonomous.py",
+    "tests/test_ci_pipeline.py",
+    "project/ticket-077/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b6bcaa6fbe96008254f52163635dd5a51a922da6",
+    "targetBranch": "main",
+    "outcome": "Restore clean Ruff checks for the existing autonomous and CI tests and publish the verified correction through protected GitHub delivery.",
+    "nonGoals": [
+      "Runtime behavior changes",
+      "Formatting unrelated files",
+      "Editing existing changes in the primary checkout"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Correct only annotation syntax and import ordering in existing tests.",
+      "components": [
+        {
+          "name": "test-quality",
+          "paths": [
+            "tests/test_autonomous.py",
+            "tests/test_ci_pipeline.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the two formatting corrections."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m ruff check src tests",
+          "python -m pytest -q tests/test_autonomous.py tests/test_ci_pipeline.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "Existing tests and managed Python/Docker gates."
+      }
+    ]
+  }
+}
