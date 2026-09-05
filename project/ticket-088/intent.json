@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-088",
+  "summary": "Require fixed Goal during locked installation",
+  "workstream": "integration",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "pyproject.toml",
+    "uv.lock",
+    "project/ticket-088/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5742a69ece20cf0b7542dec3ce36d5deabeb4f18",
+    "targetBranch": "main",
+    "outcome": "Prevent uv sync from downgrading Goal to 2.1.293 by requiring and locking the published 2.2.0 repair.",
+    "nonGoals": [
+      "No Koru version bump or runtime changes",
+      "No unrelated dependency upgrades",
+      "No local user data changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Raise the existing Goal minimum in every dependency group and regenerate only the required lock resolution.",
+      "components": [
+        {
+          "name": "package-resolution",
+          "paths": [
+            "pyproject.toml",
+            "uv.lock"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert these configuration changes; sibling checkouts would again be required."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "uv lock --check",
+          "uv sync --locked",
+          "npm install --package-lock-only --ignore-scripts",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-088/ai-codex-logs.txt"
+      }
+    ]
+  }
+}
