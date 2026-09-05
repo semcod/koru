@@ -1,0 +1,84 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-079",
+  "summary": "Extract photo VQL drive result normalization",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/integrations/vdisplay_client.py",
+    "src/koru/integrations/vdisplay/drive_result.py",
+    "src/koru/integrations/vdisplay/__init__.py",
+    "tests/test_vdisplay_drive_result.py",
+    "project/ticket-079/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "284e79fe9f63bf3d491549b7d6c03d9c7aea9c96",
+    "targetBranch": "main",
+    "outcome": "Separate photo-VQL drive result normalization from desktop orchestration while preserving existing outputs and policy callback binding, then publish through protected GitHub delivery.",
+    "nonGoals": [
+      "Changing capture, verification, map mismatch or code-edit policy",
+      "Moving unrelated desktop orchestration",
+      "Changing runtime dependencies or external interfaces"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Move the cohesive result shaping and gate-order logic into vdisplay.drive_result with explicit policy callbacks; retain the existing facade function and resolve callbacks at call time. The existing vdisplay component retains ownership and responsibility; this is an internal module extraction.",
+      "components": [
+        {
+          "name": "vdisplay-drive-result",
+          "paths": [
+            "src/koru/integrations/vdisplay_client.py",
+            "src/koru/integrations/vdisplay/drive_result.py",
+            "src/koru/integrations/vdisplay/__init__.py",
+            "tests/test_vdisplay_drive_result.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the extraction and restore normalization in the facade."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_vdisplay_drive_result.py tests/test_photo_vql_drive.py tests/test_photo_vql_orchestrator.py",
+          "python -m ruff check src tests",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "Run contract cases before and after extraction plus existing photo-VQL suites, managed gates and the trusted OneDev test profile."
+      }
+    ]
+  }
+}

@@ -1,0 +1,3 @@
+Selected the normalization cluster and checked existing call sites; no unfinished ticket owns this scope.
+Baseline: 16 result-contract tests pass before extraction. New tests pass Ruff and formatting. Clarified responsibilityChanges=false: the existing vdisplay component retains ownership; only its internal module organization changes.
+Extraction: facade reduced by 123 lines. 117 photo-VQL tests passed (2 skipped, 1 deselected); 18 control-fallback tests passed (2 skipped). Baseline replay: 5184 combinations produced identical full results and policy callback order. Standalone module import does not import vdisplay_client or vdisplay runtime. Full src/tests Ruff, managed governance, Docker Compose and diff checks passed.
