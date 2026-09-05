@@ -9,7 +9,12 @@ from pathlib import Path
 from typing import Any
 
 from koru.events import emit_management_event
-from koru.queue_clean import CleanupReport, clean_queue
+from koru.queue_clean import (
+    CleanupReport,
+    LegacySkippedMigrationReport,
+    clean_queue,
+    migrate_legacy_skipped,
+)
 from koru.ticket_evidence import render_ticket_evidence_report, validate_ticket_evidence
 
 
@@ -18,6 +23,7 @@ def build_queue_parser() -> argparse.ArgumentParser:
         prog="koru queue",
         description=(
             "Manage the planfile queue. Subcommands: clean (sweep stale test fixtures), "
+            "migrate-legacy-skipped (retire invalid skipped statuses), "
             "validate-evidence (check generated-ticket source hashes)."
         ),
     )
@@ -80,6 +86,36 @@ def build_queue_parser() -> argparse.ArgumentParser:
         default="text",
         help="Output format for the report.",
     )
+    migrate = sub.add_parser(
+        "migrate-legacy-skipped",
+        help="Migrate legacy planfile tickets with retired status skipped.",
+        description=(
+            "Planfile no longer accepts ticket status ``skipped``. Tickets that "
+            "still carry it are invisible to ``planfile ticket list`` and break "
+            "queue diagnostics. This command uses the versioned v1 rule "
+            "(skipped -> canceled) through the planfile store. Default is "
+            "dry-run; pass --apply to mutate."
+        ),
+    )
+    migrate.add_argument(
+        "--apply",
+        action="store_true",
+        help="Apply the migration. Without this, prints what would happen.",
+    )
+    migrate.add_argument(
+        "--project",
+        type=Path,
+        default=Path.cwd(),
+        help="Project root containing .planfile/.",
+    )
+    migrate.add_argument(
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format for the report.",
+    )
+
     validate = sub.add_parser(
         "validate-evidence",
         help="Validate source.context.evidence hashes on generated planfile tickets.",
@@ -159,10 +195,42 @@ def render_clean_report_text(report: CleanupReport) -> str:
     return "\n".join(lines)
 
 
+def render_legacy_skipped_report_text(report: LegacySkippedMigrationReport) -> str:
+    lines: list[str] = []
+    mode = "DRY-RUN" if report.dry_run else "APPLIED"
+    header = f"koru queue migrate-legacy-skipped [{mode}] ({report.rule.schema})"
+    lines.append(header)
+    lines.append("=" * len(header))
+    lines.append(
+        f"Rule: {report.rule.source_status!r} -> {report.rule.target_status!r}",
+    )
+    if not report.candidates:
+        lines.append("No legacy skipped tickets found. Nothing to do.")
+        return "\n".join(lines)
+    lines.append(f"Candidates ({len(report.candidates)}):")
+    for candidate in report.candidates:
+        lines.append(f"  - {candidate.explanation()}")
+    if report.dry_run:
+        lines.append("")
+        lines.append("Re-run with --apply to migrate these tickets via planfile.")
+    else:
+        if report.applied:
+            lines.append("")
+            lines.append(f"✓ Migrated: {', '.join(report.applied)}")
+        if report.failed:
+            lines.append("")
+            lines.append("✗ Failed:")
+            for tid, err in report.failed:
+                lines.append(f"  - {tid}: {err}")
+    return "\n".join(lines)
+
+
 def queue_main(argv: list[str]) -> int:
     args = build_queue_parser().parse_args(argv)
     if args.subcommand == "validate-evidence":
         return _queue_validate_evidence_main(args)
+    if args.subcommand == "migrate-legacy-skipped":
+        return _queue_migrate_legacy_skipped_main(args)
     if args.subcommand != "clean":
         print(f"koru queue: unknown subcommand {args.subcommand!r}", file=sys.stderr)
         return 2
@@ -184,6 +252,34 @@ def _queue_validate_evidence_main(args: argparse.Namespace) -> int:
     else:
         print(render_ticket_evidence_report(report))
     return 1 if report.stale_count or report.missing_evidence_count else 0
+
+
+def _queue_migrate_legacy_skipped_main(args: argparse.Namespace) -> int:
+    try:
+        report = migrate_legacy_skipped(args.project, apply=args.apply)
+    except RuntimeError as exc:
+        print(f"koru queue migrate-legacy-skipped: {exc}", file=sys.stderr)
+        return 1
+    if args.output_format == "json":
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True, default=str))
+    else:
+        print(render_legacy_skipped_report_text(report))
+    emit_management_event(
+        tool="koru.queue.migrate-legacy-skipped",
+        action="completed" if not report.failed else "failed",
+        status="completed" if not report.failed else "failed",
+        level="error" if report.failed else "info",
+        message=(
+            f"{'dry-run' if report.dry_run else 'applied'}: "
+            f"{len(report.candidates)} candidates, "
+            f"{len(report.applied)} applied, "
+            f"{len(report.failed)} failed"
+        ),
+        details=report.to_dict(),
+    )
+    if report.failed:
+        return 1
+    return 0
 
 
 def _queue_clean_main(args: argparse.Namespace) -> int:

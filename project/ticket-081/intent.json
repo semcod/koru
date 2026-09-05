@@ -1,0 +1,83 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-081",
+  "summary": "Migrate legacy skipped queue tickets through planfile",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "src/koru/cli_queue.py",
+    "src/koru/queue_clean.py",
+    "tests/test_queue_clean.py",
+    "project/ticket-081/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [
+    "ticket-083",
+    "ticket-084"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f719a83165503f86b7d2ee3d55b55ec6c5617604",
+    "targetBranch": "main",
+    "outcome": "Publish the existing dry-run-first skipped-to-canceled queue migration through planfile with deterministic reporting.",
+    "nonGoals": [
+      "Do not migrate the live user queue",
+      "Do not publish local generated environment or queue snapshots",
+      "No dependency or release metadata change"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Migrate only raw legacy skipped records through the existing planfile store; default to reporting without writes.",
+      "components": [
+        {
+          "name": "queue-migration",
+          "paths": [
+            "src/koru/cli_queue.py",
+            "src/koru/queue_clean.py",
+            "tests/test_queue_clean.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the CLI migration feature; existing queue clean behavior remains."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_queue_clean.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "project/ticket-081/ai-codex-logs.txt"
+      }
+    ]
+  }
+}
