@@ -1,0 +1,2 @@
+Split existing publication documentation into its owning integration workstream.
+Verified PR 100, 101 and 110 merge timestamps/SHAs through GitHub API. Removed unsupported timing/count claims; documented matching ticket/branch and exact-head requirements. Managed governance and bash syntax pass.

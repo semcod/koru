@@ -1,0 +1,77 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-082",
+  "summary": "Document ticket-bound local publication and verified results",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "docs/publication-local-onedev-validator.md",
+    "docs/publication-local-onedev-validator-report.md",
+    "project/ticket-082/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f719a83165503f86b7d2ee3d55b55ec6c5617604",
+    "targetBranch": "main",
+    "outcome": "Publish a ticket-bound local publication guide and source-verified historical merge report.",
+    "nonGoals": [
+      "No publication script or runtime change",
+      "No mutation of existing generated environment or queue data"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Explain branch/worktree scope requirements and distinguish historical observations from trusted merge evidence.",
+      "components": [
+        {
+          "name": "publication-guide",
+          "paths": [
+            "docs/publication-local-onedev-validator.md",
+            "docs/publication-local-onedev-validator-report.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert documentation changes."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh",
+          "bash -n scripts/publish-local-onedev-validator.sh",
+          "verify referenced PR metadata and relative links"
+        ],
+        "evidence": "project/ticket-082/ai-codex-logs.txt"
+      }
+    ]
+  }
+}
