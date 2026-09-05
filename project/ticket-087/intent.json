@@ -23,7 +23,7 @@
   "delivery": {
     "acceptedBaseSha": "5742a69ece20cf0b7542dec3ce36d5deabeb4f18",
     "targetBranch": "main",
-    "outcome": "Koru workspace globs select only intended checkout depth, avoid generated/vendor trees and symlink escapes, and retain bounded sequential retry semantics. Verify with real autogrammar refactoring pilots and digest-bound wellmanifest/performance evidence.",
+    "outcome": "Koru workspace globs select only intended checkout depth, avoid generated/vendor trees and symlink escapes, and retain bounded sequential retry semantics. Verify with real autogrammar refactoring pilots and digest-bound wellmanifest/performance evidence. Bound POSIX command execution to 30 minutes and one MiB per output stream; timeout and launch failures remain retryable records. Unsupported pipe platforms fail explicitly. Publish through protected exact-head validation and merge.",
     "nonGoals": [
       "No arbitrary edits in dirty or unselected repositories",
       "No unbounded recursive scans",
@@ -39,7 +39,7 @@
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Match include globs one path segment at a time, bound traversal, and treat Git checkout roots as scan boundaries. Keep command execution serial and retry only failures.",
+      "decision": "Match include globs one path segment at a time, bound traversal, and treat Git checkout roots as scan boundaries. Keep command execution serial and retry only failures. Use a POSIX process group and nonblocking bounded pipe reads, including inherited pipes in the deadline; no new public options or dependencies.",
       "components": [
         {
           "name": "workspace-loop",
@@ -57,7 +57,7 @@
         "states": [],
         "evidence": []
       },
-      "rollback": "Remove the standard-update allowlist entry and specialized handoff while retaining GOV-TICKET-001 supervision."
+      "rollback": "Revert workspace-loop changes and their tests together."
     },
     "runtimeDependencies": [],
     "validation": [
@@ -68,7 +68,7 @@
           "./project/governance-check.sh",
           "docker compose config --quiet"
         ],
-        "evidence": "Focused supervisor behavior plus managed repository gates"
+        "evidence": "Workspace selection, bounded subprocess behavior, sequential retries and managed gates"
       }
     ]
   }

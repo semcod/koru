@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import os
+import selectors
+import signal
 import subprocess
+import time
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from fnmatch import fnmatch
@@ -119,14 +122,66 @@ def discover_repositories(workspace: Path, include_pattern: str = "semcod/*") ->
     return sorted(repositories)
 
 
+_COMMAND_TIMEOUT_SECONDS = 1800.0
+_OUTPUT_LIMIT_BYTES = 1024 * 1024
+
+
 def _default_runner(command: Sequence[str], repository: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        command,
-        cwd=repository,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+    """Capture bounded output and include inherited pipes in the command deadline.
+
+    POSIX sessions let cleanup terminate descendants that retain output pipes.
+    Non-POSIX hosts fail explicitly rather than execute without these bounds.
+    """
+    if os.name != "posix":
+        return subprocess.CompletedProcess(command, 125, "", "bounded runner requires POSIX")
+    try:
+        process = subprocess.Popen(
+            command, cwd=repository, stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True,
+        )
+    except OSError as exc:
+        return subprocess.CompletedProcess(command, 127, "", f"command launch failed: {exc}")
+
+    buffers = [bytearray(), bytearray()]
+    truncated = [False, False]
+    deadline = time.monotonic() + _COMMAND_TIMEOUT_SECONDS
+    timed_out = False
+    try:
+        with selectors.DefaultSelector() as selector:
+            for index, pipe in enumerate((process.stdout, process.stderr)):
+                os.set_blocking(pipe.fileno(), False)
+                selector.register(pipe, selectors.EVENT_READ, index)
+            while selector.get_map() or process.poll() is None:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    timed_out = True
+                    break
+                for key, _ in selector.select(min(remaining, 0.1)):
+                    chunk = os.read(key.fd, 65536)
+                    if not chunk:
+                        selector.unregister(key.fileobj)
+                        continue
+                    index = key.data
+                    available = _OUTPUT_LIMIT_BYTES - len(buffers[index])
+                    buffers[index].extend(chunk[:available])
+                    truncated[index] |= len(chunk) > available
+    finally:
+        # Also clean up descendants after the leader exits or the caller interrupts.
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        process.wait()
+        process.stdout.close()
+        process.stderr.close()
+
+    outputs = [bytes(value).decode("utf-8", errors="replace") for value in buffers]
+    for index in range(2):
+        if truncated[index]:
+            outputs[index] += "\n[koru: output truncated]"
+    if timed_out:
+        outputs[1] += "\n[koru: command deadline exceeded]"
+    return subprocess.CompletedProcess(command, 124 if timed_out else process.returncode, *outputs)
 
 
 def run_closed_loop(
