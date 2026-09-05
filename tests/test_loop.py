@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from koru.cli import _command_value
 from koru.loop import _search_root_for_include, discover_repositories, run_closed_loop
@@ -33,6 +34,57 @@ class TestKoruLoop(unittest.TestCase):
             repos = discover_repositories(workspace, include_pattern="semcod/*")
 
             self.assertEqual(repos, [repo_a.resolve()])
+
+    def test_glob_does_not_cross_into_vendor_or_linked_worktrees(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            for name in ("autogrammar/alpha", "autogrammar/alpha/vendor/nested",
+                         "autogrammar/.worktrees/pilot", "autogrammar/vendor/third"):
+                (root / name / ".git").mkdir(parents=True)
+            self.assertEqual(discover_repositories(root, "autogrammar/*"),
+                             [root / "autogrammar/alpha"])
+            self.assertEqual(discover_repositories(root, "autogrammar/**"),
+                             [root / "autogrammar/alpha"])
+
+    def test_exact_linked_worktree_and_missing_target(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            target = root / ".worktrees/pilot"
+            target.mkdir(parents=True)
+            (target / ".git").write_text("gitdir: /unused/test-metadata\n")
+            self.assertEqual(discover_repositories(root, ".worktrees/pilot"), [target])
+            self.assertEqual(discover_repositories(root, "missing/*"), [])
+
+    def test_discovery_refuses_escape_and_skips_symlinks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            outside = root / "outside"
+            (outside / ".git").mkdir(parents=True)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            (workspace / "alias").symlink_to(outside, target_is_directory=True)
+            self.assertEqual(discover_repositories(workspace, "*"), [])
+            self.assertEqual(discover_repositories(workspace, "alias"), [])
+            for pattern in ("../outside", str(outside)):
+                with self.assertRaises(ValueError):
+                    discover_repositories(workspace, pattern)
+
+    def test_discovery_fails_closed_on_budget_exhaustion(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            for i in range(4):
+                (root / str(i) / ".git").mkdir(parents=True)
+            with patch("koru.loop._DISCOVERY_LIMIT", 3), self.assertRaises(ValueError):
+                discover_repositories(root, "*")
+
+    def test_discovery_never_scans_inside_selected_repository(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            repo = root / "org/repo"
+            (repo / ".git").mkdir(parents=True)
+            with patch("koru.loop.os.scandir", wraps=__import__("os").scandir) as scan:
+                self.assertEqual(discover_repositories(root, "org/*"), [repo])
+            self.assertNotIn(repo, [call.args[0] for call in scan.call_args_list])
 
     def test_run_closed_loop_retries_failed_repositories(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -84,6 +136,11 @@ class TestKoruLoop(unittest.TestCase):
             self.assertEqual(report.failed, ())
             self.assertEqual(report.succeeded, (repo_a, repo_b))
             self.assertEqual(report.rounds_executed, 1)
+
+    def test_nonpositive_rounds_cannot_report_an_unexecuted_run_as_success(self) -> None:
+        for rounds in (0, -1):
+            with self.assertRaises(ValueError):
+                run_closed_loop(command=["unused"], repositories=[Path(".")], max_rounds=rounds)
 
     def test_command_value_rejects_blank_value(self) -> None:
         with self.assertRaises(argparse.ArgumentTypeError):

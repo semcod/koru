@@ -1,0 +1,1 @@
+SESSION_EXECUTION_AUTHORIZATION: user requested using Koru for autogrammar refactorings, sequential correctness evaluation and wellmanifest/performance checking. This bounded correction is necessary before mutation pilots.

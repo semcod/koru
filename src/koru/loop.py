@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
@@ -57,20 +58,65 @@ def _search_root_for_include(workspace: Path, include_pattern: str) -> Path:
     return workspace.joinpath(*literal_parts)
 
 
-def discover_repositories(workspace: Path, include_pattern: str = "semcod/*") -> list[Path]:
-    """Return git repositories under workspace matching include_pattern."""
-    workspace = workspace.resolve()
-    search_root = _search_root_for_include(workspace, include_pattern).resolve()
-    if not search_root.exists():
-        return []
+_DISCOVERY_LIMIT = 100_000
+_DISCOVERY_EXCLUDES = frozenset({
+    "node_modules", "vendor", "venv", "worktrees", "__pycache__", "dist", "build",
+})
 
-    repositories: list[Path] = []
-    for git_dir in search_root.rglob(".git"):
-        candidate = git_dir.parent
-        rel_path = candidate.relative_to(workspace).as_posix()
-        if include_pattern == "*" or fnmatch(rel_path, include_pattern):
-            repositories.append(candidate)
-    return sorted(set(repositories))
+
+def discover_repositories(workspace: Path, include_pattern: str = "semcod/*") -> list[Path]:
+    """Select checkout roots using segment globs and a bounded directory traversal.
+
+    ``*`` never crosses a slash. Explicit literal paths may select linked
+    worktrees; wildcard discovery skips hidden/generated trees and symlinks.
+    ``**`` is recursive but stops at checkout roots.
+    """
+    workspace = workspace.resolve()
+    normalized = include_pattern.strip().replace("\\", "/")
+    parts = tuple(part for part in normalized.split("/") if part and part != ".")
+    if normalized.startswith("/") or ".." in parts or len(parts) > 64 or not parts:
+        raise ValueError("include must be a bounded path relative to the workspace")
+    remaining = _DISCOVERY_LIMIT
+    repositories: set[Path] = set()
+    seen: set[tuple[Path, int]] = set()
+
+    def visit(directory: Path, index: int) -> None:
+        nonlocal remaining
+        remaining -= 1
+        if remaining < 0:
+            raise ValueError("repository discovery exceeded its entry budget")
+        if len(directory.relative_to(workspace).parts) > 64:
+            raise ValueError("repository discovery exceeded its depth budget")
+        state = (directory, index)
+        if state in seen or directory.is_symlink() or not directory.is_dir():
+            return
+        seen.add(state)
+        if index == len(parts):
+            if (directory / ".git").is_dir() or (directory / ".git").is_file():
+                repositories.add(directory)
+            return
+        segment = parts[index]
+        if not any(char in segment for char in _GLOB_CHARS):
+            visit(directory / segment, index + 1)
+            return
+        if segment == "**":
+            visit(directory, index + 1)
+            if (directory / ".git").exists():
+                return
+        with os.scandir(directory) as entries:
+            for entry in entries:
+                remaining -= 1
+                if remaining < 0:
+                    raise ValueError("repository discovery exceeded its entry budget")
+                if entry.is_symlink() or not entry.is_dir(follow_symlinks=False):
+                    continue
+                if entry.name in _DISCOVERY_EXCLUDES or entry.name.startswith("."):
+                    continue
+                if segment == "**" or fnmatch(entry.name, segment):
+                    visit(Path(entry.path), index if segment == "**" else index + 1)
+
+    visit(workspace, 0)
+    return sorted(repositories)
 
 
 def _default_runner(command: Sequence[str], repository: Path) -> subprocess.CompletedProcess[str]:
@@ -91,6 +137,8 @@ def run_closed_loop(
     runner: Callable[[Sequence[str], Path], CommandResult] = _default_runner,
 ) -> LoopReport:
     """Run a command repeatedly on failed repositories until all pass or rounds end."""
+    if max_rounds < 1:
+        raise ValueError("max_rounds must be at least one")
     pending = sorted(set(Path(repo).resolve() for repo in repositories))
     records: list[RunRecord] = []
 

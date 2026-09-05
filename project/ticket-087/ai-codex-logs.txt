@@ -1,0 +1,3 @@
+Read-only baseline audit: 45 selected checkouts, including 7 nested vendor/worktree checkouts; direct inventory has 38 repositories.
+Validation: 11 loop tests and 255 critical Koru tests pass; Ruff, managed gate and Docker Compose pass. Koru applied two bounded autogrammar source/test changes sequentially; real transient and permanent failure probes verify selective retries and max rounds. Five-sample Performance plans, evidence digests, output parity and negative budget rejection pass. Evidence directory: artifact:koru-refactor/20260905t184018z
+Reject non-positive max_rounds instead of reporting success without executing any repository.
