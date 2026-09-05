@@ -6,8 +6,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from koru.ci.github import GitHubCliError
 from koru.ci.gates import DEFAULT_GATES, gate_commands, resolve_gates, run_quality_gates
+from koru.ci.github import GitHubCliError
 from koru.ci.publication import (
     PublicationConfig,
     dispatch_validator_merge,

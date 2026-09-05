@@ -5597,7 +5597,7 @@ def test_wup_subprocess_env_pins_planfile_command(tmp_path, monkeypatch) -> None
     assert env["PATH"].split(":")[0] == "/opt/planfile/bin"
 
 
-def _wup_watch_config(tmp_path: Path) -> "autonomous_wup_mod.WupWatchConfig":
+def _wup_watch_config(tmp_path: Path) -> autonomous_wup_mod.WupWatchConfig:
     return autonomous_wup_mod.WupWatchConfig(
         enabled=True,
         mode="testql",
