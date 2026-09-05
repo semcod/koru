@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from types import SimpleNamespace
 
 import pytest
 from koruide import command_picker
@@ -75,7 +76,7 @@ def _isolated_agent_availability(monkeypatch: pytest.MonkeyPatch, tmp_path_facto
 
 
 @pytest.fixture(autouse=True)
-def _isolate_command_picker_state():
+def _isolate_command_picker_state(monkeypatch: pytest.MonkeyPatch):
     """Snapshot & restore the command-picker module's shared mutable state.
 
     ``command_picker._LLM_CACHE`` is a module-level dict that persists for the
@@ -85,11 +86,17 @@ def _isolate_command_picker_state():
     ``ide|version|capability`` key, producing order-dependent failures that
     only surface under xdist's load scheduling.
 
-    ``OPENROUTER_API_KEY`` is removed so the heuristic-fallback path is taken
-    deterministically: tests that exercise the LLM path explicitly monkeypatch
-    ``call_openrouter_json`` and set ``KORU_LLM_PICKER`` themselves, so they are
-    unaffected, while accidental real network calls are prevented.
+    Stub the model boundary: SubLLM can resolve credentials independently of
+    ``OPENROUTER_API_KEY``. Model tests explicitly replace this stub, while
+    ordinary picker tests exercise deterministic heuristic fallback.
     """
+    monkeypatch.setattr(
+        command_picker,
+        "call_openrouter_json",
+        lambda *args, **kwargs: SimpleNamespace(
+            ok=False, content="", error="Live model calls are disabled in unit tests"
+        ),
+    )
     command_picker._LLM_CACHE.clear()
     os.environ.pop("OPENROUTER_API_KEY", None)
     try:
