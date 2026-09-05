@@ -1,0 +1,1 @@
+2026-09-05: Read governance, tickets and current autonomy sources. Initial test launch stopped before collection: GOV-PATH-001 in this log; replaced machine-local evidence location with receipt:koru:ticket-080.
