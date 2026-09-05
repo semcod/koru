@@ -13,5 +13,6 @@ Modules:
 * :mod:`koru.integrations.vdisplay.surface_capture` — surface-registry capture confirm
 * :mod:`koru.integrations.vdisplay.control_policy` — drive/fallback env heuristics
 * :mod:`koru.integrations.vdisplay.window_focus` — xdotool/GNOME/Alt+Tab raise helpers
+* :mod:`koru.integrations.vdisplay.drive_result` — drive result shaping and ordered gates
 * :mod:`koru.integrations.vdisplay.photo_vql_meta` — capture window-title / overlay gates
 """
