@@ -1,0 +1,2 @@
+Restore existing Antigravity command-order test contract.
+Final command-picker suite: 20 passed, including controlled model-output policy enforcement. Fix also prevents model output from bypassing existing VSCodium restrictions.

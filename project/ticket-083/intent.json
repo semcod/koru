@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-083",
+  "summary": "Enforce IDE command policy after model ranking",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "packages/koruide/src/koruide/command_picker.py",
+    "project/ticket-083/**",
+    "tests/test_command_picker.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f719a83165503f86b7d2ee3d55b55ec6c5617604",
+    "targetBranch": "main",
+    "outcome": "Retain deterministic IDE command restrictions after either heuristic or model ranking, including Antigravity side-panel priority and VSCodium focus restrictions.",
+    "nonGoals": [
+      "No new-window fallback",
+      "No queue migration or release metadata change"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Seed the documented side-panel open/focus order before generic candidates in the Antigravity sanitizer.",
+      "components": [
+        {
+          "name": "command-order",
+          "paths": [
+            "packages/koruide/src/koruide/command_picker.py",
+            "tests/test_command_picker.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ordering change."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_command_picker.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-083/ai-codex-logs.txt"
+      }
+    ]
+  }
+}
