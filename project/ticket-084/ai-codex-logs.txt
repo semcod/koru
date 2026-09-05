@@ -1,0 +1,2 @@
+Repair portable resolver metadata without changing dependency requirements.
+uv lock --check and uv sync --locked passed against registry-only dependencies; uv.lock remained byte-identical. npm install --package-lock-only --ignore-scripts passed; only the stale Windsurf workspace version differs.

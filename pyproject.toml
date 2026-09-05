@@ -259,13 +259,8 @@ control = [
 [tool.uv]
 default-groups = ["dev"]
 
-[tool.uv.sources]
-tillm = { path = "../tillm", editable = true }
-# keep the sibling checkout editable through uv/goal syncs — a registry
-# install kept resurfacing in .venv and shadowing local gillm changes
-gillm = { path = "../gillm", editable = true }
-vdisplay = { path = "../../wronai/vdisplay", editable = true }
-planfile = { path = "../planfile", editable = true }
+# Tracked dependencies resolve from the registry. Optional editable sibling
+# installs belong to the local development environment, not this lock contract.
 
 [tool.setuptools]
 package-dir = { "" = "src" }

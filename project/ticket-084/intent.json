@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-084",
+  "summary": "Restore portable package sources and synchronize workspace lock",
+  "workstream": "integration",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "pyproject.toml",
+    "uv.lock",
+    "package-lock.json",
+    "project/ticket-084/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f719a83165503f86b7d2ee3d55b55ec6c5617604",
+    "targetBranch": "main",
+    "outcome": "Make tracked Python dependencies install from their declared registry sources and synchronize the Node workspace lock version.",
+    "nonGoals": [
+      "No version bump or new dependency",
+      "No local developer package removal",
+      "No runtime source or generated queue changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Remove machine-specific sibling source overrides from tracked uv configuration; retain declared registry requirements and repair the stale Windsurf workspace lock entry.",
+      "components": [
+        {
+          "name": "package-resolution",
+          "paths": [
+            "pyproject.toml",
+            "uv.lock",
+            "package-lock.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert these configuration changes; sibling checkouts would again be required."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "uv lock --check",
+          "uv sync --locked",
+          "npm install --package-lock-only --ignore-scripts",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-084/ai-codex-logs.txt"
+      }
+    ]
+  }
+}
