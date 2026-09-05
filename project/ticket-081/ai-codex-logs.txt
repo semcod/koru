@@ -1,0 +1,4 @@
+Bound existing queue migration changes; validation in progress.
+Focused tests: 20 passed, including real Planfile store migration, preserved active work, audit history and retry idempotence. Malformed YAML now becomes a bounded CLI error. Ruff and governance passed; critical suite running.
+Publication waits for ticket-083 command-policy regression and ticket-084 portable package metadata. No further source edits until prerequisites merge and status resumes IN_PROGRESS.
+Prerequisites ticket-083 and ticket-084 are trusted merged and integrated. Resumed IN_PROGRESS. Final focused suite with locked registry dependencies: 21 passed; governance passes.

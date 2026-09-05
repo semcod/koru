@@ -15,16 +15,24 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 from koru.queue_clean import (
+    LEGACY_SKIPPED_MIGRATION_SCHEMA,
+    LEGACY_SKIPPED_MIGRATION_TAG,
+    MIGRATION_RULE_V1,
     QUEUE_CLEAN_TAG,
     CleanupCandidate,
     CleanupReport,
+    LegacySkippedCandidate,
+    _build_legacy_skipped_note,
     clean_queue,
     find_candidates,
+    find_legacy_skipped_candidates,
+    migrate_legacy_skipped,
 )
 
 
@@ -338,3 +346,169 @@ def test_report_to_dict_is_json_serialisable():
     assert parsed["failed_count"] == 1
     assert parsed["skipped_active_count"] == 1
     assert parsed["failed"] == [{"ticket_id": "PLF-2", "error": "boom"}]
+
+
+# ---------------------------------------------------------------------------
+# migrate-legacy-skipped — retired planfile status hygiene
+# ---------------------------------------------------------------------------
+
+
+def test_find_legacy_skipped_candidates_only_matches_skipped_status():
+    tickets = {
+        "STARTER-490": {"id": "STARTER-490", "name": "Smell A", "status": "skipped", "labels": ["code-smell"]},
+        "STARTER-491": {"id": "STARTER-491", "name": "Smell B", "status": "open", "labels": []},
+        "STARTER-492": {"id": "STARTER-492", "name": "Smell C", "status": "done", "labels": []},
+        "STARTER-493": {"id": "STARTER-493", "name": "Smell D", "status": "Skipped", "labels": []},
+    }
+    candidates = find_legacy_skipped_candidates(tickets)
+    assert [c.ticket_id for c in candidates] == ["STARTER-490", "STARTER-493"]
+    assert all(c.rule.target_status == "canceled" for c in candidates)
+    assert all(c.rule.schema == LEGACY_SKIPPED_MIGRATION_SCHEMA for c in candidates)
+
+
+def test_migrate_legacy_skipped_dry_run_does_not_call_planfile(tmp_path):
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    sprint_dir.joinpath("current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    STARTER-490:
+      id: STARTER-490
+      name: Smell
+      status: skipped
+      labels: [code-smell]
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    def migrator(project: Path, candidate: LegacySkippedCandidate) -> None:
+        raise AssertionError(f"unexpected migrator call in dry-run: {candidate.ticket_id}")
+
+    report = migrate_legacy_skipped(tmp_path, migrator=migrator)
+    assert report.dry_run is True
+    assert [c.ticket_id for c in report.candidates] == ["STARTER-490"]
+    assert report.applied == []
+
+
+def test_migrate_legacy_skipped_apply_updates_each_ticket(tmp_path):
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    sprint_dir.joinpath("current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    STARTER-490:
+      id: STARTER-490
+      name: Smell A
+      status: skipped
+    STARTER-491:
+      id: STARTER-491
+      name: Smell B
+      status: skipped
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    captured: list[dict[str, str]] = []
+
+    def migrator(project: Path, candidate: LegacySkippedCandidate) -> None:
+        captured.append(
+            {
+                "ticket_id": candidate.ticket_id,
+                "status": candidate.rule.target_status,
+                "note": _build_legacy_skipped_note(candidate),
+            },
+        )
+
+    report = migrate_legacy_skipped(tmp_path, apply=True, migrator=migrator)
+    assert sorted(report.applied) == ["STARTER-490", "STARTER-491"]
+    assert report.failed == []
+    assert len(captured) == 2
+    for entry in captured:
+        assert entry["status"] == "canceled"
+        assert entry["note"].startswith(LEGACY_SKIPPED_MIGRATION_TAG + " ")
+        payload = json.loads(entry["note"][len(LEGACY_SKIPPED_MIGRATION_TAG) + 1 :])
+        assert payload["schema"] == LEGACY_SKIPPED_MIGRATION_SCHEMA
+        assert payload["from_status"] == "skipped"
+        assert payload["to_status"] == "canceled"
+
+
+def test_migrate_legacy_skipped_records_failures_per_ticket(tmp_path):
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    sprint_dir.joinpath("current.yaml").write_text(
+        """
+sprint:
+  tickets:
+    STARTER-490:
+      id: STARTER-490
+      name: Smell A
+      status: skipped
+    STARTER-491:
+      id: STARTER-491
+      name: Smell B
+      status: skipped
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    def migrator(project: Path, candidate: LegacySkippedCandidate) -> None:
+        if candidate.ticket_id == "STARTER-491":
+            raise RuntimeError("ticket locked")
+
+    report = migrate_legacy_skipped(tmp_path, apply=True, migrator=migrator)
+    assert report.applied == ["STARTER-490"]
+    assert report.failed == [("STARTER-491", "ticket locked")]
+
+
+def test_legacy_skipped_candidate_explanation_mentions_rule():
+    candidate = LegacySkippedCandidate(
+        ticket_id="STARTER-490",
+        name="Smell",
+        labels=("code-smell",),
+        rule=MIGRATION_RULE_V1,
+    )
+    text = candidate.explanation()
+    assert "STARTER-490" in text
+    assert "skipped -> canceled" in text
+    assert LEGACY_SKIPPED_MIGRATION_SCHEMA in text
+
+
+def test_legacy_migration_uses_real_planfile_store_and_preserves_other_work(tmp_path):
+    import yaml
+    from planfile import Planfile
+
+    plan = Planfile(str(tmp_path))
+    legacy = plan.create_ticket(name="Legacy backlog")
+    active = plan.create_ticket(name="Keep active", status="in_progress")
+    sprint = tmp_path / ".planfile/sprints/current.yaml"
+    data = yaml.safe_load(sprint.read_text())
+    data["sprint"]["tickets"][legacy.id]["status"] = "skipped"
+    sprint.write_text(yaml.safe_dump(data))
+    before = sprint.read_bytes()
+
+    dry = migrate_legacy_skipped(tmp_path)
+    assert [item.ticket_id for item in dry.candidates] == [legacy.id]
+    assert sprint.read_bytes() == before
+
+    result = migrate_legacy_skipped(tmp_path, apply=True)
+    assert result.failed == []
+    assert result.applied == [legacy.id]
+    updated = plan.store.get_ticket(legacy.id)
+    assert updated.status == "canceled"
+    assert plan.store.get_ticket(active.id).status == "in_progress"
+    assert LEGACY_SKIPPED_MIGRATION_TAG in str(updated.history)
+    assert migrate_legacy_skipped(tmp_path, apply=True).applied == []
+
+
+def test_legacy_migration_reports_invalid_yaml_without_writes(tmp_path):
+    sprint = tmp_path / ".planfile/sprints/current.yaml"
+    sprint.parent.mkdir(parents=True)
+    sprint.write_text("sprint: [broken\n")
+    before = sprint.read_bytes()
+    with pytest.raises(RuntimeError, match="cannot read sprint file"):
+        migrate_legacy_skipped(tmp_path, apply=True)
+    assert sprint.read_bytes() == before
