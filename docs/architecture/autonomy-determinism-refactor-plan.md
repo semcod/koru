@@ -1,11 +1,11 @@
 # Koru — autonomy & determinism refactor plan
 
-**Status:** historical architecture roadmap; PR1 namespace ownership is delivered, later units require current-code review.
+**Status:** current bounded sequence in section 0; sections 1–11 retain the historical architecture roadmap with corrected implementation boundaries.
 **Date:** 2026-07-18  
-**Reviewed against code:** 2026-09-01
+**Reviewed against code:** 2026-09-05 (`c695361224afbdd13dda6be89d6862a70300ee09`)
 **Repo:** [`semcod/koru`](https://github.com/semcod/koru)  
-**Current index baseline:** [`documentation-conformance.toon.yaml`](./documentation-conformance.toon.yaml), generated from the checked-out code with `autogrammar/sumd`.
-**Provenance:** this document reconstructs the original 2026-07-18 assessment; current-state claims are reviewed against the repository and the conformance DSL above.
+**Historical index baseline (2026-09-01):** [`documentation-conformance.toon.yaml`](./documentation-conformance.toon.yaml), generated from the checked-out code with `autogrammar/sumd`.
+**Provenance:** section 0 and the gap matrix use the [September source/test assessment](./autonomy-audit-2026-09.md). Earlier metrics and cross-repository comparisons are historical; the index was not regenerated for this audit.
 
 **Related (Subactor — borrow governance, not languages):**
 
@@ -20,6 +20,64 @@
 **Separate track:** Subactor **PR6 (Paramiko/SFTP + capability readiness)** is *infrastructure for docs.subactor.com publish*. It does **not** block or merge into this Koru refactor. Do not couple commits, grants, or DoD criteria across the two repos.
 
 **ADR index (this repo):** [`adr/README.md`](./adr/README.md)
+
+---
+
+## 0. Current refactoring sequence (2026-09-05)
+
+The [assessment](./autonomy-audit-2026-09.md) confirms working patch manifests,
+Ed25519 grants, JTI replay protection, transaction journals and recovery. Reuse
+them. Fix completion and verification semantics before expanding execution
+coverage or splitting more large modules. This is a plan; these runtime changes
+are **not implemented by ticket-080**.
+
+The identifiers below are planning labels, not allocated governance tickets.
+Allocate each implementation through `project/new-ticket.sh`, reuse a matching
+unfinished ticket when appropriate, and bound its exact write paths. Each slice
+should fit an S ticket (at most five implementation files, two components and
+120 active minutes); split it before EDIT if its concrete scope exceeds that.
+
+| Order / owner | Bounded implementation | Acceptance evidence | Dependency |
+| --- | --- | --- | --- |
+| A0 / application | Make the lease test transport-independent; explicitly stub optional planning LLM in cycle integration tests. | The lease assertion passes for one-token and `python -m` prefixes; all 11 cycle tests pass with a provider stub that rejects unexpected calls. Keep a separate opt-in provider test. | F8; start here |
+| A1 / application | Validate post-run command lists and introduce a command deadline/outcome in `post_run_verify`; retain injected runner support and environment sanitization. | Blank/whitespace-only configuration is rejected or explicitly `not_run`, never `passed`; a bounded sleeping child yields timeout; nonzero exit stops subsequent commands; valid commands still pass. | F1, F4; A0 |
+| A2 / application | Separate requested and acknowledged lifecycle transitions in post-run failure handling and queue finalization, using the existing Planfile gateway. | Failed block/reopen/done returns persistence failure, not `reopened`/`completed`; a successful SDK transition occurs once; readback mismatch cannot report success. | F2; A1 |
+| A3 / application | Replace the IDE verification ID-only cache with evidence keyed to attempt, workspace/HEAD and verification-profile digest. | Same unchanged attempt is deduplicated; reopen/recomplete, changed HEAD, changed commands and restart all require valid matching evidence; queue and IDE lanes share the same evidence meaning. | F3; A2 |
+| A4 / application, integration for shared contract | Separate heuristic progress from verified completion in `Verdict`/`ActionPlan`; define the completion receipt before wiring any new dispatcher. | Unknown tests, chat acknowledgement and stale WUP health never authorize completion; missing/foreign/old receipts refuse; valid current receipt permits the transition. Shadow comparisons must record intended semantic differences. | F5; A3 |
+| A5 / integration | Inventory mutation entry points and map existing `ExecutionPlan`, `PatchPlan`, manifest, grant and journal identities to one lifecycle contract. Deliver the map/schema in one ticket, then migrate **one** executor adapter per separately scoped ticket. | Every inventoried path has an explicit policy/verification mode; no silent fallback from required grant to legacy; invalid signature, expired/replayed grant, changed base and interrupted promotion remain refused or reconciled idempotently. | F6; A4 |
+| A6 / application | Extract the next cohesive vdisplay/retry policy unit through explicit callbacks, keeping the facade. Define code-edit success precedence separately before changing it. | Characterization tests preserve output and callback order; matrix distinguishes capture failure, successful edit, unverified submit and verified task result. No reverse import into the facade. | F7; independent extraction may follow A0; policy change requires A4 |
+
+Retry/deadline follow-up belongs after A1–A3: inventory queue attempts, patch
+retries, IDE retries and lease expiry, then add a per-attempt time budget and
+resume/fencing tests in separate slices. Acceptance must show that restart does
+not reset a consumed budget, a stale worker cannot finalize another owner's
+attempt, and the existing human-triage boundary remains explicit. Do not infer
+these properties merely from the current project lock or two-hour lease.
+
+### Rollout, rollback and measurement
+
+First convert F1–F5 probes into regression tests with the **desired** results in
+the appropriate application ticket. Preserve the current implementations as
+characterization evidence where behavior must remain stable. For contract
+migration, compare decisions in shadow mode before switching one executor;
+shadow mode must not perform a second mutation. Keep the previous adapter
+available for rollback without discarding already accepted receipts. A rollback
+must never weaken a configured required verification or grant policy.
+
+Use a fixed offline corpus: successful edit, no change, missing tests, failing
+tests, whitespace command, timeout, failed lifecycle write, reopened ticket,
+expired/replayed grant, changed workspace and crash before/after promotion.
+Track false-success count (**target zero**), attempts per verified ticket,
+repeated-failure decisions after budget exhaustion (**target zero**), recovery
+outcome and maximum deadline overshoot. Baseline rates and latency percentiles
+have **not** been measured. Run a separately authorized IDE/provider lab only
+after deterministic scenarios pass, recording lane, fixture, HEAD and profile.
+
+Publication uses a ticket branch, GitHub PR and the declared protected delivery
+process. Freeze the current PR HEAD and dispatch `subactor/validator-agent` for
+trusted approval/merge as required by [AGENTS.md](../../AGENTS.md). Agent prose
+and passing local tests do not replace that approval. Keep the ticket
+`IN_PROGRESS / PUBLICATION` until the external terminal receipt closes it.
 
 ---
 
@@ -48,23 +106,23 @@ but **339 critical functions** and concentrated hotspots.
 1. **No single execution contract** shared by cycle, operator, repair, and replay.
 2. **Parallel registries / package names** (`koru`, `coru`, `koruide`, `korudsl`, `koruapi`, …) without one capability SSOT.
 3. **Hotspot concentration** — especially
-   `src/koru/integrations/vdisplay_client.py` (6,577 lines), the main CLI,
+   `src/koru/integrations/vdisplay_client.py` (6,454 lines on 2026-09-05; 6,577 in the earlier index), the main CLI,
    `scan.py`, `autonomous.py`, and cycle/operator pipelines — where planning
    still reaches subprocess/GUI.
 
 ### 1.3 Honest gap matrix
 
-| Area | Already in Koru | Missing / fragmented |
+| Area | Already in Koru | Remaining boundary |
 | --- | --- | --- |
-| Policy | `.planfile/.koru/policy.yaml`, `policy.py`, `autonomy/policy_engine.py` | Not bound to a versioned capability catalog; no CI ⊆-check vs packs |
-| Decision | `decision_arbiter.py`, ADR AUTO-002 planning LLM | Arbiter emits ad-hoc actions, not a shared `ExecutionPlan` state machine |
-| Checkpoints | `autonomous_checkpoint`, session state under `.planfile/.koru/` | Checkpoint ≠ immutable manifest + `plan_hash` |
-| Replay | `koru replay`, drive replay sidecars, control DSL | Replay is observational; no grant/`jti` anti-replay for mutations |
-| Verify | `post_run_verify`, `verification_engine.py` | Soft reopen/block; not hard DoD with evidence bundle + rollback |
-| Planfile / MCP | Queue gateway, MCP tools, ticket lifecycle | Tickets are work items, not capability-authorized execution units |
-| IDE control | `koruide`, probe ladder, plugins | Ladder exists but planning layer still spawns GUI/subprocess paths |
-| Namespaces | `coru` thin CLI; `koru*` packages; AD-001 inventory enforced by CI | Distribution and compatibility layers can still drift after ownership changes |
-| Remote exec | Local daemon / UDS | No capability-scoped mTLS remote executor |
+| Policy | Autopilot policy and queue patch contracts | Coverage across shell, IDE, scan and repair is not a single capability boundary |
+| Decision | Strategy `ExecutionPlan`, arbiter `ActionPlan`, patch `PatchPlan` | Different roles/identities; heuristic completion is not a verified receipt |
+| Checkpoints | Cycle state plus patch manifests, journal and recovery | Bind cross-path resume to current attempt, intent and evidence |
+| Replay | Signed Ed25519 grants and JTI claim store on the required-grant patch path | Grant enforcement is optional; do not claim observational replay authorizes mutation |
+| Verify | Transaction verification/evidence/rollback; optional post-run checks | Blank commands, missing deadlines, ID-only IDE dedup and unacknowledged lifecycle results (F1–F4) |
+| Planfile / MCP | Queue gateway and typed Planfile lifecycle adapter | Completion semantics must survive SDK/CLI differences and persistence failures |
+| IDE control | Probe ladder, policy, bounded retries and explicit no-effect verdict | Keep actuation success separate from task completion; vdisplay facade remains large |
+| Namespaces | Canonical ownership and compatibility layers | Preserve compatibility while extracting cohesive units |
+| Remote execution | Outside the tested local audit | Historical mTLS proposal is deferred; do not make it a prerequisite for local correctness fixes |
 
 ---
 
@@ -86,7 +144,7 @@ Intent Pack
 | **Intent Pack** | Versioned JSON/YAML under e.g. `schemas/intent-packs/` or `.koru/intent-packs/`; phrases + `situation_schema` + `required_capabilities`; **no** inline ALLOW | Intent pack registry |
 | **Capability Contract** | JSON Schema / protobuf capability ids (`drive.focus`, `queue.shell`, `scan.apply`, `workspace.promote`, …); actor/lane allowlists | AQL contract (concept only) |
 | **Execution Plan** | Unify today’s cycle/operator/repair plans into one `ExecutionPlan` + lifecycle enums (protobuf or JSON Schema) | URI Process / recipe |
-| **Immutable Manifest + Grant** | Dry-run produces file/action manifest + `plan_hash`; short-lived HMAC grant binds actor, pack, hash, target, risk class | PR5a/5b/5c |
+| **Immutable Manifest + Grant** | Dry-run produces file/action manifest + `plan_hash`; reuse the implemented Ed25519 grant bindings; add any shared-contract bindings through a versioned migration | PR5a/5b/5c |
 | **Capability Dispatcher** | Sole path to shell/IDE/MCP/remote; planning layer **never** calls subprocess/GUI directly | Connector + control |
 | **Transactional Workspace** | Git worktree (or equivalent) for code mutations; promote only after verify | Release dir + activate |
 | **Evidence + Verify** | Bundle: git diff digest, gate commands, drive trace ids, screenshots refs; fail → reopen/rollback | Origin + public verify |
@@ -154,7 +212,7 @@ APIs and MCP tools must not collapse this to a single boolean `ok`. Cycle, opera
 
 ## 6. PR sequence (~18 units)
 
-**Convention:** “PR” = reversible implementation unit (commit series). This repo ships by **commit + push**; do **not** open GitHub pull requests for the autonomy track unless a human asks.
+**Historical sequence:** these numbers describe architecture units, not current GitHub PR numbers or a fresh allocation queue. Use section 0 for the next work. Publication requires a GitHub PR and protected exact-head Validator approval; direct commit-and-push is not the merge process. Units 4 and 8–14 already have substantial queue implementations, so inspect and extend them rather than recreate them.
 
 | PR | Scope | Depends |
 | -- | --- | --- |
@@ -167,7 +225,7 @@ APIs and MCP tools must not collapse this to a single boolean `ok`. Cycle, opera
 | **6** | Wire operator + repair + replay onto same lifecycle | 5 |
 | **7** | Capability Dispatcher façade; ban new direct `subprocess`/GUI from planning modules (lint/import-linter) | 3, 6 |
 | **8** | Dry-run → immutable manifest + `plan_hash` for queue mutate / scan apply | 7 |
-| **9** | Signed execution grant (HMAC) + expire + binding checks | 8 |
+| **9** | Signed execution grant + expiry + binding checks (Ed25519 exists in queue) | 8 |
 | **10** | Grant `jti` replay store (fail-closed) | 9 |
 | **11** | Transactional git worktree workspace for code-mutating tickets | 8 |
 | **12** | VDisplay/VQL ladder policy as data (plugin → semantic → trusted VQL → escalate) | 7 |

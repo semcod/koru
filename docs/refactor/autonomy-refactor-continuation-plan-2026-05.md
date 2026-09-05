@@ -2,6 +2,18 @@
 
 Date: 2026-05-25
 
+**Historical plan. Reviewed 2026-09-05:** use the
+[September assessment](../architecture/autonomy-audit-2026-09.md) and
+[current refactoring sequence](../architecture/autonomy-determinism-refactor-plan.md#0-current-refactoring-sequence-2026-09-05)
+for new work. Historical test counts below are not current validation results.
+Chat analysis/text/ticket/config helpers have already been extracted into
+`src/koru/autonomy/cycle/cycle_chat_activity_*.py`; the remaining coordinator is
+`src/koru/autonomy/cycle/cycle_chat_activity.py`. Loop/operator modules now live
+under `src/koru/autonomy/`. Legacy `autonomous_*` names below describe the old
+layout and compatibility surface, not instructions to recreate removed files.
+The next priority is verification and lifecycle correctness before repeating
+these module splits.
+
 This plan captures the next refactor wave after stabilizing:
 
 - plugin/socket timeout handling
