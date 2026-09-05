@@ -1,0 +1,2 @@
+2026-09-05: Read governance, tickets and current autonomy sources. Initial test launch stopped before collection: GOV-PATH-001 in this log; replaced machine-local evidence location with receipt:koru:ticket-080.
+2026-09-05: Five boundary probes reproduced; 28 new local documentation links resolve. Ruff, Docker 29.1.3/Compose, managed governance and diff whitespace checks passed. See docs/architecture/autonomy-audit-2026-09.md for exact test selections, failures and limitations.

@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-080",
+  "summary": "Audit autonomy and refresh verified refactoring roadmap",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "docs/architecture/autonomy-audit-2026-09.md",
+    "docs/architecture/autonomy-determinism-refactor-plan.md",
+    "docs/refactor/autonomy-refactor-continuation-plan-2026-05.md",
+    "docs/post-run-verify.md",
+    "docs/README.md",
+    "project/ticket-080/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "c695361224afbdd13dda6be89d6862a70300ee09",
+    "targetBranch": "main",
+    "outcome": "Publish a source-grounded autonomy assessment, reproducible test results and prioritized refactoring plan through protected GitHub delivery.",
+    "nonGoals": [
+      "Runtime behavior changes",
+      "Live IDE or LLM autonomous execution",
+      "Changes to dependencies or public interfaces"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Document existing autonomy paths and their verified boundaries; propose bounded future implementation units without moving runtime responsibilities.",
+      "components": [
+        {
+          "name": "autonomy-documentation",
+          "paths": [
+            "docs/architecture/autonomy-audit-2026-09.md",
+            "docs/architecture/autonomy-determinism-refactor-plan.md",
+            "docs/refactor/autonomy-refactor-continuation-plan-2026-05.md",
+            "docs/post-run-verify.md",
+            "docs/README.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the documentation update."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_verification_engine.py tests/test_verification_cycle_integration.py tests/test_post_run_verify.py tests/test_decision_arbiter.py",
+          "python -m ruff check src tests",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "Record exact test selections and outcomes, source links and managed gate results; do not infer live autonomous success rates from mocks."
+      }
+    ]
+  }
+}

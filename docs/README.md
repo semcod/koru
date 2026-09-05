@@ -14,6 +14,7 @@ refactor automation system for multi-repo workspaces.
 | Operate an autonomous agent | [`agent-guide.md`](./agent-guide.md) | [`autopilot-quickstart.md`](./autopilot-quickstart.md) |
 | Understand queue lifecycle and retries | [`planfile-execution-gateway.md`](./planfile-execution-gateway.md) | [`planfile-llm-guide.md`](./planfile-llm-guide.md) |
 | Run Subactor development repair | [`subactor-development-repair-template.md`](./subactor-development-repair-template.md) | [`architecture/dependency-boundary-inventory.yaml`](./architecture/dependency-boundary-inventory.yaml) |
+| Assess current autonomy | [`architecture/autonomy-audit-2026-09.md`](./architecture/autonomy-audit-2026-09.md) | [`post-run-verify.md`](./post-run-verify.md) |
 | Change autonomy architecture | [`architecture/autonomy-determinism-refactor-plan.md`](./architecture/autonomy-determinism-refactor-plan.md) | [`architecture/adr/README.md`](./architecture/adr/README.md) |
 | Audit documentation against code | [`architecture/documentation-conformance.toon.yaml`](./architecture/documentation-conformance.toon.yaml) | [`architecture/volume-reduction-plan.yaml`](./architecture/volume-reduction-plan.yaml) |
 
@@ -22,7 +23,8 @@ changes are recorded in `CHANGELOG.md`.
 
 ## Architecture (autonomy / determinism)
 
-- **[`architecture/autonomy-determinism-refactor-plan.md`](./architecture/autonomy-determinism-refactor-plan.md)** — historical 18-unit autonomy roadmap; PR1 namespace ownership is delivered and later units must be checked against current code before execution.
+- **[`architecture/autonomy-audit-2026-09.md`](./architecture/autonomy-audit-2026-09.md)** — current source assessment, reproduced verification gaps, regression results and limitations.
+- **[`architecture/autonomy-determinism-refactor-plan.md`](./architecture/autonomy-determinism-refactor-plan.md)** — prioritized refactoring slices and acceptance criteria; corrected historical 18-unit roadmap.
 - **[`architecture/adr/`](./architecture/adr/README.md)** — ADR stubs AD-001…AD-006 (namespaces, SSOT, ExecutionPlan, grant/manifest, worktree, remote mTLS).
 - **[`architecture/documentation-conformance.toon.yaml`](./architecture/documentation-conformance.toon.yaml)** — reproducible `sumd`/`docval`/`code2docs` baseline and ordered documentation-refresh queue.
 
