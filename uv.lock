@@ -402,7 +402,7 @@ wheels = [
 
 [[package]]
 name = "costs"
-version = "0.1.53"
+version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anthropic" },
@@ -415,9 +415,9 @@ dependencies = [
     { name = "tiktoken" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/64/02/126b813e063a47c7e7efef481ac144747f94fd05ae39ee9d5c3c6253a09f/costs-0.1.53.tar.gz", hash = "sha256:9f9f76a9e523e899b72a658c574e33145f0f25b97554c15f70dc714206d3d8ca", size = 30980, upload-time = "2026-07-02T14:11:25.407Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e4/6f/7f3c72d6d4b5264bd5a3447e18a3b5184bffee143f72c8d023bb759afd1a/costs-0.2.0.tar.gz", hash = "sha256:3782bae859725dae30f697b5f3e5aa5d84e06feadebc5782ae706e21d46437af", size = 44606, upload-time = "2026-09-05T15:49:55.524Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bd/0e/a6c82f642985c19f6b42a86e5aaf54086fab4ab3771d54e932ec78a7d577/costs-0.1.53-py3-none-any.whl", hash = "sha256:2795668c83a5974c66b1fb6d7831248a481e1bb009f68c4b345d74d357205b88", size = 35990, upload-time = "2026-07-02T14:11:24.146Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/7e/fc91d9fdc7a1ceb9116daffab27124a54f6e8887c9d59d906df43dcbfa6a/costs-0.2.0-py3-none-any.whl", hash = "sha256:4798b8535cbbcbb354e440ebce91365f17c910414bf5831a0610998ae6e679af", size = 48625, upload-time = "2026-09-05T15:49:54.054Z" },
 ]
 
 [[package]]
@@ -835,7 +835,7 @@ wheels = [
 
 [[package]]
 name = "goal"
-version = "2.1.293"
+version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -845,9 +845,9 @@ dependencies = [
     { name = "tomlkit" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ee/fc/1ff32f1d4dad0253e11fdcbc19457b9bc25a25a9b5172abe052ee293784a/goal-2.1.293.tar.gz", hash = "sha256:2aeb3a1361959e31456b1068c712e49f99b783eaebbe244f5845add81ed6a5a6", size = 358847, upload-time = "2026-08-10T20:11:47.531Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c7/9c/135e3f67a7324c3c49ef4246f5518b59ad90226e62c3d30ae20cba005c1d/goal-2.2.0.tar.gz", hash = "sha256:e9e2c1ac9493dae3b887b16d503f7c1f83d02ddcbdd3c5cf58d44a458bb2662f", size = 399786, upload-time = "2026-09-05T19:41:55.329Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/af/ca/fa3e37c7cf5be72bee67dd00172ed74ea0cb9fe6c04c6d954dc53f4c9dea/goal-2.1.293-py3-none-any.whl", hash = "sha256:649c62990a831fef9016662ec399feb343bbfe1cb751babc9fe8d0df32e54834", size = 328389, upload-time = "2026-08-10T20:11:45.604Z" },
+    { url = "https://files.pythonhosted.org/packages/24/69/8a4cf5710683bb777f1f6e4cd44dd3907befe97b94c6ea6e97d4305b4e44/goal-2.2.0-py3-none-any.whl", hash = "sha256:0d8f93aa317ac92a66b64b797e210a5d66044ce8db2cb05b012b03d42aced95e", size = 349709, upload-time = "2026-09-05T19:41:53.615Z" },
 ]
 
 [[package]]
@@ -1636,8 +1636,8 @@ requires-dist = [
     { name = "apscheduler", marker = "extra == 'queue'", specifier = ">=3.10,<4.0" },
     { name = "arq", marker = "extra == 'all'", specifier = ">=0.26,<1.0" },
     { name = "arq", marker = "extra == 'queue'", specifier = ">=0.26,<1.0" },
+    { name = "costs", marker = "python_full_version >= '3.9' and extra == 'dev'", specifier = ">=0.1.53" },
     { name = "costs", marker = "extra == 'all'", specifier = ">=0.1.53" },
-    { name = "costs", marker = "extra == 'dev'", specifier = ">=0.1.53" },
     { name = "cryptography", marker = "extra == 'all'", specifier = ">=42.0,<50.0" },
     { name = "cryptography", marker = "extra == 'dev'", specifier = ">=42.0,<50.0" },
     { name = "cryptography", marker = "extra == 'queue'", specifier = ">=42.0,<50.0" },
@@ -1655,8 +1655,8 @@ requires-dist = [
     { name = "gillm", specifier = ">=0.1.24" },
     { name = "gillm", marker = "extra == 'all'", specifier = ">=0.1.24" },
     { name = "gillm", marker = "extra == 'dev'", specifier = ">=0.1.24" },
-    { name = "goal", marker = "extra == 'all'", specifier = ">=2.1.293" },
-    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.1.293" },
+    { name = "goal", marker = "extra == 'all'", specifier = ">=2.2.0" },
+    { name = "goal", marker = "extra == 'dev'", specifier = ">=2.2.0" },
     { name = "httpx", marker = "extra == 'all'", specifier = ">=0.27,<1.0" },
     { name = "httpx", marker = "extra == 'api'", specifier = ">=0.27,<1.0" },
     { name = "httpx", marker = "extra == 'imgl'", specifier = ">=0.27,<1.0" },
@@ -1693,8 +1693,8 @@ requires-dist = [
     { name = "opentelemetry-instrumentation-httpx", marker = "extra == 'obs'", specifier = ">=0.49b0,<1.0" },
     { name = "opentelemetry-sdk", marker = "extra == 'all'", specifier = ">=1.28,<2.0" },
     { name = "opentelemetry-sdk", marker = "extra == 'obs'", specifier = ">=1.28,<2.0" },
+    { name = "pfix", marker = "python_full_version >= '3.10' and extra == 'dev'", specifier = ">=0.1.60" },
     { name = "pfix", marker = "extra == 'all'", specifier = ">=0.1.60" },
-    { name = "pfix", marker = "extra == 'dev'", specifier = ">=0.1.60" },
     { name = "planfile", marker = "extra == 'all'", specifier = ">=0.1.117" },
     { name = "planfile", marker = "extra == 'desktop'", specifier = ">=0.1.117" },
     { name = "planfile", marker = "extra == 'dev'", specifier = ">=0.1.117" },
@@ -1770,7 +1770,7 @@ dev = [
     { name = "costs", specifier = ">=0.1.53" },
     { name = "cryptography", specifier = ">=42.0,<50.0" },
     { name = "fastapi", specifier = ">=0.115" },
-    { name = "goal", specifier = ">=2.1.293" },
+    { name = "goal", specifier = ">=2.2.0" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "httpx2", specifier = ">=2,<3" },
     { name = "hypothesis", specifier = ">=6.112,<7.0" },
@@ -2731,7 +2731,7 @@ name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ptyprocess", marker = "sys_platform != 'win32'" },
+    { name = "ptyprocess" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [

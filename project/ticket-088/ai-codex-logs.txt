@@ -1,0 +1,2 @@
+Observed Koru uv.lock resolving Goal 2.1.293 despite installed 2.1.302. Updated three minimum requirements to Goal 2.2.0; awaiting public artifact for lock resolution.
+Published Goal 2.2.0 verified against trusted merge 6cf49574f47031495db7d58e244585ea17ab6bfc. uv lock updated Goal 2.1.293 -> 2.2.0 and required costs 0.1.53 -> 0.2.0; fresh locked install and import regression pass.
