@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import argparse
+import os
+import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from koru.cli import _command_value
-from koru.loop import _search_root_for_include, discover_repositories, run_closed_loop
+from koru.loop import _default_runner, _search_root_for_include, discover_repositories, run_closed_loop
 
 
 class TestKoruLoop(unittest.TestCase):
@@ -33,6 +37,57 @@ class TestKoruLoop(unittest.TestCase):
             repos = discover_repositories(workspace, include_pattern="semcod/*")
 
             self.assertEqual(repos, [repo_a.resolve()])
+
+    def test_glob_does_not_cross_into_vendor_or_linked_worktrees(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            for name in ("autogrammar/alpha", "autogrammar/alpha/vendor/nested",
+                         "autogrammar/.worktrees/pilot", "autogrammar/vendor/third"):
+                (root / name / ".git").mkdir(parents=True)
+            self.assertEqual(discover_repositories(root, "autogrammar/*"),
+                             [root / "autogrammar/alpha"])
+            self.assertEqual(discover_repositories(root, "autogrammar/**"),
+                             [root / "autogrammar/alpha"])
+
+    def test_exact_linked_worktree_and_missing_target(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            target = root / ".worktrees/pilot"
+            target.mkdir(parents=True)
+            (target / ".git").write_text("gitdir: /unused/test-metadata\n")
+            self.assertEqual(discover_repositories(root, ".worktrees/pilot"), [target])
+            self.assertEqual(discover_repositories(root, "missing/*"), [])
+
+    def test_discovery_refuses_escape_and_skips_symlinks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            outside = root / "outside"
+            (outside / ".git").mkdir(parents=True)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            (workspace / "alias").symlink_to(outside, target_is_directory=True)
+            self.assertEqual(discover_repositories(workspace, "*"), [])
+            self.assertEqual(discover_repositories(workspace, "alias"), [])
+            for pattern in ("../outside", str(outside)):
+                with self.assertRaises(ValueError):
+                    discover_repositories(workspace, pattern)
+
+    def test_discovery_fails_closed_on_budget_exhaustion(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            for i in range(4):
+                (root / str(i) / ".git").mkdir(parents=True)
+            with patch("koru.loop._DISCOVERY_LIMIT", 3), self.assertRaises(ValueError):
+                discover_repositories(root, "*")
+
+    def test_discovery_never_scans_inside_selected_repository(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            repo = root / "org/repo"
+            (repo / ".git").mkdir(parents=True)
+            with patch("koru.loop.os.scandir", wraps=__import__("os").scandir) as scan:
+                self.assertEqual(discover_repositories(root, "org/*"), [repo])
+            self.assertNotIn(repo, [call.args[0] for call in scan.call_args_list])
 
     def test_run_closed_loop_retries_failed_repositories(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -85,6 +140,11 @@ class TestKoruLoop(unittest.TestCase):
             self.assertEqual(report.succeeded, (repo_a, repo_b))
             self.assertEqual(report.rounds_executed, 1)
 
+    def test_nonpositive_rounds_cannot_report_an_unexecuted_run_as_success(self) -> None:
+        for rounds in (0, -1):
+            with self.assertRaises(ValueError):
+                run_closed_loop(command=["unused"], repositories=[Path(".")], max_rounds=rounds)
+
     def test_command_value_rejects_blank_value(self) -> None:
         with self.assertRaises(argparse.ArgumentTypeError):
             _command_value("   ")
@@ -92,3 +152,85 @@ class TestKoruLoop(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(os.name == "posix", "POSIX process-group runner")
+class TestBoundedRunner(unittest.TestCase):
+    def run_script(self, script):
+        with tempfile.TemporaryDirectory() as directory:
+            return _default_runner([sys.executable, "-c", script], Path(directory))
+
+    def test_output_and_nonzero_exit(self):
+        result = self.run_script("import sys; print('hello'); print('error', file=sys.stderr); sys.exit(7)")
+        self.assertEqual((result.returncode, result.stdout, result.stderr), (7, "hello\n", "error\n"))
+
+    def test_both_streams_are_drained_but_retained_output_is_bounded(self):
+        with patch("koru.loop._OUTPUT_LIMIT_BYTES", 4096):
+            result = self.run_script("import os; [(os.write(1,b'x'*65536), os.write(2,b'y'*65536)) for _ in range(64)]")
+        self.assertEqual(result.returncode, 0)
+        for output, character in ((result.stdout, 'x'), (result.stderr, 'y')):
+            self.assertEqual(output, character * 4096 + "\n[koru: output truncated]")
+
+    def test_deadline_even_when_process_closes_its_pipes(self):
+        start = time.monotonic()
+        with patch("koru.loop._COMMAND_TIMEOUT_SECONDS", 0.2):
+            result = self.run_script("import os,time; os.close(1); os.close(2); time.sleep(60)")
+        self.assertEqual(result.returncode, 124)
+        self.assertIn("deadline exceeded", result.stderr)
+        self.assertLess(time.monotonic() - start, 3)
+
+    def test_descendant_retaining_pipes_is_terminated(self):
+        with tempfile.TemporaryDirectory() as directory:
+            marker = Path(directory) / "escaped"
+            child = f"import time; from pathlib import Path; time.sleep(0.6); Path({str(marker)!r}).touch()"
+            script = f"import subprocess,sys; subprocess.Popen([sys.executable,'-c',{child!r}])"
+            start = time.monotonic()
+            with patch("koru.loop._COMMAND_TIMEOUT_SECONDS", 0.2):
+                result = self.run_script(script)
+            self.assertEqual(result.returncode, 124)
+            self.assertLess(time.monotonic() - start, 3)
+            time.sleep(0.7)
+            self.assertFalse(marker.exists())
+
+    def test_launch_failure_is_a_retryable_record(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report = run_closed_loop(command=[str(Path(directory) / "missing")],
+                                     repositories=[Path(directory)], max_rounds=2)
+        self.assertEqual([record.exit_code for record in report.records], [127, 127])
+        self.assertEqual(len(report.failed), 1)
+
+    def test_invalid_utf8_does_not_abort_loop(self):
+        result = self.run_script("import os; os.write(1,b'\\xff')")
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, "\ufffd")
+
+    def test_timeout_retries_then_continues_to_next_repository(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bad, good = root / "a-bad", root / "b-good"
+            bad.mkdir()
+            good.mkdir()
+            script = "import pathlib,time; time.sleep(60) if pathlib.Path.cwd().name=='a-bad' else None"
+            with patch("koru.loop._COMMAND_TIMEOUT_SECONDS", 0.2):
+                report = run_closed_loop(command=[sys.executable, "-c", script],
+                                         repositories=[bad, good], max_rounds=2)
+            self.assertEqual([r.exit_code for r in report.records], [124, 0, 124])
+            self.assertEqual(report.succeeded, (good,))
+            self.assertEqual(report.failed, (bad,))
+
+    def test_keyboard_interrupt_cleans_up_child(self):
+        import subprocess
+
+        launched = []
+        original = subprocess.Popen
+
+        def launch(*args, **kwargs):
+            process = original(*args, **kwargs)
+            launched.append(process)
+            return process
+
+        with patch("koru.loop.subprocess.Popen", side_effect=launch):
+            with patch("koru.loop.selectors.DefaultSelector.select", side_effect=KeyboardInterrupt):
+                with self.assertRaises(KeyboardInterrupt):
+                    self.run_script("import time; time.sleep(60)")
+        self.assertIsNotNone(launched[0].poll())
