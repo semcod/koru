@@ -1,0 +1,77 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-086",
+  "summary": "Isolate command picker unit tests from live SubLLM",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "tests/conftest.py",
+    "project/ticket-086/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [
+    "ticket-085"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b255f856d4ddeb2281ec9a21658b5d4c5b0571e6",
+    "targetBranch": "main",
+    "outcome": "Prevent live SubLLM calls in command-picker unit tests while retaining explicit mocked model coverage.",
+    "nonGoals": [
+      "No product command ranking changes",
+      "No registry metadata changes"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stub the shared command-picker model boundary in the existing autouse fixture; tests can override the stub.",
+      "components": [
+        {
+          "name": "test-isolation",
+          "paths": [
+            "tests/conftest.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert fixture override."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_command_picker.py",
+          "goal -a --delivery-mode pull-request",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-086/ai-codex-logs.txt"
+      }
+    ]
+  }
+}

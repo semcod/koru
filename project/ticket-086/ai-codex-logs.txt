@@ -1,0 +1,2 @@
+2026-09-05: Publication tests reproduced live SubLLM model ranking despite OPENROUTER_API_KEY removal. Teardown removes KORU_LLM_PICKER, making process-level configuration ineffective. Stub the actual command-picker model boundary in its existing fixture.
+20 command-picker tests passed in 1.02s with mocked model tests intact; Ruff, managed governance and Docker Compose passed.
