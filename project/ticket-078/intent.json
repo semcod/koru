@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-078",
+  "summary": "Align installation guide with package metadata",
+  "workstream": "governance",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "README.md",
+    "TODO.md",
+    "project/ticket-078/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b6bcaa6fbe96008254f52163635dd5a51a922da6",
+    "targetBranch": "main",
+    "outcome": "Document the supported Python range and core dependencies accurately, identify the old generated TODO report as historical, and publish the verified documentation to GitHub.",
+    "nonGoals": [
+      "Dependency or runtime changes",
+      "Regenerating or accepting unverified static-analysis findings",
+      "Changing unrelated local work"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use package metadata as the source for installation requirements and distinguish the dated analysis snapshot from current tasks.",
+      "components": [
+        {
+          "name": "onboarding-documentation",
+          "paths": [
+            "README.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert documentation changes."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "Compare Python range and dependency names directly with pyproject.toml, inspect Markdown, and run managed gates."
+      }
+    ]
+  }
+}

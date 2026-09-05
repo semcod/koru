@@ -7,7 +7,7 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.460-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.460-blue) ![Python](https://img.shields.io/badge/python-3.12%E2%80%933.13-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 ![AI Cost](https://img.shields.io/badge/AI%20Cost-$14.04-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-296.1h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fdeep%2Fdeep--v4--pro-lightgrey)
 
 - 🤖 **LLM usage:** $14.0395 (784 commits)
@@ -135,6 +135,9 @@ command to run — the LLM never has to guess.
 
 ### Fast local startup (existing repo)
 
+Use Python **3.12 or 3.13** (`>=3.12,<3.14`), as declared in
+[`pyproject.toml`](pyproject.toml).
+
 ```bash
 python -m venv .venv
 . .venv/bin/activate
@@ -164,8 +167,9 @@ especially when switching between local source checkouts and older PyPI builds.
 
 ### Installation extras
 
-The base package stays intentionally small (`pyyaml` plus stdlib-based CLI/API).
-Install only the lanes you are working on:
+The base install includes `gillm`, `jsonschema`, `pyyaml`, `rich`, `korullm`
+and `tillm`; dependency versions are declared in [`pyproject.toml`](pyproject.toml).
+Install the optional integrations you need:
 
 ```bash
 pip install "koru[watch]"    # WebSocket queue watcher
