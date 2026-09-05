@@ -1,0 +1,3 @@
+Await merged repair prerequisites before release edits.
+
+2026-09-05: Goal 2.1.302 verified from public PyPI; Koru prerequisites merged through protected Validator (#116, #117, #118, #119). Release carriers synchronized to 0.1.461; uv lock --check, wheel/sdist build, twine check, Docker production build/runtime and compose validation passed. Required unit tests run with KORU_LLM_PICKER=never for deterministic heuristic assertions; explicit model tests use controlled responses. Goal delivery runs all required Python and npm suites.
