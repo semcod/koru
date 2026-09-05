@@ -147,12 +147,10 @@ def _env_enabled(name: str) -> bool:
 def _sanitize_antigravity_focus_open(commands: list[str]) -> list[str]:
     rejected = {"antigravity.openAgent", "aichat.newchataction"}
     filtered = [cmd for cmd in commands if cmd not in rejected]
-    # Prefer side-panel focus over new-window open even if the plugin miscategorised them.
-    preferred = ["antigravity.agentSidePanel.focus", "antigravity.agentSidePanel.open"]
-    for cmd in preferred:
-        if cmd not in filtered:
-            filtered.append(cmd)
-    return filtered
+    # Seed the side panel ahead of generic chat commands even when the plugin
+    # omitted it from focus_open. Neither command opens a new agent window.
+    preferred = ["antigravity.agentSidePanel.open", "antigravity.agentSidePanel.focus"]
+    return preferred + [cmd for cmd in filtered if cmd not in preferred]
 
 
 def _is_vscodium_focus_open_candidate(command: str) -> bool:
@@ -507,6 +505,9 @@ def pick_command_order(
             recent_dsl=recent_dsl,
             hint=strategy_hint,
         )
+        # A model ranking is advisory; every result must retain the IDE policy.
+        if picked:
+            picked = _sanitize_candidates(ide, capability, picked)
         if picked:
             order[capability] = picked
     return order

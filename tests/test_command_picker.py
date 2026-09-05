@@ -385,3 +385,21 @@ def test_vscodium_focus_open_override_rejects_new_chat_to_side(monkeypatch, tmp_
         telemetry=CommandTelemetry(tmp_path),
     )
     assert order["focus_open"] == ["chatgpt.sidebarView.open"]
+
+
+def test_antigravity_final_order_enforces_panel_policy_for_model_output(monkeypatch):
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(
+        "koruide.command_picker.build_command_picker",
+        lambda _: SimpleNamespace(pick=lambda *args, **kwargs: [
+            "aichat.newchataction", "workbench.action.chat.focusInput", "antigravity.openAgent",
+        ]),
+    )
+    order = pick_command_order(
+        ide="antigravity", plugin_version="0.2.10", catalog={}, telemetry=None,
+    )
+    assert order["focus_open"] == [
+        "antigravity.agentSidePanel.open", "antigravity.agentSidePanel.focus",
+        "workbench.action.chat.focusInput",
+    ]
