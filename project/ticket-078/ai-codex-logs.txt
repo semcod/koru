@@ -1,0 +1,2 @@
+Compared README installation guidance with pyproject.toml. The old generated TODO report is dated 2026-07-29.
+Validation passed: Python constraint and all six direct dependencies match pyproject.toml; Markdown diff reviewed; governance has no findings; Docker Compose config and git diff --check passed.

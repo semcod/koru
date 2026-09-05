@@ -93,6 +93,14 @@
   operational safety controls. State: `DONE`; classification:
   `SERVICE / application`.
 
+## Historical static-analysis snapshot
+
+The prefact block below was generated on **2026-07-29**. Its issue counts,
+paths and checkboxes describe that snapshot, not the current verified backlog.
+Reproduce each finding against the current source and remove duplicates before
+promoting it to an implementation ticket. For current Python lint results, run
+`python -m ruff check src tests` from the development environment.
+
 <!-- PREFACT:BEGIN — generated block, edits inside will be overwritten -->
 # TODO
 
