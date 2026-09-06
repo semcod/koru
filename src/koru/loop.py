@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import math
 import os
 import selectors
 import signal
 import subprocess
 import time
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from pathlib import Path
@@ -126,25 +127,31 @@ _COMMAND_TIMEOUT_SECONDS = 1800.0
 _OUTPUT_LIMIT_BYTES = 1024 * 1024
 
 
-def _default_runner(command: Sequence[str], repository: Path) -> subprocess.CompletedProcess[str]:
+def _default_runner(
+    command: Sequence[str], repository: Path, *,
+    timeout_seconds: float | None = None, env: Mapping[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     """Capture bounded output and include inherited pipes in the command deadline.
 
     POSIX sessions let cleanup terminate descendants that retain output pipes.
     Non-POSIX hosts fail explicitly rather than execute without these bounds.
     """
+    timeout = _COMMAND_TIMEOUT_SECONDS if timeout_seconds is None else timeout_seconds
+    if not math.isfinite(timeout) or timeout <= 0:
+        return subprocess.CompletedProcess(command, 125, "", "invalid command timeout")
     if os.name != "posix":
         return subprocess.CompletedProcess(command, 125, "", "bounded runner requires POSIX")
     try:
         process = subprocess.Popen(
             command, cwd=repository, stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True, env=env,
         )
     except OSError as exc:
         return subprocess.CompletedProcess(command, 127, "", f"command launch failed: {exc}")
 
     buffers = [bytearray(), bytearray()]
     truncated = [False, False]
-    deadline = time.monotonic() + _COMMAND_TIMEOUT_SECONDS
+    deadline = time.monotonic() + timeout
     timed_out = False
     try:
         with selectors.DefaultSelector() as selector:
