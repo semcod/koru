@@ -1,0 +1,1 @@
+Live MCP initialized but client logged Invalid JSON for startup activity banner on stdout.

@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-094",
+  "summary": "Keep MCP diagnostics off the JSON-RPC stdout transport",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-094/**",
+    "src/koruapi/mcp.py",
+    "tests/test_mcp_stdio_startup.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "262b28fc7adf54f286d145e1e548ae3a60b27001",
+    "targetBranch": "main",
+    "outcome": "MCP startup diagnostics use stderr and leave stdout exclusively for JSON-RPC; publish through protected validation.",
+    "nonGoals": [
+      "No protocol version, tool schema, gate policy or global logging change"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Select the existing stderr activity format explicitly at the MCP entry point.",
+      "components": [
+        {
+          "name": "mcp-startup",
+          "paths": [
+            "src/koruapi/mcp.py",
+            "tests/test_mcp_stdio_startup.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_mcp_stdio_startup.py tests/test_mcp_server.py tests/test_mcp_server_split.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Real subprocess initialized with activity enabled; every stdout line must be valid JSON-RPC."
+      }
+    ]
+  }
+}
