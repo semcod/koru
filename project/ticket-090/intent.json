@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-090",
+  "summary": "Bound post-run verification and reject empty commands",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/post_run_verify.py",
+    "tests/test_post_run_verify_boundaries.py",
+    "project/ticket-090/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "7e24af5b46d7831f00b8bc1bc1e4b13da83a3824",
+    "targetBranch": "main",
+    "outcome": "Reject invalid post-run verification commands before execution, report not_run rather than success, and publish through protected validation and merge.",
+    "nonGoals": [
+      "Configurable command deadline is deferred to a dependent ticket",
+      "No lifecycle persistence or IDE evidence-cache redesign"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Validate the entire command list before execution. Invalid configuration reports ok=false/action=not_run without lifecycle mutation. Preserve valid command ordering and injected runners.",
+      "components": [
+        {
+          "name": "post-run-verification",
+          "paths": [
+            "src/koru/autonomy/post_run_verify.py",
+            "tests/test_post_run_verify_boundaries.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Enabled invalid verification reports ok=false/action=not_run"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert this runtime and regression-test change together."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_post_run_verify_boundaries.py tests/test_post_run_verify.py tests/test_post_run_verify_env.py tests/test_loop.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Real bounded subprocess, invalid config, fail-fast ordering, stock/custom runner and environment regressions"
+      }
+    ]
+  }
+}

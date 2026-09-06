@@ -60,9 +60,11 @@ def _parse_verify_commands(block: dict[str, Any]) -> list[str]:
     commands_raw = block.get("commands")
     commands: list[str] = []
     if isinstance(commands_raw, list):
-        commands = [str(c).strip() for c in commands_raw if c]
+        commands = [c.strip() if isinstance(c, str) else "" for c in commands_raw]
     elif isinstance(commands_raw, str) and commands_raw.strip():
         commands = [commands_raw.strip()]
+    elif commands_raw is not None:
+        commands = [""]  # Preserve invalid entries for fail-closed validation.
     return commands
 
 
@@ -223,7 +225,7 @@ def verify_after_ide_work(
     shell_runner: ShellRunner | None = None,
 ) -> list[dict[str, Any]]:
     """Verify tickets the IDE likely closed (pending autopilot target or recent ``done``)."""
-    if config is None or not config.enabled or not config.commands or not config.after_ide_drive:
+    if config is None or not config.enabled or not config.after_ide_drive:
         return []
 
     to_verify: list[str] = []
@@ -298,10 +300,12 @@ def run_verify_commands(
 
     if runner is _stock_shell_runner:
         runner = _run_verify_shell_command
+    if isinstance(commands, (str, bytes)) or not commands or any(
+        not isinstance(cmd, str) or not cmd.strip() for cmd in commands
+    ):
+        return False, "verification requires non-empty string commands", None
     last_code: int | None = None
     for cmd in commands:
-        if not cmd.strip():
-            continue
         result = runner(cmd, project)
         last_code = int(getattr(result, "returncode", 1))
         if last_code != 0:
@@ -369,7 +373,7 @@ def verify_completed_tickets(
     shell_runner: ShellRunner | None = None,
 ) -> list[dict[str, Any]]:
     """Run post-run verify once per completed ticket; mutate planfile on failure."""
-    if not ticket_ids or config is None or not config.enabled or not config.commands:
+    if not ticket_ids or config is None or not config.enabled:
         return []
 
     ok, detail, exit_code = run_verify_commands(
@@ -380,6 +384,13 @@ def verify_completed_tickets(
     if ok:
         return [
             {"ticket_id": ticket_id, "ok": True, "action": "verified"} for ticket_id in ticket_ids
+        ]
+
+    if exit_code is None:
+        return [
+            {"ticket_id": ticket_id, "ok": False, "action": "not_run",
+             "detail": detail, "exit_code": None}
+            for ticket_id in ticket_ids
         ]
 
     outcomes: list[dict[str, Any]] = []

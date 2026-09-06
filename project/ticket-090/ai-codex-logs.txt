@@ -1,0 +1,1 @@
+23 focused command-validation, post-run, IDE and environment tests pass. Ruff, managed governance, Docker Compose and whitespace checks pass. GOV-BUDGET-001 resolved by deferring timeout configuration to a dependent ticket.
