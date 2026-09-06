@@ -8,11 +8,13 @@ blocked so IDE/MCP work can continue.
 
 
 import json
+import math
 import os
 import subprocess
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from functools import partial
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -35,6 +37,7 @@ class PostRunVerifyConfig:
     max_output_chars: int = 800
     after_ide_drive: bool = True
     ide_done_window_minutes: float = 30.0
+    timeout_seconds: float = 300.0  # Per native command; custom runners own their bounds.
 
 
 def _truthy_env(name: str) -> bool | None:
@@ -97,6 +100,15 @@ def _parse_verify_ide_settings(block: dict[str, Any]) -> tuple[bool, float]:
     return after_ide, ide_window
 
 
+def _parse_verify_timeout(value: Any) -> float:
+    """Return a positive finite deadline, or an invalid sentinel for not_run."""
+    try:
+        timeout = 0.0 if isinstance(value, bool) else float(value)
+    except (TypeError, ValueError, OverflowError):
+        return 0.0
+    return timeout if math.isfinite(timeout) and timeout > 0 else 0.0
+
+
 def load_post_run_verify_config(project: Path) -> PostRunVerifyConfig | None:
     """Parse ``queue.post_run_verify`` from ``koru.yaml``."""
     env_override = _truthy_env("KORU_POST_RUN_VERIFY")
@@ -117,6 +129,8 @@ def load_post_run_verify_config(project: Path) -> PostRunVerifyConfig | None:
     max_output_chars = _parse_verify_max_output(block)
     after_ide, ide_window = _parse_verify_ide_settings(block)
 
+    timeout = _parse_verify_timeout(block.get("timeout_seconds", 300.0))
+
     if not enabled and not commands:
         return None
     return PostRunVerifyConfig(
@@ -126,6 +140,7 @@ def load_post_run_verify_config(project: Path) -> PostRunVerifyConfig | None:
         max_output_chars=max_output_chars,
         after_ide_drive=after_ide,
         ide_done_window_minutes=ide_window,
+        timeout_seconds=timeout,
     )
 
 
@@ -259,7 +274,9 @@ def verify_after_ide_work(
     return outcomes
 
 
-def _run_verify_shell_command(command: str, project: Path) -> subprocess.CompletedProcess[str]:
+def _run_verify_shell_command(
+    command: str, project: Path, *, timeout_seconds: float = 300.0,
+) -> subprocess.CompletedProcess[str]:
     """Run a verify command in a sanitized, developer-shell-like environment.
 
     The autonomous loop's runtime env (KORU_*/TILLM_*/VDISPLAY_*) leaks into
@@ -273,14 +290,10 @@ def _run_verify_shell_command(command: str, project: Path) -> subprocess.Complet
         for key, value in os.environ.items()
         if not key.startswith(("KORU_", "TILLM_", "VDISPLAY_"))
     }
-    return subprocess.run(
-        command,
-        cwd=project,
-        shell=True,
-        text=True,
-        capture_output=True,
-        check=False,
-        env=env,
+    from koru.loop import _default_runner
+
+    return _default_runner(
+        ["/bin/sh", "-c", command], project, timeout_seconds=timeout_seconds, env=env,
     )
 
 
@@ -306,7 +319,12 @@ def run_verify_commands(
         return False, "verification requires non-empty string commands", None
     last_code: int | None = None
     for cmd in commands:
-        result = runner(cmd, project)
+        try:
+            result = runner(cmd, project)
+        except subprocess.TimeoutExpired:
+            return False, "verification command timed out", 124
+        except OSError as exc:
+            return False, f"verification command launch failed: {exc}", 127
         last_code = int(getattr(result, "returncode", 1))
         if last_code != 0:
             detail = (
@@ -314,6 +332,8 @@ def run_verify_commands(
             ).strip()
             if not detail:
                 detail = f"exit {last_code}"
+            if last_code == 124:
+                detail = f"verification command timed out: {detail}"
             return False, detail, last_code
     return True, "", last_code
 
@@ -376,11 +396,18 @@ def verify_completed_tickets(
     if not ticket_ids or config is None or not config.enabled:
         return []
 
-    ok, detail, exit_code = run_verify_commands(
-        project,
-        config.commands,
-        shell_runner=shell_runner,
-    )
+    timeout = _parse_verify_timeout(config.timeout_seconds)
+    if timeout <= 0:
+        ok, detail, exit_code = False, "timeout_seconds must be finite and positive", None
+    else:
+        from koru.queue.runners import run_shell_command as stock_shell_runner
+
+        runner = shell_runner
+        if runner is None or runner is stock_shell_runner or runner is _run_verify_shell_command:
+            runner = partial(_run_verify_shell_command, timeout_seconds=timeout)
+        ok, detail, exit_code = run_verify_commands(
+            project, config.commands, shell_runner=runner,
+        )
     if ok:
         return [
             {"ticket_id": ticket_id, "ok": True, "action": "verified"} for ticket_id in ticket_ids
