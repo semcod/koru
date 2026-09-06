@@ -11,12 +11,28 @@ from koru.autonomous_cycle import (
     _take_pre_drive_snapshot,
 )
 from koru.autonomous_wup import WupHealthResult
+from koru.autonomy.planning_llm import LlmResponse
 from koru.autonomy.state import AutoloopState
 from koru.autonomy.verification_engine import Snapshot  # noqa: F401
 from koru.queue import QueueLoopResult
 
 # These tests use subprocess and are slow; skip by default
 pytestmark = pytest.mark.slow
+
+
+@pytest.fixture(autouse=True)
+def offline_planning():
+    """Exercise heuristic fallback without optional provider availability."""
+    with patch(
+        "koru.autonomy.planning_llm._call_planning_llm",
+        return_value=LlmResponse(ok=False, content="", error="offline test stub"),
+    ), patch(
+        "koru.autonomy.planning_llm.call_openrouter_json",
+        side_effect=AssertionError("unexpected live planning provider call"),
+    ) as provider:
+        yield
+        # The runtime catches provider exceptions, so also assert after the test.
+        provider.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

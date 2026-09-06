@@ -1,0 +1,1 @@
+11 slow cycle tests pass in 0.53s with KORU_PLANNING_LLM=1; 47 IDE/planning tests and two Planfile-prefix subtests pass. Ruff, governance against origin/main, Docker Compose and whitespace checks pass. No provider request performed.
