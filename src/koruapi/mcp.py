@@ -11,5 +11,5 @@ def mcp_main(argv: list[str] | None = None) -> int:
     """Entry point for ``koru mcp-serve`` and ``koru api mcp``."""
     from koru.activity_log import activity
 
-    activity("MCP", "starting stdio MCP server (koru_list_tickets, koru_run_ticket, …)")
+    activity("MCP", "starting stdio MCP server (koru_list_tickets, koru_run_ticket, …)", fmt="jsonl")
     return mcp_serve_main(argv or [])
