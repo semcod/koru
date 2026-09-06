@@ -1,0 +1,1 @@
+SESSION_EXECUTION_AUTHORIZATION: user requested “napraw koru, zbadaj czy dziala porpawnie”, following authorization to test and publish changes. Implement bounded gate reporting repair and invoke protected publication. This grants no runtime policy expansion.

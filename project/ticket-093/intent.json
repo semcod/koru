@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-093",
+  "summary": "Report quality gate execution accurately and fail closed on unavailable checks",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-093/**",
+    "src/koru/ci/gates.py",
+    "tests/test_quality_gate_results.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e89d82279735a5b872cd8bdd76e39385abfbcf45",
+    "targetBranch": "main",
+    "outcome": "MCP and CLI gate reports fail closed on missing tools, execution errors and unknown gates, and show executed argv. Publish through protected validation.",
+    "nonGoals": [
+      "Do not replace absolute Regix gates with delta checks or relax quality thresholds",
+      "Do not change c2004 source, tickets or policy"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep existing gate selection and absolute Regix command; treat every unsuccessful executed check as failed and attach argv to its result. Preserve the existing explicit TestQL no-scenarios skip.",
+      "components": [
+        {
+          "name": "quality-gate-runner",
+          "paths": [
+            "src/koru/ci/gates.py",
+            "tests/test_quality_gate_results.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Add command argv to executed gate result payloads"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_quality_gate_results.py tests/test_ci_pipeline.py tests/test_mcp_server.py",
+          "python -m ruff check src/koru/ci/gates.py tests/test_quality_gate_results.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Real subprocess failures and isolated gate aggregation regression tests."
+      }
+    ]
+  }
+}

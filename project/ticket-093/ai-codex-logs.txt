@@ -1,0 +1,1 @@
+Initial diagnosis: absolute Regix gates differ from delta compare; missing tools and execution errors incorrectly preserve overall passed.

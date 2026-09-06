@@ -194,11 +194,14 @@ def run_quality_gates(
             results.append(
                 {
                     "gate": gate_name,
-                    "status": "skipped",
+                    "status": "error",
                     "issues": [],
                     "message": f"Unknown gate: {gate_name}",
                 }
             )
+            overall = "failed"
+            if fail_fast:
+                break
             continue
         if gate_name == "testql" and not has_testql_scenarios(project):
             results.append(
@@ -218,8 +221,9 @@ def run_quality_gates(
             oom_interval_seconds=oom_monitor_interval_seconds,
             oom_action=oom_action,
         )
+        payload["command"] = list(cmd)
         results.append(payload)
-        if status in {"failed", "timeout", "killed"}:
+        if status != "passed":
             overall = "failed"
             if fail_fast:
                 break
