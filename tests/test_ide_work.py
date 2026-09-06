@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import yaml
 
@@ -156,39 +157,41 @@ class TestIdeWork(unittest.TestCase):
             self.assertFalse((project / ".planfile" / "sprints" / "current.yaml").exists())
 
     def test_release_stale_in_progress_triages_old_ticket(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            project = Path(tmp)
-            old = "2020-01-01T00:00:00+00:00"
-            updates: list[list[str]] = []
+        for prefix in (["planfile"], ["python", "-m", "planfile"]):
+            with self.subTest(prefix=prefix), patch(
+                "koru.queue.ticket.resolve_planfile_base_command", return_value=prefix,
+            ):
+                with tempfile.TemporaryDirectory() as tmp:
+                    project = Path(tmp)
+                    old = "2020-01-01T00:00:00+00:00"
+                    updates: list[list[str]] = []
 
-            def runner(cmd, _proj) -> SimpleNamespace:
-                if cmd[:5] == ["planfile", "ticket", "list", "--status", "in_progress"]:
-                    return _ok(
-                        json.dumps(
-                            [
-                                {
-                                    "id": "PLF-7",
-                                    "status": "in_progress",
-                                    "execution": {"started_at": old},
-                                },
-                            ],
-                        ),
+                    def runner(cmd, _proj, *, old=old, updates=updates) -> SimpleNamespace:
+                        if cmd[:5] == ["planfile", "ticket", "list", "--status", "in_progress"]:
+                            return _ok(
+                                json.dumps(
+                                    [
+                                        {
+                                            "id": "PLF-7",
+                                            "status": "in_progress",
+                                            "execution": {"started_at": old},
+                                        },
+                                    ],
+                                ),
+                            )
+                        updates.append(list(cmd))
+                        return _ok()
+
+                    count = release_stale_in_progress_tickets(
+                        project,
+                        stale_minutes=60,
+                        runner=runner,
                     )
-                updates.append(list(cmd))
-                return _ok()
-
-            count = release_stale_in_progress_tickets(
-                project,
-                stale_minutes=60,
-                runner=runner,
-            )
-            self.assertEqual(count, 1)
-            self.assertTrue(
-                any(
-                    c[1:4] == ["ticket", "block", "PLF-7"]
-                    for c in updates
-                ),
-            )
+                    self.assertEqual(count, 1)
+                    blocks = [c for c in updates if c[len(prefix):len(prefix) + 3] == ["ticket", "block", "PLF-7"]]
+                    self.assertEqual(len(blocks), 1)
+                    self.assertEqual(blocks[0][:len(prefix)], prefix)
+                    self.assertIn("waiting_human_triage", blocks[0][-1])
 
     def test_extract_ticket_id_from_text(self) -> None:
         prompt = build_ide_work_prompt(

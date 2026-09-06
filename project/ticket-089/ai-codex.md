@@ -1,0 +1,1 @@
+SESSION_EXECUTION_AUTHORIZATION: user requested continuation of the proposed A0 test stabilization. Continue the established protected PR publication workflow. Scope is test-only; A1 runtime repairs require a subsequent bounded ticket.

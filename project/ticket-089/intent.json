@@ -1,0 +1,83 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-089",
+  "summary": "Make autonomy cycle regression tests deterministic",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "tests/test_ide_work.py",
+    "tests/test_verification_cycle_integration.py",
+    "project/ticket-089/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "4e39547b8e656a055a6482d13918d4c703614e51",
+    "targetBranch": "main",
+    "outcome": "Make lease and cycle regression tests deterministic across Planfile command transports and optional planning LLM settings; publish via protected PR validation and merge.",
+    "nonGoals": [
+      "No runtime changes or provider calls",
+      "No post-run verification behavior changes in this slice"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Exercise explicit Planfile prefixes with a custom runner and stub the optional planning boundary in cycle tests; reject accidental provider calls.",
+      "components": [
+        {
+          "name": "lease-tests",
+          "paths": [
+            "tests/test_ide_work.py"
+          ]
+        },
+        {
+          "name": "cycle-tests",
+          "paths": [
+            "tests/test_verification_cycle_integration.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the test-only change."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q -m slow tests/test_verification_cycle_integration.py",
+          "python -m pytest -q tests/test_ide_work.py tests/test_planning_llm.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Offline cycle, lease transport matrix and managed gates"
+      }
+    ]
+  }
+}
