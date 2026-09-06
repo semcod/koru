@@ -94,7 +94,6 @@ def test_injected_runner_errors_return_failure(tmp_path, error, code):
     shell.assert_called_once_with("first", tmp_path)
 
 
-@pytest.mark.skipif(os.name != "posix", reason="Native bounded executor uses POSIX process groups")
 def test_configured_deadline_stops_descendants_and_later_commands(tmp_path: Path):
     started, late = tmp_path / "started", tmp_path / "late"
     child = (
@@ -115,6 +114,12 @@ def test_configured_deadline_stops_descendants_and_later_commands(tmp_path: Path
     before = time.monotonic()
     outcomes = verify_completed_tickets(tmp_path, ["T-1"], config=config, planfile_runner=planfile)
     assert time.monotonic() - before < 5
+    if os.name != "posix":
+        assert outcomes[0]["ok"] is False and outcomes[0]["exit_code"] == 125
+        assert "requires POSIX" in outcomes[0]["detail"]
+        assert not started.exists() and not late.exists()
+        assert not (tmp_path / "later-command").exists()
+        return
     assert outcomes[0]["ok"] is False and outcomes[0]["exit_code"] == 124
     assert "timed out" in outcomes[0]["detail"]
     planfile.assert_called_once()
