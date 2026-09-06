@@ -111,22 +111,27 @@ ci:
   # and all. That is not a quality gate, it is a hang, and because
   # `require_ci_pass_before_complete` is on it blocks every ticket from
   # closing. Point `command` at what actually verifies YOUR repo; this default
-  # only aims to be harmless when it does not fit.
+  # fails closed when no supported verification is available.
   command: |
+    set -e
     echo "=== Universal Quality Gates ==="
     echo "1. Running project tests (if available)..."
-    if command -v task >/dev/null 2>&1 && [ -f "Taskfile.yml" -o -f "Taskfile.yaml" ] && task test 2>/dev/null; then
+    if command -v task >/dev/null 2>&1 && [ -f "Taskfile.yml" -o -f "Taskfile.yaml" ]; then
+      task test
       echo "✅ task test passed"
     elif command -v pytest >/dev/null 2>&1 && \
-      [ -f "pyproject.toml" -o -f "setup.py" -o -f "setup.cfg" -o -f "pytest.ini" -o -f "tox.ini" ] && \
-      pytest -q 2>/dev/null; then
+      [ -f "pyproject.toml" -o -f "setup.py" -o -f "setup.cfg" -o -f "pytest.ini" -o -f "tox.ini" ]; then
+      pytest -q
       echo "✅ pytest passed"
-    elif [ -f "package.json" ] && command -v npm >/dev/null 2>&1 && npm test 2>/dev/null; then
+    elif [ -f "package.json" ] && command -v npm >/dev/null 2>&1; then
+      npm test
       echo "✅ npm test passed"
-    elif [ -f "Makefile" ] && make test 2>/dev/null; then
+    elif [ -f "Makefile" ] && command -v make >/dev/null 2>&1; then
+      make test
       echo "✅ make test passed"
     else
-      echo "⚠️  No test runner found or tests failed"
+      echo "No supported test runner found; configure ci.command for this repository." >&2
+      exit 2
     fi
     
     echo "2. Running TestQL E2E scenarios (if available)..."
@@ -138,6 +143,7 @@ ci:
           echo "✅ testQL suite passed"
         else
           echo "⚠️  testQL suite failed or no scenarios"
+          exit 1
         fi
       else
         echo "ℹ️  No TestQL scenarios found"
@@ -149,7 +155,7 @@ ci:
     echo "3. Running WUP dependency analysis (if available)..."
     if command -v wup >/dev/null 2>&1; then
       if [ -f "wup.yaml" ]; then
-        wup status 2>/dev/null && echo "✅ WUP status OK" || echo "⚠️  WUP issues detected"
+        wup status 2>/dev/null && echo "✅ WUP status OK" || { echo "⚠️  WUP issues detected"; exit 1; }
       else
         echo "ℹ️  No wup.yaml configuration"
       fi
@@ -160,7 +166,7 @@ ci:
     echo "4. Running Regix quality gates (if available)..."
     if command -v regix >/dev/null 2>&1; then
       if [ -f "regix.yaml" ]; then
-        regix gates 2>/dev/null && echo "✅ Regix gates passed" || echo "⚠️  Regix gates failed"
+        regix gates 2>/dev/null && echo "✅ Regix gates passed" || { echo "⚠️  Regix gates failed"; exit 1; }
       else
         echo "ℹ️  No regix.yaml configuration"
       fi
@@ -174,6 +180,7 @@ ci:
         echo "✅ koru-autopilot-vscode tests passed"
       else
         echo "⚠️  koru-autopilot-vscode tests failed"
+        exit 1
       fi
     else
       echo "ℹ️  koru-autopilot-vscode plugin not present"
