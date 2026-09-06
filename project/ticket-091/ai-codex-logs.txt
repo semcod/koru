@@ -1,0 +1,1 @@
+78 focused tests pass, including real child-process timeout, configuration rejection, sanitized env, custom runner compatibility, loop output bounds and shell finalization. Ruff, governance against origin/main, Docker Compose and whitespace checks pass. Native bounded execution requires POSIX; injected runners retain ownership of their deadlines.
