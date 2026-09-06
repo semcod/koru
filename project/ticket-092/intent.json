@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-092",
+  "summary": "Reject missing and failed bootstrap verification instead of false success",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "src/koru/init.py",
+    "tests/test_bootstrap_ci_policy.py",
+    "project/ticket-092/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "041e37730feb9c5227f520d23f568bea5a19a5f1",
+    "targetBranch": "main",
+    "outcome": "Generated CI shell command propagates test failures and missing verification; publish through protected validation.",
+    "nonGoals": [
+      "No automatic overwrite of existing user policy",
+      "No enabling autonomous mutation or publication without an accepted per-repository scope"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep generated CI stages; select a runner using descriptors and availability, then propagate its exit status. Absence of a test runner is a failed verification.",
+      "components": [
+        {
+          "name": "bootstrap-ci-policy",
+          "paths": [
+            "src/koru/init.py",
+            "tests/test_bootstrap_ci_policy.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Generated CI command exits nonzero when verification cannot pass"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert generated policy change; preserve user policy files."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_init.py tests/test_bootstrap_ci_policy.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Real shell regression tests with isolated PATH and failing/succeeding executable stubs."
+      }
+    ]
+  }
+}

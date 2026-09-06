@@ -1,0 +1,2 @@
+Reproduced existing Autogrammar CI policy returning exit 0 with an empty tool PATH. Source correction and controlled shell regressions prepared.
+Validation: 153 passed, 16 deselected; governance, Ruff, Compose passed. Publication uses protected exact-head Validator.
