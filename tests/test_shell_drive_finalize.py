@@ -299,3 +299,49 @@ class TestProviderExhaustionNote:
         }
         assert self._note(tmp_path, reply, hp=lines.append) == "noted_exhaustion"
         assert any("provider-exhausted" in line for line in lines)
+
+
+@pytest.mark.parametrize('output', [
+    'Edit permission denied. NO FILES MODIFIED. NO TESTS RUN.',
+    'No changes were made.',
+    b'NO FILES WERE MODIFIED.',
+])
+def test_negative_work_evidence_vetoes_transport_success(tmp_path, planfile, monkeypatch, output):
+    monkeypatch.setenv('KORU_SHELL_DRIVE_AUTODONE', 'always')
+    assert _finalize(tmp_path, reply={
+        'ok': True, 'message': 'completed', 'stdout': output, 'client_id': 'claude-code',
+    }) == 'noted_unsuccessful'
+    assert planfile.commands() == ['ticket show', 'ticket update']
+    assert 'completed' not in planfile.calls[-1][-1]
+
+
+def test_verified_checks_run_before_done(tmp_path, planfile, monkeypatch):
+    config = verify_mod.PostRunVerifyConfig(enabled=True, commands=('true',))
+    monkeypatch.setattr(verify_mod, 'load_post_run_verify_config', lambda p: config)
+
+    def verify(project, ids, **kwargs):
+        assert 'ticket done' not in planfile.commands()
+        return [{'ticket_id': i, 'ok': True, 'action': 'verified'} for i in ids]
+
+    monkeypatch.setattr(verify_mod, 'verify_completed_tickets', verify)
+    assert _finalize(tmp_path) == 'done_verified'
+    assert planfile.commands()[-1] == 'ticket done'
+
+
+@pytest.mark.parametrize('receipts', [[], [{'ticket_id': 'OTHER', 'ok': True}]])
+def test_missing_ticket_verification_never_closes(tmp_path, planfile, monkeypatch, receipts):
+    config = verify_mod.PostRunVerifyConfig(enabled=True, commands=('true',))
+    monkeypatch.setattr(verify_mod, 'load_post_run_verify_config', lambda p: config)
+    monkeypatch.setattr(verify_mod, 'verify_completed_tickets', lambda *a, **k: receipts)
+    assert _finalize(tmp_path) == 'verify_failed:missing_receipt'
+    assert 'ticket done' not in planfile.commands()
+
+
+def test_failed_verification_never_transiently_completes(tmp_path, planfile, monkeypatch):
+    config = verify_mod.PostRunVerifyConfig(enabled=True, commands=('false',))
+    monkeypatch.setattr(verify_mod, 'load_post_run_verify_config', lambda p: config)
+    monkeypatch.setattr(verify_mod, 'verify_completed_tickets', lambda *a, **k: [
+        {'ticket_id': 'STARTER-1', 'ok': False, 'action': 'reopened'},
+    ])
+    assert _finalize(tmp_path) == 'verify_failed:reopened'
+    assert 'ticket done' not in planfile.commands()

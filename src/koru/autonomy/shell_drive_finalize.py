@@ -1,19 +1,15 @@
 """Auto-finalize planfile tickets after a successful shell-client drive.
 
-IDE-chat lanes are asynchronous: the drive submits a prompt and the loop
-waits for the editor agent to respond, so the ticket must stay open. The
-tillm shell lane (claude-code, codex, aider, …) is synchronous — when the
-drive returns ``ok`` the vendor CLI has already finished editing the repo.
-Leaving the ticket in ``waiting_input`` then requires a human to close it,
-which defeats the autonomous loop (2026-07-05: two god-module refactors
-completed by claude-code sat open until an operator intervened).
+IDE-chat lanes submit asynchronously; shell clients return synchronously.
+Transport success alone does not establish task completion. Preserve execution
+output and refuse automatic closure when it explicitly reports unsuccessful work.
 
 Policy via ``KORU_SHELL_DRIVE_AUTODONE``:
 
-- ``verified`` (default): append the agent reply as a ticket note, mark the
-  ticket done, then run ``queue.post_run_verify`` commands (``koru.yaml``).
-  A red verify reopens/blocks the ticket via the existing policy. When no
-  verify commands are configured the ticket is left open (note only) — an
+- ``verified`` (default): append the agent reply as a ticket note,
+  run ``queue.post_run_verify`` commands (``koru.yaml``), then mark the
+  ticket done only after successful verification. A red verify uses the existing
+  policy. When no verify commands are configured the ticket is left open (note only) — an
   agent's exit code alone is not proof of done.
 - ``always``: note + done without verification (trust the agent).
 - ``off``: note only.
@@ -22,6 +18,7 @@ Policy via ``KORU_SHELL_DRIVE_AUTODONE``:
 from __future__ import annotations
 
 import os
+import re
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -172,7 +169,7 @@ def note_provider_exhaustion(
 
 
 def _reply_note(reply: dict[str, Any]) -> str:
-    message = reply.get("message") or reply.get("stdout") or reply.get("output") or ""
+    message = reply.get("stdout") or reply.get("output") or reply.get("message") or ""
     if isinstance(message, bytes):
         message = message.decode("utf-8", errors="replace")
     text = str(message).strip()
@@ -187,6 +184,20 @@ def _reply_note(reply: dict[str, Any]) -> str:
     switch = provider_switch_note(reply)
     return f"{note}\n{switch}" if switch else note
 
+
+
+def _reports_unsuccessful_work(reply: dict[str, Any]) -> bool:
+    """Negative execution evidence vetoes auto-done; prose never proves success."""
+    text = "\n".join(
+        value.decode("utf-8", errors="replace") if isinstance(value, bytes) else str(value)
+        for key in ("stdout", "output", "message", "stderr")
+        if (value := reply.get(key))
+    )
+    return bool(re.search(
+        r"\b(?:no files (?:were )?modified|no changes (?:were )?made|"
+        r"(?:edit|write) permission denied|permission denied (?:for|to) (?:edit|write))\b",
+        text, flags=re.IGNORECASE,
+    ))
 
 def _eligible_for_finalize(
     *,
@@ -244,7 +255,7 @@ def _mark_done(
     return True
 
 
-def _run_post_done_verify(
+def _run_pre_done_verify(
     project: Path,
     ticket_id: str,
     *,
@@ -263,6 +274,9 @@ def _run_post_done_verify(
         config=verify_config,
         planfile_runner=runner,
     )
+    if len(outcomes) != 1 or outcomes[0].get("ticket_id") != ticket_id:
+        _hp(f"  shell-drive finalize: {ticket_id} verification receipt missing or mismatched")
+        return "verify_failed:missing_receipt"
     failed = [o for o in outcomes if not o.get("ok")]
     if failed:
         action = str(failed[0].get("action") or "reopened")
@@ -271,8 +285,7 @@ def _run_post_done_verify(
             "(agent work did not pass post_run_verify)",
         )
         return f"verify_failed:{action}"
-    _hp(f"  shell-drive finalize: {ticket_id} done + verified green")
-    return "done_verified"
+    return "verified"
 
 
 def finalize_shell_drive_ticket(
@@ -316,11 +329,19 @@ def finalize_shell_drive_ticket(
         _hp(f"  shell-drive finalize: note appended to {ticket_id} (autodone=off)")
         return "noted"
 
-    verify_config = None
+    if _reports_unsuccessful_work(reply):
+        _hp(f"  shell-drive finalize: {ticket_id} left open — execution reports unsuccessful work")
+        return "noted_unsuccessful"
+
     if policy == "verified":
         verify_config, early = _load_verify_config_or_skip(project, ticket_id, _hp=_hp)
         if early is not None:
             return early
+        verification = _run_pre_done_verify(
+            project, ticket_id, verify_config=verify_config, runner=run_process, _hp=_hp,
+        )
+        if verification != "verified":
+            return verification
 
     if not _mark_done(
         project,
@@ -335,13 +356,9 @@ def finalize_shell_drive_ticket(
         _hp(f"  shell-drive finalize: {ticket_id} marked done (autodone=always)")
         return "done"
 
-    return _run_post_done_verify(
-        project,
-        ticket_id,
-        verify_config=verify_config,
-        runner=run_process,
-        _hp=_hp,
-    )
+    _hp(f"  shell-drive finalize: {ticket_id} done + verified green")
+    return "done_verified"
+
 
 
 __all__ = [

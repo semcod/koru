@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-095",
+  "summary": "Verify shell task outcome before finalization",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/shell_drive_finalize.py",
+    "tests/test_shell_drive_finalize.py",
+    "project/ticket-095/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ab9dba9ec5b42ab68430ac96fd5b825bdbf665f0",
+    "targetBranch": "main",
+    "outcome": "Preserve shell outcome and verify before ticket completion; reject explicit unsuccessful execution; protected publication.",
+    "nonGoals": [
+      "No widening runtime permissions or changing project verification commands"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep verification before done and preserve negative execution evidence.",
+      "components": [
+        {
+          "name": "shell-finalization",
+          "paths": [
+            "src/koru/autonomy/shell_drive_finalize.py",
+            "tests/test_shell_drive_finalize.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_shell_drive_finalize.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Finalization regression tests and managed gates"
+      }
+    ]
+  }
+}
