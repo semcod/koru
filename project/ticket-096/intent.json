@@ -1,0 +1,78 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-096",
+  "summary": "Reconcile shell finalization with current cycle state",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/cycle/cycle.py",
+    "src/koru/autonomy/cycle/shell_reconciliation.py",
+    "tests/test_shell_cycle_reconciliation.py",
+    "project/ticket-096/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "38380c380450637d3ff0b83ebf5ff4d562bfe0be",
+    "targetBranch": "main",
+    "outcome": "Reconcile finalized shell tickets into the same cycle queue state and protected publication",
+    "nonGoals": [
+      "No changes to ticket authority or acceptance checks"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 35,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Read live ticket state after shell finalization and replace immutable cycle result before completion emission.",
+      "components": [
+        {
+          "name": "cycle-reconciliation",
+          "paths": [
+            "src/koru/autonomy/cycle/cycle.py",
+            "src/koru/autonomy/cycle/shell_reconciliation.py",
+            "tests/test_shell_cycle_reconciliation.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_shell_cycle_reconciliation.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Same-cycle queue and checkpoint regression tests"
+      }
+    ]
+  }
+}

@@ -639,7 +639,7 @@ def _run_drive_and_finalize(
     context: CyclePhaseContext,
     config: DrivePhaseConfig,
     inputs: DrivePhaseInputs,
-) -> str:
+) -> tuple[str, QueueLoopResult]:
     # late-bound through the compat facade so legacy-path monkeypatches
     # (koru.autonomous_cycle._run_drive_phase) keep working
     from koru import autonomous_cycle as _facade_mod
@@ -652,6 +652,16 @@ def _run_drive_and_finalize(
         take_pre_drive_snapshot=_take_pre_drive_snapshot,
         handle_autopilot_phase=_handle_autopilot_phase,
     )
+    from dataclasses import replace
+
+    from koru.autonomy.cycle.shell_reconciliation import reconcile_shell_cycle
+
+    queue, status = reconcile_shell_cycle(
+        context.project, context.state, inputs.queue_result, drive_result.status,
+        inputs.cycle_telemetry,
+    )
+    inputs = replace(inputs, queue_result=queue)
+    drive_result = replace(drive_result, status=status)
     run_post_drive_phase_fn = getattr(
         _facade_mod, "_run_post_drive_phase", _run_post_drive_phase
     )
@@ -664,7 +674,7 @@ def _run_drive_and_finalize(
         run_advisory_hooks=_run_phase4_advisory_hooks,
         emit_cycle_completion_events=_emit_cycle_completion_events,
     )
-    return drive_result.status
+    return drive_result.status, inputs.queue_result
 
 
 def run_cycle(
@@ -767,7 +777,7 @@ def run_cycle(
         hp=_hp,
     )
 
-    drive_status = _run_drive_and_finalize(
+    drive_status, queue_result = _run_drive_and_finalize(
         phase_context,
         DrivePhaseConfig(
             queue_name=queue_name,
