@@ -9,6 +9,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from koru.goal_supervisor import GoalRun, SupervisionResult, supervise_goal
+from koru.goal_workspace import GoalProjectResolutionError, resolve_goal_project
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -17,6 +18,11 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Run Goal and optionally hand an allowlisted governance repair to one agent.",
     )
     parser.add_argument("--project", type=Path, default=Path.cwd(), help="Target repository.")
+    parser.add_argument(
+        "--repo",
+        default=None,
+        help="Relative Git repository path inside an umbrella --project workspace.",
+    )
     parser.add_argument("--agent", dest="agent_id", default=None, help="Agent lane to launch.")
     parser.add_argument(
         "--auto-remediate",
@@ -89,9 +95,17 @@ def _agent_remediator(project: Path, agent_id: str | None) -> Callable[[str], in
 
 def goal_main(argv: list[str]) -> int:
     args = _build_parser().parse_args(argv)
-    project = args.project.expanduser().resolve()
-    if not project.is_dir():
-        print(f"koru goal: project is not a directory: {project}", file=sys.stderr)
+    workspace = args.project.expanduser().resolve()
+    if not workspace.is_dir():
+        print(f"koru goal: project is not a directory: {workspace}", file=sys.stderr)
+        return 2
+    try:
+        project = resolve_goal_project(workspace, args.repo)
+    except GoalProjectResolutionError as exc:
+        if args.output_format == "json":
+            print(json.dumps(exc.to_dict(), indent=2, sort_keys=True))
+        else:
+            print(f"koru goal: {exc}", file=sys.stderr)
         return 2
     goal_args = _goal_args(args.goal_args) or ["-a"]
     remediate = _agent_remediator(project, args.agent_id) if args.auto_remediate else None

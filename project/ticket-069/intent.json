@@ -1,0 +1,94 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-069",
+  "summary": "Resolve Goal targets in umbrella workspaces",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-069/**",
+    "src/koru/goal_workspace.py",
+    "src/koru/cli_goal.py",
+    "tests/test_goal_workspace.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "60d86b5a563eff53a82cd5de3953d6e998ce0008",
+    "targetBranch": "main",
+    "outcome": "`koru goal` resolves one Git repository before invoking Goal or an agent, fails closed for ambiguous umbrella workspaces, and supports explicit path-confined `--repo` selection. Publish this Koru change through a PR and protected exact-head validator approval and merge.",
+    "nonGoals": [
+      "Do not recursively choose among nested repositories or infer operator intent when zero or multiple immediate children are dirty",
+      "Do not change Goal behavior or governance policy",
+      "Do not modify, remediate, push or publish any Autogrammar child repository during validation"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Resolve the target synchronously before constructing the agent remediator: accept a direct Git root, accept an explicit relative in-workspace Git root, or select the sole dirty immediate child; otherwise return a structured fail-closed selection error.",
+      "components": [
+        {
+          "name": "goal-workspace-resolver",
+          "paths": [
+            "src/koru/goal_workspace.py",
+            "tests/test_goal_workspace.py"
+          ]
+        },
+        {
+          "name": "goal-cli-adapter",
+          "paths": [
+            "src/koru/cli_goal.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Add `koru goal --repo RELATIVE_PATH` and fail-closed umbrella target selection"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Remove the workspace resolver and `--repo`; direct `--project` behavior remains available."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_goal_workspace.py tests/test_goal_supervisor.py"
+        ],
+        "evidence": "Focused direct, unique, ambiguous, escape and no-launch tests"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python -m ruff check src/koru/goal_workspace.py src/koru/cli_goal.py tests/test_goal_workspace.py",
+          "./project/governance-check.sh --actor agent --base 60d86b5a563eff53a82cd5de3953d6e998ce0008",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Local deterministic gates"
+      }
+    ]
+  }
+}
