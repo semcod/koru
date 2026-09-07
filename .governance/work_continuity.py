@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Capture and verify bounded work-continuity checkpoints.
+"""Capture and verify host-agnostic local continuity events.
 
-The local registry is a recoverable cache outside the tracked checkout. A
-controller that promises cross-machine durability must persist the emitted
-checkpoint in its protected receipt store. A checkpoint is never authority.
+The JSONL stream is append-only and has no policy size cap. The checkpoint
+index is a bounded, atomically replaced acceleration structure; it is never an
+authority source and can always be rebuilt from the stream. Cross-machine
+durability still requires a protected external receipt store.
 """
 
 from __future__ import annotations
@@ -18,31 +19,43 @@ import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Iterable
 from urllib.parse import urlsplit
 
 
-CHECKPOINT_SCHEMA = "new-project.work-continuity/v1"
-REGISTRY_SCHEMA = "new-project.work-continuity-registry/v1"
+CHECKPOINT_SCHEMA = "new-project.work-continuity/v2"
+EVENT_SCHEMA = "new-project.work-continuity-event/v2"
+INDEX_SCHEMA = "new-project.work-continuity-index/v2"
+MANIFEST_SCHEMA = "new-project.subactor-local/v1"
 EMPTY_SHA256 = hashlib.sha256(b"").hexdigest()
 SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 TICKET_RE = re.compile(r"^ticket-[0-9]{3,}$")
 WORKSTREAM_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
-WORKTREE_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
+SAFE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
 REPOSITORY_RE = re.compile(r"^repository:[A-Za-z0-9][A-Za-z0-9._/-]{0,500}$")
+ACCOUNT_RE = re.compile(r"^account:[a-z0-9][a-z0-9._:/-]{0,255}$")
 CRITERION_RE = re.compile(r"^AC-[0-9]{2,}$")
 REFERENCE_RE = re.compile(
     r"^(artifact|authorization|decision|knowledge|receipt):"
     r"[a-z0-9][a-z0-9._:/-]{0,510}$"
 )
 IDEMPOTENCY_RE = re.compile(r"^idempotency:[a-z0-9][a-z0-9._-]{0,127}$")
+VERSION_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$")
 PHASES = {"analysis", "plan", "tools", "edit", "validation", "publication", "blocked"}
 NEXT_ACTIONS = {"observe", "edit", "validate", "publish", "reconcile", "wait"}
 EFFECT_KINDS = {
     "push", "pull-request", "validation", "merge", "release", "external-coordination"
 }
 EFFECT_STATES = {"planned", "in-flight", "failed"}
+IGNORED_DIRECTORIES = [
+    ".subactor/leases/",
+    ".subactor/sessions/",
+    ".subactor/recovery/",
+    ".subactor/receipts/",
+    ".subactor/cache/",
+    ".subactor/snapshots/",
+]
 
 
 class ContinuityError(RuntimeError):
@@ -55,10 +68,24 @@ def fail(code: str, message: str) -> None:
     raise ContinuityError(code, message)
 
 
-def load_json(path: Path) -> Any:
+def canonical_bytes(value: Any) -> bytes:
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
+
+
+def canonical_digest(value: Any) -> str:
+    return hashlib.sha256(canonical_bytes(value)).hexdigest()
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def load_json(path: Path, *, maximum: int = 1024 * 1024) -> Any:
     try:
-        if path.stat().st_size > 1024 * 1024:
-            fail("GOV-CONTINUITY-001", f"continuity document is too large: {path}")
+        if path.stat().st_size > maximum:
+            fail("GOV-CONTINUITY-001", f"bounded continuity document is too large: {path}")
         return json.loads(path.read_text(encoding="utf-8"))
     except ContinuityError:
         raise
@@ -80,6 +107,12 @@ def string(value: Any, label: str, *, maximum: int = 512) -> str:
     return value
 
 
+def safe_id(value: Any, label: str) -> str:
+    if not isinstance(value, str) or SAFE_ID_RE.fullmatch(value) is None:
+        fail("GOV-CONTINUITY-001", f"{label} is invalid")
+    return value
+
+
 def reference(value: Any, label: str, *, kind: str | None = None) -> str:
     result = string(value, label)
     match = REFERENCE_RE.fullmatch(result)
@@ -94,7 +127,22 @@ def sha(value: Any, label: str, expression: re.Pattern[str]) -> str:
     return value
 
 
-def unique_strings(value: Any, label: str, expression: re.Pattern[str], maximum: int = 128) -> list[str]:
+def timestamp(value: Any, label: str = "recordedAt") -> str:
+    result = string(value, label, maximum=64)
+    if not result.endswith("Z"):
+        fail("GOV-CONTINUITY-001", f"{label} must be UTC and end with Z")
+    try:
+        parsed = datetime.fromisoformat(result[:-1] + "+00:00")
+    except ValueError:
+        fail("GOV-CONTINUITY-001", f"{label} is not an RFC 3339 timestamp")
+    if parsed.tzinfo != timezone.utc:
+        fail("GOV-CONTINUITY-001", f"{label} must use UTC")
+    return result
+
+
+def unique_strings(
+    value: Any, label: str, expression: re.Pattern[str], maximum: int = 128
+) -> list[str]:
     if not isinstance(value, list) or len(value) > maximum:
         fail("GOV-CONTINUITY-001", f"{label} must be a bounded array")
     if any(not isinstance(item, str) or expression.fullmatch(item) is None for item in value):
@@ -117,43 +165,30 @@ def git_ref(value: Any, label: str) -> str:
     return result
 
 
-def timestamp(value: Any) -> str:
-    result = string(value, "recordedAt", maximum=64)
-    if not result.endswith("Z"):
-        fail("GOV-CONTINUITY-001", "recordedAt must be UTC and end with Z")
-    try:
-        parsed = datetime.fromisoformat(result[:-1] + "+00:00")
-    except ValueError:
-        fail("GOV-CONTINUITY-001", "recordedAt is not an RFC 3339 timestamp")
-    if parsed.tzinfo != timezone.utc:
-        fail("GOV-CONTINUITY-001", "recordedAt must use UTC")
-    return result
+def validate_repository(value: Any, label: str) -> str:
+    repository = string(value, label)
+    if REPOSITORY_RE.fullmatch(repository) is None or ".." in repository or "//" in repository:
+        fail("GOV-CONTINUITY-001", f"{label} is not a credential-free repository identity")
+    return repository
 
 
-def validate_workspace(value: Any) -> dict[str, Any]:
-    workspace = exact_object(
-        value,
-        {"state", "statusSha256", "snapshotRef", "snapshotSha256", "secretScanReceipt"},
-        "workspace",
-    )
-    if workspace["state"] not in {"clean", "snapshotted"}:
-        fail("GOV-CONTINUITY-001", "workspace state must be clean or snapshotted")
-    sha(workspace["statusSha256"], "workspace.statusSha256", SHA256_RE)
-    if workspace["state"] == "clean":
-        if workspace["statusSha256"] != EMPTY_SHA256:
-            fail("GOV-CONTINUITY-001", "clean workspace must bind the empty status digest")
-        if any(
-            workspace[field] is not None
-            for field in ("snapshotRef", "snapshotSha256", "secretScanReceipt")
-        ):
-            fail("GOV-CONTINUITY-001", "clean workspace cannot claim a snapshot")
-    else:
-        reference(workspace["snapshotRef"], "workspace.snapshotRef", kind="artifact")
-        sha(workspace["snapshotSha256"], "workspace.snapshotSha256", SHA256_RE)
-        reference(workspace["secretScanReceipt"], "workspace.secretScanReceipt", kind="receipt")
-        if workspace["statusSha256"] == EMPTY_SHA256:
-            fail("GOV-CONTINUITY-001", "snapshotted workspace must bind a non-empty status digest")
-    return workspace
+def validate_binding(value: Any, label: str) -> dict[str, Any]:
+    binding = exact_object(value, {"ref", "sha256"}, label)
+    reference(binding["ref"], f"{label}.ref", kind="artifact")
+    sha(binding["sha256"], f"{label}.sha256", SHA256_RE)
+    return binding
+
+
+def validate_slice(value: Any) -> dict[str, Any]:
+    binding = exact_object(value, {"ref", "sha256", "ordinal", "total"}, "slice")
+    reference(binding["ref"], "slice.ref", kind="artifact")
+    sha(binding["sha256"], "slice.sha256", SHA256_RE)
+    for field in ("ordinal", "total"):
+        if not isinstance(binding[field], int) or isinstance(binding[field], bool) or binding[field] < 1:
+            fail("GOV-CONTINUITY-001", f"slice.{field} must be a positive integer")
+    if binding["ordinal"] > binding["total"]:
+        fail("GOV-CONTINUITY-001", "slice ordinal cannot exceed total")
+    return binding
 
 
 def validate_lease(value: Any) -> dict[str, Any] | None:
@@ -165,6 +200,48 @@ def validate_lease(value: Any) -> dict[str, Any] | None:
         if not isinstance(lease[field], int) or isinstance(lease[field], bool) or lease[field] < 1:
             fail("GOV-CONTINUITY-001", f"lease.{field} must be a positive integer")
     return lease
+
+
+def validate_remote(value: Any, repository: str) -> dict[str, Any]:
+    observation = exact_object(
+        value,
+        {"remoteName", "repositoryRef", "accountRef", "observedAt", "receiptRef"},
+        "remoteObservation",
+    )
+    safe_id(observation["remoteName"], "remoteObservation.remoteName")
+    if validate_repository(observation["repositoryRef"], "remoteObservation.repositoryRef") != repository:
+        fail("GOV-CONTINUITY-002", "remote observation belongs to another repository")
+    if not isinstance(observation["accountRef"], str) or ACCOUNT_RE.fullmatch(observation["accountRef"]) is None:
+        fail("GOV-CONTINUITY-001", "remoteObservation.accountRef is invalid")
+    timestamp(observation["observedAt"], "remoteObservation.observedAt")
+    reference(observation["receiptRef"], "remoteObservation.receiptRef", kind="receipt")
+    return observation
+
+
+def validate_workspace(value: Any) -> dict[str, Any]:
+    workspace = exact_object(
+        value,
+        {
+            "state", "resumeSource", "statusSha256", "snapshotRef", "snapshotSha256",
+            "snapshotReceipt", "secretScanReceipt",
+        },
+        "workspace",
+    )
+    sha(workspace["statusSha256"], "workspace.statusSha256", SHA256_RE)
+    snapshot_fields = ("snapshotRef", "snapshotSha256", "snapshotReceipt", "secretScanReceipt")
+    if workspace["state"] == "clean" and workspace["resumeSource"] == "commit":
+        if workspace["statusSha256"] != EMPTY_SHA256 or any(workspace[field] is not None for field in snapshot_fields):
+            fail("GOV-CONTINUITY-001", "clean workspace must bind only the exact committed HEAD")
+    elif workspace["state"] == "snapshotted" and workspace["resumeSource"] == "snapshot":
+        reference(workspace["snapshotRef"], "workspace.snapshotRef", kind="artifact")
+        sha(workspace["snapshotSha256"], "workspace.snapshotSha256", SHA256_RE)
+        reference(workspace["snapshotReceipt"], "workspace.snapshotReceipt", kind="receipt")
+        reference(workspace["secretScanReceipt"], "workspace.secretScanReceipt", kind="receipt")
+        if workspace["statusSha256"] == EMPTY_SHA256:
+            fail("GOV-CONTINUITY-001", "snapshotted workspace must bind a non-empty status digest")
+    else:
+        fail("GOV-CONTINUITY-001", "workspace is resumable only from commit or snapshot")
+    return workspace
 
 
 def validate_pending_effect(value: Any, index: int) -> dict[str, Any]:
@@ -184,9 +261,10 @@ def validate_checkpoint(value: Any) -> dict[str, Any]:
     fields = {
         "schema", "authority", "checkpointRef", "previousCheckpointRef", "sequence",
         "repositoryRef", "ticket", "workstream", "intentRef", "intentSha256",
-        "scopeSha256", "targetBranch", "branchRef", "headSha", "worktreeId", "phase",
-        "authorizationRef", "lease", "workspace", "completedCriteria",
-        "remainingCriteria", "evidenceRefs", "pendingEffects", "nextAction", "recordedAt",
+        "scopeSha256", "plan", "slice", "targetBranch", "branchRef", "headSha",
+        "worktreeId", "phase", "authorizationRef", "lease", "remoteObservation",
+        "workspace", "completedCriteria", "remainingCriteria", "evidenceRefs",
+        "pendingEffects", "nextAction", "recordedAt",
     }
     checkpoint = exact_object(value, fields, "checkpoint")
     if checkpoint["schema"] != CHECKPOINT_SCHEMA or checkpoint["authority"] != "advisory-projection":
@@ -199,9 +277,7 @@ def validate_checkpoint(value: Any) -> dict[str, Any]:
         fail("GOV-CONTINUITY-001", "sequence must be a positive integer")
     if (sequence == 1) != (checkpoint["previousCheckpointRef"] is None):
         fail("GOV-CONTINUITY-002", "checkpoint sequence and previous reference do not agree")
-    repository = string(checkpoint["repositoryRef"], "repositoryRef")
-    if REPOSITORY_RE.fullmatch(repository) is None or ".." in repository or "//" in repository:
-        fail("GOV-CONTINUITY-001", "repositoryRef is not a credential-free repository identity")
+    repository = validate_repository(checkpoint["repositoryRef"], "repositoryRef")
     if not isinstance(checkpoint["ticket"], str) or TICKET_RE.fullmatch(checkpoint["ticket"]) is None:
         fail("GOV-CONTINUITY-001", "ticket is invalid")
     if not isinstance(checkpoint["workstream"], str) or WORKSTREAM_RE.fullmatch(checkpoint["workstream"]) is None:
@@ -209,15 +285,17 @@ def validate_checkpoint(value: Any) -> dict[str, Any]:
     reference(checkpoint["intentRef"], "intentRef", kind="artifact")
     sha(checkpoint["intentSha256"], "intentSha256", SHA256_RE)
     sha(checkpoint["scopeSha256"], "scopeSha256", SHA256_RE)
+    validate_binding(checkpoint["plan"], "plan")
+    validate_slice(checkpoint["slice"])
     git_ref(checkpoint["targetBranch"], "targetBranch")
     git_ref(checkpoint["branchRef"], "branchRef")
     sha(checkpoint["headSha"], "headSha", SHA1_RE)
-    if not isinstance(checkpoint["worktreeId"], str) or WORKTREE_RE.fullmatch(checkpoint["worktreeId"]) is None:
-        fail("GOV-CONTINUITY-001", "worktreeId is invalid")
+    safe_id(checkpoint["worktreeId"], "worktreeId")
     if checkpoint["phase"] not in PHASES:
         fail("GOV-CONTINUITY-001", "phase is invalid")
     reference(checkpoint["authorizationRef"], "authorizationRef", kind="authorization")
     validate_lease(checkpoint["lease"])
+    validate_remote(checkpoint["remoteObservation"], repository)
     validate_workspace(checkpoint["workspace"])
     completed = unique_strings(checkpoint["completedCriteria"], "completedCriteria", CRITERION_RE)
     remaining = unique_strings(checkpoint["remainingCriteria"], "remainingCriteria", CRITERION_RE)
@@ -243,79 +321,108 @@ def validate_checkpoint(value: Any) -> dict[str, Any]:
     if next_action["criterion"] is not None and (
         not isinstance(next_action["criterion"], str)
         or CRITERION_RE.fullmatch(next_action["criterion"]) is None
+        or next_action["criterion"] not in remaining
     ):
-        fail("GOV-CONTINUITY-001", "nextAction.criterion is invalid")
-    if next_action["criterion"] is not None and next_action["criterion"] not in remaining:
         fail("GOV-CONTINUITY-001", "next action criterion must remain unfinished")
     timestamp(checkpoint["recordedAt"])
     digest_payload = dict(checkpoint)
     digest_payload.pop("checkpointRef")
-    expected_ref = (
-        f"receipt:continuity.{checkpoint['ticket']}.{sequence}."
-        f"{canonical_digest(digest_payload)}"
-    )
+    expected_ref = f"receipt:continuity.{checkpoint['ticket']}.{sequence}.{canonical_digest(digest_payload)}"
     if checkpoint["checkpointRef"] != expected_ref:
         fail("GOV-CONTINUITY-002", "checkpoint reference does not bind its canonical content")
     return checkpoint
 
 
-def validate_registry(value: Any) -> dict[str, Any]:
-    registry = exact_object(value, {"schema", "repositoryRef", "checkpoints"}, "registry")
-    if registry["schema"] != REGISTRY_SCHEMA:
-        fail("GOV-CONTINUITY-001", "registry schema is invalid")
-    repository = string(registry["repositoryRef"], "registry.repositoryRef")
-    if REPOSITORY_RE.fullmatch(repository) is None or ".." in repository or "//" in repository:
-        fail("GOV-CONTINUITY-001", "registry repositoryRef is invalid")
-    checkpoints = registry["checkpoints"]
-    if not isinstance(checkpoints, list):
-        fail("GOV-CONTINUITY-001", "registry checkpoints must be an array")
-    seen: dict[str, dict[str, Any]] = {}
-    latest: dict[str, dict[str, Any]] = {}
-    for item in checkpoints:
-        checkpoint = validate_checkpoint(item)
-        if checkpoint["repositoryRef"] != repository:
-            fail("GOV-CONTINUITY-002", "checkpoint belongs to another repository")
-        checkpoint_ref = checkpoint["checkpointRef"]
-        if checkpoint_ref in seen:
-            fail("GOV-CONTINUITY-002", "checkpoint reference is not append-only unique")
-        prior = latest.get(checkpoint["ticket"])
-        expected_sequence = 1 if prior is None else prior["sequence"] + 1
-        expected_previous = None if prior is None else prior["checkpointRef"]
-        if checkpoint["sequence"] != expected_sequence or checkpoint["previousCheckpointRef"] != expected_previous:
-            fail("GOV-CONTINUITY-002", f"checkpoint chain for {checkpoint['ticket']} is not monotonic")
-        seen[checkpoint_ref] = checkpoint
-        latest[checkpoint["ticket"]] = checkpoint
-    return registry
+def validate_event(value: Any) -> dict[str, Any]:
+    event = exact_object(
+        value,
+        {"schema", "eventRef", "previousEventRef", "eventSequence", "sessionId", "checkpoint"},
+        "event",
+    )
+    if event["schema"] != EVENT_SCHEMA:
+        fail("GOV-CONTINUITY-001", "event schema is invalid")
+    reference(event["eventRef"], "eventRef", kind="receipt")
+    if event["previousEventRef"] is not None:
+        reference(event["previousEventRef"], "previousEventRef", kind="receipt")
+    sequence = event["eventSequence"]
+    if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence < 1:
+        fail("GOV-CONTINUITY-001", "eventSequence must be a positive integer")
+    if (sequence == 1) != (event["previousEventRef"] is None):
+        fail("GOV-CONTINUITY-002", "event sequence and previous reference do not agree")
+    safe_id(event["sessionId"], "sessionId")
+    validate_checkpoint(event["checkpoint"])
+    digest_payload = dict(event)
+    digest_payload.pop("eventRef")
+    expected = f"receipt:continuity-event.{event['sessionId']}.{sequence}.{canonical_digest(digest_payload)}"
+    if event["eventRef"] != expected:
+        fail("GOV-CONTINUITY-002", "event reference does not bind its canonical content")
+    return event
+
+
+def validate_index(value: Any) -> dict[str, Any]:
+    index = exact_object(value, {"schema", "repositoryRef", "maxEntries", "entries", "updatedAt"}, "index")
+    if index["schema"] != INDEX_SCHEMA:
+        fail("GOV-CONTINUITY-001", "index schema is invalid")
+    validate_repository(index["repositoryRef"], "index.repositoryRef")
+    maximum = index["maxEntries"]
+    if not isinstance(maximum, int) or isinstance(maximum, bool) or not 1 <= maximum <= 128:
+        fail("GOV-CONTINUITY-001", "index maxEntries is invalid")
+    entries = index["entries"]
+    if not isinstance(entries, list) or len(entries) > maximum:
+        fail("GOV-CONTINUITY-001", "index exceeds its bounded entry limit")
+    tickets: set[str] = set()
+    for number, item in enumerate(entries):
+        entry = exact_object(
+            item,
+            {"ticket", "sessionId", "eventRef", "checkpointRef", "checkpointSequence", "recordedAt"},
+            f"index.entries[{number}]",
+        )
+        if not isinstance(entry["ticket"], str) or TICKET_RE.fullmatch(entry["ticket"]) is None:
+            fail("GOV-CONTINUITY-001", "index ticket is invalid")
+        if entry["ticket"] in tickets:
+            fail("GOV-CONTINUITY-002", "index contains duplicate tickets")
+        tickets.add(entry["ticket"])
+        safe_id(entry["sessionId"], "index sessionId")
+        reference(entry["eventRef"], "index eventRef", kind="receipt")
+        reference(entry["checkpointRef"], "index checkpointRef", kind="receipt")
+        if not isinstance(entry["checkpointSequence"], int) or entry["checkpointSequence"] < 1:
+            fail("GOV-CONTINUITY-001", "index checkpointSequence is invalid")
+        timestamp(entry["recordedAt"], "index recordedAt")
+    timestamp(index["updatedAt"], "index updatedAt")
+    return index
 
 
 def validate_document(value: Any) -> dict[str, Any]:
     if isinstance(value, dict) and value.get("schema") == CHECKPOINT_SCHEMA:
         return validate_checkpoint(value)
-    if isinstance(value, dict) and value.get("schema") == REGISTRY_SCHEMA:
-        return validate_registry(value)
+    if isinstance(value, dict) and value.get("schema") == EVENT_SCHEMA:
+        return validate_event(value)
+    if isinstance(value, dict) and value.get("schema") == INDEX_SCHEMA:
+        return validate_index(value)
     fail("GOV-CONTINUITY-001", "unsupported continuity schema")
 
 
-def git(root: Path, *arguments: str, binary: bool = False) -> str | bytes:
+def git(root: Path, *arguments: str, binary: bool = False, check: bool = True) -> str | bytes | None:
     try:
         result = subprocess.run(
             ["git", "-C", str(root), *arguments],
-            check=True,
+            check=False,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-    except (OSError, subprocess.CalledProcessError) as exc:
+    except OSError as exc:
         fail("GOV-CONTINUITY-003", f"cannot observe Git state for {arguments[0]}: {exc}")
+    if result.returncode != 0:
+        if not check:
+            return None
+        fail("GOV-CONTINUITY-003", f"cannot observe Git state for {arguments[0]}")
     return result.stdout if binary else result.stdout.decode("utf-8").strip()
 
 
 def repository_ref(root: Path) -> str:
-    """Return a transport-independent identity without URL credentials."""
     value = git(root, "config", "--get", "remote.origin.url")
     assert isinstance(value, str)
     origin = string(value, "repository origin")
-    host = ""
-    repository_path = ""
     if "://" in origin:
         parsed = urlsplit(origin)
         if parsed.scheme not in {"git", "http", "https", "ssh"} or not parsed.hostname:
@@ -334,21 +441,192 @@ def repository_ref(root: Path) -> str:
     repository_path = repository_path.lstrip("/")
     if repository_path.endswith(".git"):
         repository_path = repository_path[:-4]
-    identity = f"repository:{host.lower()}/{repository_path}"
-    if REPOSITORY_RE.fullmatch(identity) is None or ".." in identity or "//" in identity:
-        fail("GOV-CONTINUITY-001", "repository origin cannot be normalized safely")
-    return identity
+    return validate_repository(f"repository:{host.lower()}/{repository_path}", "repository origin")
 
 
-def default_registry(root: Path) -> Path:
-    value = git(root, "rev-parse", "--path-format=absolute", "--git-common-dir")
-    assert isinstance(value, str)
-    return Path(value) / "new-project" / "work-continuity.json"
+def validate_manifest_value(value: Any) -> dict[str, Any]:
+    fields = {"schema", "standardPin", "ignoredRuntimeDirectories", "continuity"}
+    manifest = exact_object(value, fields, "subactor manifest")
+    if manifest["schema"] != MANIFEST_SCHEMA:
+        fail("GOV-CONTINUITY-001", "subactor manifest schema is invalid")
+    pin = exact_object(manifest["standardPin"], {"lockPath", "requiredStandardId"}, "standardPin")
+    if pin != {
+        "lockPath": ".governance/manifest.lock.json",
+        "requiredStandardId": "wellmanifest/new-project",
+    }:
+        fail("GOV-CONTINUITY-001", "standard pin contract is invalid")
+    if manifest["ignoredRuntimeDirectories"] != IGNORED_DIRECTORIES:
+        fail("GOV-CONTINUITY-001", "managed local-runtime directory list is invalid")
+    continuity = exact_object(
+        manifest["continuity"],
+        {
+            "checkpointSchema", "eventSchema", "indexSchema", "eventStreamPath",
+            "eventStreamPolicyMaxBytes", "checkpointIndexPath", "checkpointIndexMaxEntries",
+            "checkpointIndexMaxBytes", "checkpointIndexWrite",
+        },
+        "continuity manifest",
+    )
+    expected = {
+        "checkpointSchema": CHECKPOINT_SCHEMA,
+        "eventSchema": EVENT_SCHEMA,
+        "indexSchema": INDEX_SCHEMA,
+        "eventStreamPath": ".subactor/sessions/work-continuity.jsonl",
+        "eventStreamPolicyMaxBytes": None,
+        "checkpointIndexPath": ".subactor/recovery/checkpoint-index.json",
+        "checkpointIndexMaxEntries": 128,
+        "checkpointIndexMaxBytes": 262144,
+        "checkpointIndexWrite": "atomic-replace",
+    }
+    if continuity != expected:
+        fail("GOV-CONTINUITY-001", "continuity storage contract is invalid")
+    return manifest
 
 
-def canonical_digest(value: Any) -> str:
-    payload = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
-    return hashlib.sha256(payload).hexdigest()
+def load_local_manifest(root: Path) -> dict[str, Any]:
+    return validate_manifest_value(load_json(root / ".subactor" / "manifest.json"))
+
+
+def storage_paths(root: Path) -> tuple[Path, Path, int, int]:
+    continuity = load_local_manifest(root)["continuity"]
+    return (
+        root / continuity["eventStreamPath"],
+        root / continuity["checkpointIndexPath"],
+        continuity["checkpointIndexMaxEntries"],
+        continuity["checkpointIndexMaxBytes"],
+    )
+
+
+def iter_events(path: Path) -> Iterable[dict[str, Any]]:
+    if not path.exists():
+        return
+    try:
+        with path.open("rb") as stream:
+            for number, raw in enumerate(stream, start=1):
+                if len(raw) > 1024 * 1024:
+                    fail("GOV-CONTINUITY-001", f"event line {number} exceeds the bounded event size")
+                if not raw.endswith(b"\n"):
+                    fail("GOV-CONTINUITY-002", f"event stream has an incomplete line at {number}")
+                try:
+                    value = json.loads(raw.decode("utf-8"))
+                except (UnicodeError, json.JSONDecodeError) as exc:
+                    fail("GOV-CONTINUITY-002", f"event stream line {number} is invalid: {exc}")
+                yield validate_event(value)
+    except ContinuityError:
+        raise
+    except OSError as exc:
+        fail("GOV-CONTINUITY-001", f"cannot read event stream {path}: {exc}")
+
+
+def event_state(events: Iterable[dict[str, Any]], repository: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    all_events: list[dict[str, Any]] = []
+    latest_checkpoint: dict[str, dict[str, Any]] = {}
+    latest_session: dict[str, dict[str, Any]] = {}
+    refs: set[str] = set()
+    for event in events:
+        checkpoint = event["checkpoint"]
+        if checkpoint["repositoryRef"] != repository:
+            fail("GOV-CONTINUITY-002", "event belongs to another repository")
+        if event["eventRef"] in refs:
+            fail("GOV-CONTINUITY-002", "event reference is not append-only unique")
+        refs.add(event["eventRef"])
+        prior_session = latest_session.get(event["sessionId"])
+        expected_event_sequence = 1 if prior_session is None else prior_session["eventSequence"] + 1
+        expected_event_previous = None if prior_session is None else prior_session["eventRef"]
+        if event["eventSequence"] != expected_event_sequence or event["previousEventRef"] != expected_event_previous:
+            fail("GOV-CONTINUITY-002", f"session chain for {event['sessionId']} is not monotonic")
+        prior_checkpoint = latest_checkpoint.get(checkpoint["ticket"])
+        expected_sequence = 1 if prior_checkpoint is None else prior_checkpoint["sequence"] + 1
+        expected_previous = None if prior_checkpoint is None else prior_checkpoint["checkpointRef"]
+        if checkpoint["sequence"] != expected_sequence or checkpoint["previousCheckpointRef"] != expected_previous:
+            fail("GOV-CONTINUITY-002", f"checkpoint chain for {checkpoint['ticket']} is not monotonic")
+        latest_session[event["sessionId"]] = event
+        latest_checkpoint[checkpoint["ticket"]] = checkpoint
+        all_events.append(event)
+    return all_events, {"sessions": latest_session, "checkpoints": latest_checkpoint}
+
+
+def append_event(path: Path, event: dict[str, Any]) -> None:
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    payload = canonical_bytes(event) + b"\n"
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+    try:
+        offset = 0
+        while offset < len(payload):
+            offset += os.write(descriptor, payload[offset:])
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def index_from_events(repository: str, events: list[dict[str, Any]], maximum: int) -> dict[str, Any]:
+    latest: dict[str, dict[str, Any]] = {}
+    order: list[str] = []
+    for event in events:
+        checkpoint = event["checkpoint"]
+        ticket = checkpoint["ticket"]
+        if ticket in order:
+            order.remove(ticket)
+        order.append(ticket)
+        latest[ticket] = {
+            "ticket": ticket,
+            "sessionId": event["sessionId"],
+            "eventRef": event["eventRef"],
+            "checkpointRef": checkpoint["checkpointRef"],
+            "checkpointSequence": checkpoint["sequence"],
+            "recordedAt": checkpoint["recordedAt"],
+        }
+    value = {
+        "schema": INDEX_SCHEMA,
+        "repositoryRef": repository,
+        "maxEntries": maximum,
+        "entries": [latest[ticket] for ticket in order[-maximum:]],
+        "updatedAt": utc_now(),
+    }
+    return validate_index(value)
+
+
+def write_index(path: Path, value: dict[str, Any], maximum_bytes: int) -> None:
+    payload = json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False).encode("utf-8") + b"\n"
+    if len(payload) > maximum_bytes:
+        fail("GOV-CONTINUITY-001", "checkpoint index exceeds its bounded byte limit")
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(prefix="checkpoint-index.", suffix=".json", dir=path.parent)
+    temporary = Path(temporary_name)
+    try:
+        if hasattr(os, "fchmod"):
+            os.fchmod(descriptor, 0o600)
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        try:
+            directory_descriptor = os.open(path.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+            try:
+                os.fsync(directory_descriptor)
+            finally:
+                os.close(directory_descriptor)
+        except OSError:
+            pass
+    finally:
+        if temporary.exists():
+            temporary.unlink()
+
+
+def commit_event(root: Path, event: dict[str, Any]) -> dict[str, Any]:
+    repository = repository_ref(root)
+    event_path, index_path, maximum, maximum_bytes = storage_paths(root)
+    events, _ = event_state(iter_events(event_path), repository)
+    matching = next((existing for existing in events if existing["eventRef"] == event["eventRef"]), None)
+    if matching is not None:
+        if matching != event:
+            fail("GOV-CONTINUITY-002", "event reference already binds different content")
+        return {"status": "already-recorded", "event": event}
+    candidate = events + [event]
+    event_state(candidate, repository)
+    append_event(event_path, event)
+    write_index(index_path, index_from_events(repository, candidate, maximum), maximum_bytes)
+    return {"status": "recorded", "event": event}
 
 
 def intent_state(root: Path, ticket: str) -> tuple[dict[str, Any], str, str, str]:
@@ -368,7 +646,7 @@ def intent_state(root: Path, ticket: str) -> tuple[dict[str, Any], str, str, str
     git_ref(target_branch, "intent target branch")
     scope = {
         "ticket": value.get("ticket"),
-        "workstream": value.get("workstream"),
+        "workstream": workstream,
         "allowedPaths": value.get("allowedPaths"),
         "forbiddenPaths": value.get("forbiddenPaths"),
         "dependsOn": value.get("dependsOn"),
@@ -377,61 +655,6 @@ def intent_state(root: Path, ticket: str) -> tuple[dict[str, Any], str, str, str
         "targetBranch": target_branch,
     }
     return value, hashlib.sha256(raw).hexdigest(), canonical_digest(scope), target_branch
-
-
-def read_registry(path: Path, repository: str) -> dict[str, Any]:
-    if not path.exists():
-        return {"schema": REGISTRY_SCHEMA, "repositoryRef": repository, "checkpoints": []}
-    registry = validate_registry(load_json(path))
-    if registry["repositoryRef"] != repository:
-        fail("GOV-CONTINUITY-002", "continuity registry belongs to another repository")
-    return registry
-
-
-def append_checkpoint(registry: dict[str, Any], checkpoint: dict[str, Any]) -> bool:
-    for existing in registry["checkpoints"]:
-        if existing["checkpointRef"] == checkpoint["checkpointRef"]:
-            if existing != checkpoint:
-                fail("GOV-CONTINUITY-002", "checkpoint reference already binds different content")
-            return False
-    prior = None
-    for existing in registry["checkpoints"]:
-        if existing["ticket"] == checkpoint["ticket"]:
-            prior = existing
-    expected_sequence = 1 if prior is None else prior["sequence"] + 1
-    expected_previous = None if prior is None else prior["checkpointRef"]
-    if checkpoint["sequence"] != expected_sequence or checkpoint["previousCheckpointRef"] != expected_previous:
-        fail("GOV-CONTINUITY-002", "new checkpoint does not extend the latest ticket chain")
-    registry["checkpoints"].append(checkpoint)
-    validate_registry(registry)
-    return True
-
-
-def write_registry(path: Path, registry: dict[str, Any]) -> None:
-    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(prefix="work-continuity.", suffix=".json", dir=path.parent)
-    temporary = Path(temporary_name)
-    try:
-        if hasattr(os, "fchmod"):
-            os.fchmod(descriptor, 0o600)
-        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
-            json.dump(registry, stream, indent=2, sort_keys=True, ensure_ascii=False)
-            stream.write("\n")
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, path)
-        try:
-            directory_descriptor = os.open(path.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
-            try:
-                os.fsync(directory_descriptor)
-            finally:
-                os.close(directory_descriptor)
-        except OSError:
-            # Windows and some network filesystems do not expose directory fsync.
-            pass
-    finally:
-        if temporary.exists():
-            temporary.unlink()
 
 
 def parse_pending(value: str) -> dict[str, Any]:
@@ -449,47 +672,42 @@ def parse_pending(value: str) -> dict[str, Any]:
 def capture(args: argparse.Namespace) -> dict[str, Any]:
     root = args.root.resolve()
     repository = repository_ref(root)
-    registry_path = args.registry.resolve() if args.registry else default_registry(root)
-    registry = read_registry(registry_path, repository)
+    event_path, _, _, _ = storage_paths(root)
+    _, state = event_state(iter_events(event_path), repository)
     intent, intent_digest, scope_digest, target_branch = intent_state(root, args.ticket)
     branch = git(root, "symbolic-ref", "--quiet", "--short", "HEAD")
     head = git(root, "rev-parse", "HEAD")
     status_bytes = git(root, "status", "--porcelain=v1", "-z", "--untracked-files=all", binary=True)
     assert isinstance(branch, str) and isinstance(head, str) and isinstance(status_bytes, bytes)
+    snapshot_values = (
+        args.snapshot_ref, args.snapshot_sha256, args.snapshot_receipt,
+        args.snapshot_secret_scan_receipt,
+    )
     status_digest = hashlib.sha256(status_bytes).hexdigest()
     if status_bytes:
-        if any(
-            value is None
-            for value in (args.snapshot_ref, args.snapshot_sha256, args.snapshot_secret_scan_receipt)
-        ):
+        if not all(value is not None for value in snapshot_values):
             fail(
                 "GOV-CONTINUITY-001",
-                "dirty workspace needs an externally stored, secret-scanned snapshot reference and digest",
+                "dirty workspace needs a content-addressed snapshot, snapshot receipt and secret-scan receipt",
             )
         workspace = {
             "state": "snapshotted",
+            "resumeSource": "snapshot",
             "statusSha256": status_digest,
             "snapshotRef": args.snapshot_ref,
             "snapshotSha256": args.snapshot_sha256,
+            "snapshotReceipt": args.snapshot_receipt,
             "secretScanReceipt": args.snapshot_secret_scan_receipt,
         }
     else:
-        if any(
-            value is not None
-            for value in (args.snapshot_ref, args.snapshot_sha256, args.snapshot_secret_scan_receipt)
-        ):
+        if any(value is not None for value in snapshot_values):
             fail("GOV-CONTINUITY-001", "clean workspace cannot claim a snapshot")
         workspace = {
-            "state": "clean",
-            "statusSha256": EMPTY_SHA256,
-            "snapshotRef": None,
-            "snapshotSha256": None,
+            "state": "clean", "resumeSource": "commit", "statusSha256": EMPTY_SHA256,
+            "snapshotRef": None, "snapshotSha256": None, "snapshotReceipt": None,
             "secretScanReceipt": None,
         }
-    prior = next(
-        (item for item in reversed(registry["checkpoints"]) if item["ticket"] == args.ticket),
-        None,
-    )
+    prior = state["checkpoints"].get(args.ticket)
     sequence = 1 if prior is None else prior["sequence"] + 1
     lease = None
     lease_values = (args.lease_ref, args.lease_revision, args.fencing_token)
@@ -501,6 +719,7 @@ def capture(args: argparse.Namespace) -> dict[str, Any]:
             "leaseRevision": args.lease_revision,
             "fencingToken": args.fencing_token,
         }
+    recorded_at = utc_now()
     checkpoint: dict[str, Any] = {
         "schema": CHECKPOINT_SCHEMA,
         "authority": "advisory-projection",
@@ -513,6 +732,11 @@ def capture(args: argparse.Namespace) -> dict[str, Any]:
         "intentRef": f"artifact:intent/{args.ticket}/{intent_digest}",
         "intentSha256": intent_digest,
         "scopeSha256": scope_digest,
+        "plan": {"ref": args.plan_ref, "sha256": args.plan_sha256},
+        "slice": {
+            "ref": args.slice_ref, "sha256": args.slice_sha256,
+            "ordinal": args.slice_ordinal, "total": args.slice_total,
+        },
         "targetBranch": target_branch,
         "branchRef": branch,
         "headSha": head,
@@ -520,63 +744,101 @@ def capture(args: argparse.Namespace) -> dict[str, Any]:
         "phase": args.phase,
         "authorizationRef": args.authorization_ref,
         "lease": lease,
+        "remoteObservation": {
+            "remoteName": args.remote_name,
+            "repositoryRef": repository,
+            "accountRef": args.remote_account_ref,
+            "observedAt": recorded_at,
+            "receiptRef": args.remote_observation_receipt,
+        },
         "workspace": workspace,
         "completedCriteria": args.completed,
         "remainingCriteria": args.remaining,
         "evidenceRefs": args.evidence,
         "pendingEffects": [parse_pending(value) for value in args.pending],
         "nextAction": {"kind": args.next_action, "criterion": args.next_criterion},
-        "recordedAt": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "recordedAt": recorded_at,
     }
     digest_payload = dict(checkpoint)
     digest_payload.pop("checkpointRef")
-    checkpoint["checkpointRef"] = (
-        f"receipt:continuity.{args.ticket}.{sequence}.{canonical_digest(digest_payload)}"
-    )
+    checkpoint["checkpointRef"] = f"receipt:continuity.{args.ticket}.{sequence}.{canonical_digest(digest_payload)}"
     validate_checkpoint(checkpoint)
-    append_checkpoint(registry, checkpoint)
-    write_registry(registry_path, registry)
-    return checkpoint
+    prior_event = state["sessions"].get(args.session_id)
+    event_sequence = 1 if prior_event is None else prior_event["eventSequence"] + 1
+    event: dict[str, Any] = {
+        "schema": EVENT_SCHEMA,
+        "eventRef": "receipt:pending",
+        "previousEventRef": None if prior_event is None else prior_event["eventRef"],
+        "eventSequence": event_sequence,
+        "sessionId": args.session_id,
+        "checkpoint": checkpoint,
+    }
+    event_payload = dict(event)
+    event_payload.pop("eventRef")
+    event["eventRef"] = f"receipt:continuity-event.{args.session_id}.{event_sequence}.{canonical_digest(event_payload)}"
+    validate_event(event)
+    commit_event(root, event)
+    return event
 
 
 def record(args: argparse.Namespace) -> dict[str, Any]:
     root = args.root.resolve()
-    repository = repository_ref(root)
-    registry_path = args.registry.resolve() if args.registry else default_registry(root)
     checkpoint = validate_checkpoint(load_json(args.checkpoint))
+    repository = repository_ref(root)
     if checkpoint["repositoryRef"] != repository:
         fail("GOV-CONTINUITY-002", "checkpoint belongs to another repository")
-    registry = read_registry(registry_path, repository)
-    changed = append_checkpoint(registry, checkpoint)
-    if changed:
-        write_registry(registry_path, registry)
-    return {"status": "recorded" if changed else "already-recorded", "checkpoint": checkpoint}
-
-
-def latest_checkpoint(registry: dict[str, Any], ticket: str) -> dict[str, Any]:
-    for checkpoint in reversed(registry["checkpoints"]):
-        if checkpoint["ticket"] == ticket:
-            return checkpoint
-    fail("GOV-CONTINUITY-002", f"no continuity checkpoint exists for {ticket}")
+    event_path, _, _, _ = storage_paths(root)
+    _, state = event_state(iter_events(event_path), repository)
+    prior = state["sessions"].get(args.session_id)
+    event_sequence = 1 if prior is None else prior["eventSequence"] + 1
+    event: dict[str, Any] = {
+        "schema": EVENT_SCHEMA,
+        "eventRef": "receipt:pending",
+        "previousEventRef": None if prior is None else prior["eventRef"],
+        "eventSequence": event_sequence,
+        "sessionId": args.session_id,
+        "checkpoint": checkpoint,
+    }
+    digest_payload = dict(event)
+    digest_payload.pop("eventRef")
+    event["eventRef"] = f"receipt:continuity-event.{args.session_id}.{event_sequence}.{canonical_digest(digest_payload)}"
+    validate_event(event)
+    return commit_event(root, event)
 
 
 def resolve(args: argparse.Namespace) -> dict[str, Any]:
     root = args.root.resolve()
     repository = repository_ref(root)
-    registry_path = args.registry.resolve() if args.registry else default_registry(root)
-    registry = read_registry(registry_path, repository)
-    return latest_checkpoint(registry, args.ticket)
+    event_path, _, _, _ = storage_paths(root)
+    _, state = event_state(iter_events(event_path), repository)
+    checkpoint = state["checkpoints"].get(args.ticket)
+    if checkpoint is None:
+        fail("GOV-CONTINUITY-002", f"no continuity checkpoint exists for {args.ticket}")
+    return checkpoint
+
+
+def rebuild_index(args: argparse.Namespace) -> dict[str, Any]:
+    root = args.root.resolve()
+    repository = repository_ref(root)
+    event_path, index_path, maximum, maximum_bytes = storage_paths(root)
+    events, _ = event_state(iter_events(event_path), repository)
+    index = index_from_events(repository, events, maximum)
+    write_index(index_path, index, maximum_bytes)
+    return {"status": "rebuilt", "entries": len(index["entries"]), "index": str(index_path.relative_to(root))}
 
 
 def verify_checkpoint(root: Path, checkpoint: dict[str, Any]) -> dict[str, Any]:
-    observations: dict[str, Any] = {}
-    observations["repositoryRef"] = repository_ref(root)
-    observations["branchRef"] = git(root, "symbolic-ref", "--quiet", "--short", "HEAD")
-    observations["headSha"] = git(root, "rev-parse", "HEAD")
+    observations: dict[str, Any] = {
+        "repositoryRef": repository_ref(root),
+        "branchRef": git(root, "symbolic-ref", "--quiet", "--short", "HEAD"),
+        "headSha": git(root, "rev-parse", "HEAD"),
+    }
     _, intent_digest, scope_digest, target_branch = intent_state(root, checkpoint["ticket"])
-    observations["intentSha256"] = intent_digest
-    observations["scopeSha256"] = scope_digest
-    observations["targetBranch"] = target_branch
+    observations.update({
+        "intentSha256": intent_digest,
+        "scopeSha256": scope_digest,
+        "targetBranch": target_branch,
+    })
     status_bytes = git(root, "status", "--porcelain=v1", "-z", "--untracked-files=all", binary=True)
     assert isinstance(status_bytes, bytes)
     observations["statusSha256"] = hashlib.sha256(status_bytes).hexdigest()
@@ -591,8 +853,7 @@ def verify_checkpoint(root: Path, checkpoint: dict[str, Any]) -> dict[str, Any]:
     }
     mismatches = {
         field: {"expected": expected[field], "observed": observations[field]}
-        for field in expected
-        if expected[field] != observations[field]
+        for field in expected if expected[field] != observations[field]
     }
     if mismatches:
         fail("GOV-CONTINUITY-003", "checkpoint diverges from current repository observation: " + ", ".join(mismatches))
@@ -602,61 +863,138 @@ def verify_checkpoint(root: Path, checkpoint: dict[str, Any]) -> dict[str, Any]:
         "authority": "advisory-projection",
         "authorityVerified": False,
         "leaseMustBeRevalidated": checkpoint["lease"] is not None,
+        "remoteAccountMustBeReobserved": True,
     }
 
 
 def verify(args: argparse.Namespace) -> dict[str, Any]:
     root = args.root.resolve()
-    if args.checkpoint:
-        checkpoint = validate_checkpoint(load_json(args.checkpoint))
-    else:
-        checkpoint = resolve(args)
+    checkpoint = validate_checkpoint(load_json(args.checkpoint)) if args.checkpoint else resolve(args)
     return verify_checkpoint(root, checkpoint)
+
+
+def candidate_bytes(root: Path, relative: str, staged: bool) -> bytes | None:
+    if not staged:
+        try:
+            return (root / relative).read_bytes()
+        except FileNotFoundError:
+            return None
+        except OSError as exc:
+            fail("GOV-CONTINUITY-001", f"cannot read local pin file {relative}: {exc}")
+    value = git(root, "show", f":{relative}", binary=True, check=False)
+    return value if isinstance(value, bytes) else None
+
+
+def verify_pin(args: argparse.Namespace) -> dict[str, Any]:
+    root = args.root.resolve()
+    manifest_relative = ".subactor/manifest.json"
+    lock_relative = ".governance/manifest.lock.json"
+    manifest_raw = candidate_bytes(root, manifest_relative, args.staged)
+    lock_raw = candidate_bytes(root, lock_relative, args.staged)
+    if manifest_raw is None and lock_raw is None:
+        return {"status": "not-applicable", "networkAccess": False, "mutated": False}
+    if manifest_raw is None or lock_raw is None:
+        fail("GOV-CONTINUITY-001", "local standard pin requires both manifest and adoption lock")
+    try:
+        manifest = json.loads(manifest_raw.decode("utf-8"))
+        lock = json.loads(lock_raw.decode("utf-8"))
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        fail("GOV-CONTINUITY-001", f"local standard pin is unreadable: {exc}")
+    try:
+        validate_manifest_value(manifest)
+    except ContinuityError as exc:
+        fail("GOV-CONTINUITY-001", f"local Subactor manifest drifted: {exc}")
+    pin = manifest["standardPin"]
+    standard = lock.get("standard") if isinstance(lock, dict) else None
+    if not isinstance(standard, dict):
+        fail("GOV-CONTINUITY-001", "adoption lock has no standard pin")
+    expected_fields = {"id", "version", "sourceRepository", "sourceRevision", "publicationStatus"}
+    if set(standard) != expected_fields:
+        fail("GOV-CONTINUITY-001", "adoption lock standard pin fields are invalid")
+    if (
+        standard["id"] != pin["requiredStandardId"]
+        or standard["sourceRepository"] != "wellmanifest/new-project"
+        or not isinstance(standard["version"], str)
+        or VERSION_RE.fullmatch(standard["version"]) is None
+        or not isinstance(standard["sourceRevision"], str)
+        or SHA1_RE.fullmatch(standard["sourceRevision"]) is None
+        or standard["publicationStatus"] not in {"published", "unpublished-test"}
+    ):
+        fail("GOV-CONTINUITY-001", "adoption lock standard pin is invalid")
+    managed = lock.get("managedFiles")
+    if not isinstance(managed, dict):
+        fail("GOV-CONTINUITY-001", "adoption lock has no managed file map")
+    if managed.get(manifest_relative) != hashlib.sha256(manifest_raw).hexdigest():
+        fail("GOV-CONTINUITY-001", "tracked Subactor manifest does not match the local immutable pin")
+    ignore_relative = ".subactor/.gitignore"
+    ignore_raw = candidate_bytes(root, ignore_relative, args.staged)
+    if ignore_raw is None or managed.get(ignore_relative) != hashlib.sha256(ignore_raw).hexdigest():
+        fail("GOV-CONTINUITY-001", "managed Subactor ignore rules do not match the local immutable pin")
+    return {
+        "status": "locally-pinned",
+        "standard": standard["id"],
+        "version": standard["version"],
+        "sourceRevision": standard["sourceRevision"],
+        "networkAccess": False,
+        "mutated": False,
+    }
+
+
+def add_capture_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--root", type=Path, default=Path.cwd())
+    parser.add_argument("--ticket", required=True)
+    parser.add_argument("--session-id", required=True)
+    parser.add_argument("--phase", choices=sorted(PHASES), required=True)
+    parser.add_argument("--worktree-id", required=True)
+    parser.add_argument("--authorization-ref", required=True)
+    parser.add_argument("--plan-ref", required=True)
+    parser.add_argument("--plan-sha256", required=True)
+    parser.add_argument("--slice-ref", required=True)
+    parser.add_argument("--slice-sha256", required=True)
+    parser.add_argument("--slice-ordinal", type=int, required=True)
+    parser.add_argument("--slice-total", type=int, required=True)
+    parser.add_argument("--remote-name", default="origin")
+    parser.add_argument("--remote-account-ref", required=True)
+    parser.add_argument("--remote-observation-receipt", required=True)
+    parser.add_argument("--lease-ref")
+    parser.add_argument("--lease-revision", type=int)
+    parser.add_argument("--fencing-token", type=int)
+    parser.add_argument("--snapshot-ref")
+    parser.add_argument("--snapshot-sha256")
+    parser.add_argument("--snapshot-receipt")
+    parser.add_argument("--snapshot-secret-scan-receipt")
+    parser.add_argument("--completed", action="append", default=[])
+    parser.add_argument("--remaining", action="append", default=[])
+    parser.add_argument("--evidence", action="append", default=[])
+    parser.add_argument("--pending", action="append", default=[])
+    parser.add_argument("--next-action", choices=sorted(NEXT_ACTIONS), required=True)
+    parser.add_argument("--next-criterion")
 
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
     subparsers = result.add_subparsers(dest="command", required=True)
-
-    validate_parser = subparsers.add_parser("validate", help="validate a checkpoint or registry")
+    validate_parser = subparsers.add_parser("validate", help="validate a v2 checkpoint, event or index")
     validate_parser.add_argument("document", type=Path)
-
-    capture_parser = subparsers.add_parser("capture", help="capture and append the current repository state")
-    capture_parser.add_argument("--root", type=Path, default=Path.cwd())
-    capture_parser.add_argument("--registry", type=Path)
-    capture_parser.add_argument("--ticket", required=True)
-    capture_parser.add_argument("--phase", choices=sorted(PHASES), required=True)
-    capture_parser.add_argument("--worktree-id", required=True)
-    capture_parser.add_argument("--authorization-ref", required=True)
-    capture_parser.add_argument("--lease-ref")
-    capture_parser.add_argument("--lease-revision", type=int)
-    capture_parser.add_argument("--fencing-token", type=int)
-    capture_parser.add_argument("--snapshot-ref")
-    capture_parser.add_argument("--snapshot-sha256")
-    capture_parser.add_argument("--snapshot-secret-scan-receipt")
-    capture_parser.add_argument("--completed", action="append", default=[])
-    capture_parser.add_argument("--remaining", action="append", default=[])
-    capture_parser.add_argument("--evidence", action="append", default=[])
-    capture_parser.add_argument("--pending", action="append", default=[])
-    capture_parser.add_argument("--next-action", choices=sorted(NEXT_ACTIONS), required=True)
-    capture_parser.add_argument("--next-criterion")
-
-    record_parser = subparsers.add_parser("record", help="append a restored checkpoint to the local cache")
+    capture_parser = subparsers.add_parser("capture", help="append the current repository checkpoint event")
+    add_capture_arguments(capture_parser)
+    record_parser = subparsers.add_parser("record", help="append an externally restored checkpoint event")
     record_parser.add_argument("--root", type=Path, default=Path.cwd())
-    record_parser.add_argument("--registry", type=Path)
     record_parser.add_argument("--checkpoint", type=Path, required=True)
-
+    record_parser.add_argument("--session-id", required=True)
     resolve_parser = subparsers.add_parser("resolve", help="resolve the latest checkpoint for a ticket")
     resolve_parser.add_argument("--root", type=Path, default=Path.cwd())
-    resolve_parser.add_argument("--registry", type=Path)
     resolve_parser.add_argument("--ticket", required=True)
-
     verify_parser = subparsers.add_parser("verify", help="compare a checkpoint with current observable state")
     verify_parser.add_argument("--root", type=Path, default=Path.cwd())
-    verify_parser.add_argument("--registry", type=Path)
     source = verify_parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--checkpoint", type=Path)
     source.add_argument("--ticket")
+    rebuild_parser = subparsers.add_parser("rebuild-index", help="atomically rebuild the bounded index")
+    rebuild_parser.add_argument("--root", type=Path, default=Path.cwd())
+    pin_parser = subparsers.add_parser("verify-pin", help="validate only the local immutable standard pin")
+    pin_parser.add_argument("--root", type=Path, default=Path.cwd())
+    pin_parser.add_argument("--staged", action="store_true", help="read managed candidates from the Git index")
     return result
 
 
@@ -672,8 +1010,12 @@ def main() -> int:
             output = record(args)
         elif args.command == "resolve":
             output = resolve(args)
-        else:
+        elif args.command == "verify":
             output = verify(args)
+        elif args.command == "rebuild-index":
+            output = rebuild_index(args)
+        else:
+            output = verify_pin(args)
         print(json.dumps(output, indent=2, sort_keys=True, ensure_ascii=False))
         return 0
     except ContinuityError as exc:

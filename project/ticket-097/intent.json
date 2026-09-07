@@ -1,0 +1,158 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-097",
+  "summary": "Adopt local CI publication policy",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    ".githooks/pre-commit",
+    ".gitignore",
+    ".governance/AGENT_DECISIONS.md",
+    ".governance/adoption-bindings.json",
+    ".governance/adoption-bindings.schema.json",
+    ".governance/branch-intent-reconciliation.schema.json",
+    ".governance/branch_intent_reconciliation.py",
+    ".governance/branch_lifecycle_check.py",
+    ".governance/diagnostics.json",
+    ".governance/docs/BRANCH_INTENT_RECONCILIATION.md",
+    ".governance/docs/LOCAL_CI_PUBLICATION.md",
+    ".governance/error/GOV-STANDARD-UPDATE.md",
+    ".governance/error/GOV-TICKET-ACTIVITY.md",
+    ".governance/error/GOV-WORKTREE-OVERLAP.md",
+    ".governance/governance_check.py",
+    ".governance/intent.schema.json",
+    ".governance/manifest.base.json",
+    ".governance/manifest.json",
+    ".governance/manifest.lock.json",
+    ".governance/manifest.schema.json",
+    ".governance/package-manifest.json",
+    ".governance/precommit_standard_update.py",
+    ".governance/standard-adoption.schema.json",
+    ".governance/templates/conftest-worktree-bootstrap.py",
+    ".governance/ticket-activity.json",
+    ".governance/ticket-activity.schema.json",
+    ".governance/ticket_activity.py",
+    ".governance/work-continuity.schema.json",
+    ".governance/work_continuity.py",
+    ".governance/workspace_lifecycle_check.py",
+    ".governance/worktree_overlap_check.py",
+    ".governance/worktree_path_check.py",
+    ".governance/worktrees.lock.json",
+    ".governance/worktrees.schema.json",
+    ".subactor/.gitignore",
+    ".subactor/manifest.json",
+    "AGENTS.md",
+    "GEMINI.md",
+    "project/new-ticket.sh",
+    "project/ticket-097/**",
+    "scripts/install-agent-hosts.sh",
+    "worktree-guard.yaml",
+    "pyproject.toml",
+    "package.json"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0ed7ea7b1ec16a05ac394333ec4d386a1c628696",
+    "targetBranch": "main",
+    "outcome": "Adopt immutable published local CI publication instructions while preserving protected checks and custom manifest settings.",
+    "nonGoals": [
+      "No migration of executor profiles, required checks, credentials or runtime deployments."
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the standard managed updater and its independently verified immutable adoption exception. Route this adoption to the existing governance owner; do not change manifest path ownership.",
+      "components": [
+        {
+          "name": "governance",
+          "paths": [
+            ".githooks/pre-commit",
+            ".gitignore",
+            ".governance/AGENT_DECISIONS.md",
+            ".governance/adoption-bindings.json",
+            ".governance/adoption-bindings.schema.json",
+            ".governance/branch-intent-reconciliation.schema.json",
+            ".governance/branch_intent_reconciliation.py",
+            ".governance/branch_lifecycle_check.py",
+            ".governance/diagnostics.json",
+            ".governance/docs/BRANCH_INTENT_RECONCILIATION.md",
+            ".governance/docs/LOCAL_CI_PUBLICATION.md",
+            ".governance/error/GOV-STANDARD-UPDATE.md",
+            ".governance/error/GOV-TICKET-ACTIVITY.md",
+            ".governance/error/GOV-WORKTREE-OVERLAP.md",
+            ".governance/governance_check.py",
+            ".governance/intent.schema.json",
+            ".governance/manifest.base.json",
+            ".governance/manifest.json",
+            ".governance/manifest.lock.json",
+            ".governance/manifest.schema.json",
+            ".governance/package-manifest.json",
+            ".governance/precommit_standard_update.py",
+            ".governance/standard-adoption.schema.json",
+            ".governance/templates/conftest-worktree-bootstrap.py",
+            ".governance/ticket-activity.json",
+            ".governance/ticket-activity.schema.json",
+            ".governance/ticket_activity.py",
+            ".governance/work-continuity.schema.json",
+            ".governance/work_continuity.py",
+            ".governance/workspace_lifecycle_check.py",
+            ".governance/worktree_overlap_check.py",
+            ".governance/worktree_path_check.py",
+            ".governance/worktrees.lock.json",
+            ".governance/worktrees.schema.json",
+            ".subactor/.gitignore",
+            ".subactor/manifest.json",
+            "AGENTS.md",
+            "GEMINI.md",
+            "package.json",
+            "project/new-ticket.sh",
+            "pyproject.toml",
+            "scripts/install-agent-hosts.sh",
+            "worktree-guard.yaml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Review a subsequent immutable standard update; preserve previous pins in history."
+    },
+    "runtimeDependencies": [],
+    "standardAdoption": {
+      "sourceRepository": "wellmanifest/new-project",
+      "fromRevision": "43999c793a86084b4c3198fe07be350105db59ec",
+      "toRevision": "2cd39286dc0931870a8a60ee11c96dd6448b39e6"
+    },
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh --actor agent"
+        ],
+        "evidence": "receipt:local:ticket-097-local-ci-adoption"
+      }
+    ]
+  }
+}

@@ -40,6 +40,12 @@ Before any multi-step implementation, an agent must:
 5. Move to `EDIT` without a second confirmation and stay inside `intent.json`
    `allowedPaths`. Ask for new authority only for destructive action, secret
    access, new external coordination, or material objective expansion.
+   Before escalating, follow [.governance/AGENT_DECISIONS.md](.governance/AGENT_DECISIONS.md):
+   inspect the exact effect and current evidence, reuse existing authorization,
+   and prefer a bounded route that preserves unknown work. Continue disjoint
+   authorized work while a dependent effect waits. Shared Git history or a
+   quarantine label alone does not prove a competing writer or require cleanup.
+   A necessary question names the exact target, effect and applicable rule.
    When the recorded outcome includes publication, this authorization also
    permits invoking the repository's declared protected delivery process and
    that process's merge after exact-head trusted approval. Do not ask for a
@@ -54,11 +60,25 @@ Before any multi-step implementation, an agent must:
    target-owned seed aliases and must not be assumed to contain the gate.
 9. Serialize ticket-ID allocation before branching, then use a separate
    branch/worktree per implementation ticket. Resolve its location with the
-   managed `wellmanifest/worktrees` checker. The canonical linked worktree is
-   `<workspace>/.worktrees/<repo>--ticket-NNN--<slug>` with its lease under
-   `<workspace>/.worktrees/.leases`; never create publishable ticket work in a
-   repo-local `.worktrees`, parallel `<organization>-worktrees`, nested
-   `.worktrees/.worktrees`, system temporary directory or duplicate clone.
+   managed `wellmanifest/worktrees` checker. Resolve the primary checkout from
+   Git even when allocation starts inside a linked checkout. The only
+   publishable linked worktree is
+   `<primaryCheckout>/.worktrees/<ticket-NNN>--<slug>` with
+   `linkMode=relative`; its lease is
+   `<primaryCheckout>/.subactor/leases/<ticket-NNN>--<slug>.json`. Root-ignore
+   `/.worktrees/` and only
+   `/.subactor/{leases,sessions,recovery,receipts,cache,snapshots}/`; keep
+   `.subactor/manifest.json` tracked. Before the first effect, feature-probe
+   `git worktree add --relative-paths` and
+   `git worktree repair --relative-paths` (minimum Git 2.51.0). When the host starts outside the target checkout, pass
+   `feature-probe --from-worktree <checkout>` to the adopted checker; resolve
+   `repository_context_unavailable` before interpreting feature support. Reject a
+   symlink in any existing canonical path component. Legacy v1/v2/v3/v4,
+   system-temporary, duplicate and unknown registrations are read-only recovery
+   inventory, never publishable locations. Never automatically move, repair,
+   delete, prune or clean them. A separately authorized exact operation first
+   audits dirty state, active processes and IDEs, leases, pull requests and
+   HEAD reachability.
    Each diff must resolve to exactly one active ticket. Shared contract paths are edited only by the declared
    integration workstream; `integrationTicket` coordinates work but does not
    transfer path ownership. Product commercial registries (prices,
@@ -74,23 +94,22 @@ Before any multi-step implementation, an agent must:
    either a `User` login is in protected `trusted-reviewers` or a `Bot` login
    is in the separate protected `trusted-validator-apps` input. Never trust an
    arbitrary Bot review.
-11a. **INVOKE VALIDATOR-AGENT — do not ask the human.** When publication needs
-   trusted merge approval (protected default branch, merge blocked on reviews,
-   or the user asks to publish/merge), the coding agent MUST dispatch
-   `subactor/validator-agent` itself:
+11a. **USE LOCAL ONEDEV AND THE INDEPENDENT VALIDATOR.** For `semcod/*` and
+   `subactor/*`, follow [.governance/docs/LOCAL_CI_PUBLICATION.md](.governance/docs/LOCAL_CI_PUBLICATION.md).
+   Resolve the protected repository profile, observe the current OneDev
+   head/base receipt and reuse any existing local reconciliation result.
+   Invoke the trusted `subactor/validator-agent/bin/run-local-direct-pr.sh`
+   with the exact repository, PR, ticket, head SHA and protected key reference;
+   use `--merge` only for already authorized publication. The deployed local
+   timer may own this invocation. GitHub Actions dispatch is a separate
+   transport and is not the default or an unavoidable dependency of local CI.
+   Do not declare publication blocked by Actions billing before checking the
+   local route. Retire a hosted check only through protected policy after an
+   equivalent deployed OneDev canary; preserve uncovered test/platform gates.
+   Freeze the head through review and merge. Never self-approve, write a fake
+   status, waive required checks or ask the human to invoke an available
+   Validator. Scope, pins, deployment and observed success are separate facts.
 
-   ```bash
-   # from a checkout of subactor/validator-agent @ main
-   ./bin/dispatch-direct-pr.sh \
-     --owner <org> --name <repo> --pr <N> --ticket ticket-NNN \
-     --wait-checks --merge --watch
-   ```
-
-   Freeze: re-read `gh pr view <N> --json headRefOid` immediately before
-   dispatch; do not push after freeze until approve or fail. MUST NOT ask the
-   human to “use the validator”, MUST NOT self-approve, and MUST NOT treat
-   chat/Markdown as merge approval. Normative:
-   `subactor/validator-agent/docs/PUBLICATION_FREEZE.md`.
 12. Require merge approval evidence to bind repository, PR, current HEAD,
    active ticket and actor. The protected resolver creates that evidence
    outside the PR checkout; repository-authored evidence is untrusted.
@@ -102,6 +121,15 @@ Before any multi-step implementation, an agent must:
    must disappear after merge. A PR closed without merge keeps its branch until
    the owner explicitly discards that unmerged work. When no PR is open, the
    only remote branch is the default branch.
+15a. Before proposing unmerged branch discard, follow
+   `.governance/docs/BRANCH_INTENT_RECONCILIATION.md`. Preserve restorable
+   history and reconcile every accepted criterion against the current target
+   SHA. Record implementation, partial, superseded, missing or unknown with
+   evidence; preserve remaining work in a linked ticket or an explicit owner
+   decision. Run `.governance/branch_intent_reconciliation.py` with an
+   independently acquired observation. Report validity never grants deletion
+   authority; unknown evidence blocks automatic resolution. Recheck exact refs,
+   digests and authority immediately before any separately authorized effect.
 16. At merge, publication or explicit pilot discard, inventory temporary linked
    worktrees, duplicate clones and non-default local branches. Verify dirty state and HEAD reachability
    before removal; preserve unknown or unique data. Remove an exact linked
@@ -144,18 +172,25 @@ Before any multi-step implementation, an agent must:
    carrier-only commit or PR. If analysis finds no material delta, emit an
     external no-change receipt and create no repository history. Intent may be
     committed atomically with the first material change; do not create a
-    separate plan-only commit.
+    separate plan-only commit. A version bump and release projections join
+    their material implementation ticket; never create a separate release-only
+    ticket, branch or PR.
 24. Treat conversation memory as a cache, never task storage. At a material
     milestone, configured checkpoint interval, context compaction, handoff,
     pause, blocker, tool failure or external-effect boundary, emit a bounded
-    `new-project.work-continuity/v1` checkpoint through
-    `.governance/work_continuity.py` and persist it in the external receipt
-    store. The local `.git` registry is only a recovery cache. Resume by
-    observing Git/PR/receipts first, verifying the monotonic chain, intent,
-    HEAD and workspace digest, then revalidating the lease. The checkpoint
-    grants no authority. Dirty work needs an authorized ticket-branch commit
-    or a content-addressed, secret-scanned external snapshot; otherwise stop
-    the handoff and preserve the unknown state.
+    `new-project.work-continuity/v2` checkpoint through
+    `.governance/work_continuity.py`. Append it to the ignored host-agnostic
+    session event stream and atomically refresh the bounded recovery index;
+    event streams have no policy size cap. Persist its receipt externally for
+    cross-machine recovery. Bind the exact plan, slice, ticket, branch, HEAD,
+    lease, remote/account observation and snapshot receipt. Resume by observing
+    Git/PR/receipts first, verifying the monotonic chain, intent, HEAD and
+    workspace digest, then revalidating lease and remote account. Checkpoint
+    data and prose grant no authority. Dirty work needs an authorized
+    ticket-branch commit or a content-addressed, secret-scanned external
+    snapshot. Pre-commit checks only the local immutable pin; explicit
+    adoption/updater automation owns freshness and the hook never fetches or
+    mutates.
 
 Markdown approval is an audit note, not trusted merge approval. Required
 merge approval comes from the repository's protected review, attestation and
