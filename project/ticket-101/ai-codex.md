@@ -1,0 +1,1 @@
+SESSION_EXECUTION_AUTHORIZATION: User requests continuation and publication of pending Semcod work. This bounded slice continues Koru refactoring based on fresh measurements and the advisory c2004 analysis. EDIT is authorized; publication uses independent Validator.

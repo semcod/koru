@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from koru.autonomy.code_change_usefulness import (
     is_governance_owned_path,
     is_useful_code_change_path,
@@ -134,3 +136,26 @@ def test_explicit_create_plan_is_useful_only_while_target_is_absent(tmp_path) ->
     target.parent.mkdir()
     target.write_text("# existing\n", encoding="utf-8")
     assert not is_useful_plan(plan, project=tmp_path)
+
+
+@pytest.mark.parametrize("path", [
+    "", "/src/core.py", "C:\\src\\core.py", "src/a.py:12", "src/a.py::run",
+    "src/a\n.py", "src/a\r.py", "src/a\0.py", "src/../core.py", "src/*.py",
+    "src/a?.py", "src/[a].py", "src/{a}.py", "vendor/x.py", "x.egg-info/y.py",
+    "x.dist-info/y.py", "assets/a.PNG", "project/report.toon", "project/report.toon.yaml",
+    "project/report.mmd", "project/report.json", ".koru/config.py", ".planfile/test.py",
+    "src/code2llm_incremental_backup.py", "src/index.html", "src/context.md",
+    "project/TICKET-001/src.py", "PROJECT/tickets.md", "src/agents.MD",
+])
+def test_concrete_path_rejections(path):
+    assert not is_useful_code_change_path(path)
+
+
+@pytest.mark.parametrize("path", [
+    "src/core.py", "./src\\core.py", "src//core.py", "src/./core.py", "Dockerfile",
+    ".gitignore", "project/config.yaml", "Project/report.json", "src/core.PY",
+    "Vendor/core.py", "project/report.JSON", "src/.png", "src/index.HTML",
+    "docs/guide.md", "project/ticket-not-numeric/src.py",
+])
+def test_concrete_path_acceptance_preserves_case_and_normalization(path):
+    assert is_useful_code_change_path(path)
