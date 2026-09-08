@@ -8,6 +8,30 @@
       "executable": false
     },
     {
+      "source": "docs/AGENT_DECISIONS.md",
+      "target": ".governance/AGENT_DECISIONS.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": ".subactor/.gitignore",
+      "target": ".subactor/.gitignore",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": ".subactor/manifest.json",
+      "target": ".subactor/manifest.json",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "template/files/tests/conftest-worktree-bootstrap.template.py",
+      "target": ".governance/templates/conftest-worktree-bootstrap.py",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
       "source": "project.sh",
       "target": "project.sh",
       "strategy": "seed",
@@ -392,6 +416,12 @@
       "executable": false
     },
     {
+      "source": "error/GOV-STANDARD-UPDATE.md",
+      "target": ".governance/error/GOV-STANDARD-UPDATE.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
       "source": "error/GOV-PACKAGING.md",
       "target": ".governance/error/GOV-PACKAGING.md",
       "strategy": "managed",
@@ -418,6 +448,12 @@
     {
       "source": "template/files/pre-commit.template.sh",
       "target": ".githooks/pre-commit",
+      "strategy": "managed",
+      "executable": true
+    },
+    {
+      "source": "scripts/precommit_standard_update.py",
+      "target": ".governance/precommit_standard_update.py",
       "strategy": "managed",
       "executable": true
     },
@@ -492,6 +528,30 @@
       "target": ".governance/standard_pack_check.py",
       "strategy": "managed",
       "executable": true
+    },
+    {
+      "source": "scripts/branch_intent_reconciliation.py",
+      "target": ".governance/branch_intent_reconciliation.py",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "governance/branch-intent-reconciliation.schema.json",
+      "target": ".governance/branch-intent-reconciliation.schema.json",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "docs/BRANCH_INTENT_RECONCILIATION.md",
+      "target": ".governance/docs/BRANCH_INTENT_RECONCILIATION.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "template/files/LOCAL_CI_PUBLICATION.template.md",
+      "target": ".governance/docs/LOCAL_CI_PUBLICATION.md",
+      "strategy": "managed",
+      "executable": false
     }
   ]
 }

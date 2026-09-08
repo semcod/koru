@@ -58,7 +58,8 @@
           "project.sh",
           "project.bat",
           "scripts/publish-local-onedev-validator.sh",
-          "docs/publication-local-onedev-validator.md"
+          "docs/publication-local-onedev-validator.md",
+          ".github/workflows/standard-pack-conformance.yml"
         ]
       },
       "infrastructure": {
@@ -228,7 +229,7 @@
   ],
   "standard": {
     "id": "wellmanifest/new-project",
-    "version": "0.19.19"
+    "version": "0.20.11"
   },
   "ticket": {
     "activeStatuses": [
@@ -250,14 +251,9 @@
       "PLAN",
       "BLOCKED"
     ],
-    "requiredAgentFiles": [
-      "ai-*.md",
-      "ai-*-logs.txt"
-    ],
+    "requiredAgentFiles": [],
     "requiredFiles": [
       "README.md",
-      "preprompt.md",
-      "changelog.md",
       "intent.json"
     ],
     "root": "project"

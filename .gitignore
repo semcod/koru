@@ -334,3 +334,12 @@ local.dev.txt
 .tmp/
 .vscode/
 .zed/
+
+# Repository-local worktrees and operational state
+/.worktrees/
+/.subactor/leases/
+/.subactor/sessions/
+/.subactor/recovery/
+/.subactor/receipts/
+/.subactor/cache/
+/.subactor/snapshots/
