@@ -39,7 +39,7 @@ import re
 import shutil
 import subprocess
 from collections import Counter
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
@@ -1714,6 +1714,41 @@ def _scan_metrun_report(project: Path) -> list[Suggestion]:
     ]
 
 
+def _todo2code_plan_suggestion(
+    plan: dict[str, Any], *, project: Path, plans_rel: str,
+    is_useful_plan: Callable[..., bool], plan_useful_paths: Callable[..., list[str]],
+    priority_map: Mapping[str, str], source: str,
+    dedupe_key: Callable[[dict[str, Any]], str],
+) -> Suggestion | None:
+    """Convert one useful grounded plan into a scan suggestion."""
+    if not is_useful_plan(plan, project=project):
+        return None
+    paths = plan_useful_paths(plan, project=project)
+    if not paths:
+        return None
+    title_raw = str(plan.get("title") or "todo2code code-change plan").strip()
+    title = title_raw if len(title_raw) <= 140 else title_raw[:139].rstrip() + "…"
+    description = str(plan.get("description") or title_raw).strip()
+    priority = priority_map.get(str(plan.get("priority") or "").upper(), "normal")
+    if priority not in {"high", "normal", "low"}:
+        priority = "normal"
+    evidence = plan.get("evidence") if isinstance(plan.get("evidence"), dict) else {}
+    return Suggestion(
+        signal="todo2code_plan", title=f"[todo2code] {title}",
+        description=(
+            f"{description}\n\nSource: `{plans_rel}` "
+            f"(plan id {plan.get('id') or 'n/a'}). Implement only declared target paths."
+        ),
+        priority=priority, labels=("todo2code", "code-change", "scan", "useful-code-change"),
+        files=tuple(paths[:12]),
+        source_context={"signal": "todo2code_code_change_plan", "dedupe_key": dedupe_key(plan),
+                        "plan_id": str(plan.get("id") or "").strip() or None,
+                        "plan_hash": str(plan.get("planHash") or "").strip() or None,
+                        "source_tool": source,
+                        "diagnostic_ids": [str(v) for v in (evidence.get("diagnosticIds") or []) if str(v).strip()]},
+    )
+
+
 def _scan_todo2code_plans(project: Path) -> list[Suggestion]:
     """Useful grounded code-change plans from ``t2c`` artifacts."""
     try:
@@ -1746,42 +1781,13 @@ def _scan_todo2code_plans(project: Path) -> list[Suggestion]:
 
     suggestions: list[Suggestion] = []
     for plan in plans:
-        if not is_useful_plan(plan, project=project):
-            continue
-        paths = plan_useful_paths(plan, project=project)
-        if not paths:
-            continue
-        title_raw = str(plan.get("title") or "todo2code code-change plan").strip()
-        title = title_raw if len(title_raw) <= 140 else title_raw[:139].rstrip() + "…"
-        description = str(plan.get("description") or title_raw).strip()
-        priority = _PRIORITY_MAP.get(str(plan.get("priority") or "").upper(), "normal")
-        if priority not in {"high", "normal", "low"}:
-            priority = "normal"
-        evidence = plan.get("evidence") if isinstance(plan.get("evidence"), dict) else {}
-        suggestions.append(
-            Suggestion(
-                signal="todo2code_plan",
-                title=f"[todo2code] {title}",
-                description=(
-                    f"{description}\n\n"
-                    f"Source: `{plans_rel}` (plan id {plan.get('id') or 'n/a'}). "
-                    "Implement only declared target paths."
-                ),
-                priority=priority,
-                labels=("todo2code", "code-change", "scan", "useful-code-change"),
-                files=tuple(paths[:12]),
-                source_context={
-                    "signal": "todo2code_code_change_plan",
-                    "dedupe_key": _plan_dedupe_key(plan),
-                    "plan_id": str(plan.get("id") or "").strip() or None,
-                    "plan_hash": str(plan.get("planHash") or "").strip() or None,
-                    "source_tool": TODO2CODE_SOURCE,
-                    "diagnostic_ids": [
-                        str(v) for v in (evidence.get("diagnosticIds") or []) if str(v).strip()
-                    ],
-                },
-            ),
+        suggestion = _todo2code_plan_suggestion(
+            plan, project=project, plans_rel=plans_rel, is_useful_plan=is_useful_plan,
+            plan_useful_paths=plan_useful_paths, priority_map=_PRIORITY_MAP,
+            source=TODO2CODE_SOURCE, dedupe_key=_plan_dedupe_key,
         )
+        if suggestion is not None:
+            suggestions.append(suggestion)
     return suggestions
 
 
