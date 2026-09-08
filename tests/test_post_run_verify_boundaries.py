@@ -122,7 +122,8 @@ def test_configured_deadline_stops_descendants_and_later_commands(tmp_path: Path
         return
     assert outcomes[0]["ok"] is False and outcomes[0]["exit_code"] == 124
     assert "timed out" in outcomes[0]["detail"]
-    planfile.assert_called_once()
+    assert planfile.call_count == 2  # Write followed by status readback.
+    assert outcomes[0]["action"] == "persistence_failed"  # Empty readback is not acknowledgement.
     assert started.exists()
     time.sleep(1.1)
     assert not late.exists()

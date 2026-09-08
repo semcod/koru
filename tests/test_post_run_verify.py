@@ -66,6 +66,8 @@ queue:
 
             def planfile_runner(cmd, _proj: Path) -> SimpleNamespace:
                 calls.append(list(cmd))
+                if cmd[2] == "show":
+                    return _ok('{"id": "PLF-1", "status": "open"}')
                 return _ok()
 
             outcomes = verify_completed_tickets(

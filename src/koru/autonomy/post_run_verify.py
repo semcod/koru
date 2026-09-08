@@ -319,23 +319,28 @@ def run_verify_commands(
         return False, "verification requires non-empty string commands", None
     last_code: int | None = None
     for cmd in commands:
-        try:
-            result = runner(cmd, project)
-        except subprocess.TimeoutExpired:
-            return False, "verification command timed out", 124
-        except OSError as exc:
-            return False, f"verification command launch failed: {exc}", 127
-        last_code = int(getattr(result, "returncode", 1))
-        if last_code != 0:
-            detail = (
-                getattr(result, "stderr", None) or getattr(result, "stdout", None) or ""
-            ).strip()
-            if not detail:
-                detail = f"exit {last_code}"
-            if last_code == 124:
-                detail = f"verification command timed out: {detail}"
-            return False, detail, last_code
+        ok, detail, last_code = _run_verify_command(project, cmd, runner)
+        if not ok:
+            return ok, detail, last_code
     return True, "", last_code
+
+
+def _run_verify_command(project: Path, command: str, runner: ShellRunner) -> tuple[bool, str, int]:
+    """Normalize one command result while preserving timeout and launch failures."""
+    try:
+        result = runner(command, project)
+    except subprocess.TimeoutExpired:
+        return False, "verification command timed out", 124
+    except OSError as exc:
+        return False, f"verification command launch failed: {exc}", 127
+    code = int(getattr(result, "returncode", 1))
+    if code == 0:
+        return True, "", code
+    detail = (getattr(result, "stderr", None) or getattr(result, "stdout", None) or "").strip()
+    detail = detail or f"exit {code}"
+    if code == 124:
+        detail = f"verification command timed out: {detail}"
+    return False, detail, code
 
 
 def _truncate(text: str, limit: int) -> str:
@@ -357,31 +362,25 @@ def apply_verify_failure(
     exit_code: int | None,
     runner: PlanfileRunner,
 ) -> str:
-    """Reopen or block a ticket after failed verification. Returns action label."""
+    """Return an acknowledged failure action, or persistence_failed on write/read failure."""
     reason = _truncate(
         f"post_run_verify failed (exit {exit_code}): {detail}",
         config.max_output_chars,
     )
     if config.on_failure == "block":
-        runner(
-            ["planfile", "ticket", "block", ticket_id, "--reason", reason],
-            project,
-        )
-        return "blocked"
-    runner(
-        [
-            "planfile",
-            "ticket",
-            "update",
-            ticket_id,
-            "--status",
-            "open",
-            "--note",
-            reason,
-        ],
-        project,
-    )
-    return "reopened"
+        command = ["planfile", "ticket", "block", ticket_id, "--reason", reason]
+        expected_status, action = "blocked", "blocked"
+    else:
+        command = ["planfile", "ticket", "update", ticket_id, "--status", "open", "--note", reason]
+        expected_status, action = "open", "reopened"
+    try:
+        result = runner(command, project)
+        if result.returncode != 0:
+            return "persistence_failed"
+        status = fetch_ticket_status(project, ticket_id, runner=runner)
+    except (OSError, subprocess.SubprocessError):
+        return "persistence_failed"
+    return action if status == expected_status else "persistence_failed"
 
 
 def verify_completed_tickets(
