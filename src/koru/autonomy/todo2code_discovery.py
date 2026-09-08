@@ -614,6 +614,20 @@ def _consume_plan_set(
         outcome.filtered_out_count = len(plans) - len(useful)
 
 
+def _discovery_limits(
+    project: Path, stale_minutes: float | None, planfile_limit: int | None,
+) -> tuple[float, int, float]:
+    """Resolve bounded artifact age, ticket count, and usefulness thresholds."""
+    stale = stale_minutes if stale_minutes is not None else _env_float(
+        "KORU_TODO2CODE_STALE_MINUTES", DEFAULT_STALE_MINUTES, project
+    )
+    limit = planfile_limit if planfile_limit is not None else max(
+        1, _env_int("KORU_TODO2CODE_MAX_TICKETS", DEFAULT_MAX_TICKETS, project)
+    )
+    usefulness = _env_float("KORU_TODO2CODE_MIN_USEFULNESS", DEFAULT_MIN_USEFULNESS, project)
+    return stale, limit, usefulness
+
+
 def run_todo2code_discovery(
     project: Path,
     *,
@@ -645,21 +659,7 @@ def run_todo2code_discovery(
         outcome.skipped_reason = "t2c not on PATH (set KORU_TODO2CODE_BIN)"
         return outcome
     outcome.t2c_path = binary
-    stale = (
-        stale_minutes
-        if stale_minutes is not None
-        else _env_float("KORU_TODO2CODE_STALE_MINUTES", DEFAULT_STALE_MINUTES, project)
-    )
-    limit = (
-        planfile_limit
-        if planfile_limit is not None
-        else max(1, _env_int("KORU_TODO2CODE_MAX_TICKETS", DEFAULT_MAX_TICKETS, project))
-    )
-    min_usefulness = _env_float(
-        "KORU_TODO2CODE_MIN_USEFULNESS",
-        DEFAULT_MIN_USEFULNESS,
-        project,
-    )
+    stale, limit, min_usefulness = _discovery_limits(project, stale_minutes, planfile_limit)
 
     existing_plans = find_latest_plans_path(out_dir)
     if existing_plans is not None and not force and _plans_fresh(existing_plans, stale_minutes=stale):
