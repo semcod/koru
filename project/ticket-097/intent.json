@@ -52,7 +52,12 @@
     "scripts/install-agent-hosts.sh",
     "worktree-guard.yaml",
     "pyproject.toml",
-    "package.json"
+    "package.json",
+    ".governance/standard-adoption.json",
+    ".governance/standard-pack-evidence/new-project.json",
+    ".governance/standard-pack-evidence/worktrees.json",
+    ".governance/standard-pack-evidence/git-lifecycle.json",
+    ".github/workflows/standard-pack-conformance.yml"
   ],
   "forbiddenPaths": [
     "project/ticket-*/user-*.md"
@@ -64,7 +69,7 @@
   "delivery": {
     "acceptedBaseSha": "0ed7ea7b1ec16a05ac394333ec4d386a1c628696",
     "targetBranch": "main",
-    "outcome": "Adopt immutable published local CI publication instructions while preserving protected checks and custom manifest settings.",
+    "outcome": "Publish complete immutable New-project 0.20.11 and Worktrees 0.5.1 adoption, current Git lifecycle evidence and matching conformance CI.",
     "nonGoals": [
       "No migration of executor profiles, required checks, credentials or runtime deployments."
     ],
@@ -78,7 +83,7 @@
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Use the standard managed updater and its independently verified immutable adoption exception. Route this adoption to the existing governance owner; do not change manifest path ownership.",
+      "decision": "Use the standard managed updater and its independently verified immutable adoption exception. Route this adoption to the existing governance owner; do not change manifest path ownership. Standard-pack conformance is assigned explicitly to the governance workstream because it tests adopted governance contracts; source/test application ownership remains separate.",
       "components": [
         {
           "name": "governance",
@@ -125,7 +130,12 @@
             "project/new-ticket.sh",
             "pyproject.toml",
             "scripts/install-agent-hosts.sh",
-            "worktree-guard.yaml"
+            "worktree-guard.yaml",
+            ".governance/standard-adoption.json",
+            ".governance/standard-pack-evidence/new-project.json",
+            ".governance/standard-pack-evidence/worktrees.json",
+            ".governance/standard-pack-evidence/git-lifecycle.json",
+            ".github/workflows/standard-pack-conformance.yml"
           ]
         }
       ],

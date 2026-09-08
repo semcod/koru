@@ -68,20 +68,22 @@ jobs:
             --repository-name koru \
             --ticket ticket-777 \
             --slug ci-probe \
-            --workspace-root /workspace > "$record"
+            --primary-checkout /workspace/koru > "$record"
           python3 .governance/worktree_path_check.py validate "$record"
           python3 - "$record" <<'PY'
           import json
           import sys
 
           record = json.load(open(sys.argv[1], encoding="utf-8"))
+          assert record["schema"] == "wellmanifest.worktrees/v5", record
+          assert record["linkMode"] == "relative", record
           assert record["branch"] == "ticket/777-ci-probe", record
           assert record["worktreePath"] == (
-              "/workspace/.worktrees/koru--ticket-777--ci-probe"
+              "/workspace/koru/.worktrees/ticket-777--ci-probe"
           ), record
           assert record["leasePath"] == (
-              "/workspace/.worktrees/.leases/"
-              "koru--ticket-777--ci-probe.json"
+              "/workspace/koru/.subactor/leases/"
+              "ticket-777--ci-probe.json"
           ), record
           PY
       - name: Validate the Logs projection

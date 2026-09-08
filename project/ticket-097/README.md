@@ -13,3 +13,5 @@ SESSION_EXECUTION_AUTHORIZATION: user requests implementation and publication of
 Canonical fleet evidence: `subactor/docs/architecture/analysis/local-ci-adoption.md`. Full runtime CI coverage is assessed separately.
 
 Routing correction: existing governance ownership covers this standard adoption; package declarations are verified atomic adoption bindings. The source ownership manifest is preserved.
+
+SESSION_EXECUTION_AUTHORIZATION (2026-09-08): user requests publication of all Koru changes without conflicts and updates to Wellmanifest worktrees/new-project. Complete adoption includes refreshed independent upstream CI/ruleset receipts and a v5 layout conformance test.
