@@ -222,6 +222,43 @@ def _slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:80]
 
 
+def _read_sprint_tickets(project: Path, sprint: str) -> dict[str, Any]:
+    try:
+        import yaml
+
+        sprint_path = project / ".planfile" / "sprints" / f"{sprint}.yaml"
+        data = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
+    except (OSError, Exception):  # noqa: BLE001 - best-effort duplicate guard
+        return {}
+    sprint_data = data.get("sprint") if isinstance(data, dict) else None
+    tickets = sprint_data.get("tickets") if isinstance(sprint_data, dict) else None
+    if not isinstance(tickets, dict):
+        return {}
+    return tickets
+
+
+def _remember_todo2code_ticket(
+    ticket: dict[str, Any],
+    keys: set[str],
+    title_files: set[tuple[str, tuple[str, ...]]],
+) -> None:
+    name = str(ticket.get("name") or "").strip()
+    files = tuple(str(v) for v in (ticket.get("files") or []) if str(v).strip())
+    if name.startswith("[todo2code]"):
+        title_files.add((name, files))
+    source = ticket.get("source")
+    context = source.get("context") if isinstance(source, dict) else None
+    if not isinstance(context, dict):
+        return
+    key = str(context.get("dedupe_key") or "").strip()
+    if key.startswith("todo2code:"):
+        keys.add(key)
+    # Also remember title/files from source-tagged tickets without prefix.
+    tool = str(source.get("tool") or "") if isinstance(source, dict) else ""
+    if tool == DEFAULT_SOURCE and name:
+        title_files.add((name, files))
+
+
 def _existing_todo2code_keys(
     project: Path,
     *,
@@ -233,37 +270,12 @@ def _existing_todo2code_keys(
     shifts, so title+files guards against re-filing the same work from a
     fresh pipeline run.
     """
-    try:
-        import yaml
-
-        sprint_path = project / ".planfile" / "sprints" / f"{sprint}.yaml"
-        data = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
-    except (OSError, Exception):  # noqa: BLE001 - best-effort duplicate guard
-        return set(), set()
-    sprint_data = data.get("sprint") if isinstance(data, dict) else None
-    tickets = sprint_data.get("tickets") if isinstance(sprint_data, dict) else None
-    if not isinstance(tickets, dict):
-        return set(), set()
+    tickets = _read_sprint_tickets(project, sprint)
     keys: set[str] = set()
     title_files: set[tuple[str, tuple[str, ...]]] = set()
     for ticket in tickets.values():
-        if not isinstance(ticket, dict):
-            continue
-        name = str(ticket.get("name") or "").strip()
-        files = tuple(str(v) for v in (ticket.get("files") or []) if str(v).strip())
-        if name.startswith("[todo2code]"):
-            title_files.add((name, files))
-        source = ticket.get("source")
-        context = source.get("context") if isinstance(source, dict) else None
-        if not isinstance(context, dict):
-            continue
-        key = str(context.get("dedupe_key") or "").strip()
-        if key.startswith("todo2code:"):
-            keys.add(key)
-        # Also remember title/files from source-tagged tickets without prefix.
-        tool = str(source.get("tool") or "") if isinstance(source, dict) else ""
-        if tool == DEFAULT_SOURCE and name:
-            title_files.add((name, files))
+        if isinstance(ticket, dict):
+            _remember_todo2code_ticket(ticket, keys, title_files)
     return keys, title_files
 
 
