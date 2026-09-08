@@ -239,6 +239,11 @@ def is_useful_code_change_path(value: str, *, project: Path | None = None) -> bo
     if is_governance_owned_path(normalized, project=project):
         return False
     segments = [part for part in normalized.split("/") if part]
+    return _is_concrete_source_path(normalized, segments) and not _is_generated_path(segments)
+
+
+def _is_concrete_source_path(normalized: str, segments: list[str]) -> bool:
+    """Reject traversal, globs and vendored or installed source trees."""
     if not segments or ".." in segments or "*" in segments:
         return False
     if any(ch in normalized for ch in "*?[]{}"):
@@ -250,15 +255,20 @@ def is_useful_code_change_path(value: str, *, project: Path | None = None) -> bo
         if segment.endswith(".egg-info") or segment.endswith(".dist-info"):
             return False
 
+    return True
+
+
+def _is_generated_path(segments: list[str]) -> bool:
+    """Identify generated analysis artifacts, binary assets and tool state."""
     basename = segments[-1]
     if basename in GENERATED_ANALYSIS_BASENAMES:
-        return False
+        return True
 
     dot = basename.rfind(".")
     if dot > 0:
         ext = basename[dot:].lower()
         if ext in NON_SOURCE_EXTENSIONS:
-            return False
+            return True
 
     if segments[0] == "project" and (
         basename.endswith(".toon")
@@ -267,14 +277,14 @@ def is_useful_code_change_path(value: str, *, project: Path | None = None) -> bo
         or basename.endswith(".json")
         or basename in {"prompt.txt", "README.md"}
     ):
-        return False
+        return True
 
     if segments[0] in {".koru", ".code2llm_cache", ".planfile"}:
-        return False
+        return True
     if "code2llm_incremental" in basename:
-        return False
+        return True
 
-    return True
+    return False
 
 
 def useful_paths(
