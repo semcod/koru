@@ -59,7 +59,9 @@
           "project.bat",
           "scripts/publish-local-onedev-validator.sh",
           "docs/publication-local-onedev-validator.md",
-          ".github/workflows/standard-pack-conformance.yml"
+          ".github/workflows/standard-pack-conformance.yml",
+          "project2.sh",
+          "project/README.md"
         ]
       },
       "infrastructure": {
