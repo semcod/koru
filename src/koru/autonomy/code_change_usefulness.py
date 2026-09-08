@@ -377,7 +377,7 @@ def plan_usefulness_score(plan: dict[str, Any], *, project: Path | None = None) 
     return score
 
 
-def is_useful_plan(plan: dict[str, Any], *, project: Path | None = None, min_score: float = 8.0) -> bool:
+def _plan_requires_review(plan: dict[str, Any]) -> bool:
     evidence = plan.get("evidence") if isinstance(plan.get("evidence"), dict) else {}
     record_ids = [str(value) for value in (evidence.get("recordIds") or [])]
     # A CHANGELOG-only gap says that historical evidence is incomplete.  It
@@ -386,13 +386,17 @@ def is_useful_plan(plan: dict[str, Any], *, project: Path | None = None, min_sco
     # audit records into the autonomous queue caused models to redo changes
     # already present in the repository.
     if record_ids and all(value.startswith("INT-CHANGELOG-") for value in record_ids):
-        return False
+        return True
     risk = plan.get("risk") if isinstance(plan.get("risk"), dict) else {}
     # Blocking/high-risk findings commonly mean a checked/completed declaration
     # lacks proof.  They require review or decomposition; hydrating them as R1
     # silently widened the authority of the autonomous patch runner.
     if str(risk.get("level") or "").strip().lower() == "high":
-        return False
+        return True
+    return False
+
+
+def _plan_targets_match_state(plan: dict[str, Any], project: Path | None) -> bool:
     paths = plan_useful_paths(plan, project=project)
     changes = plan.get("changes") if isinstance(plan.get("changes"), list) else []
     actions = {
@@ -408,6 +412,14 @@ def is_useful_plan(plan: dict[str, Any], *, project: Path | None = None, min_sco
                 return False
             if action != "create" and not exists:
                 return False
+    return True
+
+
+def is_useful_plan(plan: dict[str, Any], *, project: Path | None = None, min_score: float = 8.0) -> bool:
+    if _plan_requires_review(plan):
+        return False
+    if not _plan_targets_match_state(plan, project):
+        return False
     return plan_usefulness_score(plan, project=project) >= min_score
 
 

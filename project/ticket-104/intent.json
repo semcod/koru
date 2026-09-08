@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-104",
+  "summary": "Decompose useful plan eligibility checks",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/code_change_usefulness.py",
+    "tests/test_plan_eligibility.py",
+    "project/ticket-104/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "c1926a62acdc0ec1b19fe9f510b3ffe9368f65c9",
+    "targetBranch": "main",
+    "outcome": "Publish behavior-preserving plan eligibility decomposition, preserving review boundaries and filesystem preconditions.",
+    "nonGoals": [
+      "No changes to scoring, action semantics, autonomous authority or c2004 sources"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Separate review requirements from filesystem action preconditions; keep original short-circuit order and scoring threshold.",
+      "components": [
+        {
+          "name": "plan-eligibility",
+          "paths": [
+            "src/koru/autonomy/code_change_usefulness.py",
+            "tests/test_plan_eligibility.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_plan_eligibility.py tests/test_code_change_usefulness.py tests/test_plan_usefulness_scoring.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Eligibility boundary characterization before/after, code2llm complexity, koru execution and independent CI."
+      }
+    ]
+  }
+}
