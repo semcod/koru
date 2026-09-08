@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-107",
+  "summary": "Separate useful plan ranking from ticket creation",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/todo2code_discovery.py",
+    "tests/test_todo2code_plan_ranking.py",
+    "project/ticket-107/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6e9925bde177b825041b95581dc67c77a146d3c0",
+    "targetBranch": "main",
+    "outcome": "Publish behavior-preserving separation of plan eligibility/ranking from ticket creation.",
+    "nonGoals": [
+      "No changes to scoring, duplicate identity, creation limits, authority or c2004 sources"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract eligibility filtering and stable descending ranking before the unchanged ticket creation loop.",
+      "components": [
+        {
+          "name": "todo2code-ranking",
+          "paths": [
+            "src/koru/autonomy/todo2code_discovery.py",
+            "tests/test_todo2code_plan_ranking.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_todo2code_plan_ranking.py tests/test_todo2code_discovery.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Ranking and creation-limit characterization before/after; code2llm complexity; koru tests and independent CI."
+      }
+    ]
+  }
+}

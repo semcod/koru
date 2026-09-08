@@ -480,6 +480,25 @@ def _ticket_scaffold(
     }
 
 
+def _rank_useful_plans(
+    project: Path, plan_set: dict[str, Any], min_usefulness: float,
+) -> tuple[list[dict[str, Any]], int]:
+    raw_plans = [p for p in (plan_set.get("plans") or []) if isinstance(p, dict)]
+    useful: list[dict[str, Any]] = []
+    filtered_out = 0
+    for plan in raw_plans:
+        if not _plan_paths(plan) or not is_useful_plan(
+            plan, project=project, min_score=min_usefulness
+        ):
+            filtered_out += 1
+            continue
+        useful.append(plan)
+    # Highest usefulness first so the ticket cap prefers real code work.
+    useful.sort(key=lambda p: plan_usefulness_score(p, project=project), reverse=True)
+
+    return useful, filtered_out
+
+
 def _apply_plan_tickets(
     project: Path,
     plan_set: dict[str, Any],
@@ -493,18 +512,7 @@ def _apply_plan_tickets(
     """Return (created, skipped, useful_count, filtered_out_count)."""
     from koru.tasks import create_nl_task
 
-    raw_plans = [p for p in (plan_set.get("plans") or []) if isinstance(p, dict)]
-    useful: list[dict[str, Any]] = []
-    filtered_out = 0
-    for plan in raw_plans:
-        if not _plan_paths(plan) or not is_useful_plan(
-            plan, project=project, min_score=min_usefulness
-        ):
-            filtered_out += 1
-            continue
-        useful.append(plan)
-    # Highest usefulness first so the ticket cap prefers real code work.
-    useful.sort(key=lambda p: plan_usefulness_score(p, project=project), reverse=True)
+    useful, filtered_out = _rank_useful_plans(project, plan_set, min_usefulness)
 
     created_titles: list[str] = []
     skipped_titles: list[str] = []
