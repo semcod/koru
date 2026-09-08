@@ -419,6 +419,35 @@ def _skip_scan_after_idle_for_create_failed_cooldown(
     return True
 
 
+def _run_idle_discovery_fallbacks(
+    project: Path, state: AutoloopState, include_semcod_artifacts: bool | None,
+    scan_paths: tuple[str, ...] | None, cycle_telemetry: dict[str, Any],
+    _hp: Callable[..., Any], _emit: Callable[..., Any],
+) -> None:
+    """Run progressively broader discovery, retaining applied-ticket short circuits."""
+    discovery: dict[str, Any] | None = None
+    todo2code: dict[str, Any] | None = None
+    if include_semcod_artifacts:
+        discovery = _run_code2llm_discovery_after_idle(
+            project,
+            _hp,
+            _emit,
+            scope_paths=scan_paths,
+        )
+        _record_code2llm_discovery_telemetry(state, cycle_telemetry, discovery)
+        if not (discovery and discovery.get("applied")):
+            todo2code = _run_todo2code_discovery_after_idle(project, _hp, _emit)
+            _record_todo2code_discovery_telemetry(state, cycle_telemetry, todo2code)
+            if todo2code and (todo2code.get("applied") or todo2code.get("useful_plans_count")):
+                auto = _run_code_change_autonomy_after_idle(project, _hp, _emit)
+                _record_code_change_autonomy_telemetry(state, cycle_telemetry, auto)
+    if not (discovery and discovery.get("applied")) and not (
+        todo2code and todo2code.get("applied")
+    ):
+        nxdo_payload = _run_nxdo_discovery_after_idle(project, _hp, _emit)
+        _record_nxdo_discovery_telemetry(state, cycle_telemetry, nxdo_payload)
+
+
 def _skip_scan_after_idle_for_duplicate_cooldown(
     project: Path,
     state: AutoloopState,
@@ -445,31 +474,16 @@ def _skip_scan_after_idle_for_duplicate_cooldown(
         },
     )
     cycle_telemetry["scan_after_idle_skipped_duplicate_cooldown"] = True
-    discovery: dict[str, Any] | None = None
-    todo2code: dict[str, Any] | None = None
     if include_semcod_artifacts:
         _hp(
             "  idle strategy: detailed scan is in duplicate cooldown; "
             "continue detail→general by checking whole-project discovery",
         )
-        discovery = _run_code2llm_discovery_after_idle(
-            project,
-            _hp,
-            _emit,
-            scope_paths=_scan_paths_for_project(project),
-        )
-        _record_code2llm_discovery_telemetry(state, cycle_telemetry, discovery)
-        if not (discovery and discovery.get("applied")):
-            todo2code = _run_todo2code_discovery_after_idle(project, _hp, _emit)
-            _record_todo2code_discovery_telemetry(state, cycle_telemetry, todo2code)
-            if todo2code and (todo2code.get("applied") or todo2code.get("useful_plans_count")):
-                auto = _run_code_change_autonomy_after_idle(project, _hp, _emit)
-                _record_code_change_autonomy_telemetry(state, cycle_telemetry, auto)
-    if not (discovery and discovery.get("applied")) and not (
-        todo2code and todo2code.get("applied")
-    ):
-        nxdo_payload = _run_nxdo_discovery_after_idle(project, _hp, _emit)
-        _record_nxdo_discovery_telemetry(state, cycle_telemetry, nxdo_payload)
+    _run_idle_discovery_fallbacks(
+        project, state, include_semcod_artifacts,
+        _scan_paths_for_project(project) if include_semcod_artifacts else None,
+        cycle_telemetry, _hp, _emit,
+    )
     return True
 
 
@@ -517,29 +531,10 @@ def _run_scan_after_idle(
         _hp,
         _emit,
     )
-    discovery: dict[str, Any] | None = None
-    todo2code: dict[str, Any] | None = None
-    if include_semcod_artifacts and not idle_scan.applied:
-        discovery = _run_code2llm_discovery_after_idle(
-            project,
-            _hp,
-            _emit,
-            scope_paths=scan_paths,
+    if not idle_scan.applied:
+        _run_idle_discovery_fallbacks(
+            project, state, include_semcod_artifacts, scan_paths, cycle_telemetry, _hp, _emit,
         )
-        _record_code2llm_discovery_telemetry(state, cycle_telemetry, discovery)
-        if not (discovery and discovery.get("applied")):
-            todo2code = _run_todo2code_discovery_after_idle(project, _hp, _emit)
-            _record_todo2code_discovery_telemetry(state, cycle_telemetry, todo2code)
-            if todo2code and (todo2code.get("applied") or todo2code.get("useful_plans_count")):
-                auto = _run_code_change_autonomy_after_idle(project, _hp, _emit)
-                _record_code_change_autonomy_telemetry(state, cycle_telemetry, auto)
-    if (
-        not idle_scan.applied
-        and not (discovery and discovery.get("applied"))
-        and not (todo2code and todo2code.get("applied"))
-    ):
-        nxdo_payload = _run_nxdo_discovery_after_idle(project, _hp, _emit)
-        _record_nxdo_discovery_telemetry(state, cycle_telemetry, nxdo_payload)
     return idle_scan
 
 
