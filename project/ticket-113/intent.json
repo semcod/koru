@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-113",
+  "summary": "Share idle discovery fallback sequencing",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/phases/scan_phase.py",
+    "tests/test_scan_phase.py",
+    "project/ticket-113/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "98f3ef489f2837a406a49145de1c0e65e945da2b",
+    "targetBranch": "main",
+    "outcome": "Publish shared behavior-preserving idle discovery fallback sequencing.",
+    "nonGoals": [
+      "No changes to scan eligibility, cooldowns, discovery authority or tool behavior."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Share fallback sequencing between empty scans and duplicate cooldown while preserving scope and telemetry.",
+      "components": [
+        {
+          "name": "scan-phase",
+          "paths": [
+            "src/koru/autonomy/phases/scan_phase.py",
+            "tests/test_scan_phase.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_scan_phase.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Sequencing characterization before/after, fresh code2llm and koru regressions, independent CI."
+      }
+    ]
+  }
+}
