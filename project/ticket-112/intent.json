@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-112",
+  "summary": "Separate shell finalization from drive outcome handling",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/cycle/cycle_drive_outcome.py",
+    "tests/test_autonomous_cycle_drive_outcome.py",
+    "project/ticket-112/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "c852d7e5a91354da5bd93eed2f204e43f4c61447",
+    "targetBranch": "main",
+    "outcome": "Publish behavior-preserving separation of shell finalization from drive outcome handling.",
+    "nonGoals": [
+      "No changes to delivery verification, availability, submit strategy or telemetry semantics."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract finalization routing and its existing exception boundary; preserve state update and observability ordering.",
+      "components": [
+        {
+          "name": "drive-outcome",
+          "paths": [
+            "src/koru/autonomy/cycle/cycle_drive_outcome.py",
+            "tests/test_autonomous_cycle_drive_outcome.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_autonomous_cycle_drive_outcome.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Public outcome characterization before/after; code2llm, koru regression gates and independent CI."
+      }
+    ]
+  }
+}

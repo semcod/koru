@@ -19,6 +19,41 @@ from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
 
 
+def _apply_shell_finalization(
+    *, project: Path, ticket_id: str, reply: dict[str, Any], ok: bool,
+    decision_kind: str | None, autopilot_ide: str,
+    cycle_telemetry: dict[str, Any], _hp: Callable[..., Any],
+) -> None:
+    """Route finalization without allowing its failure to interrupt observability."""
+    try:
+        from koru.autonomy.shell_drive_finalize import (
+            finalize_shell_drive_ticket,
+            note_provider_exhaustion,
+        )
+
+        if ok:
+            finalize_action = finalize_shell_drive_ticket(
+                project=project,
+                autopilot_ide=autopilot_ide,
+                ticket_id=ticket_id,
+                reply=reply,
+                ok=ok,
+                decision_kind=decision_kind,
+                _hp=_hp,
+            )
+        else:
+            finalize_action = note_provider_exhaustion(
+                project=project,
+                ticket_id=ticket_id,
+                reply=reply,
+                _hp=_hp,
+            )
+        if finalize_action != "skipped":
+            cycle_telemetry["shell_drive_finalize"] = finalize_action
+    except Exception as exc:  # noqa: BLE001 — finalization must never break the cycle
+        _hp(f"  shell-drive finalize error: {exc}")
+
+
 def apply_autopilot_drive_outcome(
     *,
     project: Path,
@@ -86,33 +121,11 @@ def apply_autopilot_drive_outcome(
     _update_autopilot_state(
         state, ok, decision_kind, autopilot_drive_kind, reply.get("prompt", "")
     )
-    try:
-        from koru.autonomy.shell_drive_finalize import (
-            finalize_shell_drive_ticket,
-            note_provider_exhaustion,
-        )
-
-        if ok:
-            finalize_action = finalize_shell_drive_ticket(
-                project=project,
-                autopilot_ide=autopilot_ide,
-                ticket_id=ticket_id,
-                reply=reply,
-                ok=ok,
-                decision_kind=decision_kind,
-                _hp=_hp,
-            )
-        else:
-            finalize_action = note_provider_exhaustion(
-                project=project,
-                ticket_id=ticket_id,
-                reply=reply,
-                _hp=_hp,
-            )
-        if finalize_action != "skipped":
-            cycle_telemetry["shell_drive_finalize"] = finalize_action
-    except Exception as exc:  # noqa: BLE001 — finalization must never break the cycle
-        _hp(f"  shell-drive finalize error: {exc}")
+    _apply_shell_finalization(
+        project=project, ticket_id=ticket_id, reply=reply, ok=ok,
+        decision_kind=decision_kind, autopilot_ide=autopilot_ide,
+        cycle_telemetry=cycle_telemetry, _hp=_hp,
+    )
     _log_autopilot_result(ok, queue_result, autopilot_ide, decision_kind, reply, _hp)
     from koru.autonomy.cycle.cycle_orchestrator import _emit_autopilot_observability_outcome
 
