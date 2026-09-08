@@ -584,6 +584,36 @@ def _run_t2c_pipeline(
     return result
 
 
+def _consume_plan_set(
+    outcome: Todo2codeDiscoveryOutcome,
+    project: Path,
+    plan_set: dict[str, Any],
+    *,
+    plans_path: Path,
+    apply_planfile: bool,
+    source: str,
+    limit: int,
+    sprint: str,
+    min_usefulness: float,
+) -> None:
+    """Record plan counts and optionally apply useful plans to the sprint."""
+    plans = [p for p in (plan_set.get("plans") or []) if isinstance(p, dict)]
+    outcome.plans_count = len(plans)
+    if apply_planfile:
+        applied, skipped, useful, filtered = _apply_plan_tickets(
+            project, plan_set, plans_path=plans_path, source=source,
+            limit=limit, sprint=sprint, min_usefulness=min_usefulness,
+        )
+        outcome.applied_titles = applied
+        outcome.skipped_titles = skipped
+        outcome.useful_plans_count = useful
+        outcome.filtered_out_count = filtered
+    else:
+        useful = [p for p in plans if is_useful_plan(p, project=project, min_score=min_usefulness)]
+        outcome.useful_plans_count = len(useful)
+        outcome.filtered_out_count = len(plans) - len(useful)
+
+
 def run_todo2code_discovery(
     project: Path,
     *,
@@ -641,30 +671,9 @@ def run_todo2code_discovery(
         if plan_set is None:
             outcome.error = f"unreadable plans artifact: {existing_plans}"
             return outcome
-        raw_count = len([p for p in (plan_set.get("plans") or []) if isinstance(p, dict)])
-        outcome.plans_count = raw_count
-        if apply_planfile:
-            applied, skipped, useful, filtered = _apply_plan_tickets(
-                project,
-                plan_set,
-                plans_path=existing_plans,
-                source=planfile_source,
-                limit=limit,
-                sprint=planfile_sprint,
-                min_usefulness=min_usefulness,
-            )
-            outcome.applied_titles = applied
-            outcome.skipped_titles = skipped
-            outcome.useful_plans_count = useful
-            outcome.filtered_out_count = filtered
-        else:
-            useful = [
-                p
-                for p in (plan_set.get("plans") or [])
-                if isinstance(p, dict) and is_useful_plan(p, project=project, min_score=min_usefulness)
-            ]
-            outcome.useful_plans_count = len(useful)
-            outcome.filtered_out_count = raw_count - len(useful)
+        _consume_plan_set(outcome, project, plan_set, plans_path=existing_plans,
+                          apply_planfile=apply_planfile, source=planfile_source,
+                          limit=limit, sprint=planfile_sprint, min_usefulness=min_usefulness)
         return outcome
 
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -688,32 +697,9 @@ def run_todo2code_discovery(
         outcome.error = f"unreadable plans artifact: {plans_path}"
         return outcome
 
-    raw_count = len([p for p in (plan_set.get("plans") or []) if isinstance(p, dict)])
-    outcome.plans_count = raw_count
-
-    if not apply_planfile:
-        useful = [
-            p
-            for p in (plan_set.get("plans") or [])
-            if isinstance(p, dict) and is_useful_plan(p, project=project, min_score=min_usefulness)
-        ]
-        outcome.useful_plans_count = len(useful)
-        outcome.filtered_out_count = raw_count - len(useful)
-        return outcome
-
-    applied, skipped, useful, filtered = _apply_plan_tickets(
-        project,
-        plan_set,
-        plans_path=plans_path,
-        source=planfile_source,
-        limit=limit,
-        sprint=planfile_sprint,
-        min_usefulness=min_usefulness,
-    )
-    outcome.applied_titles = applied
-    outcome.skipped_titles = skipped
-    outcome.useful_plans_count = useful
-    outcome.filtered_out_count = filtered
+    _consume_plan_set(outcome, project, plan_set, plans_path=plans_path,
+                      apply_planfile=apply_planfile, source=planfile_source,
+                      limit=limit, sprint=planfile_sprint, min_usefulness=min_usefulness)
     return outcome
 
 
