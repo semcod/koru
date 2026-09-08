@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-099",
+  "summary": "Publish the existing Koru analysis pipeline and refreshed index",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project2.sh",
+    "project/README.md",
+    "project/TICKETS.md",
+    ".governance/manifest.json",
+    "project/ticket-099/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1baaf56a6351d399e2ad4b3d0cf67cb4b56287d7",
+    "targetBranch": "main",
+    "outcome": "Publish the user-provided analysis pipeline and existing generated analysis/index updates after validation.",
+    "nonGoals": [
+      "No new runtime dependencies or application behavior changes",
+      "Do not run package upgrades or replace generated artifacts during publication"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 35,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Preserve user-authored analysis script and existing analysis projection; assign these unowned root analysis paths to governance for publication.",
+      "components": [
+        {
+          "name": "analysis-pipeline",
+          "paths": [
+            "project2.sh",
+            "project/README.md",
+            "project/TICKETS.md",
+            ".governance/manifest.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash -n project2.sh",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Shell syntax and bounded ownership validation; retain the existing generated snapshot without asserting a fresh full analysis run."
+      }
+    ]
+  }
+}
