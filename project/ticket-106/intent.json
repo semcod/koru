@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-106",
+  "summary": "Separate phase and ticket execution profile matching",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/execution_plan.py",
+    "tests/test_execution_profile_matching.py",
+    "project/ticket-106/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "eeddd516307936f2183fdd3333cfd6b03b549b31",
+    "targetBranch": "main",
+    "outcome": "Publish behavior-preserving execution profile matching decomposition.",
+    "nonGoals": [
+      "No changes to profile selection order, match semantics, authority or c2004 sources"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Separate phase-only profile dispatch from ticket selector matching while preserving short-circuit order, normalization and defaults.",
+      "components": [
+        {
+          "name": "execution-profiles",
+          "paths": [
+            "src/koru/autonomy/execution_plan.py",
+            "tests/test_execution_profile_matching.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_execution_profile_matching.py tests/test_execution_plan.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Profile matching characterization before/after; code2llm complexity; koru tests and independent CI."
+      }
+    ]
+  }
+}
