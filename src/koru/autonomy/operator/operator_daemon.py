@@ -67,6 +67,16 @@ def _version_compatibility_check(
     return True, f"daemon version {actual}"
 
 
+def _same_python_executable(daemon_python: str, current_python: str | Path) -> bool:
+    left = Path(daemon_python).expanduser().resolve()
+    right = Path(current_python).expanduser().resolve()
+    return left == right or (
+        left.parent == right.parent
+        and left.name in {"python", "python3"}
+        and right.name in {"python", "python3"}
+    )
+
+
 def daemon_status_compatible(
     status: Mapping[str, Any] | None,
     *,
@@ -97,14 +107,7 @@ def daemon_status_compatible(
 
     daemon_python = str(metadata.get("python_executable") or "").strip()
     if daemon_python and current_python is not None:
-        left = Path(daemon_python).expanduser().resolve()
-        right = Path(current_python).expanduser().resolve()
-        same_python = left == right or (
-            left.parent == right.parent
-            and left.name in {"python", "python3"}
-            and right.name in {"python", "python3"}
-        )
-        if not same_python:
+        if not _same_python_executable(daemon_python, current_python):
             return (
                 False,
                 f"daemon python {daemon_python} != current python {current_python}",
