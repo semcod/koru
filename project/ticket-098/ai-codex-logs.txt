@@ -1,0 +1,2 @@
+Initial primary-checkout tests blocked by unrelated dirty-state governance; validation moved to ticket worktree.
+Final: 55 focused + 11 integration tests passed through koru; Ruff, governance, Compose, whitespace and lease validation passed.
