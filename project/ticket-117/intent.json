@@ -1,0 +1,29 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-117",
+  "summary": "Simplify todo2code discovery orchestration",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": ["src/koru/autonomy/todo2code_discovery.py", "tests/test_todo2code_discovery.py", "project/ticket-117/**"],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6856af511a4aabaf3490c22a5bb41da5f57d179e",
+    "targetBranch": "main",
+    "outcome": "Publish a behavior-preserving simplification of todo2code discovery orchestration.",
+    "nonGoals": ["No changes to discovery authority, planfile schema, dependencies or public interfaces."],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {"maxImplementationFiles": 2, "maxAffectedComponents": 1, "maxPublicInterfaceChanges": 0, "maxRuntimeDependencies": 0},
+    "architecture": {"status": "accepted", "decision": "Move environment setting resolution and fresh-artifact reuse into focused helpers while retaining the public discovery API.", "components": [{"name": "todo2code-discovery", "paths": ["src/koru/autonomy/todo2code_discovery.py", "tests/test_todo2code_discovery.py"]}], "responsibilityChanges": false, "interfaceChanges": [], "dataChanges": [], "ui": {"impact": "none", "states": [], "evidence": []}, "rollback": "Revert protected merge."},
+    "runtimeDependencies": [],
+    "validation": [{"criterion": "AC-01", "commands": ["python -m pytest -q tests/test_todo2code_discovery.py", "./project/governance-check.sh", "docker compose config --quiet"], "evidence": "Focused regression, Koru run, fresh analysis and independent CI."}]
+  }
+}
