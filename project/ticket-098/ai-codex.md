@@ -1,0 +1,5 @@
+SESSION_EXECUTION_AUTHORIZATION: User requested continuation of Koru refactoring using maskservice/project.sh analysis and the koru command, then supplied c2004/project/analysis.toon.yaml. Scope remains Koru pending clarification; no c2004 mutation or publication.
+
+The c2004 August 14 report suggests splitting high-CC methods but includes constants classified as functions and generic purity labels: advisory evidence only. Fresh September 8 Koru autonomy analysis: 116 files, 18 methods above threshold; run_verify_commands CC=16. Redup: 20 structural/exact groups, 332 potential lines, not accepted savings. Source confirms apply_verify_failure ignored write results. Reports: /tmp/koru-autonomy-analysis and /tmp/koru-refactor-duplicates.json.
+
+SESSION_EXECUTION_AUTHORIZATION 2026-09-08: user requests publication of all changes without conflicts and updated Wellmanifest standards. Existing 66-test refactor preserved during exact-path migration to adopted worktrees v5; publication follows ticket-097.

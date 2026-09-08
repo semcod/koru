@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-098",
+  "summary": "Acknowledge persisted post-run verification failure transitions",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/post_run_verify.py",
+    "tests/test_post_run_verify.py",
+    "tests/test_post_run_verify_boundaries.py",
+    "tests/test_post_run_verify_persistence.py",
+    "project/ticket-098/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1baaf56a6351d399e2ad4b3d0cf67cb4b56287d7",
+    "targetBranch": "main",
+    "outcome": "Publish acknowledged post-run verification failure transitions and reduce command verification complexity through protected exact-head validation.",
+    "nonGoals": [
+      "No changes to c2004 or queue finalization/IDE cache semantics"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 35,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract single-command verification; report lifecycle action only after successful write and matching status readback.",
+      "components": [
+        {
+          "name": "post-run-verification",
+          "paths": [
+            "src/koru/autonomy/post_run_verify.py",
+            "tests/test_post_run_verify.py",
+            "tests/test_post_run_verify_boundaries.py",
+            "tests/test_post_run_verify_persistence.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_post_run_verify.py tests/test_post_run_verify_boundaries.py tests/test_post_run_verify_persistence.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Failure injection for writes and readback, existing deadline and command tests, Koru single-repository execution."
+      }
+    ]
+  }
+}
