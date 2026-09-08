@@ -1,0 +1,1 @@
+SESSION_EXECUTION_AUTHORIZATION: User requested continuation of Koru refactoring based on c2004 analysis and previously authorized publication of changes. Scope: behavior-preserving scoring decomposition, tests and protected publication. Enter EDIT without a second confirmation. The supplied c2004 report is advisory; current Koru code2llm measurements select the target.

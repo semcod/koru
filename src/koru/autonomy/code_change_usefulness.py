@@ -305,55 +305,65 @@ def plan_useful_paths(plan: dict[str, Any], *, project: Path | None = None) -> l
     )
 
 
+def _evidence_usefulness_score(evidence: dict[str, Any]) -> float:
+    diagnostic_ids = [str(v) for v in (evidence.get("diagnosticIds") or []) if str(v).strip()]
+    record_ids = [str(v) for v in (evidence.get("recordIds") or []) if str(v).strip()]
+    score = 0.0
+    # Prefer TODO-style plans over pure changelog noise.
+    if any(rid.startswith("INT-TODO-") for rid in record_ids):
+        score += 8.0
+    elif any(rid.startswith("INT-CHANGELOG-") for rid in record_ids):
+        score -= 3.0
+    if diagnostic_ids:
+        score += 1.0
+    return score
+
+
+def _path_usefulness_score(path: str, project: Path | None) -> tuple[float, bool]:
+    """Return a path's ranking contribution and whether it is primary source."""
+    ext = Path(path).suffix.lower()
+    is_source = ext in {".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs", ".java"}
+    score = 0.0
+    if is_source:
+        score += 4.0
+    elif ext in SOURCE_EXTENSIONS:
+        score += 1.5
+    if path.startswith("src/") or path.startswith("lib/") or "/src/" in path:
+        score += 3.0
+    if path.startswith("tests/") or path.startswith("test/"):
+        score += 1.0
+    if path.startswith("docs/") or path.endswith(".md"):
+        score -= 1.5
+    if project is not None and (project / path).is_file():
+        score += 0.5
+    return score, is_source
+
+
+def _symbol_usefulness_score(target: dict[str, Any]) -> float:
+    symbols = [str(s) for s in (target.get("symbols") or []) if str(s).strip()]
+    return 2.0 + min(3.0, 0.5 * len(symbols)) if symbols else 0.0
+
+
 def plan_usefulness_score(plan: dict[str, Any], *, project: Path | None = None) -> float:
     """Higher score = more worth turning into a planfile ticket."""
     paths = plan_useful_paths(plan, project=project)
     if not paths:
         return -1.0
 
-    score = 10.0
     evidence = plan.get("evidence") if isinstance(plan.get("evidence"), dict) else {}
-    diagnostic_ids = [str(v) for v in (evidence.get("diagnosticIds") or []) if str(v).strip()]
-    record_ids = [str(v) for v in (evidence.get("recordIds") or []) if str(v).strip()]
-
-    # Prefer TODO-style plans over pure changelog noise.
-    if any(rid.startswith("INT-TODO-") for rid in record_ids):
-        score += 8.0
-    if any(rid.startswith("INT-CHANGELOG-") for rid in record_ids) and not any(
-        rid.startswith("INT-TODO-") for rid in record_ids
-    ):
-        score -= 3.0
-
+    score = 10.0 + _evidence_usefulness_score(evidence)
     source_hits = 0
     for path in paths:
-        ext = Path(path).suffix.lower()
-        if ext in {".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs", ".java"}:
-            source_hits += 1
-            score += 4.0
-        elif ext in SOURCE_EXTENSIONS:
-            score += 1.5
-        if path.startswith("src/") or path.startswith("lib/") or "/src/" in path:
-            score += 3.0
-        if path.startswith("tests/") or path.startswith("test/"):
-            score += 1.0
-        if path.startswith("docs/") or path.endswith(".md"):
-            score -= 1.5
-        if project is not None and (project / path).is_file():
-            score += 0.5
+        contribution, is_source = _path_usefulness_score(path, project)
+        score += contribution
+        source_hits += is_source
 
     target = plan.get("target") if isinstance(plan.get("target"), dict) else {}
-    symbols = [str(s) for s in (target.get("symbols") or []) if str(s).strip()]
-    if symbols:
-        score += 2.0 + min(3.0, 0.5 * len(symbols))
-
+    score += _symbol_usefulness_score(target)
     priority = str(plan.get("priority") or "").upper()
     score += {"P0": 5.0, "P1": 3.0, "P2": 1.0, "P3": 0.0}.get(priority, 0.5)
-
-    if diagnostic_ids:
-        score += 1.0
     if source_hits == 0 and all(path.endswith(".md") for path in paths):
         score -= 4.0
-
     return score
 
 
