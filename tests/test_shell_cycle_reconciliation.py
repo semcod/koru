@@ -84,3 +84,35 @@ def test_same_cycle_emission_and_return_use_reconciled_queue(monkeypatch):
     status, queue = _run_drive_and_finalize(context, None, inputs)
     assert status == "ok" and queue.last_status == "completed"
     assert emitted == [queue] and emitted[0].waiting == []
+
+
+@pytest.mark.parametrize("live", ["done", "canceled"])
+@pytest.mark.parametrize("already_completed", [False, True])
+@pytest.mark.parametrize("remaining", [[], ["NEXT-1", "NEXT-2"]])
+def test_terminal_projection_preserves_queue_contract(monkeypatch, live, already_completed, remaining):
+    from copy import deepcopy
+
+    monkeypatch.setattr(reconciliation, "fetch_ticket_status", lambda *a, **k: live)
+    completed = ["OLD", "PLF-1"] if already_completed else ["OLD"]
+    original = QueueLoopResult(
+        7, completed, ["FAILED"], ["PLF-1", *remaining, "PLF-1"],
+        "waiting_input", last_ticket_id="PLF-1", last_message="waiting",
+    )
+    snapshot = deepcopy(original)
+    state = AutoloopState(previous_signature="waiting_input:PLF-1", stagnation_streak=8)
+    telemetry = {"shell_drive_finalize": "done_verified", "preserved": "value"}
+    queue, status = reconciliation.reconcile_shell_cycle(Path("."), state, original, "ok", telemetry)
+    assert original == snapshot
+    assert queue is not original
+    assert queue.waiting == remaining
+    assert queue.completed == (["OLD", "PLF-1"] if live == "done" or already_completed else ["OLD"])
+    assert queue.failed == ["FAILED"]
+    assert queue.last_status == ("waiting_input" if remaining else ("completed" if live == "done" else "idle"))
+    assert queue.last_ticket_id == (remaining[-1] if remaining else "PLF-1")
+    assert queue.last_message == f"Shell finalization reconciled: PLF-1 is {live}"
+    assert status == "ok"
+    assert telemetry == {
+        "shell_drive_finalize": "done_verified", "preserved": "value",
+        "shell_ticket_live_status": live, "shell_cycle_reconciled": True,
+    }
+    assert state.stagnation_streak == 0
