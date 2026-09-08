@@ -95,17 +95,16 @@ def _ticket_name(ticket: dict[str, Any]) -> str:
     return str(ticket.get("name") or ticket.get("id") or "").strip()
 
 
-def _profile_matches(profile: dict[str, Any], *, ticket: dict[str, Any] | None, phase: str) -> bool:
-    match = profile.get("match")
-    if not isinstance(match, dict):
-        return False
-    if match.get("phase"):
-        return str(match["phase"]) == phase
-    if ticket is None:
-        return False
+def _profile_labels_match(labels: set[str], wanted: Any) -> bool:
+    if not wanted:
+        return True
+    return bool(labels.intersection({str(value).lower() for value in wanted}))
+
+
+def _ticket_matches_profile(match: dict[str, Any], ticket: dict[str, Any]) -> bool:
     labels = _ticket_labels(ticket)
     labels_any = match.get("labels_any") or []
-    if labels_any and not labels.intersection({str(x).lower() for x in labels_any}):
+    if not _profile_labels_match(labels, labels_any):
         return False
     signal = _ticket_signal(ticket)
     signals_any = match.get("signals_any") or []
@@ -116,6 +115,18 @@ def _profile_matches(profile: dict[str, Any], *, ticket: dict[str, Any] | None, 
     if patterns and not any(fnmatch.fnmatch(name, str(pat)) for pat in patterns):
         return False
     return bool(labels_any or signals_any or patterns)
+
+
+
+def _profile_matches(profile: dict[str, Any], *, ticket: dict[str, Any] | None, phase: str) -> bool:
+    match = profile.get("match")
+    if not isinstance(match, dict):
+        return False
+    if match.get("phase"):
+        return str(match["phase"]) == phase
+    if ticket is None:
+        return False
+    return _ticket_matches_profile(match, ticket)
 
 
 def _profile_order(profiles_doc: dict[str, Any]) -> tuple[str, ...]:
