@@ -316,8 +316,8 @@ markers = [
 ]
 
 [tool.wellmanifest]
-standard = "0.20.11"
-revision = "2cd39286dc0931870a8a60ee11c96dd6448b39e6"
+standard = "0.20.13"
+revision = "824625238d697511f58be2b73c0aa6e15c228a9a"
 gate = "project/governance-check.sh"
 
 [tool.ruff]

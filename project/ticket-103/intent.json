@@ -1,0 +1,99 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-103",
+  "summary": "Adopt verified New-project 0.20.13 local-pin commit boundary",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    ".githooks/pre-commit",
+    ".github/workflows/new-project-governance.yml",
+    ".governance/error/GOV-STANDARD-UPDATE.md",
+    ".governance/manifest.base.json",
+    ".governance/manifest.json",
+    ".governance/worktree_overlap_check.py",
+    "scripts/install-agent-hosts.sh",
+    ".governance/manifest.lock.json",
+    ".governance/package-manifest.json",
+    ".governance/standard-adoption.json",
+    ".governance/standard-pack-evidence/new-project.json",
+    "project/ticket-103/**",
+    "package.json",
+    "pyproject.toml"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e8991ec19fde38724feb47f50d220e554c016f2e",
+    "targetBranch": "main",
+    "outcome": "Publish immutable New-project 0.20.13 adoption so commits validate the local pin without fetching or implicitly updating governance.",
+    "nonGoals": [
+      "No migration of executor profiles, required checks, credentials or runtime deployments."
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the verified managed updater in a separate governance ticket to resolve GOV-STANDARD-UPDATE-001; preserve application work.",
+      "components": [
+        {
+          "name": "governance",
+          "paths": [
+            ".githooks/pre-commit",
+            ".github/workflows/new-project-governance.yml",
+            ".governance/error/GOV-STANDARD-UPDATE.md",
+            ".governance/manifest.base.json",
+            ".governance/manifest.json",
+            ".governance/worktree_overlap_check.py",
+            "scripts/install-agent-hosts.sh",
+            ".governance/manifest.lock.json",
+            ".governance/package-manifest.json",
+            ".governance/standard-adoption.json",
+            ".governance/standard-pack-evidence/new-project.json",
+            "project/ticket-103/**",
+            "package.json",
+            "pyproject.toml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Review a subsequent immutable standard update; preserve previous pins in history."
+    },
+    "runtimeDependencies": [],
+    "standardAdoption": {
+      "sourceRepository": "wellmanifest/new-project",
+      "fromRevision": "2cd39286dc0931870a8a60ee11c96dd6448b39e6",
+      "toRevision": "824625238d697511f58be2b73c0aa6e15c228a9a"
+    },
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh --actor agent"
+        ],
+        "evidence": "Managed governance, local pin verification, Compose and independent publication."
+      }
+    ]
+  }
+}
