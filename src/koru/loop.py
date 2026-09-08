@@ -127,6 +127,31 @@ _COMMAND_TIMEOUT_SECONDS = 1800.0
 _OUTPUT_LIMIT_BYTES = 1024 * 1024
 
 
+def _capture_bounded_output(
+    process: subprocess.Popen[bytes], deadline: float,
+    buffers: list[bytearray], truncated: list[bool],
+) -> bool:
+    """Drain both pipes within their byte budgets; return whether the deadline expired."""
+    with selectors.DefaultSelector() as selector:
+        for index, pipe in enumerate((process.stdout, process.stderr)):
+            os.set_blocking(pipe.fileno(), False)
+            selector.register(pipe, selectors.EVENT_READ, index)
+        while selector.get_map() or process.poll() is None:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return True
+            for key, _ in selector.select(min(remaining, 0.1)):
+                chunk = os.read(key.fd, 65536)
+                if not chunk:
+                    selector.unregister(key.fileobj)
+                    continue
+                index = key.data
+                available = _OUTPUT_LIMIT_BYTES - len(buffers[index])
+                buffers[index].extend(chunk[:available])
+                truncated[index] |= len(chunk) > available
+    return False
+
+
 def _default_runner(
     command: Sequence[str], repository: Path, *,
     timeout_seconds: float | None = None, env: Mapping[str, str] | None = None,
@@ -152,26 +177,8 @@ def _default_runner(
     buffers = [bytearray(), bytearray()]
     truncated = [False, False]
     deadline = time.monotonic() + timeout
-    timed_out = False
     try:
-        with selectors.DefaultSelector() as selector:
-            for index, pipe in enumerate((process.stdout, process.stderr)):
-                os.set_blocking(pipe.fileno(), False)
-                selector.register(pipe, selectors.EVENT_READ, index)
-            while selector.get_map() or process.poll() is None:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    timed_out = True
-                    break
-                for key, _ in selector.select(min(remaining, 0.1)):
-                    chunk = os.read(key.fd, 65536)
-                    if not chunk:
-                        selector.unregister(key.fileobj)
-                        continue
-                    index = key.data
-                    available = _OUTPUT_LIMIT_BYTES - len(buffers[index])
-                    buffers[index].extend(chunk[:available])
-                    truncated[index] |= len(chunk) > available
+        timed_out = _capture_bounded_output(process, deadline, buffers, truncated)
     finally:
         # Also clean up descendants after the leader exits or the caller interrupts.
         try:

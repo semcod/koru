@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-114",
+  "summary": "Separate bounded command output capture",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/loop.py",
+    "tests/test_loop.py",
+    "project/ticket-114/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0aa3f7cabf18f6ed418ce32fc15bc64e758afbe2",
+    "targetBranch": "main",
+    "outcome": "Publish behavior-preserving bounded output capture extraction and deploy an isolated local Koru pilot for Hillm.",
+    "nonGoals": [
+      "No changes to process authority, limits, deadlines, dependencies or public interfaces."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract bounded stream draining while keeping process launch and unconditional process-group cleanup in the runner.",
+      "components": [
+        {
+          "name": "bounded-command-runner",
+          "paths": [
+            "src/koru/loop.py",
+            "tests/test_loop.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_loop.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Boundary characterization before/after, Koru-driven regression checks, fresh complexity analysis and independent CI."
+      }
+    ]
+  }
+}

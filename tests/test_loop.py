@@ -179,6 +179,25 @@ class TestBoundedRunner(unittest.TestCase):
         self.assertIn("deadline exceeded", result.stderr)
         self.assertLess(time.monotonic() - start, 3)
 
+    def test_exact_byte_limit_decodes_invalid_utf8_without_truncation(self):
+        with patch("koru.loop._OUTPUT_LIMIT_BYTES", 4):
+            result = self.run_script("import os; os.write(1,b'abc\\xff'); os.write(2,b'ok')")
+        self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "abc\ufffd", "ok"))
+
+    def test_truncation_is_reported_only_for_the_overflowing_stream(self):
+        with patch("koru.loop._OUTPUT_LIMIT_BYTES", 4):
+            result = self.run_script("import os; os.write(1,b'abcde'); os.write(2,b'ok')")
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, "abcd\n[koru: output truncated]")
+        self.assertEqual(result.stderr, "ok")
+
+    def test_deadline_preserves_partial_output_from_both_streams(self):
+        with patch("koru.loop._COMMAND_TIMEOUT_SECONDS", 0.2):
+            result = self.run_script("import os,time; os.write(1,b'partial'); os.write(2,b'error'); time.sleep(60)")
+        self.assertEqual(result.returncode, 124)
+        self.assertEqual(result.stdout, "partial")
+        self.assertEqual(result.stderr, "error\n[koru: command deadline exceeded]")
+
     def test_descendant_retaining_pipes_is_terminated(self):
         with tempfile.TemporaryDirectory() as directory:
             marker = Path(directory) / "escaped"
