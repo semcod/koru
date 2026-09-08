@@ -114,6 +114,41 @@ def _explicit_project(
     return candidate
 
 
+def _select_workspace_repository(
+    workspace: Path, repositories: tuple[Path, ...], *,
+    runner: Callable[..., subprocess.CompletedProcess[str]],
+) -> Path:
+    """Select the sole dirty child or fail closed on ambiguity."""
+    dirty: list[Path] = []
+    unreadable: list[str] = []
+    for candidate in repositories:
+        state = _is_dirty(candidate, runner=runner)
+        if state is None:
+            unreadable.append(candidate.name)
+        elif state:
+            dirty.append(candidate)
+    if unreadable:
+        raise GoalProjectResolutionError(
+            "Git status failed for workspace repositories; select only after inspection",
+            workspace, tuple(unreadable),
+        )
+    if len(dirty) == 1:
+        return dirty[0]
+    if not repositories:
+        raise GoalProjectResolutionError(
+            "--project is neither a Git repository nor an umbrella with Git children", workspace,
+        )
+    if not dirty:
+        raise GoalProjectResolutionError(
+            "umbrella workspace has no dirty repository; use --repo to select one",
+            workspace, tuple(candidate.name for candidate in repositories),
+        )
+    raise GoalProjectResolutionError(
+        "umbrella workspace has multiple dirty repositories; use --repo to select one",
+        workspace, tuple(candidate.name for candidate in dirty),
+    )
+
+
 def resolve_goal_project(
     project: Path,
     repo: str | None = None,
@@ -152,36 +187,4 @@ def resolve_goal_project(
         and not child.is_symlink()
         and _is_git_root(child, runner=runner)
     )
-    dirty: list[Path] = []
-    unreadable: list[str] = []
-    for candidate in repositories:
-        state = _is_dirty(candidate, runner=runner)
-        if state is None:
-            unreadable.append(candidate.name)
-        elif state:
-            dirty.append(candidate)
-
-    if unreadable:
-        raise GoalProjectResolutionError(
-            "Git status failed for workspace repositories; select only after inspection",
-            workspace,
-            tuple(unreadable),
-        )
-    if len(dirty) == 1:
-        return dirty[0]
-    if not repositories:
-        raise GoalProjectResolutionError(
-            "--project is neither a Git repository nor an umbrella with Git children",
-            workspace,
-        )
-    if not dirty:
-        raise GoalProjectResolutionError(
-            "umbrella workspace has no dirty repository; use --repo to select one",
-            workspace,
-            tuple(candidate.name for candidate in repositories),
-        )
-    raise GoalProjectResolutionError(
-        "umbrella workspace has multiple dirty repositories; use --repo to select one",
-        workspace,
-        tuple(candidate.name for candidate in dirty),
-    )
+    return _select_workspace_repository(workspace, repositories, runner=runner)
