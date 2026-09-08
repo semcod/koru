@@ -1,0 +1,29 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-120",
+  "summary": "Separate todo2code ticket hydration policy",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": ["src/koru/queue/ticket_templates.py", "tests/test_todo2code_autonomous_gate.py", "project/ticket-120/**"],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1d9f14e3678dd30d5e6178b7571ad99ee891b1d5",
+    "targetBranch": "main",
+    "outcome": "Publish a behavior-preserving extraction of todo2code ticket hydration command construction.",
+    "nonGoals": ["No changes to execution authority, ticket schema, dependencies or public interfaces."],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {"maxImplementationFiles": 2, "maxAffectedComponents": 1, "maxPublicInterfaceChanges": 0, "maxRuntimeDependencies": 0},
+    "architecture": {"status": "accepted", "decision": "Move diagnostic verification command assembly into a focused helper while retaining hydration and fail-closed contract behavior.", "components": [{"name": "todo2code-hydration", "paths": ["src/koru/queue/ticket_templates.py", "tests/test_todo2code_autonomous_gate.py"]}], "responsibilityChanges": false, "interfaceChanges": [], "dataChanges": [], "ui": {"impact": "none", "states": [], "evidence": []}, "rollback": "Revert protected merge."},
+    "runtimeDependencies": [],
+    "validation": [{"criterion": "AC-01", "commands": ["python -m pytest -q tests/test_todo2code_autonomous_gate.py", "./project/governance-check.sh", "docker compose config --quiet"], "evidence": "Focused regression, Koru run and independent CI."}]
+  }
+}

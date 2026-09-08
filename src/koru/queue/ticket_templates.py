@@ -250,6 +250,21 @@ def hydrate_subactor_repair_ticket(ticket: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def _todo2code_verify_command(project: Path, diagnostic_ids: list[str]) -> str | None:
+    """Build the Koru verification command for validated todo2code diagnostics."""
+    if not diagnostic_ids:
+        return None
+    t2c = t2c_executable(project)
+    if not t2c:
+        return None
+    koru_source_root = str(Path(__file__).resolve().parents[2])
+    command = ["env", f"PYTHONPATH={koru_source_root}", sys.executable, "-m",
+               "koru.queue.todo2code_gate", "--project", ".", "--t2c", t2c]
+    for diagnostic_id in diagnostic_ids:
+        command.extend(["--diagnostic", diagnostic_id])
+    return shlex.join(command)
+
+
 def hydrate_todo2code_ticket(ticket: dict[str, Any], project: Path) -> dict[str, Any]:
     """Hydrate todo2code defaults without manufacturing execution authority."""
     labels = [str(label) for label in (ticket.get("labels") or [])]
@@ -295,27 +310,10 @@ def hydrate_todo2code_ticket(ticket: dict[str, Any], project: Path) -> dict[str,
         str(value) for value in (context.get("diagnostic_ids") or [])
         if re.fullmatch(r"DIAG-[a-f0-9]+", str(value))
     ]
-    if not str(inputs.get("verify_command") or "").strip() and diagnostic_ids:
-        t2c = t2c_executable(project)
-        if t2c:
-            # Verification runs in a temporary worktree of the target project.
-            # A relative developer PYTHONPATH (commonly ``src``) would then
-            # resolve against that project and make the Koru gate disappear.
-            koru_source_root = str(Path(__file__).resolve().parents[2])
-            command = [
-                "env",
-                f"PYTHONPATH={koru_source_root}",
-                sys.executable,
-                "-m",
-                "koru.queue.todo2code_gate",
-                "--project",
-                ".",
-                "--t2c",
-                t2c,
-            ]
-            for diagnostic_id in diagnostic_ids:
-                command.extend(["--diagnostic", diagnostic_id])
-            inputs["verify_command"] = shlex.join(command)
+    if not str(inputs.get("verify_command") or "").strip():
+        verify_command = _todo2code_verify_command(project, diagnostic_ids)
+        if verify_command:
+            inputs["verify_command"] = verify_command
 
     if "type:development-defect" not in lowered:
         labels.append("type:development-defect")
