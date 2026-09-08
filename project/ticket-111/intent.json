@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-111",
+  "summary": "Separate terminal shell queue projection from reconciliation",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/cycle/shell_reconciliation.py",
+    "tests/test_shell_cycle_reconciliation.py",
+    "project/ticket-111/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "dd316ccd38437b553262fa2d8ecaae8df175e9d3",
+    "targetBranch": "main",
+    "outcome": "Publish behavior-preserving separation of terminal queue projection from live shell reconciliation.",
+    "nonGoals": [
+      "No changes to live status verification, delivery authority or queue semantics."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract a pure terminal queue projection; retain status readback, failure handling and state/telemetry updates in the coordinator.",
+      "components": [
+        {
+          "name": "shell-reconciliation",
+          "paths": [
+            "src/koru/autonomy/cycle/shell_reconciliation.py",
+            "tests/test_shell_cycle_reconciliation.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_shell_cycle_reconciliation.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Public reconciliation regressions before/after; code2llm and koru checks; independent CI."
+      }
+    ]
+  }
+}
