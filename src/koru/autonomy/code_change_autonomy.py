@@ -137,6 +137,48 @@ def apply_ready_source_patches(
     return applied, skipped
 
 
+def _configure_todo2code_executor(ticket: dict[str, Any], files: list[str], contract: str) -> None:
+    """Write the bounded automatic executor configuration after eligibility passes."""
+    ticket["executor"] = {"kind": "llm", "mode": "automatic"}
+    inputs = dict(ticket.get("inputs") or {})
+    inputs.pop("llm_model", None)
+    inputs.pop("llm_max_tokens", None)
+    inputs.setdefault("include_project_context", True)
+    inputs.setdefault("context_files", files)
+    inputs["patch_mode"] = True
+    inputs.setdefault("max_patch_attempts", 3)
+    inputs.setdefault("risk_class", "R1")
+    inputs["contract"] = contract
+    ticket["inputs"] = inputs
+    execution = dict(ticket.get("execution") or {})
+    execution.setdefault("state", "ready")
+    execution["max_attempts"] = max(3, int(execution.get("max_attempts") or 1))
+    ticket["execution"] = execution
+    labels = list(ticket.get("labels") or [])
+    if "autonomous" not in labels:
+        labels.append("autonomous")
+    ticket["labels"] = labels
+
+
+def _promote_todo2code_ticket(ticket: dict[str, Any], *, project: Path, contract: str) -> bool:
+    """Apply the explicit executor, contract, and path policy to one ticket."""
+    status = str(ticket.get("status") or "").strip().lower()
+    if status in {"done", "closed", "cancelled", "canceled", "failed"}:
+        return False
+    name = str(ticket.get("name") or "")
+    source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
+    if not (name.startswith("[todo2code]") or "todo2code" in str(source.get("tool") or "")):
+        return False
+    executor = ticket.get("executor") if isinstance(ticket.get("executor"), dict) else {}
+    if str(executor.get("kind") or "human").lower() == "llm" and str(executor.get("mode") or "").lower() == "automatic":
+        return False
+    files = [str(f) for f in (ticket.get("files") or []) if str(f).strip()]
+    if not files or not all(is_useful_code_change_path(path, project=project) for path in files):
+        return False
+    _configure_todo2code_executor(ticket, files, contract)
+    return True
+
+
 def _promote_todo2code_tickets_to_llm(project: Path, *, sprint: str = "current") -> int:
     """Promote tickets only under the target's explicit executor flag and contract."""
     enabled = _config_value("KORU_TODO2CODE_LLM_EXECUTOR", project).lower()
@@ -145,59 +187,16 @@ def _promote_todo2code_tickets_to_llm(project: Path, *, sprint: str = "current")
         return 0
     try:
         import yaml
-    except Exception:  # noqa: BLE001
-        return 0
-    path = project / ".planfile" / "sprints" / f"{sprint}.yaml"
-    try:
+        path = project / ".planfile" / "sprints" / f"{sprint}.yaml"
         data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    except (OSError, Exception):  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         return 0
     sprint_data = data.get("sprint") if isinstance(data, dict) else None
     tickets = sprint_data.get("tickets") if isinstance(sprint_data, dict) else None
     if not isinstance(tickets, dict):
         return 0
-
-    changed = 0
-    for ticket in tickets.values():
-        if not isinstance(ticket, dict):
-            continue
-        status = str(ticket.get("status") or "").strip().lower()
-        if status in {"done", "closed", "cancelled", "canceled", "failed"}:
-            continue
-        name = str(ticket.get("name") or "")
-        source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
-        tool = str(source.get("tool") or "")
-        if not (name.startswith("[todo2code]") or "todo2code" in tool):
-            continue
-        executor = ticket.get("executor") if isinstance(ticket.get("executor"), dict) else {}
-        kind = str(executor.get("kind") or "human").lower()
-        if kind == "llm" and str(executor.get("mode") or "").lower() == "automatic":
-            continue
-        files = [str(f) for f in (ticket.get("files") or []) if str(f).strip()]
-        if not files or not all(
-            is_useful_code_change_path(path, project=project) for path in files
-        ):
-            continue
-        ticket["executor"] = {"kind": "llm", "mode": "automatic"}
-        inputs = dict(ticket.get("inputs") or {})
-        inputs.pop("llm_model", None)
-        inputs.pop("llm_max_tokens", None)
-        inputs.setdefault("include_project_context", True)
-        inputs.setdefault("context_files", files)
-        inputs["patch_mode"] = True
-        inputs.setdefault("max_patch_attempts", 3)
-        inputs.setdefault("risk_class", "R1")
-        inputs["contract"] = contract
-        ticket["inputs"] = inputs
-        execution = dict(ticket.get("execution") or {})
-        execution.setdefault("state", "ready")
-        execution["max_attempts"] = max(3, int(execution.get("max_attempts") or 1))
-        ticket["execution"] = execution
-        labels = list(ticket.get("labels") or [])
-        if "autonomous" not in labels:
-            labels.append("autonomous")
-        ticket["labels"] = labels
-        changed += 1
+    changed = sum(_promote_todo2code_ticket(ticket, project=project, contract=contract)
+                  for ticket in tickets.values() if isinstance(ticket, dict))
     if changed:
         try:
             path.write_text(
