@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-105",
+  "summary": "Decompose todo2code duplicate detection",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/todo2code_discovery.py",
+    "tests/test_todo2code_dedupe.py",
+    "project/ticket-105/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "49539d11732f2b2a99e61659aebb12314f92a8ad",
+    "targetBranch": "main",
+    "outcome": "Publish behavior-preserving decomposition of existing todo2code ticket identity collection.",
+    "nonGoals": [
+      "No changes to duplicate identity, authority, discovery state or c2004 sources"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Separate best-effort sprint reading from per-ticket duplicate identity collection, preserving original input normalization and exception boundaries.",
+      "components": [
+        {
+          "name": "todo2code-dedupe",
+          "paths": [
+            "src/koru/autonomy/todo2code_discovery.py",
+            "tests/test_todo2code_dedupe.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_todo2code_dedupe.py tests/test_todo2code_discovery.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Dedupe characterization before/after; code2llm complexity; koru tests and independent CI."
+      }
+    ]
+  }
+}
