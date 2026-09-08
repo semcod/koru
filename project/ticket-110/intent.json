@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-110",
+  "summary": "Separate ticket work unit rendering from selection",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/ticket2dsl.py",
+    "tests/test_ticket2dsl.py",
+    "project/ticket-110/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f2b84989d2062a20a8f1c9ecd5370032a9b6a0ab",
+    "targetBranch": "main",
+    "outcome": "Publish behavior-preserving separation of ticket work unit rendering and selection.",
+    "nonGoals": [
+      "No changes to filtering, scores, output schemas or runtime dependencies."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract work unit rendering into a private helper; retain filtering and stable sorting in build_work_units.",
+      "components": [
+        {
+          "name": "ticket2dsl",
+          "paths": [
+            "src/koru/autonomy/ticket2dsl.py",
+            "tests/test_ticket2dsl.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_ticket2dsl.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Public work unit characterization before/after, fresh code2llm, koru regressions and independent CI."
+      }
+    ]
+  }
+}

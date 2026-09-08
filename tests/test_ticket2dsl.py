@@ -86,3 +86,64 @@ def test_disabled_via_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     outcome = t2d.run_ticket2dsl(tmp_path)
     assert outcome.ran is False
     assert "disabled" in (outcome.skipped_reason or "")
+
+
+def test_complete_work_unit_contract(tmp_path: Path) -> None:
+    _write_sprint(tmp_path, {
+        "PLF-1": {
+            "name": "[todo2code] Implement rate limiter",
+            "status": "open", "priority": "high", "files": ["src/rate.py"],
+            "description": "Add rate limiter", "labels": ["backend", " ", 7],
+            "source": {"tool": "koru-todo2code-discovery", "context": {
+                "plan_id": "CPLAN-abc", "plan_hash": "a" * 64,
+                "diagnostic_ids": ["DIAG-1"],
+            }},
+        },
+    })
+    units, filtered = t2d.build_work_units(tmp_path, only_todo2code=True)
+    assert filtered == 0
+    assert units == [{
+        "schemaVersion": "koru.ticket-work-unit/v1",
+        "id": "TWU-359e65c719be98b5",
+        "ticketId": "PLF-1", "title": "[todo2code] Implement rate limiter",
+        "description": "Add rate limiter", "priority": "high", "status": "open",
+        "paths": ["src/rate.py"], "labels": ["backend", "7"],
+        "sourceTool": "koru-todo2code-discovery", "planId": "CPLAN-abc",
+        "planHash": "a" * 64, "diagnosticIds": ["DIAG-1"], "usefulnessScore": 20.0,
+        "planfileDsl": ["start ticket PLF-1", "show ticket PLF-1",
+                        "# implement paths: src/rate.py", "done ticket PLF-1"],
+        "acceptanceHints": [
+            "Implement only the declared paths.",
+            "Re-run project checks / t2c evaluate-code-change when a planHash is present.",
+            "Close with planfile: done ticket PLF-1",
+        ],
+    }]
+
+
+@pytest.mark.parametrize("source", [None, "external", {"context": "invalid"}])
+def test_work_unit_defaults(tmp_path: Path, source: object) -> None:
+    _write_sprint(tmp_path, {"PLF-1": {"paths": "src/a.py", "source": source}})
+    units, filtered = t2d.build_work_units(tmp_path)
+    assert filtered == 0
+    unit = units[0]
+    assert unit["title"] == "Work unit for PLF-1"
+    assert unit["description"] == ""
+    assert unit["priority"] == "normal"
+    assert unit["status"] == "open"
+    assert unit["labels"] == unit["diagnosticIds"] == []
+    assert unit["sourceTool"] is unit["planId"] is unit["planHash"] is None
+
+
+@pytest.mark.parametrize("limit, expected", [(0, ["PLF-2"]), (3, ["PLF-2", "PLF-3", "PLF-1"])])
+def test_work_unit_stable_ranking_and_filter_count(tmp_path: Path, limit: int, expected: list[str]) -> None:
+    _write_sprint(tmp_path, {
+        "PLF-1": {"name": "[todo2code] low", "files": ["src/a.py"], "priority": "low"},
+        "PLF-2": {"source": {"tool": "todo2code"}, "files": ["src/b.py"], "priority": "high"},
+        "PLF-3": {"name": "[todo2code] high", "files": ["src/c.py"], "priority": "high"},
+        "PLF-4": {"name": "[todo2code] empty", "files": []},
+        "PLF-5": {"name": "[todo2code] done", "files": ["src/d.py"], "status": "done"},
+        "PLF-6": {"files": ["src/e.py"]},
+    })
+    units, filtered = t2d.build_work_units(tmp_path, only_todo2code=True, max_units=limit)
+    assert [unit["ticketId"] for unit in units] == expected
+    assert filtered == 1
