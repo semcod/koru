@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-102",
+  "summary": "Decompose todo2code ticket text rendering",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/todo2code_discovery.py",
+    "tests/test_todo2code_ticket_text.py",
+    "project/ticket-102/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "cf35ae18d5d01ad9cf2414bf3e775aea48084658",
+    "targetBranch": "main",
+    "outcome": "Publish behavior-preserving decomposition of todo2code ticket rendering verified through koru and protected review.",
+    "nonGoals": [
+      "No changes to plan authority, discovery, accepted paths or c2004 sources"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract rendering sections while preserving exact text, malformed-input handling and declared-path restriction.",
+      "components": [
+        {
+          "name": "todo2code-rendering",
+          "paths": [
+            "src/koru/autonomy/todo2code_discovery.py",
+            "tests/test_todo2code_ticket_text.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_todo2code_ticket_text.py tests/test_todo2code_discovery.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Exact text characterization before and after extraction; fresh code2llm complexity analysis; tests through koru and independent publication."
+      }
+    ]
+  }
+}

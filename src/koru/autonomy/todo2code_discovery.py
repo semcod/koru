@@ -287,12 +287,8 @@ def _ticket_title(plan: dict[str, Any]) -> str:
     return _truncate(f"[todo2code] {raw}", 160)
 
 
-def _ticket_text(plan: dict[str, Any], *, plans_rel: str) -> str:
+def _ticket_plan_lines(plan: dict[str, Any], *, plans_rel: str) -> list[str]:
     lines: list[str] = []
-    description = str(plan.get("description") or "").strip()
-    title = str(plan.get("title") or "").strip()
-    lines.append(description or title or "Implement grounded todo2code code-change plan.")
-
     plan_id = str(plan.get("id") or "").strip()
     plan_hash = str(plan.get("planHash") or "").strip()
     if plan_id or plan_hash:
@@ -308,6 +304,11 @@ def _ticket_text(plan: dict[str, Any], *, plans_rel: str) -> str:
         lines.append("Target paths:")
         lines.extend(f"- {path}" for path in paths)
 
+    return lines
+
+
+def _ticket_change_lines(plan: dict[str, Any]) -> list[str]:
+    lines: list[str] = []
     changes = plan.get("changes") if isinstance(plan.get("changes"), list) else []
     change_lines: list[str] = []
     for change in changes:
@@ -328,12 +329,11 @@ def _ticket_text(plan: dict[str, Any], *, plans_rel: str) -> str:
         lines.append("Proposed changes:")
         lines.extend(change_lines)
 
-    criteria = _string_list(plan.get("acceptanceCriteria"))
-    if criteria:
-        lines.append("")
-        lines.append("Acceptance criteria:")
-        lines.extend(f"- {item}" for item in criteria)
+    return lines
 
+
+def _ticket_risk_lines(plan: dict[str, Any]) -> list[str]:
+    lines: list[str] = []
     risk = plan.get("risk") if isinstance(plan.get("risk"), dict) else {}
     risk_level = str(risk.get("level") or "").strip()
     risk_reasons = _string_list(risk.get("reasons"))
@@ -342,6 +342,11 @@ def _ticket_text(plan: dict[str, Any], *, plans_rel: str) -> str:
         lines.append(f"Risk: {risk_level or 'unknown'}")
         lines.extend(f"- {reason}" for reason in risk_reasons)
 
+    return lines
+
+
+def _ticket_recovery_lines(plan: dict[str, Any]) -> list[str]:
+    lines: list[str] = []
     rollback = str(plan.get("rollback") or "").strip()
     if rollback:
         lines.append("")
@@ -353,6 +358,27 @@ def _ticket_text(plan: dict[str, Any], *, plans_rel: str) -> str:
         lines.append("")
         lines.append("Diagnostics:")
         lines.extend(f"- {diag}" for diag in diagnostic_ids)
+
+    return lines
+
+
+def _ticket_text(plan: dict[str, Any], *, plans_rel: str) -> str:
+    lines: list[str] = []
+    description = str(plan.get("description") or "").strip()
+    title = str(plan.get("title") or "").strip()
+    lines.append(description or title or "Implement grounded todo2code code-change plan.")
+
+    lines.extend(_ticket_plan_lines(plan, plans_rel=plans_rel))
+    lines.extend(_ticket_change_lines(plan))
+
+    criteria = _string_list(plan.get("acceptanceCriteria"))
+    if criteria:
+        lines.append("")
+        lines.append("Acceptance criteria:")
+        lines.extend(f"- {item}" for item in criteria)
+
+    lines.extend(_ticket_risk_lines(plan))
+    lines.extend(_ticket_recovery_lines(plan))
 
     lines.append("")
     lines.append(
