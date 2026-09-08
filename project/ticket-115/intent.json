@@ -1,0 +1,35 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-115",
+  "summary": "Separate todo2code ticket promotion policy",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": ["src/koru/autonomy/code_change_autonomy.py", "tests/test_code_change_autonomy.py", "project/ticket-115/**"],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "198dd4a795feed93a48b76d370563b5f4b65fd18",
+    "targetBranch": "main",
+    "outcome": "Publish a behavior-preserving extraction of the todo2code ticket promotion policy.",
+    "nonGoals": ["No changes to executor authority, path eligibility, dependencies or public interfaces."],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {"maxImplementationFiles": 2, "maxAffectedComponents": 1, "maxPublicInterfaceChanges": 0, "maxRuntimeDependencies": 0},
+    "architecture": {
+      "status": "accepted",
+      "decision": "Move single-ticket eligibility and mutation into a focused helper while retaining file loading and persistence orchestration.",
+      "components": [{"name": "todo2code-promotion", "paths": ["src/koru/autonomy/code_change_autonomy.py", "tests/test_code_change_autonomy.py"]}],
+      "responsibilityChanges": false, "interfaceChanges": [], "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []}, "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [{"criterion": "AC-01", "commands": ["python -m pytest -q tests/test_code_change_autonomy.py", "./project/governance-check.sh", "docker compose config --quiet"], "evidence": "Characterization tests, Koru regression run, fresh analysis and independent CI."}]
+  }
+}
