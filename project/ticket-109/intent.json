@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-109",
+  "summary": "Separate queued execution plan construction",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/execution_plan.py",
+    "tests/test_queued_execution_steps.py",
+    "project/ticket-109/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "03b4c1a5cf15364483137ee1e519e97a5b3f8fb7",
+    "targetBranch": "main",
+    "outcome": "Publish behavior-preserving queued execution plan decomposition.",
+    "nonGoals": [
+      "No changes to profile order, fallback policy, commands or daemon compatibility"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract queued ticket step construction while preserving repo resolution, fallback profiles, manual default step and compiler summaries.",
+      "components": [
+        {
+          "name": "queue-plan",
+          "paths": [
+            "src/koru/autonomy/execution_plan.py",
+            "tests/test_queued_execution_steps.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_queued_execution_steps.py tests/test_execution_plan.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Queued compiler characterization before/after; code2llm complexity; koru tests and independent CI."
+      }
+    ]
+  }
+}

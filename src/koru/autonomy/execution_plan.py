@@ -317,6 +317,39 @@ def _workflow_steps(
     return steps
 
 
+def _queued_ticket_steps(
+    project: Path, selected: dict[str, Any], phase: str,
+) -> list[ExecutionStep]:
+    repo = Path(resolve_ticket_repo(project, selected) or project)
+    profile_id, profile = _select_profile(selected, phase)
+    if profile is None:
+        profiles_doc = _load_task_profiles()
+        fallback_id = _fallback_profile_id(profiles_doc)
+        profile = (profiles_doc.get("profiles") or {}).get(fallback_id)
+        profile_id = fallback_id if isinstance(profile, dict) else None
+    if isinstance(profile, dict):
+        steps = _workflow_steps(
+            profile,
+            project=project,
+            repo=repo,
+            ticket=selected,
+            profile_id=profile_id or "generic",
+            phase=phase,
+        )
+    else:
+        steps = [
+            ExecutionStep(
+                id="work_ticket",
+                kind="ide_work",
+                reason="Runnable planfile ticket without a matching profile.",
+                ticket_id=str(selected.get("id")),
+                repo=str(repo.resolve()),
+                hint=_ticket_name(selected),
+            ),
+        ]
+    return steps
+
+
 def compile_execution_plan(project: Path) -> ExecutionPlan:
     project = project.resolve()
     strategy = load_autonomy_strategy(project) or {}
@@ -345,33 +378,7 @@ def compile_execution_plan(project: Path) -> ExecutionPlan:
     if open_tickets:
         phase = "planfile_queue"
         selected = open_tickets[0]
-        repo = Path(resolve_ticket_repo(project, selected) or project)
-        profile_id, profile = _select_profile(selected, phase)
-        if profile is None:
-            profiles_doc = _load_task_profiles()
-            fallback_id = _fallback_profile_id(profiles_doc)
-            profile = (profiles_doc.get("profiles") or {}).get(fallback_id)
-            profile_id = fallback_id if isinstance(profile, dict) else None
-        if isinstance(profile, dict):
-            steps = _workflow_steps(
-                profile,
-                project=project,
-                repo=repo,
-                ticket=selected,
-                profile_id=profile_id or "generic",
-                phase=phase,
-            )
-        else:
-            steps = [
-                ExecutionStep(
-                    id="work_ticket",
-                    kind="ide_work",
-                    reason="Runnable planfile ticket without a matching profile.",
-                    ticket_id=str(selected.get("id")),
-                    repo=str(repo.resolve()),
-                    hint=_ticket_name(selected),
-                ),
-            ]
+        steps = _queued_ticket_steps(project, selected, phase)
     else:
         for phase_name in order:
             if phase_name in {"idle_scan", "whole_project_discovery"}:
