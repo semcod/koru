@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-100",
+  "summary": "Decompose plan usefulness scoring without changing rankings",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/code_change_usefulness.py",
+    "tests/test_plan_usefulness_scoring.py",
+    "project/ticket-100/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8dca5a7267796ab8bf119a4cea31935ece78fc75",
+    "targetBranch": "main",
+    "outcome": "Publish a behavior-preserving decomposition of plan usefulness scoring, verified through koru and protected review.",
+    "nonGoals": [
+      "No policy, path acceptance or c2004 source changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Separate evidence, path and symbol scoring while preserving numeric weights, ordering, filtering and public API.",
+      "components": [
+        {
+          "name": "plan-usefulness",
+          "paths": [
+            "src/koru/autonomy/code_change_usefulness.py",
+            "tests/test_plan_usefulness_scoring.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_code_change_usefulness.py tests/test_plan_usefulness_scoring.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Exact-score characterization and eligibility thresholds; fresh code2llm before/after; koru single-repository execution."
+      }
+    ]
+  }
+}
