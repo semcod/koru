@@ -164,6 +164,41 @@ def _unit_score(ticket: dict[str, Any], files: list[str]) -> float:
     return score
 
 
+def _render_work_unit(
+    ticket_id: str, ticket: dict[str, Any], files: list[str],
+    source: dict[str, Any], source_tool: str, name: str, score: float,
+) -> dict[str, Any]:
+    """Render the work-unit contract for an already selected ticket."""
+    context = source.get("context") if isinstance(source.get("context"), dict) else {}
+    return {
+        "schemaVersion": "koru.ticket-work-unit/v1",
+        "id": _unit_id(ticket_id, files),
+        "ticketId": ticket_id,
+        "title": name or f"Work unit for {ticket_id}",
+        "description": _ticket_text(ticket),
+        "priority": _ticket_priority(ticket),
+        "status": _ticket_status(ticket) or "open",
+        "paths": files,
+        "labels": [str(x) for x in (ticket.get("labels") or []) if str(x).strip()],
+        "sourceTool": source_tool or None,
+        "planId": context.get("plan_id"),
+        "planHash": context.get("plan_hash"),
+        "diagnosticIds": list(context.get("diagnostic_ids") or []),
+        "usefulnessScore": round(score, 2),
+        "planfileDsl": [
+            f'start ticket {ticket_id}',
+            f'show ticket {ticket_id}',
+            f'# implement paths: {", ".join(files)}',
+            f'done ticket {ticket_id}',
+        ],
+        "acceptanceHints": [
+            "Implement only the declared paths.",
+            "Re-run project checks / t2c evaluate-code-change when a planHash is present.",
+            f"Close with planfile: done ticket {ticket_id}",
+        ],
+    }
+
+
 def build_work_units(
     project: Path,
     *,
@@ -193,34 +228,7 @@ def build_work_units(
             filtered += 1
             continue
         score = _unit_score(ticket, files)
-        context = source.get("context") if isinstance(source.get("context"), dict) else {}
-        unit = {
-            "schemaVersion": "koru.ticket-work-unit/v1",
-            "id": _unit_id(ticket_id, files),
-            "ticketId": ticket_id,
-            "title": name or f"Work unit for {ticket_id}",
-            "description": _ticket_text(ticket),
-            "priority": _ticket_priority(ticket),
-            "status": _ticket_status(ticket) or "open",
-            "paths": files,
-            "labels": [str(x) for x in (ticket.get("labels") or []) if str(x).strip()],
-            "sourceTool": source_tool or None,
-            "planId": context.get("plan_id"),
-            "planHash": context.get("plan_hash"),
-            "diagnosticIds": list(context.get("diagnostic_ids") or []),
-            "usefulnessScore": round(score, 2),
-            "planfileDsl": [
-                f'start ticket {ticket_id}',
-                f'show ticket {ticket_id}',
-                f'# implement paths: {", ".join(files)}',
-                f'done ticket {ticket_id}',
-            ],
-            "acceptanceHints": [
-                "Implement only the declared paths.",
-                "Re-run project checks / t2c evaluate-code-change when a planHash is present.",
-                f"Close with planfile: done ticket {ticket_id}",
-            ],
-        }
+        unit = _render_work_unit(ticket_id, ticket, files, source, source_tool, name, score)
         candidates.append((score, unit))
 
     candidates.sort(key=lambda item: item[0], reverse=True)
