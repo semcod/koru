@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-108",
+  "summary": "Separate daemon interpreter compatibility",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/autonomy/operator/operator_daemon.py",
+    "tests/test_daemon_python_compatibility.py",
+    "project/ticket-108/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "7102b69ed8961d55b09164da177cb304411f1d6d",
+    "targetBranch": "main",
+    "outcome": "Publish behavior-preserving daemon interpreter compatibility decomposition.",
+    "nonGoals": [
+      "No daemon lifecycle effects, compatibility policy changes or c2004 edits"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract interpreter identity matching while preserving resolved paths, python/python3 aliases, version/project precedence and diagnostic text.",
+      "components": [
+        {
+          "name": "daemon-compatibility",
+          "paths": [
+            "src/koru/autonomy/operator/operator_daemon.py",
+            "tests/test_daemon_python_compatibility.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_daemon_python_compatibility.py tests/test_autonomous_readiness.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Compatibility boundary tests before/after; code2llm complexity; koru tests and independent CI."
+      }
+    ]
+  }
+}
