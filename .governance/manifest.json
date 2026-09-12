@@ -84,6 +84,12 @@
       },
       "integration": {
         "ownedPaths": [
+          ".governance/manifest.json",
+          ".governance/manifest.base.json",
+          ".governance/manifest.lock.json",
+          ".governance/package-manifest.json",
+          ".governance/standard-adoption.json",
+          ".governance/standard-pack-evidence/**",
           ".coverage_data/**",
           ".tmp/code2llm-plugins/**",
           "SUMD.md",
@@ -231,7 +237,7 @@
   ],
   "standard": {
     "id": "wellmanifest/new-project",
-    "version": "0.20.13"
+    "version": "0.20.25"
   },
   "ticket": {
     "activeStatuses": [
@@ -241,7 +247,7 @@
       "DONE",
       "CANCELLED"
     ],
-    "directoryPattern": "^ticket-[0-9]{3}$",
+    "directoryPattern": "^ticket-[0-9]{3,}$",
     "implementationStates": [
       "EDIT",
       "VALIDATION",
