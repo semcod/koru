@@ -15,6 +15,9 @@
     ".governance/manifest.base.json",
     ".governance/manifest.lock.json",
     ".governance/package-manifest.json",
+    ".governance/standard-adoption.json",
+    ".governance/standard-pack-evidence/new-project.json",
+    ".governance/standard-pack-evidence/worktrees.json",
     "pyproject.toml",
     "package.json"
   ],
@@ -52,7 +55,7 @@
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Advance the pinned standard with `goal governance adopt --source-revision d54878a…` and realign both packaging pins with the regenerated lock. The managed payload is covered by the atomic adoption proof; this ticket owns only the repository instance files that proof does not cover. Because the packaging pins are integration-required, the ticket runs in the integration workstream and the manifest instance files are added to integration.ownedPaths so one atomic adoption is not split across two workstreams.",
+      "decision": "Advance the pinned standard with `goal governance adopt --source-revision d54878a…` and realign both packaging pins with the regenerated lock. The managed payload is covered by the atomic adoption proof; this ticket owns only the repository instance files that proof does not cover. Because the packaging pins are integration-required, the ticket runs in the integration workstream and the manifest instance files are added to integration.ownedPaths so one atomic adoption is not split across two workstreams. The adoption also advances `.governance/worktrees.schema.json`, `.governance/worktree_path_check.py` and `.governance/standard_pack_check.py`, which the repository-owned standard pack registry binds by immutable revision and digest; `goal` does not maintain that registry, so this ticket carries its refresh to `wellmanifest/worktrees` 0.5.3 and `wellmanifest/new-project` 0.20.25 with the upstream CI receipts that bind those revisions. Splitting it out would leave `enforce` mode reporting STD-ADOPTION-DRIFT on the very files this adoption moves.",
       "components": [
         {
           "name": "governance-instance",
@@ -61,6 +64,8 @@
             ".governance/manifest.base.json",
             ".governance/manifest.lock.json",
             ".governance/package-manifest.json",
+            ".governance/standard-adoption.json",
+            ".governance/standard-pack-evidence/**",
             "project/**"
           ]
         },

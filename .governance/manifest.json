@@ -88,6 +88,8 @@
           ".governance/manifest.base.json",
           ".governance/manifest.lock.json",
           ".governance/package-manifest.json",
+          ".governance/standard-adoption.json",
+          ".governance/standard-pack-evidence/**",
           ".coverage_data/**",
           ".tmp/code2llm-plugins/**",
           "SUMD.md",
