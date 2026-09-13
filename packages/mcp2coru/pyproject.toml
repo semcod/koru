@@ -13,7 +13,7 @@ dependencies = [
     "mcp2koru>=0.1.0",
     "dsl2coru>=0.1.0",
     "nlp2coru>=0.1.0",
-    "mcp>=1.0",
+    "mcp>=1.0,<2",
 ]
 
 [project.scripts]
