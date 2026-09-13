@@ -1,0 +1,71 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-126",
+  "summary": "Add dependabot for internal packages",
+  "workstream": "infrastructure",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    ".github/dependabot.yml",
+    "project/ticket-126/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "26e74639c8c42f1b89a5ac877c99a820b5f5dac2",
+    "targetBranch": "main",
+    "outcome": "Add .github/dependabot.yml enabling scheduled uv updates for internal packages (koruenv, korullm, mcp2koru).",
+    "nonGoals": [
+      "No source or packaging changes."
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Fleet dependabot convention: uv ecosystem, weekly cron, internal allow-list, chore(deps) prefix.",
+      "components": [
+        {
+          "name": "dependabot-config",
+          "paths": [
+            ".github/dependabot.yml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance gate on the PR head."
+      }
+    ]
+  }
+}
