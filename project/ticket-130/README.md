@@ -23,6 +23,8 @@ LLM queue lane and preserve the proposal as local runtime evidence.
   rejected without a ticket write.
 - [x] AC-04: Focused tests, Ruff, the managed governance check, stack checks
   and Docker Compose validation pass.
+- [x] AC-05: Automatic queue state is kept in local Git runtime excludes so a
+  later Goal run does not report Koru's own Planfile state as implementation.
 
 ## Authorization
 
@@ -31,7 +33,8 @@ implementation and testing of Goal-to-Planfile-to-Koru remediation.
 
 ## Validation evidence
 
-Feature and CLI suite: 76 passed, 53 subtests passed. The full Koru suite
+Feature and CLI suite: 76 passed, 53 subtests passed; the focused remediation
+suite remains green after the runtime-exclude guard. The full Koru suite
 reached 4087 passed, 9 skipped, 165 deselected and 6 failures; after the new
 dispatcher contract was updated, the remaining five failures are unrelated
 existing socket, metadata and provider cases. Ruff,

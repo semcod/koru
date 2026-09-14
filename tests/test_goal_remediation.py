@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -99,6 +100,7 @@ def test_proposal_must_be_inside_target_project(tmp_path: Path) -> None:
 def test_cli_writes_the_delegated_ticket_to_planfile(tmp_path: Path, capsys) -> None:
     project = tmp_path / "project"
     project.mkdir()
+    subprocess.run(["git", "init", "--quiet"], cwd=project, check=True)
     proposal_path = _write_proposal(project)
 
     assert (
@@ -121,3 +123,22 @@ def test_cli_writes_the_delegated_ticket_to_planfile(tmp_path: Path, capsys) -> 
     assert "PLF-001" in sprint
     assert "executor" in sprint
     assert "llm" in sprint
+    exclude = subprocess.run(
+        ["git", "rev-parse", "--git-path", "info/exclude"],
+        cwd=project,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    excluded = Path(exclude if Path(exclude).is_absolute() else project / exclude)
+    contents = excluded.read_text(encoding="utf-8")
+    assert ".planfile/" in contents
+    assert ".koru/" in contents
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=all"],
+        cwd=project,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert status.stdout == ""

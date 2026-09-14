@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import subprocess
 import sys
 from collections.abc import Callable
 from contextlib import redirect_stdout
@@ -38,6 +39,43 @@ class GoalRemediationTicket:
 
 class GoalProposalError(ValueError):
     """Raised when a Goal proposal is not safe to consume."""
+
+
+_LOCAL_RUNTIME_EXCLUDES = (".planfile/", ".koru/")
+
+
+def _exclude_local_runtime(project: Path) -> None:
+    """Keep Koru's local queue state out of the target's implementation diff."""
+    result = subprocess.run(
+        ["git", "rev-parse", "--git-path", "info/exclude"],
+        cwd=project,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0 or not result.stdout.strip():
+        return
+    raw_path = Path(result.stdout.strip())
+    exclude_path = raw_path if raw_path.is_absolute() else project / raw_path
+    try:
+        existing = exclude_path.read_text(encoding="utf-8") if exclude_path.exists() else ""
+        lines = set(existing.splitlines())
+        additions = [pattern for pattern in _LOCAL_RUNTIME_EXCLUDES if pattern not in lines]
+        if not additions:
+            return
+        prefix = "" if not existing or existing.endswith("\n") else "\n"
+        block = (
+            prefix
+            + "# Koru/Goal local remediation queue runtime\n"
+            + "\n".join(additions)
+            + "\n"
+        )
+        exclude_path.parent.mkdir(parents=True, exist_ok=True)
+        with exclude_path.open("a", encoding="utf-8") as stream:
+            stream.write(block)
+    except OSError:
+        # A read-only or nonstandard checkout must not prevent ticket intake.
+        return
 
 
 def _proposal_path(project: Path, raw_path: Path) -> Path:
@@ -120,6 +158,7 @@ def consume_goal_proposal(
         priority=proposal.priority,
         scaffold=scaffold,
     )
+    _exclude_local_runtime(project)
     return GoalRemediationTicket(
         ticket_id=created.ticket_id,
         name=created.name,
