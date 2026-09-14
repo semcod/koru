@@ -125,4 +125,5 @@ project analysis or human-owned ticket inputs.
 | **ticket-118** | [`README.md`](./ticket-118/README.md) | - | - | - | - | - |
 | **ticket-119** | [`README.md`](./ticket-119/README.md) | - | - | - | - | - |
 | **ticket-120** | [`README.md`](./ticket-120/README.md) | - | - | - | - | - |
+| **ticket-124** | [`README.md`](./ticket-124/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->
