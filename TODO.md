@@ -6,10 +6,14 @@
   State: `IN_PROGRESS / PUBLICATION`; 8 focused tests, Ruff, governance,
   Docker Compose and compileall pass; classification: `BUG / P1 / requested`.
 
-- [ ] [`ticket-029`](project/ticket-029/README.md) — implement two-hour leased
-  Planfile execution, one Living Status projection and SLA human triage.
-  State: `IN_PROGRESS / VALIDATION`; local deterministic gates pass and
-  protected publication is pending.
+- [ ] [`ticket-029`](project/ticket-029/README.md) — implement one-hour leased
+  Planfile execution, a ten-minute takeover grace period and one deduplicated
+  handoff notice without granting write authority.
+  State: `IN_PROGRESS / PUBLICATION`; focused and full deterministic gates pass;
+  baseline-only failures remain in unrelated pre-existing tests.
+- [ ] ticket-128 (project/ticket-128/README.md) — scan adopted Wellmanifest
+  pins in parallel and emit deduplicated waiting-input adoption tickets.
+  State: IN_PROGRESS / PUBLICATION; scanner never mutates adopter repositories.
 - [ ] [`ticket-028`](project/ticket-028/README.md) — adopt immutable
   `new-project` 0.19.19 and its resumable, conflict-safe delivery contracts.
   State: `IN_PROGRESS / PUBLICATION`; Draft PR #62 has received the streamed

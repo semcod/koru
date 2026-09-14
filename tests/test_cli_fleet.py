@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -13,6 +14,7 @@ from koru.cli_fleet import (
     discover_projects,
     fleet_main,
 )
+from koru.standard_fleet import StandardFleetReport, StandardRelease
 
 
 def _make_policy_project(root: Path, *parts: str) -> Path:
@@ -148,3 +150,61 @@ class TestFleetMain:
     def test_missing_subcommand_errors(self) -> None:
         with pytest.raises(SystemExit):
             fleet_main([])
+
+    def test_standard_update_requires_planfile_for_ticket_emission(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture
+    ) -> None:
+        rc = fleet_main(
+            [
+                "standard-update",
+                "--standard-root",
+                str(tmp_path),
+                "--emit-tickets",
+            ]
+        )
+        assert rc == 2
+        assert "--planfile-project is required" in capsys.readouterr().err
+
+    def test_standard_update_json_dispatches_read_only_scan(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+    ) -> None:
+        release = StandardRelease("0.20.29", "a" * 40, tmp_path / "standard")
+        expected = StandardFleetReport(
+            workspace=tmp_path,
+            standard=release,
+            repositories=1,
+            current=1,
+            candidates=(),
+        )
+        observed: dict[str, object] = {}
+
+        def fake_scan(workspace: Path, standard_root: Path, *, workers: int) -> StandardFleetReport:
+            observed.update(
+                workspace=workspace,
+                standard_root=standard_root,
+                workers=workers,
+            )
+            return expected
+
+        monkeypatch.setattr("koru.standard_fleet.scan_standard_fleet", fake_scan)
+        rc = fleet_main(
+            [
+                "standard-scan",
+                str(tmp_path),
+                "--standard-root",
+                str(tmp_path / "standard"),
+                "--workers",
+                "3",
+                "--format",
+                "json",
+            ]
+        )
+        payload = json.loads(capsys.readouterr().out)
+        assert rc == 0
+        assert observed == {
+            "workspace": tmp_path,
+            "standard_root": tmp_path / "standard",
+            "workers": 3,
+        }
+        assert payload["schema"] == "koru.standard-fleet-report/v1"
+        assert payload["current"] == 1

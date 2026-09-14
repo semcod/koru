@@ -1,7 +1,7 @@
 {
   "schema": "new-project.intent/v3",
   "ticket": "ticket-029",
-  "summary": "Implement leased issue execution and living status",
+  "summary": "Implement expiring issue execution leases and safe handoff notices",
   "workstream": "application",
   "classification": {
     "kind": "FEATURE",
@@ -16,11 +16,15 @@
     "src/koru/queue/living_status.py",
     "src/koru/queue/runner.py",
     "src/koru/autonomy/ide_work.py",
+    "src/koru/autonomy/execution_lease_watcher.py",
     "src/koru/autonomy/phases/queue_phase.py",
+    "src/koru/task_ticket.py",
     "src/koru/watch.py",
     "tests/test_queue_living_status.py",
     "tests/test_planfile_queue.py",
     "tests/test_ide_work.py",
+    "tests/test_execution_lease_watcher.py",
+    "tests/test_tasks.py",
     "tests/test_watch.py"
   ],
   "forbiddenPaths": ["project/ticket-*/user-*.md"],
@@ -29,9 +33,9 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "8bc9775c76e64289886f09783b7568631ed99873",
+    "acceptedBaseSha": "cd6b9a9b06bca0d3a12b352cfd44ea9f4c1d3f07",
     "targetBranch": "main",
-    "outcome": "Koru claims Planfile work for two hours, projects one transport-neutral Living Status and escalates expired work to human triage.",
+    "outcome": "Koru claims Planfile work for one hour, waits ten minutes before handoff eligibility, emits one deduplicated non-runnable notice and preserves fail-closed fencing authority.",
     "nonGoals": [
       "Implement the Subactor chat UI",
       "Call GitHub Issues directly from a Koru worker",
@@ -56,7 +60,17 @@
         },
         {
           "name": "autonomous-sla-triage",
-          "paths": ["src/koru/autonomy/**", "tests/test_ide_work.py"]
+          "paths": ["src/koru/autonomy/ide_work.py", "tests/test_ide_work.py"]
+        },
+        {
+          "name": "execution-lease-handoff",
+          "paths": [
+            "src/koru/autonomy/execution_lease_watcher.py",
+            "src/koru/autonomy/phases/queue_phase.py",
+            "src/koru/task_ticket.py",
+            "tests/test_execution_lease_watcher.py",
+            "tests/test_tasks.py"
+          ]
         },
         {
           "name": "status-observation",
@@ -65,7 +79,8 @@
       ],
       "responsibilityChanges": false,
       "interfaceChanges": [
-        "KORU_TICKET_LEASE_SECONDS defaults to 7200",
+        "KORU_TICKET_LEASE_SECONDS defaults to 3600",
+        "Lease expiry produces a takeover notice after 600 seconds of grace",
         "Planfile descriptions gain one koru:living-status marker block"
       ],
       "dataChanges": [],
@@ -76,12 +91,12 @@
     "validation": [
       {
         "criterion": "AC-02",
-        "commands": ["python -m pytest -q tests/test_queue_living_status.py tests/test_planfile_queue.py tests/test_ide_work.py tests/test_watch.py"],
+        "commands": ["python -m pytest -q tests/test_queue_living_status.py tests/test_planfile_queue.py tests/test_ide_work.py tests/test_watch.py tests/test_execution_lease_watcher.py tests/test_tasks.py"],
         "evidence": "protected OneDev status and validator receipt"
       },
       {
         "criterion": "AC-07",
-        "commands": ["python -m ruff check src/koru/queue/locking.py src/koru/queue/living_status.py src/koru/queue/runner.py src/koru/autonomy/ide_work.py src/koru/autonomy/phases/queue_phase.py src/koru/watch.py tests/test_queue_living_status.py tests/test_ide_work.py tests/test_watch.py", "./project/governance-check.sh", "docker compose config --quiet"],
+        "commands": ["python -m ruff check src/koru/queue/locking.py src/koru/queue/living_status.py src/koru/queue/runner.py src/koru/autonomy/ide_work.py src/koru/autonomy/execution_lease_watcher.py src/koru/autonomy/phases/queue_phase.py src/koru/task_ticket.py src/koru/watch.py tests/test_queue_living_status.py tests/test_ide_work.py tests/test_watch.py tests/test_execution_lease_watcher.py tests/test_tasks.py", "./project/governance-check.sh", "docker compose config --quiet"],
         "evidence": "protected OneDev status and validator receipt"
       }
     ]
