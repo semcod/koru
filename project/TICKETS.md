@@ -133,5 +133,6 @@ project analysis or human-owned ticket inputs.
 | **ticket-127** | [`README.md`](./ticket-127/README.md) | - | - | - | - | - |
 | **ticket-128** | [`README.md`](./ticket-128/README.md) | - | - |  [`ai-codex.md`](./ticket-128/ai-codex.md) | - | - |
 | **ticket-129** | [`README.md`](./ticket-129/README.md) | - | - | - | - | - |
+| **ticket-130** | [`README.md`](./ticket-130/README.md) | - | - |  [`ai-codex.md`](./ticket-130/ai-codex.md) | - | - |
 | **ticket-131** | [`README.md`](./ticket-131/README.md) | - | - |  [`ai-codex.md`](./ticket-131/ai-codex.md) | - | - |
 <!-- AUTO:TICKET_INDEX:END -->

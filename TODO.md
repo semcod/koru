@@ -1,5 +1,9 @@
 # Governance roadmap
 
+- [ ] Deliver [ticket-130](project/ticket-130/README.md): consume strict Goal
+  governance proposals through Planfile and delegate one deduplicated ticket
+  to Koru's automatic queue lane. State: `IN_PROGRESS / EDIT`; classification:
+  `FEATURE / P1 / requested`.
 - [ ] [ticket-131](project/ticket-131/README.md): compact execution guides and stable legacy links; local validation, no remote publication.
 
 - [ ] [`ticket-075`](project/ticket-075/README.md) — route the target-published

@@ -872,6 +872,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "task",
             "agent",
             "goal",
+            "goal-remediation",
             "local-serve",
             "serve",
             "scan",
