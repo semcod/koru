@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-124",
+  "summary": "Pin mcp<2 in root extras",
+  "workstream": "integration",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "pyproject.toml",
+    "uv.lock",
+    "project/ticket-124/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "03233c82c28427a8b4d8c50f7a336d4154abdb4b",
+    "targetBranch": "main",
+    "outcome": "Upper-bound the mcp extra in the root pyproject to <2.",
+    "nonGoals": [
+      "No changes to runtime behavior, public interfaces or unrelated dependencies."
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Upper-bound the mcp requirement to <2; MCP 2.x removed mcp.server.fastmcp used by the 1.x-era server code.",
+      "components": [
+        {
+          "name": "root-pyproject",
+          "paths": [
+            "pyproject.toml",
+            "uv.lock"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "uv lock --check",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Governance gate and OneDev local-verify canary on the PR head."
+      }
+    ]
+  }
+}
