@@ -1,5 +1,7 @@
 # Governance roadmap
 
+- [ ] [ticket-131](project/ticket-131/README.md): compact execution guides and stable legacy links; local validation, no remote publication.
+
 - [ ] [`ticket-075`](project/ticket-075/README.md) — route the target-published
   `GOV-STANDARD-UPDATE-001` diagnostic through one bounded agent handoff and
   one Goal retry while preserving a separate governance adoption ticket.
