@@ -12,6 +12,7 @@ from typing import Any
 
 import yaml
 
+from koru.autonomy.execution_lease_watcher import takeover_at
 from koru.autonomy.planfile_handoff import planfile_status_handoff_lines
 from koru.project_pipeline import load_koru_project_pipeline
 from koru.queue.ticket import ticket_matches_queue
@@ -376,12 +377,15 @@ def release_stale_in_progress_tickets(
         execution = ticket.get("execution") if isinstance(ticket.get("execution"), dict) else {}
         lease_expires = _parse_iso_datetime(execution.get("lease_expires_at"))
         started = _ticket_in_progress_started_at(ticket)
-        expired = lease_expires <= now if lease_expires is not None else bool(
-            started is not None and started <= cutoff
+        lease_takeover_at = takeover_at(ticket) if lease_expires is not None else None
+        expired = (
+            lease_takeover_at <= now
+            if lease_takeover_at is not None
+            else bool(started is not None and started <= cutoff)
         )
         if not expired:
             continue
-        observed = lease_expires or started
+        observed = lease_takeover_at or lease_expires or started
         note = f"SLA expired at {observed.isoformat()}; waiting_human_triage sla:urgent"
         from koru.queue.planfile_sdk import planfile_lifecycle_command
 
