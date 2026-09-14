@@ -3,10 +3,11 @@ from __future__ import annotations
 import fcntl
 import json
 import os
+from contextlib import contextmanager
 from pathlib import Path
 
 from koru.ticket_command.execution import propose_and_apply, snapshot, verify
-from koru.ticket_command.profile import command, git, load_profile, no_symlinks
+from koru.ticket_command.profile import command, git, load_profile, no_symlinks, parse_issue
 from koru.ticket_command.publication import publish
 from koru.ticket_command.workspace import preflight_workspace, prepare_workspace
 
@@ -28,6 +29,20 @@ def _save(path: Path, state: dict) -> None:
         stream.flush()
         os.fsync(stream.fileno())
     pending.replace(path)
+
+
+@contextmanager
+def execution_lock(profile: dict, name: str):
+    """Serialize cooperating CLI processes in the Git-registered primary."""
+    path = profile["primary"] / ".subactor/cache/koru-tickets" / name
+    no_symlinks(path)
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with path.open("a") as stream:
+        try:
+            fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise RuntimeError("this repository already has an active Koru execution") from exc
+        yield
 
 
 def github_backend(profile: dict):
@@ -101,8 +116,13 @@ def _report_blocked(state: dict, folder: Path, backend) -> str:
     return sync_comment(store, backend, event)["url"]
 
 
-def run_ticket(url: str, profiles: Path, *, dry_run=False, backend=None, runner=None) -> dict:
+def run_ticket(
+    url: str, profiles: Path, *, dry_run=False, backend=None, runner=None, expected_profile_sha256=None
+) -> dict:
+    parse_issue(url)
     profile = load_profile(url, profiles)
+    if expected_profile_sha256 is not None and profile["profile_sha256"] != expected_profile_sha256:
+        raise ValueError("execution profile changed during the run")
     if dry_run:
         return {
             "state": "planned",
@@ -123,7 +143,7 @@ def run_ticket(url: str, profiles: Path, *, dry_run=False, backend=None, runner=
     no_symlinks(path)
     lock = folder / "run.lock"
     no_symlinks(lock)
-    with lock.open("a") as stream:
+    with execution_lock(profile, "repository.lock"), lock.open("a") as stream:
         try:
             fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as exc:
