@@ -98,6 +98,15 @@ _PROBLEM_CATALOG: tuple[ProblemCatalogEntry, ...] = (
         ),
     ),
     ProblemCatalogEntry(
+        check="dependency_lock_freshness",
+        severity=WARN,
+        problem="The uv lockfile has available dependency updates.",
+        detection=(
+            "Opt-in `koru doctor --dependency-freshness` runs "
+            "`uv lock --upgrade --dry-run` without writing the lockfile."
+        ),
+    ),
+    ProblemCatalogEntry(
         check="autopilot_plugin_bundle",
         severity=FAIL,
         problem="The expected autopilot plugin version is not bundled consistently.",

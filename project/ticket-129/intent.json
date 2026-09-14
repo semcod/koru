@@ -1,0 +1,101 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-129",
+  "summary": "Report Koru doctor dependency and virtualenv drift to Planfile",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-129/**",
+    "project/TICKETS.md",
+    "src/koru/cli_doctor.py",
+    "src/koru/doctor_constants.py",
+    "src/koru/doctor_dependencies.py",
+    "src/koru/doctor_runtime_checks.py",
+    "src/koru/doctor_ticket_reporting.py",
+    "tests/test_doctor.py",
+    "tests/test_doctor_dependency_diagnostics.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ff48c97d1481c73e1e75abdec31168d1982d6e3d",
+    "targetBranch": "main",
+    "outcome": "Koru doctor detects competing project virtual environments, offers a read-only uv lock freshness check, and creates deduplicated Planfile tickets through the configured tracker synchronization.",
+    "nonGoals": [
+      "Do not upgrade dependencies or mutate lockfiles and virtual environments.",
+      "Do not remove project virtual environments automatically.",
+      "Do not alter external tracker configuration beyond the existing configured Planfile synchronization."
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 2,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep default doctor execution local and read-only. Run uv only behind an explicit freshness flag, then hand persistent actionable findings to the existing Planfile task creator so configured remote integrations are stamped and synchronized.",
+      "components": [
+        {
+          "name": "doctor-diagnostics",
+          "paths": [
+            "src/koru/cli_doctor.py",
+            "src/koru/doctor_constants.py",
+            "src/koru/doctor_dependencies.py",
+            "src/koru/doctor_runtime_checks.py"
+          ]
+        },
+        {
+          "name": "doctor-planfile-handoff",
+          "paths": [
+            "src/koru/doctor_ticket_reporting.py"
+          ]
+        },
+        {
+          "name": "doctor-regression-tests",
+          "paths": [
+            "tests/test_doctor.py",
+            "tests/test_doctor_dependency_diagnostics.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "koru doctor --dependency-freshness",
+        "koru doctor --diagnostic-tickets"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the protected merge; markers can be recreated on the next diagnostic run."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "PYTHONPATH=src python -m pytest -q tests/test_doctor.py tests/test_doctor_dependency_diagnostics.py",
+          "PYTHONPATH=src python -m ruff check src/koru tests/test_doctor.py tests/test_doctor_dependency_diagnostics.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Focused unit tests, static analysis and repository governance validation."
+      }
+    ]
+  }
+}

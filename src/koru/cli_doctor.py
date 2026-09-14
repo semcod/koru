@@ -19,6 +19,9 @@ from koru.doctor import detected_problems as doctor_detected_problems
 from koru.doctor import problem_catalog as doctor_problem_catalog
 from koru.doctor import render_problem_catalog_text, run_diagnostics
 from koru.doctor import render_text as render_doctor_text
+from koru.doctor_dependencies import check_uv_lock_freshness
+from koru.doctor_models import Check
+from koru.doctor_ticket_reporting import report_actionable_findings
 from koru.events import emit_management_event
 
 
@@ -75,7 +78,7 @@ def doctor_fix_payload(report: Any) -> dict[str, object]:
             "`setup-host --install` may run apt and needs sudo on Debian/Ubuntu.",
             "`install-plugin` mutates the selected IDE extension directory.",
             "After starting the daemon, reload/connect the IDE plugin if it is not listed by `status`.",
-            "`--diagnostic-tickets` creates deduplicated planfile tickets for failed checks.",
+            "`--diagnostic-tickets` creates deduplicated Planfile tickets for actionable findings.",
         ],
     }
 
@@ -208,16 +211,29 @@ def doctor_main(args: argparse.Namespace, raw_args: list[str]) -> int:
     repair_payload = doctor_repair_payload(report) if getattr(args, "repair", False) else None
     if repair_payload is not None:
         report = run_diagnostics(args.project)
+    if getattr(args, "dependency_freshness", False):
+        status, detail = check_uv_lock_freshness(report.project)
+        report.checks.append(Check("dependency_lock_freshness", status, detail))
     fix_payload = doctor_fix_payload(report) if getattr(args, "fix", False) else None
     include_catalog = bool(getattr(args, "catalog", False))
     problems = doctor_detected_problems(report)
+    created_tickets: list[str] = []
+    if getattr(args, "diagnostic_tickets", False):
+        created_tickets = report_actionable_findings(
+            report.project,
+            report.checks,
+            priority=getattr(args, "diagnostic_ticket_priority", "high"),
+            queue_name=getattr(args, "diagnostic_ticket_queue", None),
+        )
     explicit_format = "--format" in raw_args
     if explicit_format and args.output_format == "json":
-        print(_doctor_json_output(report, problems, fix_payload, repair_payload, include_catalog))
+        print(_doctor_json_output(report, problems, fix_payload, repair_payload, include_catalog, created_tickets))
     elif explicit_format and args.output_format == "markdown":
         print(_doctor_markdown_output(report, fix_payload, repair_payload, include_catalog))
     else:
         print(_doctor_text_output(report, fix_payload, repair_payload, include_catalog))
+    if created_tickets and not (explicit_format and args.output_format == "json"):
+        print("Created Planfile diagnostic tickets: " + ", ".join(created_tickets))
     _doctor_emit_management_event(report, args)
     return 1 if report.has_failures else 0
 
@@ -228,9 +244,12 @@ def _doctor_json_output(
     fix_payload: dict[str, Any] | None,
     repair_payload: dict[str, Any] | None,
     include_catalog: bool,
+    created_tickets: list[str] | None = None,
 ) -> str:
     payload = report.to_dict()
     payload["detected_problems"] = problems
+    if created_tickets is not None:
+        payload["diagnostic_tickets"] = created_tickets
     if include_catalog:
         payload["problem_catalog"] = doctor_problem_catalog()
     if fix_payload is not None:
@@ -294,6 +313,26 @@ def build_doctor_parser() -> argparse.ArgumentParser:
         "--catalog",
         action="store_true",
         help="Include known problems catalog (check -> detection rule).",
+    )
+    parser.add_argument(
+        "--dependency-freshness",
+        action="store_true",
+        help="Check the uv lockfile against configured package indexes (read-only network check).",
+    )
+    parser.add_argument(
+        "--diagnostic-tickets",
+        action="store_true",
+        help="Create deduplicated Planfile tickets for actionable doctor findings and sync configured trackers.",
+    )
+    parser.add_argument(
+        "--diagnostic-ticket-priority",
+        default="high",
+        help="Priority for tickets created by --diagnostic-tickets (default: high).",
+    )
+    parser.add_argument(
+        "--diagnostic-ticket-queue",
+        default=None,
+        help="Optional Planfile queue for tickets created by --diagnostic-tickets.",
     )
     parser.add_argument(
         "--queue-name",
