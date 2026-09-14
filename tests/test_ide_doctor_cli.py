@@ -412,6 +412,8 @@ def test_ide_doctor_treats_auto_instance_as_selected_ide(
     """Taskfile ``INSTANCE=auto`` must not rewrite settings to the bare socket."""
     monkeypatch.delenv("KORU_AUTOPILOT_SOCKET", raising=False)
     monkeypatch.setenv("KORU_AUTOPILOT_INSTANCE", "auto")
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
     monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
     args = type("Args", (), {"socket": None, "instance": None, "project": None})()
 

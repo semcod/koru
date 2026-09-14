@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -43,6 +46,31 @@ def _targets(profile: dict, backend, path: Path) -> list[str]:
     return _snapshot(profile, backend)
 
 
+def _sync_primary_planfile(profile: dict) -> None:
+    primary = profile.get("primary")
+    if not primary:
+        return
+    planfile_dir = Path(primary) / ".planfile"
+    if not planfile_dir.exists():
+        return
+    has_github_config = (planfile_dir / "github.planfile.yaml").exists() or (
+        planfile_dir / "integrations.planfile.yaml"
+    ).exists()
+    if not has_github_config:
+        return
+    py = os.environ.get("PY") or sys.executable
+    try:
+        subprocess.run(
+            [py, "-m", "planfile.cli", "sync", "github", "--direction", "both"],
+            cwd=primary,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except Exception:
+        pass
+
+
 def run_issue_list(url: str, profiles: Path, *, dry_run=False, backend=None, runner=None) -> dict:
     profile = load_profile(url, profiles)
     if profile["number"] is not None:
@@ -65,6 +93,7 @@ def run_issue_list(url: str, profiles: Path, *, dry_run=False, backend=None, run
         }
         if dry_run:
             return result
+        _sync_primary_planfile(profile)
         persisted = {"schema": SCHEMA, "profile_sha256": profile["profile_sha256"]}
         # Persist the selection before any ticket effect. A restart must not
         # forget an unfinished ticket just because GitHub closed it meanwhile.
@@ -110,4 +139,5 @@ def run_issue_list(url: str, profiles: Path, *, dry_run=False, backend=None, run
                 persisted["diagnostic"] = {"type": type(exc).__name__, "message": str(exc)[:4000]}
                 break
         _save(path, {**persisted, **result})
+        _sync_primary_planfile(profile)
         return result

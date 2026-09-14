@@ -9,7 +9,7 @@ import subprocess
 from pathlib import Path
 
 ISSUE = re.compile(r"https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/issues/([1-9][0-9]*)")
-ISSUE_LIST = re.compile(r"https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/issues/?")
+ISSUE_LIST = re.compile(r"https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/issues(?:/?|\*|/\*)?")
 
 
 def command(root: Path, argv: list[str], *, stdin: str | None = None, env: dict | None = None) -> str:
