@@ -25,6 +25,8 @@ The user explicitly released src/koru/cli.py after the requested five-minute wai
 109 focused tests and 54 dispatcher subtests passed with the native Planfile
 comment API and the merged goal-remediation command. Eight queue/reporting tests
 also passed after moving the clean-main preflight before GitHub authentication.
+Ten queue/reporting tests then passed, including both runtime credential sources;
+the GitHub client uses its native positional constructor without embedding credentials.
 The existing C2004 fleet integration
 suite passed 75 tests after installing the merged Planfile wheel.
 Ruff, Compose and managed governance passed. A real Planfile delivery to C2004

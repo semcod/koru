@@ -36,7 +36,7 @@ def github_backend(profile: dict):
     credential = os.environ.get("GITHUB_TOKEN")
     if not credential:
         credential = command(profile["primary"], ["gh", "auth", "token"])
-    return GitHubBackend(repo=profile["repository"], token=credential)
+    return GitHubBackend(profile["repository"], credential)
 
 
 def _intake(profile: dict, folder: Path, backend):

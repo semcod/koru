@@ -13,6 +13,31 @@ URL = "https://github.com/maskservice/c2004/issues/12"
 DIFF = "diff --git a/value.py b/value.py\n--- a/value.py\n+++ b/value.py\n@@ -1 +1 @@\n-value = 1\n+value = 2\n"
 
 
+@pytest.mark.parametrize("from_environment", [True, False])
+def test_github_backend_uses_runtime_credentials_only(tmp_path, monkeypatch, from_environment):
+    import planfile.sync.github as github
+
+    import koru.ticket_command.service as service
+
+    calls = []
+    credential = "fixture-runtime-credential"
+    if from_environment:
+        monkeypatch.setenv("GITHUB_TOKEN", credential)
+    else:
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+
+    def auth(root, argv):
+        assert not from_environment
+        assert root == tmp_path and argv == ["gh", "auth", "token"]
+        return credential
+
+    monkeypatch.setattr(service, "command", auth)
+    monkeypatch.setattr(github, "GitHubBackend", lambda *args: calls.append(args) or "backend")
+    assert service.github_backend({"primary": tmp_path, "repository": "maskservice/c2004"}) == "backend"
+    assert calls == [("maskservice/c2004", credential)]
+    assert list(tmp_path.iterdir()) == []
+
+
 @pytest.fixture
 def execution(tmp_path, monkeypatch):
     pytest.importorskip("planfile.sync.ticket_comments")
