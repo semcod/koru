@@ -41,7 +41,7 @@ def backend_for(pages):
     return SimpleNamespace(repo=SimpleNamespace(get_issues=get_issues, get_issue=issues.__getitem__)), observed
 
 
-@pytest.mark.parametrize("url", [LIST, LIST.rstrip("/")])
+@pytest.mark.parametrize("url", [LIST, LIST.rstrip("/"), LIST + "*", LIST.rstrip("/") + "/*", LIST.rstrip("/") + "*"])
 def test_list_preview_routes_without_writing_even_on_dirty_main(repo, monkeypatch, capsys, url):
     import koru.ticket_command.batch as batch
 
@@ -59,7 +59,7 @@ def test_list_preview_routes_without_writing_even_on_dirty_main(repo, monkeypatc
     assert (root / "value.py").read_text() == "Other session\n"
 
 
-@pytest.mark.parametrize("url", [LIST + "?state=all", LIST + "#all", LIST + "*", LIST + "/", LIST + "0"])
+@pytest.mark.parametrize("url", [LIST + "?state=all", LIST + "#all", LIST + "/", LIST + "0"])
 def test_list_target_rejects_ambiguous_suffixes(url):
     with pytest.raises(ValueError):
         parse_target(url)
@@ -327,3 +327,31 @@ def test_disabled_list_does_not_read_github_or_create_working_data(repo, monkeyp
     with pytest.raises(ValueError, match="disabled"):
         run_issue_list(LIST, profiles)
     assert not (root / ".subactor").exists()
+
+def test_issue_list_synchronizes_primary_planfile_when_configured(repo, monkeypatch):
+    import koru.ticket_command.batch as batch
+
+    root, profiles = repo
+    planfile_dir = root / ".planfile"
+    planfile_dir.mkdir(parents=True, exist_ok=True)
+    (planfile_dir / "github.planfile.yaml").write_text("sync: true\n")
+
+    sync_calls = []
+
+    import subprocess as _sp
+    real_run = _sp.run
+
+    def fake_run(cmd, *args, **kwargs):
+        if isinstance(cmd, list) and "planfile.cli" in cmd:
+            sync_calls.append((cmd, kwargs.get("cwd")))
+            return SimpleNamespace(returncode=0, stdout="")
+        return real_run(cmd, *args, **kwargs)
+
+    monkeypatch.setattr("subprocess.run", fake_run)
+    backend, _ = backend_for([[issue(12)]])
+    monkeypatch.setattr(batch, "run_ticket", lambda *a, **kw: {"state": "reported"})
+    result = run_issue_list(LIST + "*", profiles, backend=backend)
+    assert result["state"] == "completed"
+    assert len(sync_calls) == 2
+    assert sync_calls[0][1] == root
+    assert "sync" in sync_calls[0][0] and "github" in sync_calls[0][0]

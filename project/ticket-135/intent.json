@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-135",
+  "summary": "Support wildcard issue URLs and Planfile synchronization in ticket command",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-135/**",
+    "project/TICKETS.md",
+    "src/koru/cli_ticket.py",
+    "src/koru/ticket_command/profile.py",
+    "src/koru/ticket_command/batch.py",
+    "tests/test_ticket_command*.py",
+    "tests/test_ide_doctor_cli.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "251fe0ca243cbb8bee058ff1ebd34e591d3f60f8",
+    "targetBranch": "main",
+    "outcome": "Support wildcard GitHub issue URLs (e.g. issues/*) and synchronize primary Planfile backlogs when executing ticket batches.",
+    "nonGoals": [
+      "No concurrent execution or widening of operator profile paths",
+      "No direct commits to main in governed repos"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Permit wildcard suffixes in ISSUE_LIST regex (e.g., issues/*). When batch delivery is invoked against a repository that has .planfile with GitHub sync configured, synchronize Planfile with GitHub issues via planfile.cli sync github. Isolate user settings directory in ide doctor test.",
+      "components": [
+        {
+          "name": "ticket-command",
+          "paths": [
+            "src/koru/cli_ticket.py",
+            "src/koru/ticket_command/**"
+          ]
+        },
+        {
+          "name": "tests",
+          "paths": [
+            "tests/test_ticket_command*.py",
+            "tests/test_ide_doctor_cli.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "koru ticket https://github.com/OWNER/REPO/issues/*"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert material implementation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_ticket_command*.py tests/test_ide_doctor_cli.py",
+          "ruff check src/koru/ticket_command tests/test_ticket_command*.py tests/test_ide_doctor_cli.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Focused pytest suite, ruff lint and governance check passed."
+      }
+    ]
+  }
+}
