@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-133",
+  "summary": "Execute GitHub issue lists sequentially through Koru",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-133/**",
+    "src/koru/cli_ticket.py",
+    "src/koru/ticket_command/profile.py",
+    "src/koru/ticket_command/service.py",
+    "src/koru/ticket_command/batch.py",
+    "tests/test_ticket_command*.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5dde69ee541f3b9ad567d29f73d118401e308ac0",
+    "targetBranch": "main",
+    "outcome": "Execute a finite snapshot of open GitHub issues sequentially from an issues-list URL, preserving scoped single-issue verification, Planfile reporting and protected publication.",
+    "nonGoals": [
+      "No concurrent issue execution or automatic widening of operator profiles",
+      "No live hardware effects or automatic execution of real C2004 issues during tests",
+      "No branch or PR in C2004; no direct merge in governed repositories"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Freeze paginated open-issue identities, exclude PRs, and reuse run_ticket for every sequential effect. Stop on failed or incomplete delivery. Operator profiles and per-issue receipts remain authoritative; add a repository execution lock to prevent concurrent writers. Persist the finite queue selection in ignored repository-local working data so closed issues with unfinished reporting are not lost during restart.",
+      "components": [
+        {
+          "name": "ticket-command",
+          "paths": [
+            "src/koru/cli_ticket.py",
+            "src/koru/ticket_command/**"
+          ]
+        },
+        {
+          "name": "tests",
+          "paths": [
+            "tests/test_ticket_command*.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "koru ticket https://github.com/OWNER/REPO/issues/"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert material implementation; retain existing issue receipts and working data."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_ticket_command*.py tests/test_cli.py tests/test_goal_remediation.py",
+          "ruff check src/koru/cli_ticket.py src/koru/ticket_command tests/test_ticket_command*.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Focused tests, read-only list preview and protected exact-head delivery receipts"
+      }
+    ]
+  }
+}

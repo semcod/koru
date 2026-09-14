@@ -9,6 +9,7 @@ import subprocess
 from pathlib import Path
 
 ISSUE = re.compile(r"https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/issues/([1-9][0-9]*)")
+ISSUE_LIST = re.compile(r"https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/issues/?")
 
 
 def command(root: Path, argv: list[str], *, stdin: str | None = None, env: dict | None = None) -> str:
@@ -37,6 +38,13 @@ def parse_issue(url: str) -> tuple[str, int]:
     return match[1], int(match[2])
 
 
+def parse_target(url: str) -> tuple[str, int | None]:
+    match = ISSUE_LIST.fullmatch(url)
+    if match:
+        return match[1], None
+    return parse_issue(url)
+
+
 def validator_environment(adapter: dict, root: Path) -> dict:
     """Load only the operator-pinned environment; never evaluate shell syntax."""
     environment = dict(os.environ)
@@ -60,7 +68,7 @@ def validator_environment(adapter: dict, root: Path) -> dict:
 
 
 def load_profile(url: str, path: Path) -> dict:
-    repository, number = parse_issue(url)
+    repository, number = parse_target(url)
     no_symlinks(path.absolute())
     raw = path.read_bytes()
     config = json.loads(raw)
