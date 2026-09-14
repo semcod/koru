@@ -413,6 +413,22 @@ class TestAutopilotDoctorChecks(unittest.TestCase):
             self.assertEqual(check.status, PASS)
             self.assertIn("virtual_env_unset=true", check.detail)
 
+    def test_python_venv_alignment_warns_when_project_has_legacy_venv_too(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            _scaffold(project)
+            (project / ".venv" / "bin").mkdir(parents=True)
+            (project / "venv" / "bin").mkdir(parents=True)
+            with (
+                patch.dict(os.environ, {}, clear=True),
+                patch("sys.executable", str(project / ".venv" / "bin" / "python")),
+                patch("shutil.which", return_value=str(project / ".venv" / "bin" / "koru")),
+            ):
+                report = _run(project)
+            check = _named(report, "python_venv_alignment")
+            self.assertEqual(check.status, WARN)
+            self.assertIn("multiple_project_venvs=.venv,venv", check.detail)
+
     def test_autopilot_plugin_bundle_lock_matches_package_when_consistent(self) -> None:
         """package-lock root version must match package.json / EXPECTED."""
         with tempfile.TemporaryDirectory() as tmp:

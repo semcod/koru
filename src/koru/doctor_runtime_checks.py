@@ -254,4 +254,9 @@ def _check_python_venv_alignment(project: Path) -> tuple[str, str]:
     detail_bits, status = _collect_venv_detail_bits(
         existing_venvs, project, virtual_env, executable
     )
+    if len(existing_venvs) > 1:
+        status = WARN
+        detail_bits.append(
+            "multiple_project_venvs=" + ",".join(venv.name for venv in existing_venvs)
+        )
     return status, "; ".join(detail_bits)
