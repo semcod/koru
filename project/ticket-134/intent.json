@@ -1,0 +1,33 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-134",
+  "summary": "Prepare pinned documentation gate and consumer canaries",
+  "workstream": "governance",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": ["project/ticket-134/**", ".governance/docs.json", ".governance/docs_gate.py", ".governance/tests/test_docs_gate.py", ".governance/DOCS_ADOPTION.md", "README.md"],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5dde69ee541f3b9ad567d29f73d118401e308ac0", "targetBranch": "main",
+    "outcome": "Prepare and independently publish pinned documentation preflight/final integration, preserving the separate protected executor deployment boundary",
+    "nonGoals": ["Changing protected executor configuration", "Mass documentation migration", "Editing Planfile data or another ticket", "Executing documentation DSL assertions"],
+    "complexity": "M", "estimatedMinutes": 60,
+    "budgets": {"maxImplementationFiles": 5, "maxAffectedComponents": 2, "maxPublicInterfaceChanges": 1, "maxRuntimeDependencies": 1},
+    "architecture": {
+      "status": "accepted", "decision": "Thin consumer adapter over hash-verified published docs sources, without vendoring or candidate bytecode execution",
+      "components": [{"name": "docs-adoption", "paths": [".governance/docs.json", ".governance/docs_gate.py", ".governance/DOCS_ADOPTION.md", "README.md"]}, {"name": "canaries", "paths": [".governance/tests/test_docs_gate.py"]}],
+      "responsibilityChanges": false, "interfaceChanges": ["Explicit prepare/final adapter for docs 0.5.0"], "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Restore the preceding adopter configuration; preserve all source documents and receipts."
+    },
+    "runtimeDependencies": ["wellmanifest/docs@71c296aab28bceec709722f59078ca86ac48dca7"],
+    "validation": [{"criterion": "AC-03", "commands": ["python3 -m unittest discover -s .governance/tests -p test_docs_gate.py", "./project/governance-check.sh --base origin/main --head HEAD", "docker compose config --quiet"], "evidence": ".governance/DOCS_ADOPTION.md"}]
+  }
+}

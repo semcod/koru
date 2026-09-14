@@ -1443,6 +1443,10 @@ sprint YAML remains the source of truth.
 
 ## Documentation
 
+Before writing durable documentation, use the pinned
+[docs preflight and final gate](.governance/DOCS_ADOPTION.md).
+This consumer pilot does not yet establish protected OneDev enforcement.
+
 **Index:** [`docs/README.md`](./docs/README.md) — complete catalog of every guide,
 reading order for agents, and pipeline phase map. **Release notes:**
 [`CHANGELOG.md`](./CHANGELOG.md).
