@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-123",
+  "summary": "Remove pfix auto-repair from packaging metadata",
+  "workstream": "integration",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-123/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "pyproject.toml",
+    "uv.lock"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md",
+    ".env",
+    "src/**",
+    "tests/**"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [
+    "ticket-124"
+  ],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f12d4a165b249f2b1b37aba178eb35a9b81edc69",
+    "targetBranch": "main",
+    "outcome": "The project no longer configures, installs or locks pfix auto-repair.",
+    "nonGoals": [
+      "No source or test change.",
+      "No release and no registry publish."
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Delete the [tool.pfix] tables and pfix requirements, verify that the parsed TOML differs only by those entries, and regenerate uv.lock with uv 0.12.13.",
+      "components": [
+        {
+          "name": "packaging-metadata",
+          "paths": [
+            "pyproject.toml",
+            "uv.lock"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; the pfix declarations and lock entries return."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh --base origin/main --head HEAD --actor agent"
+        ],
+        "evidence": "Pending exact-head publication."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "uv lock --check"
+        ],
+        "evidence": "Pending exact-head publication."
+      }
+    ]
+  }
+}
