@@ -58,9 +58,21 @@ def _build_ticket_dict(
     executor_mode: str,
     files: list[str],
     now: str,
+    scaffold: dict[str, Any],
     max_attempts: int = 1,
 ) -> dict[str, Any]:
     """Build the complete ticket dictionary."""
+    execution_state = str(scaffold.get("execution_state") or "ready").strip()
+    if execution_state not in {
+        "pending",
+        "ready",
+        "running",
+        "waiting_input",
+        "done",
+        "failed",
+        "skipped",
+    }:
+        execution_state = "ready"
     return {
         "id": ticket_id,
         "name": name,
@@ -76,7 +88,7 @@ def _build_ticket_dict(
         "executor": {"kind": executor_kind, "mode": executor_mode},
         "execution": {
             "queue": queue_name or "default",
-            "state": "ready",
+            "state": execution_state,
             "attempt": 0,
             "max_attempts": max(1, int(max_attempts)),
         },
@@ -132,6 +144,7 @@ def _build_nl_task_record(
         executor_mode,
         files,
         now,
+        scaffold,
         max_attempts=max_attempts,
     )
     return ticket, executor_kind

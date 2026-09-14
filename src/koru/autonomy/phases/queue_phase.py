@@ -6,6 +6,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from koru.autonomy.execution_lease_watcher import emit_takeover_notices
 from koru.autonomy.ide_work import (
     release_stale_in_progress_tickets,
     resolve_in_progress_stale_minutes,
@@ -27,6 +28,16 @@ def handle_queue_hygiene(
     _hp: Callable[..., Any],
     _emit: Callable[..., Any],
 ) -> None:
+    takeover_notices = emit_takeover_notices(
+        project,
+        runner=_run_process,
+    )
+    if takeover_notices:
+        _hp(f"  queue hygiene: emitted/refreshed {takeover_notices} lease takeover notice(s)")
+        _emit(
+            "ExecutionLeaseTakeoverNotices",
+            {"cycle": cycle, "count": takeover_notices, "grace_seconds": 600},
+        )
     stale_minutes = resolve_in_progress_stale_minutes(project)
     if stale_minutes is not None:
         triaged_stale = release_stale_in_progress_tickets(

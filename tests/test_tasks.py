@@ -76,6 +76,29 @@ class TestNaturalLanguageTask(unittest.TestCase):
             self.assertIn("[TOOL ADAPTER SCAFFOLD]", ticket["inputs"]["prompt"])
             self.assertEqual(ticket["inputs"]["tool_id"], "gemini-cli")
 
+    def test_scaffold_can_create_non_runnable_waiting_input_ticket(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            created = create_nl_task(
+                Path(tmp),
+                "Review an expired execution lease",
+                queue_name="handoff",
+                scaffold={"execution_state": "waiting_input"},
+            )
+            data = yaml.safe_load(created.path.read_text(encoding="utf-8"))
+            ticket = data["sprint"]["tickets"][created.ticket_id]
+            self.assertEqual(ticket["execution"]["state"], "waiting_input")
+
+    def test_scaffold_rejects_unknown_execution_state_to_ready(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            created = create_nl_task(
+                Path(tmp),
+                "Use the default execution state",
+                scaffold={"execution_state": "takeover"},
+            )
+            data = yaml.safe_load(created.path.read_text(encoding="utf-8"))
+            ticket = data["sprint"]["tickets"][created.ticket_id]
+            self.assertEqual(ticket["execution"]["state"], "ready")
+
     def test_reuses_existing_ticket_with_same_dedupe_key(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
