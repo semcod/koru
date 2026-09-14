@@ -1,0 +1,93 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-128",
+  "summary": "Add proactive fleet standard-update ticket emission",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-128/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/standard_fleet.py",
+    "src/koru/cli_fleet.py",
+    "tests/test_standard_fleet.py",
+    "tests/test_cli_fleet.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "da2e522f344e64ff65734db8c37fb7d5906486f0",
+    "targetBranch": "main",
+    "outcome": "Koru provides a bounded read-only Wellmanifest freshness scan and explicit idempotent Planfile handoff emission without mutating adopter repositories.",
+    "nonGoals": [
+      "Automatically adopt, commit, push, merge or delete any target repository",
+      "Refresh an untrusted or dirty standard source checkout",
+      "Replace target-owned Goal, CI or protected Validator delivery"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 2,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add a local, fail-closed standard release observation, bounded parallel adopter inspection and serial Planfile handoff emission. Existing target repositories remain untouched; only their own governance workflow may perform adoption.",
+      "components": [
+        {
+          "name": "standard-fleet-scan",
+          "paths": [
+            "src/koru/standard_fleet.py",
+            "src/koru/cli_fleet.py",
+            "tests/test_standard_fleet.py",
+            "tests/test_cli_fleet.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": ["koru fleet standard-update", "koru fleet standard-scan"],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; the scanner has no adopter-side mutation to undo."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh --base origin/main --head HEAD --actor agent",
+          ".venv/bin/ruff check src/koru/standard_fleet.py src/koru/cli_fleet.py tests/test_standard_fleet.py tests/test_cli_fleet.py"
+        ],
+        "evidence": "Governance and Ruff pass with zero errors."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          ".venv/bin/pytest -o addopts='' -q tests/test_standard_fleet.py tests/test_cli_fleet.py",
+          ".venv/bin/pytest -o addopts='' -m 'not slow' -q"
+        ],
+        "evidence": "Focused tests pass; full non-slow result is recorded in ticket README, with the three baseline failures reproduced on clean main."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "koru fleet standard-update WORKSPACE --standard-root CLEAN_STANDARD --format json"
+        ],
+        "evidence": "Real read-only scan found 33 governed repositories: 2 current and 31 stale; dirty and linked-worktree state was reported without target mutation."
+      }
+    ]
+  }
+}
