@@ -11,6 +11,10 @@ Compact-format pilot: one topic per `SERVICE/UPPER_SNAKE_CASE.md`, priority in
 metadata. Existing entry paths remain link maps. This does not change protected
 standard adoption or authorize command execution.
 
+Link new references to whole topic files. Legacy headings preserve existing
+links; publishing these guides does not install the standard checker in CI
+or turn embedded examples into executable policy contracts.
+
 - [Command execution](SERVICE/COMMAND_EXECUTION.md) — which surfaces actually start subprocesses.
 - [CI completion gates](SERVICE/CI_COMPLETION_GATES.md) — policy commands, topology gates and completion requirements.
 - [Post-run verification](SERVICE/POST_RUN_VERIFICATION.md) — configuration, timeouts and confirmed lifecycle writes.
