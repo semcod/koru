@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-132",
+  "summary": "Execute a linked GitHub issue with repository-aware delivery",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-132/**",
+    "src/koru/cli_ticket.py",
+    "src/koru/ticket_command/**",
+    "tests/test_ticket_command*.py",
+    "src/koru/cli.py",
+    "tests/test_cli.py",
+    "src/koru/cli_ticket_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [
+    "ticket-130"
+  ],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3188b8e6ac5d3c96f4e17c755c878bea01915525",
+    "targetBranch": "main",
+    "outcome": "Execute one GitHub issue using Planfile, canonical repository-aware isolation, required tests and the declared protected publication route.",
+    "nonGoals": [
+      "No hardware output activation or firmware flashing",
+      "No branch or PR in main-only repositories",
+      "No merge without independent Validator evidence"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 100,
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 4,
+      "maxPublicInterfaceChanges": 2,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "One scoped URL intake; use Planfile for ticket/comments, a local trusted repository profile for effects, Wellmanifest for worktree placement, and existing OneDev/Validator adapters for protected delivery. Private execution receipts are operational working data; no existing product schema, stored records or ownership is migrated.",
+      "components": [
+        {
+          "name": "ticket-command",
+          "paths": [
+            "src/koru/cli_ticket.py",
+            "src/koru/ticket_command/**",
+            "src/koru/cli.py",
+            "src/koru/cli_ticket_queue.py"
+          ]
+        },
+        {
+          "name": "tests",
+          "paths": [
+            "tests/test_ticket_command*.py",
+            "tests/test_cli.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "koru ticket URL"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert material implementation; preserve outstanding receipts and worktrees."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_ticket_command*.py",
+          "python -m ruff check src/koru/cli_ticket.py src/koru/ticket_command tests/test_ticket_command*.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Focused tests, governance and protected delivery receipts"
+      }
+    ]
+  }
+}
