@@ -39,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- Split [command execution](docs/SERVICE/COMMAND_EXECUTION.md), [CI gates](docs/SERVICE/CI_COMPLETION_GATES.md) and [post-run verification](docs/SERVICE/POST_RUN_VERIFICATION.md) into compact guides; correct timeout and persistence details while preserving legacy links.
+
 ### Added
 - **todo2code → planfile → ticket2dsl** idle chain: useful code-change plans
   become human-review planfile tickets by default; explicitly contracted LLM
