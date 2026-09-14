@@ -26,6 +26,7 @@ REPORT_SCHEMA = "koru.standard-fleet-report/v1"
 SOURCE_TOOL = "koru-standard-fleet-watcher"
 DEDUPE_PREFIX = "koru:wellmanifest-standard-adoption:"
 DEFAULT_WORKERS = 8
+MAX_WORKERS = 32
 _REMOTE_IDENTITY = re.compile(r"(?:git@|https://|ssh://git@)(?:[^/:]+)[/:]([^/]+)/(.+?)(?:\.git)?/?$")
 _PRUNE_DIRS = {
     ".git",
@@ -244,8 +245,8 @@ def scan_standard_fleet(
     git_runner: GitRunner = _subprocess_git,
 ) -> StandardFleetReport:
     """Scan all governed repositories; Git observations may run in parallel."""
-    if workers < 1 or workers > 32:
-        raise ValueError("workers must be between 1 and 32")
+    if workers < 1 or workers > MAX_WORKERS:
+        raise ValueError(f"workers must be between 1 and {MAX_WORKERS}")
     workspace = workspace.resolve()
     release = load_standard_release(standard_root, git_runner=git_runner)
     repositories = discover_governed_repositories(workspace)
@@ -365,6 +366,7 @@ def render_report(report: StandardFleetReport) -> str:
 
 __all__ = [
     "DEFAULT_WORKERS",
+    "MAX_WORKERS",
     "REPORT_SCHEMA",
     "SOURCE_TOOL",
     "StandardCandidate",
