@@ -1,0 +1,77 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-130",
+  "summary": "Consume Goal governance proposals through Planfile",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "src/koru/cli.py",
+    "src/koru/cli_goal_remediation.py",
+    "tests/test_cli.py",
+    "tests/test_goal_remediation.py",
+    "project/ticket-130/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e7b3fa24433dcfd85261eeb570c698ab0ac904b3",
+    "targetBranch": "main",
+    "outcome": "Koru validates Goal proposals, creates or reuses a deduplicated automatic Planfile remediation ticket and exposes the explicit goal-remediation CLI boundary.",
+    "nonGoals": [
+      "Do not accept executor, queue, approval or transport fields from the proposal",
+      "Do not execute the created ticket in the proposal intake command",
+      "Do not bypass Koru's existing queue leases, retry limits or governance handoff",
+      "Do not modify Goal or Planfile source repositories"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep proposal validation and Planfile ticket creation in Koru. Use Planfile's strict TicketProposalV1 contract, then map only safe fields into create_nl_task while Koru selects the executor and queue policy.",
+      "components": [
+        {
+          "name": "goal-proposal-consumer",
+          "paths": ["src/koru/cli_goal_remediation.py", "src/koru/cli.py"]
+        },
+        {
+          "name": "consumer-regression-tests",
+          "paths": ["tests/test_cli.py", "tests/test_goal_remediation.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": ["koru goal-remediation CLI command"],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Remove the dispatcher entry and consumer module; existing Koru goal supervision remains available."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python -m pytest -q tests/test_cli.py tests/test_goal_remediation.py tests/test_goal_supervisor.py",
+          "python -m ruff check src/koru/cli.py src/koru/cli_goal_remediation.py tests/test_cli.py tests/test_goal_remediation.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "Focused consumer and supervisor checks plus managed repository gates"
+      }
+    ]
+  }
+}

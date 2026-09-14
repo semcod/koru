@@ -164,6 +164,11 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "task": lambda argv: _lazy_module_main("koru.cli_task", "_task_main", argv),
     "agent": lambda argv: _lazy_module_main("koru.cli_agent", "_agent_main", argv),
     "goal": lambda argv: _lazy_module_main("koru.cli_goal", "goal_main", argv),
+    "goal-remediation": lambda argv: _lazy_module_main(
+        "koru.cli_goal_remediation",
+        "goal_remediation_main",
+        argv,
+    ),
     "local-serve": lambda argv: _lazy_module_main(
         "koru.cli_local_serve",
         "_local_serve_main",
