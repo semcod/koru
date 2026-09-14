@@ -870,6 +870,7 @@ class TestSubcommandDispatch(unittest.TestCase):
             "agent-backends",
             "agent-availability",
             "task",
+            "ticket",
             "agent",
             "goal",
             "goal-remediation",

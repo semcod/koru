@@ -162,6 +162,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
         argv,
     ),
     "task": lambda argv: _lazy_module_main("koru.cli_task", "_task_main", argv),
+    "ticket": lambda argv: _lazy_module_main("koru.cli_ticket", "ticket_main", argv),
     "agent": lambda argv: _lazy_module_main("koru.cli_agent", "_agent_main", argv),
     "goal": lambda argv: _lazy_module_main("koru.cli_goal", "goal_main", argv),
     "goal-remediation": lambda argv: _lazy_module_main(
@@ -411,7 +412,7 @@ def _handle_parser_exit(exc: SystemExit, raw_args: list[str], subcommand: str) -
 _GLOBAL_CONTROL_SUBCOMMANDS: frozenset[str] = frozenset(
     {"on", "off", "status", "agent-availability"}
 )
-_NO_PROJECT_REEXEC_SUBCOMMANDS: frozenset[str] = frozenset({"goal"})
+_NO_PROJECT_REEXEC_SUBCOMMANDS: frozenset[str] = frozenset({"goal", "ticket"})
 
 
 def _dispatch_before_parse(subcommand: str, raw_args: list[str]) -> int | None:
