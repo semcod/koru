@@ -1,0 +1,73 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-125",
+  "summary": "Pin mcp<2 in mcp2 packages",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "packages/mcp2coru/**",
+    "packages/mcp2koru/**",
+    "project/ticket-125/**",
+    "TODO.md",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f12d4a165b249f2b1b37aba178eb35a9b81edc69",
+    "targetBranch": "main",
+    "outcome": "Upper-bound the mcp requirement in mcp2coru and mcp2koru packages to <2.",
+    "nonGoals": [
+      "No changes to runtime behavior, public interfaces or unrelated dependencies."
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Upper-bound the mcp requirement to <2; MCP 2.x removed mcp.server.fastmcp used by the 1.x-era server code.",
+      "components": [
+        {
+          "name": "mcp2-packages",
+          "paths": [
+            "packages/mcp2coru/pyproject.toml",
+            "packages/mcp2koru/pyproject.toml"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert protected merge."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Governance gate and OneDev local-verify canary on the PR head."
+      }
+    ]
+  }
+}

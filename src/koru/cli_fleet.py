@@ -24,11 +24,13 @@ runaway or crashing project can't take down every other project's loop.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import signal
 import subprocess
 import sys
 import time
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -247,8 +249,53 @@ def _build_parser() -> argparse.ArgumentParser:
     boot.add_argument(
         "--prepare-host-environment",
         action="store_true",
-        help="Write host-environment.{json,md} on fresh init (off by default "
-        "for fleet-scale bootstrap).",
+        help="Write host-environment.{json,md} on fresh init (off by default for fleet-scale bootstrap).",
+    )
+
+    standard = sub.add_parser(
+        "standard-update",
+        aliases=["standard-scan"],
+        help=(
+            "Scan adopted Wellmanifest pins and optionally emit deduplicated "
+            "waiting-input Planfile adoption tickets."
+        ),
+    )
+    standard.add_argument(
+        "workspace",
+        type=Path,
+        nargs="?",
+        default=None,
+        help="Workspace containing governed repositories "
+        "(default: $KORU_FLEET_WORKSPACE or ~/github).",
+    )
+    standard.add_argument(
+        "--standard-root",
+        type=Path,
+        required=True,
+        help="Clean, already-fetched wellmanifest/new-project checkout.",
+    )
+    standard.add_argument(
+        "--planfile-project",
+        type=Path,
+        default=None,
+        help="Planfile project used for ticket emission.",
+    )
+    standard.add_argument(
+        "--emit-tickets",
+        action="store_true",
+        help="Create or reuse waiting-input adoption tickets.",
+    )
+    standard.add_argument(
+        "--workers",
+        type=int,
+        default=8,
+        help="Parallel read-only Git observations (1-32, default: 8).",
+    )
+    standard.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Report format (default: text).",
     )
 
     return parser
@@ -399,6 +446,46 @@ def _run_fleet_bootstrap(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_fleet_standard_update(args: argparse.Namespace) -> int:
+    from koru.standard_fleet import (
+        emit_adoption_tickets,
+        render_report,
+        scan_standard_fleet,
+    )
+
+    workspace = args.workspace or _default_workspace()
+    if args.emit_tickets and args.planfile_project is None:
+        _log("koru fleet standard-update: --planfile-project is required with --emit-tickets")
+        return 2
+    try:
+        report = scan_standard_fleet(
+            workspace,
+            args.standard_root,
+            workers=args.workers,
+        )
+    except (NotADirectoryError, OSError, ValueError) as exc:
+        _log(f"koru fleet standard-update: {exc}")
+        return 2
+
+    if args.emit_tickets:
+        emitted, reused, errors = emit_adoption_tickets(
+            args.planfile_project,
+            report.candidates,
+        )
+        report = replace(
+            report,
+            emitted=emitted,
+            reused=reused,
+            emission_errors=errors,
+        )
+
+    if args.format == "json":
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
+    else:
+        print(render_report(report))
+    return 1 if report.emission_errors else 0
+
+
 def fleet_main(argv: list[str]) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -408,6 +495,8 @@ def fleet_main(argv: list[str]) -> int:
         return _run_fleet_ls(args)
     if args.fleet_command in {"bootstrap", "init"}:
         return _run_fleet_bootstrap(args)
+    if args.fleet_command in {"standard-update", "standard-scan"}:
+        return _run_fleet_standard_update(args)
     parser.error(f"unknown fleet command: {args.fleet_command}")
     return 2
 

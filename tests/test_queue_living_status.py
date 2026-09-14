@@ -10,9 +10,9 @@ from koru.queue.living_status import (
 )
 
 
-def test_two_hour_expiry_is_normalized_utc() -> None:
+def test_one_hour_expiry_is_normalized_utc() -> None:
     now = datetime(2026, 9, 1, 10, 0, tzinfo=UTC)
-    assert lease_expiry_text(lease_seconds=7200, now=now) == "2026-09-01T12:00:00Z"
+    assert lease_expiry_text(lease_seconds=3600, now=now) == "2026-09-01T11:00:00Z"
 
 
 def test_living_status_is_single_and_preserves_source_description() -> None:

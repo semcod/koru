@@ -473,7 +473,7 @@ class TestPlanfileQueue(unittest.TestCase):
                 "--assigned-to",
                 "koru-test",
                 "--lease-seconds",
-                "7200",
+                "3600",
             ]
             self.assertIn(claim, tail_args)
             self.assertLess(tail_args.index(claim), tail_args.index(["ticket", "start", "PLF-001"]))
@@ -570,7 +570,7 @@ class TestPlanfileQueue(unittest.TestCase):
                     "--assigned-to",
                     "koru-test",
                     "--lease-seconds",
-                    "7200",
+                    "3600",
                 ],
                 tail_args,
             )
@@ -890,7 +890,7 @@ class TestPlanfileQueue(unittest.TestCase):
                 "--assigned-to",
                 "koru-api",
                 "--lease-seconds",
-                "7200",
+                "3600",
             ]
             self.assertIn(claim, tail_args)
             self.assertLess(tail_args.index(claim), tail_args.index(["ticket", "start", "PLF-004"]))
@@ -1166,7 +1166,7 @@ def test_run_next_planfile_task_persists_queue_event(tmp_path: Path) -> None:
                 "--assigned-to",
                 "koru-i",
                 "--lease-seconds",
-                "7200",
+                    "3600",
             ]
             self.assertIn(claim, tail_calls)
             self.assertLess(
@@ -1314,7 +1314,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
                 "--assigned-to",
                 "koru-llm",
                 "--lease-seconds",
-                "7200",
+                    "3600",
             ]
             self.assertIn(claim, tail)
             self.assertLess(tail.index(claim), tail.index(["ticket", "start", "LLM-001"]))
