@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-139",
+  "summary": "Keep local publication script compatible with worktree planner CLI",
+  "workstream": "governance",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-139/**",
+    "scripts/publish-local-onedev-validator.sh"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "36f44dcb7987d9dd825f67b6fad66992485a0f8b",
+    "targetBranch": "main",
+    "outcome": "The local protected publication script invokes the current Wellmanifest worktree planner and reaches the OneDev phase on frozen PR heads.",
+    "nonGoals": [
+      "No changes to target repository source",
+      "No synthetic or manually fabricated status success"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Replace the removed workspace-root planner option with the explicit /workspace primary checkout used by the deterministic path assertion.",
+      "components": [
+        {
+          "name": "publication-orchestration",
+          "paths": [
+            "scripts/publish-local-onedev-validator.sh"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore the previous planner invocation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "bash -n scripts/publish-local-onedev-validator.sh",
+          "./scripts/publish-local-onedev-validator.sh --help",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Shell syntax, usage and governance output retained in delivery receipt."
+      }
+    ]
+  }
+}
