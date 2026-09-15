@@ -295,21 +295,20 @@ PY
     --repository-name "${NAME}" \
     --ticket ticket-777 \
     --slug ci-probe \
-    --workspace-root /workspace > "$record"
+    --primary-checkout /workspace > "$record"
   python3 .governance/worktree_path_check.py validate "$record"
   python3 - "$record" <<'PY'
 import json
 import sys
 
 record = json.load(open(sys.argv[1], encoding="utf-8"))
-name = record["repositoryName"]
 assert record["branch"] == "ticket/777-ci-probe", record
 assert record["worktreePath"] == (
-    f"/workspace/.worktrees/{name}--ticket-777--ci-probe"
+    "/workspace/.worktrees/ticket-777--ci-probe"
 ), record
 assert record["leasePath"] == (
-    f"/workspace/.worktrees/.leases/"
-    f"{name}--ticket-777--ci-probe.json"
+    f"/workspace/.subactor/leases/"
+    f"ticket-777--ci-probe.json"
 ), record
 PY
 
