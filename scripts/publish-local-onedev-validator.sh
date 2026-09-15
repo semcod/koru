@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Local publication orchestration for a target PR without GitHub Actions on that repo.
 # Publishes standard-pack conformance via REST, runs onedev-agent locally, then
-# dispatches validator-agent direct-pr (workflow runs only on validator-agent).
+# invokes the deployed local Validator direct-pr adapter.
 #
 # Usage:
 #   publish-local-onedev-validator.sh --owner OWNER --name NAME --pr N \
@@ -18,8 +18,8 @@ DRY_RUN=false
 
 usage() {
   sed -n '2,8p' "$0" | tail -n +2
-  echo "  --merge     Pass --merge to validator dispatch."
-  echo "  --dry-run   Run checks and onedev; skip status publish and validator dispatch."
+  echo "  --merge     Pass --merge to the local Validator adapter."
+  echo "  --dry-run   Run checks and onedev; skip status publish and Validator."
 }
 
 die() {
@@ -48,7 +48,7 @@ done
 [[ "$TICKET" =~ ^ticket-[0-9]{3}$ ]] || die "--ticket must match ticket-NNN"
 
 ONEDEV_AGENT="${ONEDEV_AGENT:-$HOME/github/subactor/onedev-agent}"
-VALIDATOR_AGENT="${VALIDATOR_AGENT:-$HOME/github/subactor/validator-agent}"
+LOCAL_VALIDATOR_ENV_FILE="${LOCAL_VALIDATOR_ENV_FILE:-$HOME/.config/subactor/local-validator.env}"
 REPO_SLUG="${OWNER}/${NAME}"
 WORK_ROOT=""
 RUNNER_TEMP=""
@@ -235,9 +235,28 @@ PY
 
 echo "=== Resolve agent paths ==="
 [[ -d "$ONEDEV_AGENT" ]] || die "ONEDEV_AGENT not found: $ONEDEV_AGENT"
-[[ -d "$VALIDATOR_AGENT" ]] || die "VALIDATOR_AGENT not found: $VALIDATOR_AGENT"
 [[ -f "${ONEDEV_AGENT}/config/repositories.toml" ]] || die "missing ${ONEDEV_AGENT}/config/repositories.toml"
-[[ -x "${VALIDATOR_AGENT}/bin/dispatch-direct-pr.sh" ]] || die "missing ${VALIDATOR_AGENT}/bin/dispatch-direct-pr.sh"
+if [[ "$DRY_RUN" != true ]]; then
+  [[ -f "$LOCAL_VALIDATOR_ENV_FILE" && ! -L "$LOCAL_VALIDATOR_ENV_FILE" ]] \
+    || die "protected local Validator environment not found: $LOCAL_VALIDATOR_ENV_FILE"
+  env_mode="$(stat -c '%a' "$LOCAL_VALIDATOR_ENV_FILE")"
+  env_owner="$(stat -c '%u' "$LOCAL_VALIDATOR_ENV_FILE")"
+  [[ "$env_owner" == "$(id -u)" ]] \
+    || die "local Validator environment is not owned by the current user"
+  (( (8#$env_mode & 0077) == 0 )) \
+    || die "local Validator environment permissions are too open"
+  set -a
+  # shellcheck disable=SC1090
+  source "$LOCAL_VALIDATOR_ENV_FILE"
+  set +a
+  [[ -n "${VALIDATOR_ROOT:-}" ]] || die "local Validator environment lacks VALIDATOR_ROOT"
+  VALIDATOR_SCRIPT="${VALIDATOR_RUNNER:-${VALIDATOR_ROOT}/bin/run-local-direct-pr.sh}"
+  [[ -x "$VALIDATOR_SCRIPT" ]] || die "missing deployed local Validator adapter: $VALIDATOR_SCRIPT"
+  [[ -n "${VALIDATOR_APP_PRIVATE_KEY_FILE:-}" ]] \
+    || die "local Validator environment lacks VALIDATOR_APP_PRIVATE_KEY_FILE"
+  [[ -f "$VALIDATOR_APP_PRIVATE_KEY_FILE" && ! -L "$VALIDATOR_APP_PRIVATE_KEY_FILE" ]] \
+    || die "Validator App key is not a protected file"
+fi
 command -v gh >/dev/null || die "gh CLI is required"
 command -v python3 >/dev/null || die "python3 is required"
 command -v git >/dev/null || die "git is required"
@@ -365,23 +384,28 @@ echo "onedev/local-verify=${ONEDEV_STATE:-success}"
 [[ "$ONEDEV_STATE" == "success" || "$DRY_RUN" == true ]] || die "onedev/local-verify is not success on ${FROZEN_HEAD}"
 
 if [[ "$DRY_RUN" == true ]]; then
-  echo "=== Dry run: skipping validator-agent dispatch ==="
+  echo "=== Dry run: skipping local Validator adapter ==="
   echo "publish-local-onedev-validator: dry_run complete for ${REPO_SLUG}#${PR} @ ${FROZEN_HEAD}"
   exit 0
 fi
 
-echo "=== Validator-agent direct-pr dispatch ==="
-DISPATCH_ARGS=(
-  "${VALIDATOR_AGENT}/bin/dispatch-direct-pr.sh"
-  --owner "$OWNER"
-  --name "$NAME"
-  --pr "$PR"
+echo "=== Deployed local Validator direct-pr ==="
+VALIDATOR_ARGS=(
+  "$VALIDATOR_SCRIPT"
+  --repository "$REPO_SLUG"
+  --pull-request "$PR"
   --ticket "$TICKET"
-  --wait-checks
+  --expected-head-sha "$FROZEN_HEAD"
+  --key-file "$VALIDATOR_APP_PRIVATE_KEY_FILE"
 )
 if [[ "$MERGE" == true ]]; then
-  DISPATCH_ARGS+=(--merge --watch)
+  VALIDATOR_ARGS+=(--merge)
+else
+  VALIDATOR_ARGS+=(--apply)
 fi
-"${DISPATCH_ARGS[@]}"
+if [[ -n "${VALIDATOR_SUBLLM_ROOT:-}" ]]; then
+  VALIDATOR_ARGS+=(--subllm-root "$VALIDATOR_SUBLLM_ROOT")
+fi
+"${VALIDATOR_ARGS[@]}"
 
 echo "publish-local-onedev-validator: completed for ${REPO_SLUG}#${PR} @ ${FROZEN_HEAD}"

@@ -30,22 +30,25 @@ Ta ścieżka publikuje PR **bez uruchamiania GitHub Actions na repozytorium doce
    uruchamiany lokalnie w worktree; status `onedev/local-verify` idzie przez REST.
    Wymaga sibling `subactor/subllm` tylko gdy używasz pełnego agenta; domyślnie
    skrypt odpala bramki profilu bez root/docker executora.
-3. **Validator** — jedyne zaufane workflow GitHub Actions to dispatch na
-   `subactor/validator-agent` (`bin/dispatch-direct-pr.sh`), który czeka na checki i
-   opcjonalnie merge (`--merge --watch`).
+3. **Validator** — zaufana ścieżka publikacji prowadzi przez wdrożony lokalny
+   adapter `run-local-direct-pr.sh`. Dostaje pełny slug repozytorium, numer PR,
+   ticket, zamrożony `head.sha` i chroniony klucz Validator App; `--merge` wykonuje
+   zatwierdzenie i scalenie dopiero po sprawdzeniu exact-head oraz wymaganych bramek.
 
 ### Przykład (`semcod/koru`)
 
 ```bash
 export ONEDEV_AGENT="$HOME/github/subactor/onedev-agent"
-export VALIDATOR_AGENT="$HOME/github/subactor/validator-agent"
 export GITHUB_TOKEN="$(gh auth token)"
 
 ./scripts/publish-local-onedev-validator.sh \
   --owner semcod --name koru --pr 123 --ticket ticket-065 --merge
 ```
 
-Użyj `--dry-run`, aby wykonać checki i OneDev bez statusu REST ani dispatchu Validatora.
+Skrypt ładuje chronione środowisko lokalnego Validatora z
+`$HOME/.config/subactor/local-validator.env` (można zmienić przez
+`LOCAL_VALIDATOR_ENV_FILE`). Użyj `--dry-run`, aby wykonać checki i OneDev bez
+statusu REST ani publikacji przez Validatora.
 
 Szczegółowy raport z testów i publikacji (2026-09-02): [publication-local-onedev-validator-report.md](./publication-local-onedev-validator-report.md).
 
@@ -68,18 +71,23 @@ This path publishes a PR **without running GitHub Actions on the target reposito
    `standard packs / conformance` via GitHub REST.
 2. **OneDev** — runs the same repository profile test gates locally in the worktree,
    then posts `onedev/local-verify` via REST (no target-repo GHA, no root-only executor).
-3. **Validator** — trusted merge path is only `subactor/validator-agent`
-   `dispatch-direct-pr.sh` (optional `--merge --watch`).
+3. **Validator** — the trusted merge path is the deployed local
+   `run-local-direct-pr.sh` adapter. It receives the repository, PR, ticket,
+   frozen head and protected App key explicitly; `--merge` performs the
+   exact-head verification and protected merge.
 
 ### Example (`semcod/koru`)
 
-Same command block as above.
+Use the same command block as above. The script loads the protected local
+Validator environment from `$HOME/.config/subactor/local-validator.env`.
 
-Use `--dry-run` to run checks and OneDev without REST status or Validator dispatch.
+Use `--dry-run` to run checks and OneDev without REST status or Validator
+publication.
 
 Operational report (2026-09-02 tests and merges): [publication-local-onedev-validator-report.md](./publication-local-onedev-validator-report.md).
 
 ### Alternative: `koru ci publish`
 
-`koru ci publish` focuses on Validator dispatch from the Koru CLI; use this shell script
-when the target must not rely on GHA for conformance and OneDev evidence.
+`koru ci publish` is a separate Koru CLI path and still resolves its own
+Validator launcher. Use this shell script for the complete local conformance,
+OneDev and protected Validator cycle when the target must not rely on GHA.
