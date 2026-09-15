@@ -1,0 +1,38 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-136",
+  "summary": "Document deployed protected Docs gate and verify consumer CI",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": ["project/ticket-136/**", ".governance/DOCS_ADOPTION.md"],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python", "docker"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9c330f9deb231859d5555bfcebb257b9decebcf7",
+    "targetBranch": "main",
+    "outcome": "Publish accurate deployed Docs gate guidance and verify it through a real protected Koru documentation PR.",
+    "nonGoals": ["No generator implementation", "No fleet migration or historical ticket rewrites", "No runtime or dependency edits", "No self-approval or direct merge"],
+    "complexity": "S",
+    "estimatedMinutes": 40,
+    "budgets": {"maxImplementationFiles": 1, "maxAffectedComponents": 1, "maxPublicInterfaceChanges": 0, "maxRuntimeDependencies": 0},
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep one existing adopter guide; distinguish the independently deployed checker from candidate-side convenience and pending generator coverage.",
+      "components": [{"name": "docs-adoption", "paths": [".governance/DOCS_ADOPTION.md"]}],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert this guide update if inaccurate; no deployment effect is performed by this ticket."
+    },
+    "runtimeDependencies": [],
+    "validation": [{"criterion": "AC-02", "commands": ["./project/governance-check.sh", "docker compose config --quiet", "KORU_DOCS_STANDARD_ROOT=$DOCS_STANDARD_ROOT python3 -m unittest discover -s .governance/tests -p test_docs_gate.py", "python -m pytest -q tests/test_koru_queue_argv.py tests/test_mcp_server.py tests/test_planfile_queue.py tests/test_queue_cli_helpers.py"], "evidence": "Local results and protected exact-head CI retained in external receipts."}]
+  }
+}
