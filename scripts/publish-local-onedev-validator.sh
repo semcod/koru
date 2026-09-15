@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Local publication orchestration for a target PR without GitHub Actions on that repo.
-# Publishes standard-pack conformance via REST, runs onedev-agent locally, then
-# invokes the deployed local Validator direct-pr adapter.
+# Publishes standard-pack conformance via REST, observes the protected local
+# OneDev executor, then invokes the deployed local Validator direct-pr adapter.
 #
 # Usage:
 #   publish-local-onedev-validator.sh --owner OWNER --name NAME --pr N \
@@ -19,7 +19,7 @@ DRY_RUN=false
 usage() {
   sed -n '2,8p' "$0" | tail -n +2
   echo "  --merge     Pass --merge to the local Validator adapter."
-  echo "  --dry-run   Run checks and onedev; skip status publish and Validator."
+  echo "  --dry-run   Run checks and observe OneDev; skip script status publish and Validator."
 }
 
 die() {
@@ -71,166 +71,32 @@ commit_status_context_state() {
     --jq ".statuses[] | select(.context==\"${context}\") | .state" 2>/dev/null | head -n1
 }
 
-wait_for_commit_status() {
+commit_status_description() {
   local sha="$1"
   local context="$2"
-  local want="${3:-success}"
+  gh api "repos/${REPO_SLUG}/commits/${sha}/status" \
+    --jq ".statuses[] | select(.context==\"${context}\") | .description" 2>/dev/null | head -n1
+}
+
+wait_for_deployed_onedev() {
+  local main_sha="$1"
   local deadline=$((SECONDS + 1800))
   local state=""
+  local description=""
   while (( SECONDS < deadline )); do
-    state="$(commit_status_context_state "$sha" "$context" || true)"
-    if [[ "$state" == "$want" ]]; then
-      echo "$state"
+    state="$(commit_status_context_state "$FROZEN_HEAD" "onedev/local-verify" || true)"
+    description="$(commit_status_description "$FROZEN_HEAD" "onedev/local-verify" || true)"
+    if [[ "$state" == "success" && "$description" == *"main ${main_sha:0:12}"* ]]; then
+      echo "onedev/local-verify=success (deployed local OneDev; main=${main_sha})"
       return 0
     fi
     if [[ "$state" == "failure" || "$state" == "error" ]]; then
-      die "commit status ${context}=${state} on ${sha}"
+      die "onedev/local-verify=${state} on ${FROZEN_HEAD}: ${description:-no description}"
     fi
+    echo "onedev/local-verify=${state:-pending}; waiting for deployed local OneDev executor"
     sleep 15
   done
-  die "timed out waiting for ${context}=${want} on ${sha} (last=${state:-pending})"
-}
-
-ONEDEV_LOCAL_CONFIG=""
-
-write_local_onedev_config() {
-  ONEDEV_LOCAL_CONFIG="${WORK_ROOT}/onedev-local.toml"
-  python3 <<PY
-import tomllib
-from pathlib import Path
-
-onedev = Path("${ONEDEV_AGENT}")
-work = Path("${WORK_ROOT}")
-repo = "${REPO_SLUG}"
-out = Path("${ONEDEV_LOCAL_CONFIG}")
-data = tomllib.load((onedev / "config/repositories.toml").open("rb"))
-svc = data["service"]
-base = onedev / "config"
-
-def resolve(path_value: str) -> Path:
-    candidate = Path(path_value)
-    return candidate if candidate.is_absolute() else (base / candidate).resolve()
-
-def q(value: str) -> str:
-    return value.replace("\\\\", "\\\\\\\\").replace('"', '\\\\"')
-
-profile = next(
-    row for row in data["pull_request_verification"]["repositories"]
-    if row.get("full_name") == repo
-)
-queue = work / "pr-state"
-pr_work = work / "pr-work"
-for directory in (queue, pr_work, pr_work / "mirrors", pr_work / "unused", queue / "git-state"):
-    directory.mkdir(parents=True, exist_ok=True)
-
-lines = [
-    "[service]",
-    f'poll_interval_seconds = {int(svc.get("poll_interval_seconds", 300))}',
-    f'mirror_root = "{pr_work / "mirrors"}"',
-    f'work_root = "{pr_work / "unused"}"',
-    f'state_root = "{queue / "git-state"}"',
-    'process_root = "processes"',
-    f'github_api_url = "{svc.get("github_api_url", "https://api.github.com")}"',
-    f'github_token_file = "{resolve(str(svc["github_token_file"]))}"',
-    f'gitlab_token_file = "{resolve(str(svc["gitlab_token_file"]))}"',
-    f'git_askpass_file = "{resolve(str(svc["git_askpass_file"]))}"',
-    f'onedev_url = "{svc.get("onedev_url", "http://127.0.0.1:6610")}"',
-    f'onedev_user = "{svc.get("onedev_user", "onedev-admin")}"',
-    f'onedev_password_file = "{resolve(str(svc["onedev_password_file"]))}"',
-    f'bootstrap_validation_secret_file = "{resolve(str(svc["bootstrap_validation_secret_file"]))}"',
-    f'bootstrap_validation_github_token_file = "{resolve(str(svc["bootstrap_validation_github_token_file"]))}"',
-    f'bootstrap_validation_github_app_id = {int(svc.get("bootstrap_validation_github_app_id", 4344831))}',
-    f'bootstrap_validation_github_app_private_key_file = "{resolve(str(svc["bootstrap_validation_github_app_private_key_file"]))}"',
-    f'bootstrap_desired_inventory_file = "{resolve(str(svc["bootstrap_desired_inventory_file"]))}"',
-    "automation_enabled = false",
-    "publish_enabled = false",
-    "",
-    "[pull_request_verification]",
-    "enabled = false",
-    "poll_interval_seconds = 30",
-    'context = "onedev/local-verify"',
-    "max_open_per_repository = 10",
-    "max_profiles_per_cycle = 5",
-    "api_publication_reserve = 250",
-    "api_scan_cost_per_profile = 4",
-    "api_recovery_profiles_per_cycle = 1",
-    f'work_root = "{pr_work}"',
-    f'queue_root = "{queue}"',
-    "",
-    "[[pull_request_verification.repositories]]",
-    f'full_name = "{profile["full_name"]}"',
-    "test_commands = [",
-]
-for command in profile["test_commands"]:
-    rendered = ", ".join(f'"{q(str(part))}"' for part in command)
-    lines.append(f"  [{rendered}],")
-lines.append("]")
-lines.append(f"timeout_seconds = {int(profile.get('timeout_seconds', 1800))}")
-if profile.get("github_branch_lifecycle"):
-    lines.append("github_branch_lifecycle = true")
-if profile.get("include_drafts"):
-    lines.append("include_drafts = true")
-for link in profile.get("dependency_links", []):
-    lines.extend([
-        "",
-        "[[pull_request_verification.repositories.dependency_links]]",
-        f'path = "{q(str(link["path"]))}"',
-        f'target = "{q(str(link["target"]))}"',
-    ])
-out.write_text("\\n".join(lines) + "\\n", encoding="utf-8")
-print(out)
-PY
-}
-
-run_local_onedev_profile_tests() {
-  write_local_onedev_config
-  local main_sha=""
-  main_sha="$(gh api "repos/${REPO_SLUG}/git/ref/heads/main" --jq .object.sha)"
-  [[ -n "$main_sha" ]] || die "could not resolve main SHA for ${REPO_SLUG}"
-  echo "main_sha=${main_sha}"
-  echo "onedev_local_config=${ONEDEV_LOCAL_CONFIG}"
-  if [[ "$DRY_RUN" != true ]]; then
-    gh api "repos/${REPO_SLUG}/statuses/${FROZEN_HEAD}" \
-      -f state=pending \
-      -f context="onedev/local-verify" \
-      -f description="PR #${PR} queued against main ${main_sha:0:12}" \
-      >/dev/null
-  fi
-  (
-    set -euo pipefail
-    cd "$WT"
-    export ONEDEV_PR_MAIN_SHA="$main_sha"
-    export ONEDEV_PR_REPOSITORY="$REPO_SLUG"
-    export CI=true
-    export NO_COLOR=1
-    python3 -m pip install -e . -q
-    python3 <<PY
-import subprocess
-import tomllib
-from pathlib import Path
-
-config = tomllib.load(Path("${ONEDEV_LOCAL_CONFIG}").open("rb"))
-profile = config["pull_request_verification"]["repositories"][0]
-for command in profile["test_commands"]:
-    subprocess.run(command, check=True)
-PY
-  )
-  if [[ "$DRY_RUN" != true ]]; then
-    local gate_count=""
-    gate_count="$(python3 <<PY
-import tomllib
-from pathlib import Path
-profile = tomllib.load(Path("${ONEDEV_LOCAL_CONFIG}").open("rb"))["pull_request_verification"]["repositories"][0]
-print(len(profile["test_commands"]))
-PY
-)"
-    gh api "repos/${REPO_SLUG}/statuses/${FROZEN_HEAD}" \
-      -f state=success \
-      -f context="onedev/local-verify" \
-      -f description="PR #${PR}: ${gate_count} local test gate(s) passed against main ${main_sha:0:12}" \
-      >/dev/null
-  fi
-  echo "onedev/local-verify=success (local profile tests)"
+  die "timed out waiting for deployed onedev/local-verify on ${FROZEN_HEAD} against main ${main_sha} (last=${state:-pending})"
 }
 
 echo "=== Resolve agent paths ==="
@@ -368,12 +234,15 @@ else
     >/dev/null
 fi
 
-echo "=== OneDev local profile tests (same gates as onedev-agent) ==="
+echo "=== Observe deployed OneDev local profile ==="
 if [[ -z "${GITHUB_TOKEN:-}" ]]; then
   GITHUB_TOKEN="$(gh auth token)"
   export GITHUB_TOKEN
 fi
-run_local_onedev_profile_tests
+LOCAL_MAIN_SHA="$(gh api "repos/${REPO_SLUG}/git/ref/heads/main" --jq .object.sha)"
+[[ "$LOCAL_MAIN_SHA" =~ ^[0-9a-f]{40}$ ]] || die "could not resolve main SHA for ${REPO_SLUG}"
+echo "main_sha=${LOCAL_MAIN_SHA}"
+wait_for_deployed_onedev "$LOCAL_MAIN_SHA"
 
 echo "=== Verify onedev/local-verify on frozen head ==="
 ONEDEV_STATE="$(commit_status_context_state "$FROZEN_HEAD" "onedev/local-verify" || true)"

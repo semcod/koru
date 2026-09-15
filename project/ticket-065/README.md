@@ -16,8 +16,10 @@ the Validator or OneDev source repositories are not modified.
 
 ## Acceptance criteria
 
-- [x] AC-01: Dry-run executes standard packs and OneDev profile gates on the frozen PR head.
-- [x] AC-02: Full run posts REST statuses and invokes the deployed local
+- [ ] AC-01: Dry-run executes standard packs and observes the protected OneDev
+  profile result for the frozen PR head and current `main`; currently blocked
+  by the deployed executor image missing the configured Koru checker.
+- [ ] AC-02: Full run posts REST statuses and invokes the deployed local
   `run-local-direct-pr.sh` adapter; it does not use hosted workflow dispatch.
 - [x] AC-03: The local Validator environment and protected App key are loaded
   from the operator's protected configuration, and the adapter receives the
@@ -28,9 +30,17 @@ the Validator or OneDev source repositories are not modified.
 ## Validation evidence
 
 - `bash -n scripts/publish-local-onedev-validator.sh` passed.
+- The exact checkout passes `governance_check.py --actor ci` against the current
+  `main` SHA.
+- The script no longer executes `/app/...` profile commands on the operator
+  host; it waits for the deployed OneDev executor's exact-head status.
 - Focused shell contract checks confirm the hosted dispatch path is absent and
   the local adapter receives repository, PR, ticket, exact head and key.
-- Final exact-head publication evidence is recorded after the PR is opened.
+- A fresh protected retry for PR #249 fails before tests because the active
+  `ifuri-onedev-agent:taskand-browser-link` image lacks
+  `/app/docker/pr/check-koru-docs.py`; the existing Koru deployment receipt
+  records `ifuri-onedev-agent:koru-docs-350-required-canaries` instead. The
+  adapter is therefore not invoked and no merge is attempted.
 
 ## Tracking boundary
 

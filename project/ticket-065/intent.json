@@ -41,7 +41,7 @@
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Shell orchestration runs frozen-head conformance checks, executes the OneDev repository profile locally, posts REST commit statuses, then invokes the deployed local Validator direct-pr adapter with explicit repository, ticket, exact-head and protected-key arguments.",
+      "decision": "Shell orchestration runs frozen-head conformance checks, waits for the protected local OneDev executor to publish exact-head status against the current main SHA, posts only the script-owned standard-pack status, then invokes the deployed local Validator direct-pr adapter with explicit repository, ticket, exact-head and protected-key arguments.",
       "components": [
         {
           "name": "local-publication-script",
@@ -74,10 +74,10 @@
         "criterion": "AC-01",
         "commands": [
           "bash -n scripts/publish-local-onedev-validator.sh",
-          "./scripts/publish-local-onedev-validator.sh --owner semcod --name koru --pr 101 --ticket ticket-065 --dry-run",
+          "python .governance/governance_check.py --root . --actor ci --base e63b83ca5eadd9b83a8fe1efba27b14dce7c47f8 --head HEAD",
           "rg -n 'run-local-direct-pr.sh|--expected-head-sha|--key-file' scripts/publish-local-onedev-validator.sh"
         ],
-        "evidence": "local dry-run publishes conformance and onedev profile evidence on the frozen PR head"
+        "evidence": "The exact checkout passes the local governance gate; protected dry-run remains blocked by the deployed executor image missing /app/docker/pr/check-koru-docs.py."
       },
       {
         "criterion": "AC-02",
@@ -85,7 +85,7 @@
           "bash -n scripts/publish-local-onedev-validator.sh",
           "! rg -q 'dispatch-direct-pr.sh' scripts/publish-local-onedev-validator.sh"
         ],
-        "evidence": "Pending exact-head PR publication through the deployed local Validator adapter."
+        "evidence": "The protected retry for PR #249 fails before tests because the active executor image lacks the configured Koru checker; the local Validator adapter is not invoked."
       }
     ]
   }
