@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-143",
+  "summary": "Promote Planfile backlog from monag before paid idle discovery",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-143/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/monag_discovery.py",
+    "src/koru/autonomy/phases/scan_phase.py",
+    "tests/test_monag_discovery.py",
+    "tests/test_scan_phase.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e63b83ca5eadd9b83a8fe1efba27b14dce7c47f8",
+    "targetBranch": "main",
+    "outcome": "When the autonomous loop is idle and scan, code2llm and todo2code created nothing, Koru reads the project-scoped monag resume inventory, moves a bounded number of unambiguous open backlog tickets into the current sprint and skips the paid nxdo planner when it promoted existing work; unfinished ticket worktrees are reported read-only.",
+    "nonGoals": [
+      "Resume, take over, reset or delete any existing worktree",
+      "Create new tickets from monag data or GitHub issues",
+      "Move tickets from legacy root planfile.yaml, worktree copies or tickets with conflicting statuses",
+      "Change monag, Planfile or the nxdo planner"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add an optional monag adapter to the existing idle discovery fallback chain directly before nxdo. It shells out to the read-only monag CLI, accepts only primary-checkout sprint sources, verifies the ticket is absent from the current sprint and promotes through the Planfile CLI move command.",
+      "components": [
+        {
+          "name": "monag-idle-intake",
+          "paths": [
+            "src/koru/autonomy/monag_discovery.py",
+            "src/koru/autonomy/phases/scan_phase.py",
+            "tests/test_monag_discovery.py",
+            "tests/test_scan_phase.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Set KORU_MONAG_ENABLE=0 or revert the ticket commit; promoted tickets stay valid current-sprint tickets."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          ".venv/bin/pytest -o addopts='' -q tests/test_monag_discovery.py tests/test_scan_phase.py"
+        ],
+        "evidence": "Pending."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "./project/governance-check.sh --base origin/main --head HEAD --actor agent",
+          ".venv/bin/ruff check src/koru/autonomy/monag_discovery.py src/koru/autonomy/phases/scan_phase.py tests/test_monag_discovery.py tests/test_scan_phase.py"
+        ],
+        "evidence": "Pending."
+      }
+    ]
+  }
+}

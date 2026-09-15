@@ -444,6 +444,11 @@ def _run_idle_discovery_fallbacks(
     if not (discovery and discovery.get("applied")) and not (
         todo2code and todo2code.get("applied")
     ):
+        # Existing backlog work is free; only invent tickets when there is none.
+        monag_payload = _run_monag_discovery_after_idle(project, _hp, _emit)
+        _record_monag_discovery_telemetry(state, cycle_telemetry, monag_payload)
+        if monag_payload and monag_payload.get("applied"):
+            return
         nxdo_payload = _run_nxdo_discovery_after_idle(project, _hp, _emit)
         _record_nxdo_discovery_telemetry(state, cycle_telemetry, nxdo_payload)
 
@@ -591,6 +596,47 @@ def _record_code2llm_discovery_telemetry(
         cycle_telemetry["code2llm_discovery_follow_up_workflow"] = str(
             discovery.get("follow_up_workflow") or "",
         ).strip() or "standardized_project_discovery"
+
+
+def _run_monag_discovery_after_idle(
+    project: Path,
+    _hp: Callable[..., Any],
+    _emit: Callable[..., Any],
+) -> dict[str, Any] | None:
+    """Promote existing open backlog tickets reported by ``monag`` before ``nxdo``."""
+    try:
+        from koru.autonomy.monag_discovery import (
+            format_monag_summary,
+            format_unfinished_worktrees,
+            run_monag_discovery,
+        )
+    except Exception as exc:  # noqa: BLE001 - optional integration
+        _hp(f"- monag backlog promotion unavailable: {exc}")
+        return None
+
+    outcome = run_monag_discovery(project)
+    _hp(f"  {format_monag_summary(outcome)}")
+    for line in format_unfinished_worktrees(outcome):
+        _hp(line)
+    payload = outcome.to_dict()
+    _emit("MonagDiscoveryCompleted", payload)
+    return payload
+
+
+def _record_monag_discovery_telemetry(
+    state: AutoloopState,
+    cycle_telemetry: dict[str, Any],
+    discovery: dict[str, Any] | None,
+) -> None:
+    if discovery is None:
+        return
+    applied_count = len(discovery.get("applied", []))
+    state.telemetry_scan_after_idle_tickets_applied += applied_count
+    cycle_telemetry["monag_discovery_run"] = bool(discovery.get("ran"))
+    cycle_telemetry["monag_discovery_applied"] = applied_count
+    cycle_telemetry["monag_discovery_unfinished_worktrees"] = len(
+        discovery.get("unfinished_worktrees", []),
+    )
 
 
 def _run_nxdo_discovery_after_idle(
