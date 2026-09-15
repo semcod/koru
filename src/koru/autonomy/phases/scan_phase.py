@@ -299,6 +299,26 @@ def handle_scan_phase(
     return scan_result
 
 
+def handle_backlog_promotion_after_idle(
+    project: Path,
+    state: AutoloopState,
+    queue_result: QueueLoopResult,
+    cycle_telemetry: dict[str, Any],
+    _hp: Callable[..., Any],
+    _emit: Callable[..., Any],
+) -> dict[str, Any] | None:
+    """Move existing backlog work into the current sprint whenever the queue is idle.
+
+    Runs independently of the opt-in idle discovery: promoting planned work is
+    not discovery, and an idle queue with a ready backlog must not stay idle.
+    """
+    if queue_result.last_status != "idle":
+        return None
+    payload = _run_monag_discovery_after_idle(project, _hp, _emit)
+    _record_monag_discovery_telemetry(state, cycle_telemetry, payload)
+    return payload
+
+
 def handle_scan_after_idle(
     project: Path,
     state: AutoloopState,
@@ -444,11 +464,6 @@ def _run_idle_discovery_fallbacks(
     if not (discovery and discovery.get("applied")) and not (
         todo2code and todo2code.get("applied")
     ):
-        # Existing backlog work is free; only invent tickets when there is none.
-        monag_payload = _run_monag_discovery_after_idle(project, _hp, _emit)
-        _record_monag_discovery_telemetry(state, cycle_telemetry, monag_payload)
-        if monag_payload and monag_payload.get("applied"):
-            return
         nxdo_payload = _run_nxdo_discovery_after_idle(project, _hp, _emit)
         _record_nxdo_discovery_telemetry(state, cycle_telemetry, nxdo_payload)
 
