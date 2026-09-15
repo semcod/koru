@@ -3,7 +3,7 @@
 - **ID**: ticket-128
 - **Owner**: unresolved:human
 - **Status**: IN_PROGRESS
-- **Workflow state**: PUBLICATION
+- **Workflow state**: EDIT
 - **Created**: 2026-09-14
 
 ## Goal and scope
@@ -23,6 +23,12 @@ Read-only Git observations run in bounded parallel workers so the fleet can be
 audited quickly. Planfile ticket creation stays sequential because it has a
 single writer.
 
+Continuation scope: make the default scan organization-scoped and primary
+checkout-only, while retaining a separate read-only inventory command for
+excluded organizations, local-only checkouts, linked worktrees and duplicate
+clones. Explicit inclusion flags must be required before those paths can be
+considered for ticket emission.
+
 ## Acceptance criteria
 
 - [x] AC-01: Scope is approved by the user's explicit execution request.
@@ -35,13 +41,20 @@ single writer.
 - [x] AC-04: Explicit ticket emission is idempotent by repository and target
       revision, uses waiting_input, and grants no write or merge authority.
 - [x] AC-05: CLI, focused tests, Ruff and governance checks pass.
+- [x] AC-06: Default scope selects only the configured fleet organizations and
+      primary checkouts; excluded paths are reported separately and are not
+      emitted.
+- [x] AC-07: `standard-inventory` provides a read-only full-scope view, while
+      explicit inclusion flags are required to scan excluded paths for ticket
+      emission.
 
 ## Validation evidence
 
-- `22 passed` in `tests/test_standard_fleet.py tests/test_cli_fleet.py`.
-- `4075 passed, 15 skipped, 164 deselected, 962 subtests passed` in the
-  non-slow suite; the three failures are the same baseline failures on clean
-  `main` (`test_ide_doctor...` and the two `test_pyproject_metadata...`).
+- `27 passed` in `tests/test_standard_fleet.py tests/test_cli_fleet.py`.
+- `4159 passed, 19 skipped, 165 deselected, 976 subtests passed` in the
+  non-slow suite; the two failures are pre-existing metadata assertions in
+  `tests/test_pyproject_metadata.py` and no changed dependency file is in the
+  ticket diff.
 - `./project/governance-check.sh --base origin/main --head HEAD --actor agent`:
   `GOV-PASS: passed (0 errors, 0 warnings)`.
 - Ruff, Python compilation and `git diff --check` pass.

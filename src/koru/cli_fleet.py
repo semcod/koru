@@ -140,6 +140,56 @@ def _default_workspace() -> Path:
     return Path.home() / "github"
 
 
+def _add_standard_scope_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--organization",
+        dest="organizations",
+        action="append",
+        metavar="ORG",
+        help=(
+            "Restrict the default scope to this GitHub organization; repeatable. "
+            "Default: autogrammar, semcod, subactor, wellmanifest."
+        ),
+    )
+    parser.add_argument(
+        "--all-organizations",
+        action="store_true",
+        help="Include repositories from organizations outside the default scope.",
+    )
+    parser.add_argument(
+        "--include-local",
+        action="store_true",
+        help="Include checkouts without an origin remote (excluded by default).",
+    )
+    parser.add_argument(
+        "--include-worktrees",
+        action="store_true",
+        help="Include linked worktrees (excluded by default).",
+    )
+    parser.add_argument(
+        "--include-duplicates",
+        action="store_true",
+        help="Include duplicate clones of an origin (primary checkout wins by default).",
+    )
+    parser.add_argument(
+        "--show-excluded",
+        action="store_true",
+        help="Show paths excluded by the scope in the report; does not include them in ticket emission.",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=8,
+        help="Parallel read-only Git observations (1-32, default: 8).",
+    )
+    parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Report format (default: text).",
+    )
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru fleet",
@@ -285,18 +335,31 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Create or reuse waiting-input adoption tickets.",
     )
-    standard.add_argument(
-        "--workers",
-        type=int,
-        default=8,
-        help="Parallel read-only Git observations (1-32, default: 8).",
+    _add_standard_scope_arguments(standard)
+
+    inventory = sub.add_parser(
+        "standard-inventory",
+        aliases=["standard-scope"],
+        help=(
+            "Audit selected and excluded governed checkouts without emitting or "
+            "changing tickets."
+        ),
     )
-    standard.add_argument(
-        "--format",
-        choices=("text", "json"),
-        default="text",
-        help="Report format (default: text).",
+    inventory.add_argument(
+        "workspace",
+        type=Path,
+        nargs="?",
+        default=None,
+        help="Workspace containing governed repositories (default: $KORU_FLEET_WORKSPACE or ~/github).",
     )
+    inventory.add_argument(
+        "--standard-root",
+        type=Path,
+        required=True,
+        help="Clean, already-fetched wellmanifest/new-project checkout.",
+    )
+    _add_standard_scope_arguments(inventory)
+    inventory.set_defaults(emit_tickets=False, show_excluded=True)
 
     return parser
 
@@ -454,6 +517,9 @@ def _run_fleet_standard_update(args: argparse.Namespace) -> int:
     )
 
     workspace = args.workspace or _default_workspace()
+    if args.all_organizations and args.organizations:
+        _log("koru fleet standard-update: --all-organizations cannot be combined with --organization")
+        return 2
     if args.emit_tickets and args.planfile_project is None:
         _log("koru fleet standard-update: --planfile-project is required with --emit-tickets")
         return 2
@@ -462,6 +528,11 @@ def _run_fleet_standard_update(args: argparse.Namespace) -> int:
             workspace,
             args.standard_root,
             workers=args.workers,
+            organizations=args.organizations,
+            include_external=args.all_organizations,
+            include_local=args.include_local,
+            include_worktrees=args.include_worktrees,
+            include_duplicates=args.include_duplicates,
         )
     except (NotADirectoryError, OSError, ValueError) as exc:
         _log(f"koru fleet standard-update: {exc}")
@@ -479,10 +550,11 @@ def _run_fleet_standard_update(args: argparse.Namespace) -> int:
             emission_errors=errors,
         )
 
+    show_excluded = args.show_excluded or args.fleet_command in {"standard-inventory", "standard-scope"}
     if args.format == "json":
-        print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
+        print(json.dumps(report.to_dict(include_excluded=show_excluded), indent=2, sort_keys=True))
     else:
-        print(render_report(report))
+        print(render_report(report, show_excluded=show_excluded))
     return 1 if report.emission_errors else 0
 
 
@@ -496,6 +568,8 @@ def fleet_main(argv: list[str]) -> int:
     if args.fleet_command in {"bootstrap", "init"}:
         return _run_fleet_bootstrap(args)
     if args.fleet_command in {"standard-update", "standard-scan"}:
+        return _run_fleet_standard_update(args)
+    if args.fleet_command in {"standard-inventory", "standard-scope"}:
         return _run_fleet_standard_update(args)
     parser.error(f"unknown fleet command: {args.fleet_command}")
     return 2

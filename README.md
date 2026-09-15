@@ -806,7 +806,10 @@ koru fleet ls --workspace ~/github/subactor
 ```
 
 Idempotent soft-ensure: missing `policy.yaml` on an existing `.planfile/` is
-added **without** `--force`. See [`docs/koru-fleet.md`](./docs/koru-fleet.md).
+added **without** `--force`. For Wellmanifest freshness, use
+`koru fleet standard-update` for the default organization-scoped scan and
+`koru fleet standard-inventory` to inspect excluded local clones and
+worktrees. See [`docs/koru-fleet.md`](./docs/koru-fleet.md).
 
 ### Or use Taskfile
 

@@ -81,7 +81,41 @@ koru fleet up --workspace /path/to/root \
   --restart-backoff-seconds 30 \
   --rescan-interval-seconds 300 \
   -- --ide claude --ticket-sources all            # everything after `--` is forwarded to each child
+
+# Wellmanifest freshness: update notices use the default organization scope
+koru fleet standard-update ~/github --standard-root ~/github/wellmanifest/new-project \
+  --emit-tickets --planfile-project ~/github/semcod/koru
+
+# Full read-only inventory, including local clones, linked worktrees and other orgs
+koru fleet standard-inventory ~/github --standard-root ~/github/wellmanifest/new-project
 ```
+
+### Wellmanifest standard-update scope
+
+`koru fleet standard-update` selects only primary checkouts from the default
+organizations `autogrammar`, `semcod`, `subactor` and `wellmanifest`. It
+excludes checkouts without an `origin`, linked worktrees and duplicate clones
+of the same remote. Excluded paths are never emitted as adoption tickets.
+This prevents a local copy or a temporary worktree from creating a second
+handoff for the same repository.
+
+Use `koru fleet standard-inventory` (alias: `standard-scope`) for a complete
+read-only audit. It displays both selected and excluded paths and never emits
+tickets. `standard-update --show-excluded` adds the same excluded-path detail
+to an ordinary update report without changing its selection.
+
+| Flag | Effect |
+| --- | --- |
+| `--organization ORG` | Select one or more organizations instead of the default set |
+| `--all-organizations` | Include remote repositories from every organization |
+| `--include-local` | Include repositories with no `origin` remote |
+| `--include-worktrees` | Include linked worktrees |
+| `--include-duplicates` | Include non-primary clones of an origin |
+| `--show-excluded` | Show excluded paths; does not select or emit them |
+
+The inclusion flags are explicit audit controls. Ticket emission remains
+opt-in through `--emit-tickets`, and every emitted adoption notice remains
+`waiting_input` with no write or merge authority.
 
 ### `koru fleet bootstrap` (alias: `koru fleet init`)
 

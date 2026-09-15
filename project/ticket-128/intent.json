@@ -1,7 +1,7 @@
 {
   "schema": "new-project.intent/v3",
   "ticket": "ticket-128",
-  "summary": "Add proactive fleet standard-update ticket emission",
+  "summary": "Add scoped and auditable fleet standard-update ticket emission",
   "workstream": "application",
   "classification": {
     "kind": "SERVICE",
@@ -15,7 +15,9 @@
     "src/koru/standard_fleet.py",
     "src/koru/cli_fleet.py",
     "tests/test_standard_fleet.py",
-    "tests/test_cli_fleet.py"
+    "tests/test_cli_fleet.py",
+    "docs/koru-fleet.md",
+    "README.md"
   ],
   "forbiddenPaths": ["project/ticket-*/user-*.md"],
   "stacks": ["python"],
@@ -25,7 +27,7 @@
   "delivery": {
     "acceptedBaseSha": "da2e522f344e64ff65734db8c37fb7d5906486f0",
     "targetBranch": "main",
-    "outcome": "Koru provides a bounded read-only Wellmanifest freshness scan and explicit idempotent Planfile handoff emission without mutating adopter repositories.",
+      "outcome": "Koru provides a bounded read-only, organization-scoped Wellmanifest freshness scan and explicit idempotent Planfile handoff emission without mutating adopter repositories. Excluded local, worktree, duplicate and out-of-scope checkouts remain available through a read-only inventory command.",
     "nonGoals": [
       "Automatically adopt, commit, push, merge or delete any target repository",
       "Refresh an untrusted or dirty standard source checkout",
@@ -54,7 +56,7 @@
         }
       ],
       "responsibilityChanges": false,
-      "interfaceChanges": ["koru fleet standard-update", "koru fleet standard-scan"],
+        "interfaceChanges": ["koru fleet standard-update", "koru fleet standard-scan", "koru fleet standard-inventory"],
       "dataChanges": [],
       "ui": {
         "impact": "none",
