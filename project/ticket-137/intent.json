@@ -1,0 +1,96 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-137",
+  "summary": "Expose and reconcile legacy skipped Planfile tickets in queue reads",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-137/**",
+    "src/koru/planfile_compat.py",
+    "src/koru/context.py",
+    "src/koru/queue_clean.py",
+    "tests/test_context.py",
+    "tests/test_queue_clean.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "yaml"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "36f44dcb7987d9dd825f67b6fad66992485a0f8b",
+    "targetBranch": "main",
+    "outcome": "Keep legacy skipped and unknown Planfile records visible in Koru read-only queue and context reports, with explicit migration evidence and no implicit writes.",
+    "nonGoals": [
+      "No automatic mutation or deletion of Planfile records",
+      "No rewrite of Koru operational event history",
+      "No change to runnable status selection for skipped tickets"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 2,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Merge Planfile CLI results with a raw, read-only YAML snapshot by ticket id. Keep the CLI record authoritative; annotate recovered legacy or unknown statuses and expose aggregate counts in context output. Queue cleanup uses the same fallback when the legacy CLI fails.",
+      "components": [
+        {
+          "name": "planfile-compat",
+          "paths": [
+            "src/koru/planfile_compat.py"
+          ]
+        },
+        {
+          "name": "context-read",
+          "paths": [
+            "src/koru/context.py",
+            "tests/test_context.py"
+          ]
+        },
+        {
+          "name": "queue-maintenance",
+          "paths": [
+            "src/koru/queue_clean.py",
+            "tests/test_queue_clean.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "context output adds ticket_compatibility read-only diagnostics"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the compatibility adapter and its tests; persisted Planfile data remains unchanged."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q tests/test_context.py tests/test_queue_clean.py",
+          "ruff check src/koru/planfile_compat.py src/koru/context.py src/koru/queue_clean.py tests/test_context.py tests/test_queue_clean.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Focused regression tests, lint and governance output retained in the delivery receipt."
+      }
+    ]
+  }
+}

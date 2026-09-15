@@ -46,6 +46,7 @@ from pathlib import Path
 from typing import Any
 
 from koru.context import FIXTURE_LABELS
+from koru.planfile_compat import merge_missing_ticket_records
 
 QUEUE_CLEAN_TAG = "KORU-QUEUE-CLEAN"
 """Marker prefix written to ``outputs.notes`` on every cleaned ticket."""
@@ -297,6 +298,12 @@ def _list_tickets(
     cmd = [*_planfile_base(), "ticket", "list", "--format", "json"]
     result = runner(cmd, cwd=str(project), capture_output=True, text=True, check=False)
     if result.returncode != 0:
+        # A pre-compatibility Planfile can fail while validating one legacy
+        # record.  The raw reader is deliberately read-only and lets queue
+        # housekeeping report the record instead of dropping the whole list.
+        merged, report = merge_missing_ticket_records([], project)
+        if report.recovered_ticket_count:
+            return merged
         raise RuntimeError(
             f"planfile ticket list failed (exit {result.returncode}): "
             f"{(result.stderr or result.stdout or '').strip()}",
@@ -307,12 +314,18 @@ def _list_tickets(
     try:
         data = json.loads(stdout)
     except json.JSONDecodeError as exc:
+        merged, report = merge_missing_ticket_records([], project)
+        if report.recovered_ticket_count:
+            return merged
         raise RuntimeError(f"planfile ticket list returned invalid JSON: {exc}") from exc
     if isinstance(data, list):
-        return [t for t in data if isinstance(t, dict)]
-    if isinstance(data, dict):
-        return [data]
-    return []
+        listed = [t for t in data if isinstance(t, dict)]
+    elif isinstance(data, dict):
+        listed = [data]
+    else:
+        listed = []
+    merged, _report = merge_missing_ticket_records(listed, project)
+    return merged
 
 
 def _close_ticket(

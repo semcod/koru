@@ -86,6 +86,7 @@ from koru.context_render import (
 )
 from koru.dotenv_loader import load_dotenv as _load_dotenv_impl
 from koru.git_attribution import KORU_AGENT_COAUTHOR_TRAILER
+from koru.planfile_compat import merge_missing_ticket_records
 from koru.policy import Policy, load_policy
 from koru.project_pipeline import build_project_pipeline_brief
 from koru.runtime import planfile_dir
@@ -505,6 +506,19 @@ def build_context(
         include_fixtures,
     )
 
+    # Older Planfile readers can return success while dropping records whose
+    # persisted status is no longer in the TicketStatus enum (notably
+    # ``skipped``). Recover those raw records for the historical/dashboard
+    # view and expose explicit counts so an operator can run the migration.
+    ticket_history, compatibility_report = merge_missing_ticket_records(
+        ticket_history,
+        project,
+    )
+    if not _resolve_include_fixtures(include_fixtures):
+        ticket_history = [
+            ticket for ticket in ticket_history if not _is_fixture_ticket(ticket)
+        ]
+
     # Auto-promote blocking tickets to critical priority
     _auto_promote_blocking_tickets(project, runner=planfile_runner)
 
@@ -530,6 +544,7 @@ def build_context(
         "ticket_error": ticket_error,
         "open_tickets": open_tickets,
         "all_tickets": ticket_history,
+        "ticket_compatibility": compatibility_report.to_dict(),
         "policy": resolved_policy.to_dict(),
         "environment": {
             "git": git_state,

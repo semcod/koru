@@ -429,6 +429,48 @@ class TestBuildContext(unittest.TestCase):
             self.assertTrue(any("show" in cmd for cmd in captured_commands))
             self.assertTrue(any("list" in cmd for cmd in captured_commands))
 
+    def test_legacy_skipped_ticket_is_recovered_for_history_and_reported(self) -> None:
+        """A legacy Planfile reader must not hide a raw ``skipped`` record."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _init_planfile(root)
+            sprint = root / ".planfile" / "sprints" / "current.yaml"
+            sprint.write_text(
+                """sprint:
+  id: current
+  tickets:
+    PLF-legacy:
+      id: PLF-legacy
+      name: Historical skipped work
+      status: skipped
+      labels: [legacy]
+    PLF-unknown:
+      id: PLF-unknown
+      name: Historical unknown work
+      status: archived
+""",
+                encoding="utf-8",
+            )
+
+            # Simulate an older Planfile CLI that silently omits the invalid
+            # ticket while returning a successful JSON response.
+            ctx = build_context(
+                project=root,
+                planfile_runner=lambda _command, _project: _ok("[]"),
+                git_probe=_no_git,
+            )
+
+            assert [ticket["id"] for ticket in ctx["all_tickets"]] == [
+                "PLF-legacy",
+                "PLF-unknown",
+            ]
+            recovered = ctx["all_tickets"][0]
+            assert recovered["legacy_status"] == "skipped"
+            assert recovered["status_diagnostic"]["kind"] == "legacy-status"
+            assert ctx["ticket_compatibility"]["migration_candidate_count"] == 1
+            assert ctx["ticket_compatibility"]["recovered_ticket_count"] == 2
+            assert ctx["ticket_compatibility"]["unknown_status_count"] == 1
+
 
 class TestMarkdownHandoff(unittest.TestCase):
     def test_renders_koru_runtime_version_in_environment(self) -> None:
