@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-138",
+  "summary": "Align Koru metadata regressions with declared dependencies and extras",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-138/**",
+    "tests/test_pyproject_metadata.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "36f44dcb7987d9dd825f67b6fad66992485a0f8b",
+    "targetBranch": "main",
+    "outcome": "Metadata tests reflect the declared runtime and environment-marked extras without weakening dependency drift detection.",
+    "nonGoals": [
+      "No runtime dependency bound changes",
+      "No changes to unrelated provider behavior"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Parse requirement names and markers for the all-extra equality check and update the explicit base dependency contract to match pyproject.",
+      "components": [
+        {
+          "name": "metadata-regressions",
+          "paths": [
+            "tests/test_pyproject_metadata.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the test-only contract update."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          ".venv/bin/python -m pytest -q tests/test_pyproject_metadata.py",
+          "ruff check tests/test_pyproject_metadata.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Metadata tests, lint and governance output retained in delivery receipt."
+      }
+    ]
+  }
+}
