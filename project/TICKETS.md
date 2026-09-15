@@ -135,4 +135,12 @@ project analysis or human-owned ticket inputs.
 | **ticket-129** | [`README.md`](./ticket-129/README.md) | - | - | - | - | - |
 | **ticket-130** | [`README.md`](./ticket-130/README.md) | - | - |  [`ai-codex.md`](./ticket-130/ai-codex.md) | - | - |
 | **ticket-131** | [`README.md`](./ticket-131/README.md) | - | - |  [`ai-codex.md`](./ticket-131/ai-codex.md) | - | - |
+| **ticket-132** | [`README.md`](./ticket-132/README.md) | - | - | - | - | - |
+| **ticket-133** | [`README.md`](./ticket-133/README.md) | - | - | - | - | - |
+| **ticket-134** | [`README.md`](./ticket-134/README.md) | - | - | - | - | - |
+| **ticket-135** | [`README.md`](./ticket-135/README.md) | - | - | - | - | - |
+| **ticket-136** | [`README.md`](./ticket-136/README.md) | - | - | - | - | - |
+| **ticket-137** | [`README.md`](./ticket-137/README.md) | - | - | - | - | - |
+| **ticket-138** | [`README.md`](./ticket-138/README.md) | - | - | - | - | - |
+| **ticket-139** | [`README.md`](./ticket-139/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->
