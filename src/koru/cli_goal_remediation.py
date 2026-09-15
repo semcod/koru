@@ -41,7 +41,26 @@ class GoalProposalError(ValueError):
     """Raised when a Goal proposal is not safe to consume."""
 
 
-_LOCAL_RUNTIME_EXCLUDES = (".planfile/", ".koru/")
+_LOCAL_RUNTIME_EXCLUDES = (".planfile/", ".koru/", ".planfile_analysis/")
+
+
+def _mark_tracked_runtime(project: Path) -> None:
+    """Keep tracked legacy runtime files out of the local implementation diff."""
+    result = subprocess.run(
+        ["git", "ls-files", "-z", "--", *_LOCAL_RUNTIME_EXCLUDES],
+        cwd=project,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0 or not result.stdout:
+        return
+    subprocess.run(
+        ["git", "update-index", "--skip-worktree", "-z", "--stdin"],
+        cwd=project,
+        input=result.stdout,
+        capture_output=True,
+        check=False,
+    )
 
 
 def _exclude_local_runtime(project: Path) -> None:
@@ -61,21 +80,21 @@ def _exclude_local_runtime(project: Path) -> None:
         existing = exclude_path.read_text(encoding="utf-8") if exclude_path.exists() else ""
         lines = set(existing.splitlines())
         additions = [pattern for pattern in _LOCAL_RUNTIME_EXCLUDES if pattern not in lines]
-        if not additions:
-            return
-        prefix = "" if not existing or existing.endswith("\n") else "\n"
-        block = (
-            prefix
-            + "# Koru/Goal local remediation queue runtime\n"
-            + "\n".join(additions)
-            + "\n"
-        )
-        exclude_path.parent.mkdir(parents=True, exist_ok=True)
-        with exclude_path.open("a", encoding="utf-8") as stream:
-            stream.write(block)
+        if additions:
+            prefix = "" if not existing or existing.endswith("\n") else "\n"
+            block = (
+                prefix
+                + "# Koru/Goal local remediation queue runtime\n"
+                + "\n".join(additions)
+                + "\n"
+            )
+            exclude_path.parent.mkdir(parents=True, exist_ok=True)
+            with exclude_path.open("a", encoding="utf-8") as stream:
+                stream.write(block)
     except OSError:
         # A read-only or nonstandard checkout must not prevent ticket intake.
-        return
+        pass
+    _mark_tracked_runtime(project)
 
 
 def _proposal_path(project: Path, raw_path: Path) -> Path:

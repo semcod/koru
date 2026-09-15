@@ -1,0 +1,73 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-140",
+  "summary": "Keep Goal remediation runtime state outside the implementation diff",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "src/koru/cli_goal_remediation.py",
+    "tests/test_goal_remediation.py",
+    "project/ticket-140/**",
+    "project/TICKETS.md"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "59609ba865f98cf319cb0b41f7662dab7f4f3787",
+    "targetBranch": "main",
+    "outcome": "Keep Goal remediation Planfile and analysis outputs local to the checkout so generated runtime state cannot fail Koru implementation-ticket governance.",
+    "nonGoals": [
+      "Do not delete local Planfile or analysis data",
+      "Do not weaken governance ticket ownership or active-status rules",
+      "Do not change Planfile or Goal source repositories"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extend Koru's existing local runtime exclusion boundary to cover analysis output and mark legacy tracked runtime paths skip-worktree in the local index.",
+      "components": [
+        {
+          "name": "goal-remediation-runtime-boundary",
+          "paths": ["src/koru/cli_goal_remediation.py"]
+        },
+        {
+          "name": "runtime-boundary-regression-tests",
+          "paths": ["tests/test_goal_remediation.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the runtime exclusion extension; local runtime files remain recoverable in the checkout."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-03",
+        "commands": [
+          ".venv/bin/python -m pytest -q tests/test_goal_remediation.py",
+          ".venv/bin/python -m ruff check src/koru/cli_goal_remediation.py tests/test_goal_remediation.py",
+          "./project/governance-check.sh",
+          "docker compose config --quiet",
+          "git diff --check"
+        ],
+        "evidence": "Focused runtime-boundary regression, lint, managed governance, Docker and whitespace checks."
+      }
+    ]
+  }
+}
