@@ -27,6 +27,7 @@ SOURCE_TOOL = "koru-standard-fleet-watcher"
 DEDUPE_PREFIX = "koru:wellmanifest-standard-adoption:"
 DEFAULT_WORKERS = 8
 MAX_WORKERS = 32
+DEFAULT_ORGANIZATIONS = ("autogrammar", "semcod", "subactor", "wellmanifest")
 _REMOTE_IDENTITY = re.compile(r"(?:git@|https://|ssh://git@)(?:[^/:]+)[/:]([^/]+)/(.+?)(?:\.git)?/?$")
 _PRUNE_DIRS = {
     ".git",
@@ -79,6 +80,23 @@ class StandardCandidate:
 
 
 @dataclass(frozen=True)
+class StandardExcluded:
+    """A governed checkout observed but excluded from the default scope."""
+
+    path: Path
+    identity: str
+    reasons: tuple[str, ...]
+    dirty: bool = False
+    linked_worktrees: int = 0
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = asdict(self)
+        payload["path"] = str(self.path)
+        payload["reasons"] = list(self.reasons)
+        return payload
+
+
+@dataclass(frozen=True)
 class StandardFleetReport:
     workspace: Path
     standard: StandardRelease
@@ -88,9 +106,14 @@ class StandardFleetReport:
     emitted: int = 0
     reused: int = 0
     emission_errors: tuple[str, ...] = ()
+    excluded: tuple[StandardExcluded, ...] = ()
+    discovered: int | None = None
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
+    def to_dict(self, *, include_excluded: bool = False) -> dict[str, Any]:
+        discovered = self.discovered
+        if discovered is None:
+            discovered = self.repositories + len(self.excluded)
+        payload: dict[str, Any] = {
             "schema": REPORT_SCHEMA,
             "workspace": str(self.workspace),
             "standard": {
@@ -99,8 +122,10 @@ class StandardFleetReport:
                 "sourceRoot": str(self.standard.source_root),
             },
             "repositories": self.repositories,
+            "discovered": discovered,
             "current": self.current,
             "stale": len(self.candidates),
+            "excluded": len(self.excluded),
             "candidates": [item.to_dict() for item in self.candidates],
             "tickets": {
                 "emitted": self.emitted,
@@ -108,6 +133,9 @@ class StandardFleetReport:
                 "errors": list(self.emission_errors),
             },
         }
+        if include_excluded:
+            payload["excludedRepositories"] = [item.to_dict() for item in self.excluded]
+        return payload
 
 
 def _subprocess_git(repo: Path, args: Sequence[str]) -> GitObservation:
@@ -177,6 +205,21 @@ def _origin_identity(repo: Path, *, git_runner: GitRunner) -> str:
     return f"local:{repo}"
 
 
+def _is_linked_worktree(repo: Path, *, git_runner: GitRunner) -> bool:
+    """Return whether *repo* is a linked worktree rather than its primary checkout."""
+    git_dir_result = git_runner(repo, ["rev-parse", "--git-dir"])
+    common_dir_result = git_runner(repo, ["rev-parse", "--git-common-dir"])
+    if git_dir_result.returncode != 0 or common_dir_result.returncode != 0:
+        return False
+    git_dir = Path(_clean_text(git_dir_result.stdout))
+    common_dir = Path(_clean_text(common_dir_result.stdout))
+    if not git_dir.is_absolute():
+        git_dir = repo / git_dir
+    if not common_dir.is_absolute():
+        common_dir = repo / common_dir
+    return git_dir.resolve() != common_dir.resolve()
+
+
 def _lock_standard(repo: Path) -> tuple[str | None, str | None, str | None]:
     path = repo / ".governance" / "manifest.lock.json"
     try:
@@ -204,20 +247,38 @@ def _git_state(repo: Path, *, git_runner: GitRunner) -> tuple[bool, int, str | N
     return bool(dirty_result.stdout.strip()), max(0, len(worktree_lines) - 1), None
 
 
-def inspect_repository(
-    repo: Path,
-    release: StandardRelease,
-    *,
-    git_runner: GitRunner = _subprocess_git,
-) -> StandardCandidate | None:
-    """Return a stale candidate, or None when its pin is current."""
-    pinned_version, pinned_revision, lock_error = _lock_standard(repo)
+@dataclass(frozen=True)
+class _RepositoryObservation:
+    path: Path
+    identity: str
+    dirty: bool
+    linked_worktrees: int
+    git_error: str | None
+    linked_worktree: bool
+
+
+def _observe_repository(repo: Path, *, git_runner: GitRunner) -> _RepositoryObservation:
     dirty, linked_worktrees, git_error = _git_state(repo, git_runner=git_runner)
+    return _RepositoryObservation(
+        path=repo.resolve(),
+        identity=_origin_identity(repo, git_runner=git_runner),
+        dirty=dirty,
+        linked_worktrees=linked_worktrees,
+        git_error=git_error,
+        linked_worktree=_is_linked_worktree(repo, git_runner=git_runner),
+    )
+
+
+def _candidate_from_observation(
+    observation: _RepositoryObservation,
+    release: StandardRelease,
+) -> StandardCandidate | None:
+    pinned_version, pinned_revision, lock_error = _lock_standard(observation.path)
     reasons: list[str] = []
     if lock_error:
         reasons.append(lock_error)
-    if git_error:
-        reasons.append(git_error)
+    if observation.git_error:
+        reasons.append(observation.git_error)
     if pinned_version != release.version:
         reasons.append("version-mismatch")
     if pinned_revision != release.revision:
@@ -225,16 +286,96 @@ def inspect_repository(
     if not reasons:
         return None
     return StandardCandidate(
-        path=repo.resolve(),
-        identity=_origin_identity(repo, git_runner=git_runner),
+        path=observation.path,
+        identity=observation.identity,
         pinned_version=pinned_version,
         pinned_revision=pinned_revision,
         latest_version=release.version,
         latest_revision=release.revision,
         reasons=tuple(dict.fromkeys(reasons)),
-        dirty=dirty,
-        linked_worktrees=linked_worktrees,
+        dirty=observation.dirty,
+        linked_worktrees=observation.linked_worktrees,
     )
+
+
+def inspect_repository(
+    repo: Path,
+    release: StandardRelease,
+    *,
+    git_runner: GitRunner = _subprocess_git,
+) -> StandardCandidate | None:
+    """Return a stale candidate, or None when its pin is current."""
+    return _candidate_from_observation(_observe_repository(repo, git_runner=git_runner), release)
+
+
+def _normalise_organizations(organizations: Sequence[str] | None) -> tuple[str, ...]:
+    values = organizations if organizations is not None else DEFAULT_ORGANIZATIONS
+    normalised = tuple(dict.fromkeys(value.strip().lower() for value in values if value.strip()))
+    if any(not re.fullmatch(r"[a-z0-9][a-z0-9-]*", value) for value in normalised):
+        raise ValueError("organizations must contain GitHub organization names")
+    return normalised
+
+
+def _identity_organization(identity: str) -> str | None:
+    if identity.startswith("local:"):
+        return None
+    organization, separator, _repository = identity.partition("/")
+    return organization.lower() if separator else None
+
+
+def _expected_repository_path(workspace: Path, identity: str) -> Path | None:
+    organization, separator, repository = identity.partition("/")
+    if not separator or not organization or not repository:
+        return None
+    return (workspace / organization / repository).resolve()
+
+
+def _primary_paths_by_identity(
+    workspace: Path,
+    observations: Sequence[_RepositoryObservation],
+) -> dict[str, Path]:
+    grouped: dict[str, list[_RepositoryObservation]] = {}
+    for observation in observations:
+        if observation.identity.startswith("local:"):
+            continue
+        grouped.setdefault(observation.identity.lower(), []).append(observation)
+    primary: dict[str, Path] = {}
+    for identity, items in grouped.items():
+        expected = _expected_repository_path(workspace, identity)
+        chosen = min(
+            items,
+            key=lambda item: (
+                0 if expected is not None and item.path == expected else 1,
+                len(item.path.relative_to(workspace).parts),
+                str(item.path),
+            ),
+        )
+        primary[identity] = chosen.path
+    return primary
+
+
+def _exclusion_reasons(
+    observation: _RepositoryObservation,
+    *,
+    organizations: tuple[str, ...],
+    include_external: bool,
+    include_local: bool,
+    include_worktrees: bool,
+    include_duplicates: bool,
+    primary_paths: dict[str, Path],
+) -> tuple[str, ...]:
+    reasons: list[str] = []
+    organization = _identity_organization(observation.identity)
+    if organization is None and not include_local:
+        reasons.append("local-origin")
+    elif organization is not None and not include_external and organization not in organizations:
+        reasons.append("organization-not-allowed")
+    if observation.linked_worktree and not include_worktrees:
+        reasons.append("linked-worktree")
+    primary_path = primary_paths.get(observation.identity.lower())
+    if primary_path is not None and primary_path != observation.path and not include_duplicates:
+        reasons.append("duplicate-clone")
+    return tuple(reasons)
 
 
 def scan_standard_fleet(
@@ -243,28 +384,65 @@ def scan_standard_fleet(
     *,
     workers: int = DEFAULT_WORKERS,
     git_runner: GitRunner = _subprocess_git,
+    organizations: Sequence[str] | None = None,
+    include_external: bool = False,
+    include_local: bool = False,
+    include_worktrees: bool = False,
+    include_duplicates: bool = False,
 ) -> StandardFleetReport:
-    """Scan all governed repositories; Git observations may run in parallel."""
+    """Scan the selected governed repositories; observations run in parallel.
+
+    The default scope is the primary checkout for the four organizations that
+    own the current fleet. Local-only checkouts, linked worktrees and duplicate
+    clones remain visible in ``excluded`` but cannot create adoption tickets
+    unless explicitly included.
+    """
     if workers < 1 or workers > MAX_WORKERS:
         raise ValueError(f"workers must be between 1 and {MAX_WORKERS}")
     workspace = workspace.resolve()
     release = load_standard_release(standard_root, git_runner=git_runner)
+    allowed_organizations = _normalise_organizations(organizations)
     repositories = discover_governed_repositories(workspace)
     with ThreadPoolExecutor(max_workers=min(workers, max(1, len(repositories)))) as pool:
-        candidates = tuple(
-            item
-            for item in pool.map(
-                lambda repo: inspect_repository(repo, release, git_runner=git_runner),
-                repositories,
-            )
-            if item is not None
+        observations = tuple(pool.map(lambda repo: _observe_repository(repo, git_runner=git_runner), repositories))
+    primary_paths = _primary_paths_by_identity(workspace, observations)
+    selected: list[_RepositoryObservation] = []
+    excluded: list[StandardExcluded] = []
+    for observation in observations:
+        reasons = _exclusion_reasons(
+            observation,
+            organizations=allowed_organizations,
+            include_external=include_external,
+            include_local=include_local,
+            include_worktrees=include_worktrees,
+            include_duplicates=include_duplicates,
+            primary_paths=primary_paths,
         )
+        if reasons:
+            excluded.append(
+                StandardExcluded(
+                    path=observation.path,
+                    identity=observation.identity,
+                    reasons=reasons,
+                    dirty=observation.dirty,
+                    linked_worktrees=observation.linked_worktrees,
+                )
+            )
+        else:
+            selected.append(observation)
+    candidates = tuple(
+        item
+        for item in (_candidate_from_observation(observation, release) for observation in selected)
+        if item is not None
+    )
     return StandardFleetReport(
         workspace=workspace,
         standard=release,
-        repositories=len(repositories),
-        current=len(repositories) - len(candidates),
+        repositories=len(selected),
+        current=len(selected) - len(candidates),
         candidates=candidates,
+        excluded=tuple(excluded),
+        discovered=len(repositories),
     )
 
 
@@ -345,10 +523,12 @@ def emit_adoption_tickets(
     return emitted, reused, tuple(errors)
 
 
-def render_report(report: StandardFleetReport) -> str:
+def render_report(report: StandardFleetReport, *, show_excluded: bool = False) -> str:
     lines = [
-        f"Wellmanifest fleet: {report.repositories} repositories, "
-        f"{report.current} current, {len(report.candidates)} stale",
+        f"Wellmanifest fleet: {report.repositories} selected / "
+        f"{report.discovered or report.repositories + len(report.excluded)} discovered, "
+        f"{report.current} current, {len(report.candidates)} stale, "
+        f"{len(report.excluded)} excluded",
         f"Standard: {report.standard.version} @ {report.standard.revision}",
     ]
     for candidate in report.candidates:
@@ -359,17 +539,29 @@ def render_report(report: StandardFleetReport) -> str:
             blockers.append(f"worktrees={candidate.linked_worktrees}")
         suffix = f" [{', '.join(blockers)}]" if blockers else ""
         lines.append(f"  {candidate.identity}: {', '.join(candidate.reasons)}{suffix}")
+    if show_excluded:
+        lines.append("Excluded repositories:")
+        for item in report.excluded:
+            blockers = []
+            if item.dirty:
+                blockers.append("dirty")
+            if item.linked_worktrees:
+                blockers.append(f"worktrees={item.linked_worktrees}")
+            suffix = f" [{', '.join(blockers)}]" if blockers else ""
+            lines.append(f"  {item.identity}: {', '.join(item.reasons)}{suffix} ({item.path})")
     if report.emitted or report.reused or report.emission_errors:
         lines.append(f"Tickets: emitted={report.emitted} reused={report.reused} errors={len(report.emission_errors)}")
     return "\n".join(lines)
 
 
 __all__ = [
+    "DEFAULT_ORGANIZATIONS",
     "DEFAULT_WORKERS",
     "MAX_WORKERS",
     "REPORT_SCHEMA",
     "SOURCE_TOOL",
     "StandardCandidate",
+    "StandardExcluded",
     "StandardFleetReport",
     "StandardRelease",
     "adoption_dedupe_key",
