@@ -125,7 +125,9 @@ class TestApiClient:
                 agent="build",
             )
         body = json.loads(mock.call_args[0][0].data.decode())
-        assert body["model"] == {"id": "glm-5.3", "providerID": "zai"}
+        # prompt_async wants {providerID, modelID}; session create wants
+        # {id, providerID} — the server schemas differ.
+        assert body["model"] == {"providerID": "zai", "modelID": "glm-5.3"}
         assert body["agent"] == "build"
 
     def test_create_session_normalizes_model(self) -> None:
