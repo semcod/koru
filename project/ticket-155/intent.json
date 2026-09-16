@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-155",
+  "summary": "terminals-adopt-unmanaged-serve",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-155/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_terminals.py",
+    "tests/test_dashboard_terminals.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "aec675af855056840a00881d3f5224745da62a59",
+    "targetBranch": "main",
+    "outcome": "Manually started `opencode serve` processes get a stable proc-N id so they can be targeted by terminal detail/prompt/reply endpoints; set_auto_answer adopts a discovered process into the registry so the supervisor can answer its questions/permissions.",
+    "nonGoals": [
+      "no serve-based drive lane (tillm opencode run stays the drive mechanism)",
+      "no changes to supervisor loop or dashboard JS",
+      "stop remains refused for unmanaged instances"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "proc-N id derived from port in _scan_serve_processes; set_auto_answer falls back to adopting the discovered entry via register_instance(managed=False)",
+      "components": [
+        {
+          "name": "dashboard/terminals",
+          "paths": [
+            "src/koruapi/opencode_terminals.py",
+            "tests/test_dashboard_terminals.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_dashboard_terminals.py -q"
+        ],
+        "evidence": "discovered instances carry proc-N ids; auto_answer adopts them"
+      }
+    ]
+  }
+}

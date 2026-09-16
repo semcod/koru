@@ -105,6 +105,16 @@ def set_auto_answer(project: Path, instance_id: str, enabled: bool) -> dict[str,
             entry["auto_answer"] = bool(enabled)
             save_registry(project, entries)
             return entry
+    for found in _scan_serve_processes():
+        if found.get("id") == instance_id:
+            return register_instance(
+                project,
+                url=str(found["url"]),
+                label=str(found.get("label", "")),
+                pid=found.get("pid"),
+                managed=False,
+                auto_answer=bool(enabled),
+            )
     return None
 
 
@@ -157,7 +167,8 @@ def _scan_serve_processes() -> list[dict[str, Any]]:
         if not port:
             continue
         found.append(
-            {"url": f"http://{host}:{port}", "pid": int(entry.name),
+            {"id": f"proc-{port}", "url": f"http://{host}:{port}",
+             "pid": int(entry.name),
              "label": f"opencode serve :{port}", "managed": False,
              "auto_answer": False}
         )
