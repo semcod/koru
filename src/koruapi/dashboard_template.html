@@ -1126,10 +1126,19 @@ async function postRuntimeContextToggle(section, enabled) {
 let logSSE = null;
 let logLevels = new Set(["ERROR", "WARNING", "INFO", "DEBUG"]);
 let logEntries = [];
+let logSeen = new Set();
 const LOG_MAX_ENTRIES = 500;
 
 function renderLogsPanel() {
-  setTimeout(connectLogSSE, 50);
+  // Only connect if no live stream exists — the 5s refresh re-renders this
+  // panel; reconnecting each cycle would churn the EventSource, re-read the
+  // full nfo log server-side and wipe displayed entries.
+  if (!logSSE || logSSE.readyState === EventSource.CLOSED) {
+    setTimeout(connectLogSSE, 50);
+  } else {
+    // Panel DOM was rebuilt by the refresh — repopulate from cached entries.
+    setTimeout(reRenderLogs, 0);
+  }
   return panel("Live Logs (SSE stream)", `
     <div style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
       <label class="inline-select" style="display:flex;align-items:center;gap:4px;">
@@ -1169,6 +1178,7 @@ function toggleAutoScroll() {
 
 function clearLogs() {
   logEntries = [];
+  logSeen = new Set();
   reRenderLogs();
 }
 
@@ -1191,6 +1201,14 @@ function reRenderLogs() {
 }
 
 function appendLogEntry(entry) {
+  // Dedupe: a reconnect re-sends history already shown — skip exact repeats.
+  const key = (entry.timestamp || "") + "|" + (entry.level || "") + "|" +
+    (entry.source || "") + "|" + (entry.message || "");
+  if (logSeen.has(key)) return;
+  logSeen.add(key);
+  if (logSeen.size > LOG_MAX_ENTRIES * 2) {
+    logSeen = new Set(Array.from(logSeen).slice(-LOG_MAX_ENTRIES));
+  }
   logEntries.push(entry);
   if (logEntries.length > LOG_MAX_ENTRIES) logEntries.shift();
   if (!logLevels.has(entry.level)) return;
@@ -1212,15 +1230,19 @@ function appendLogEntry(entry) {
 }
 
 function connectLogSSE() {
-  if (logSSE) {
-    logSSE.close();
-    logSSE = null;
-  }
-  const status = $("log-sse-status");
+  // Guard: keep an already-open or connecting stream — reconnecting on every
+  // 5s refresh re-reads the whole nfo log server-side and floods history.
+  if (logSSE && logSSE.readyState !== EventSource.CLOSED) return;
+  if (logSSE) { logSSE.close(); logSSE = null; }
+  const setStatus = (text, cls) => {
+    const el = $("log-sse-status");  // re-query: element is recreated each render
+    if (el) { el.textContent = text; el.className = cls; }
+  };
   try {
     const levelParam = Array.from(logLevels).join(",");
     logSSE = new EventSource("/api/logs/stream?level=" + levelParam + "&limit=0");
-    if (status) { status.textContent = "connected"; status.className = "pill ok"; }
+    setStatus("connecting...", "pill warn");
+    logSSE.onopen = function() { setStatus("connected", "pill ok"); };
     logSSE.onmessage = function(ev) {
       try {
         const entry = JSON.parse(ev.data);
@@ -1228,7 +1250,7 @@ function connectLogSSE() {
       } catch (e) { /* ignore parse errors */ }
     };
     logSSE.onerror = function() {
-      if (status) { status.textContent = "disconnected"; status.className = "pill warn"; }
+      setStatus("disconnected", "pill warn");
       setTimeout(function() {
         if (logSSE && logSSE.readyState === EventSource.CLOSED) {
           connectLogSSE();
@@ -1236,7 +1258,7 @@ function connectLogSSE() {
       }, 3000);
     };
   } catch (e) {
-    if (status) { status.textContent = "error: " + e.message; status.className = "pill err"; }
+    setStatus("error: " + e.message, "pill err");
   }
 }
 
@@ -1688,6 +1710,13 @@ async function refresh() {
     renderDashboardControls(dash);
     renderTabs();
     syncUrlState({ replace: true });
+    // Fast first paint for the Logs tab: the view does not depend on the
+    // slow context/topology/config endpoints — render it immediately so the
+    // SSE stream can connect while the rest of the brief loads.
+    if (state.tab === "logs" && !lastRenderPayload) {
+      lastRenderPayload = { ctx: {}, topo: {}, runtime: {}, configPayload: {}, envConfigPayload: {} };
+      renderCurrentViewFromCache();
+    }
     const [ctxRes, topoRes, runtimeRes, configRes, envConfigRes] = await Promise.all([
       fetch("/api/context" + projectQuery(),  { cache: "no-store" }),
       fetch("/api/topology" + projectQuery(), { cache: "no-store" }),

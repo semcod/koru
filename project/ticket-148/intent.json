@@ -1,0 +1,78 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-148",
+  "summary": "logs-tab-sse-reconnect-churn",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-148/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/dashboard_template.html",
+    "tests/test_dashboard_logs.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "769f0e79a2b8c3ed4aa04763c4bbc7fd3f6e168a",
+    "targetBranch": "main",
+    "outcome": "Fix Logs tab SSE reconnect churn: 5s refresh re-creates EventSource, re-reads 4.7MB nfo file, wipes entries",
+    "nonGoals": [
+      "no new features",
+      "no server-side changes"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "guard connectLogSSE on open/connecting state; repopulate entries from cache after re-render; only connect when logSSE absent",
+      "components": [
+        {
+          "name": "dashboard-ui",
+          "paths": [
+            "src/koruapi/dashboard_template.html",
+            "tests/test_dashboard_logs.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "single-state",
+        "states": [
+          "success"
+        ],
+        "evidence": [
+          "Logs tab renders from cached entries; SSE persists across refreshes"
+        ]
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_dashboard_logs.py -q"
+        ],
+        "evidence": "tests pass including reconnect-guard regression"
+      }
+    ]
+  }
+}
