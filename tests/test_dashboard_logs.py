@@ -4,9 +4,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 from koruapi.dashboard_logs import (
     _parse_autonomous_log_line,
@@ -313,3 +310,66 @@ class TestLogsTabSseReconnectGuard:
     def test_history_deduped_on_reconnect(self) -> None:
         html = self._template()
         assert "logSeen.has(key)" in html
+
+
+class TestWebDashboardShutdown:
+    """Regression: Ctrl+C teardown must not hang when server.shutdown() stalls."""
+
+    @staticmethod
+    def _context(server: object, thread: object) -> object:
+        import argparse
+
+        args = argparse.Namespace(web=True, emit_events="human")
+        return argparse.Namespace(
+            args=args, serve_server=server, serve_thread=thread
+        )
+
+    def test_shutdown_bounded_when_server_shutdown_blocks(self) -> None:
+        import threading
+        import time
+
+        from koru.autonomy.operator import operator_up
+
+        class BlockingServer:
+            def __init__(self) -> None:
+                self.release = threading.Event()
+
+            def shutdown(self) -> None:
+                self.release.wait(timeout=30.0)
+
+            def server_close(self) -> None:
+                self.release.set()
+
+        class FakeThread:
+            def join(self, timeout=None):
+                return None
+
+        server = BlockingServer()
+        started = time.monotonic()
+        operator_up._shutdown_web_dashboard(self._context(server, FakeThread()))
+        elapsed = time.monotonic() - started
+        assert elapsed < 5.0
+
+    def test_shutdown_closes_server_then_joins_thread(self) -> None:
+        from koru.autonomy.operator import operator_up
+
+        events: list[str] = []
+
+        class Server:
+            def shutdown(self) -> None:
+                events.append("shutdown")
+
+            def server_close(self) -> None:
+                events.append("close")
+
+        class FakeThread:
+            def join(self, timeout=None):
+                events.append(f"join:{timeout}")
+
+        operator_up._shutdown_web_dashboard(self._context(Server(), FakeThread()))
+        assert events == ["shutdown", "close", "join:2.0"]
+
+    def test_shutdown_without_server_is_noop(self) -> None:
+        from koru.autonomy.operator import operator_up
+
+        operator_up._shutdown_web_dashboard(self._context(None, None))
