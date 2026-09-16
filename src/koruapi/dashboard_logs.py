@@ -116,6 +116,7 @@ def sse_log_stream(
     levels: set[str] | None = None,
     poll_interval: float = 0.5,
     max_events: int = 0,
+    stop_event: Any = None,
 ) -> str:
     """Yield SSE-formatted log events by tailing log files.
 
@@ -139,6 +140,8 @@ def sse_log_stream(
 
     while True:
         if max_events and events_sent >= max_events:
+            break
+        if stop_event is not None and stop_event.is_set():
             break
         # Check nfo log for new lines
         if nfo_path.exists():
@@ -206,7 +209,10 @@ def handle_sse_logs_request(handler: Any, config: Any) -> None:
     handler.end_headers()
 
     try:
-        for chunk in sse_log_stream(project, levels=levels, max_events=limit):
+        stop_event = getattr(handler.server, "shutdown_event", None)
+        for chunk in sse_log_stream(
+            project, levels=levels, max_events=limit, stop_event=stop_event
+        ):
             handler.wfile.write(chunk.encode("utf-8"))
             handler.wfile.flush()
     except (BrokenPipeError, ConnectionResetError):
