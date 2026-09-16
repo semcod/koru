@@ -399,6 +399,7 @@ def test_idle_discovery_fallback_contract(monkeypatch, tmp_path, cooldown, enabl
     monkeypatch.setattr(scan_phase, "_run_code2llm_discovery_after_idle", code2llm)
     monkeypatch.setattr(scan_phase, "_run_todo2code_discovery_after_idle", todo2code)
     monkeypatch.setattr(scan_phase, "_run_code_change_autonomy_after_idle", autonomy)
+    monkeypatch.setattr(scan_phase, "_run_monag_discovery_after_idle", lambda *a: pytest.fail("monag in discovery"))
     monkeypatch.setattr(scan_phase, "_run_nxdo_discovery_after_idle", nxdo)
     for name in ("code2llm_discovery", "todo2code_discovery", "code_change_autonomy", "nxdo_discovery"):
         monkeypatch.setattr(scan_phase, f"_record_{name}_telemetry", record)
@@ -413,3 +414,33 @@ def test_idle_discovery_fallback_contract(monkeypatch, tmp_path, cooldown, enabl
     assert calls == expected
     payloads = {"code2llm": discovery, "todo2code": todo, "autonomy": {"ran": True}, "nxdo": {"ran": True}}
     assert records == [payloads[name] for name in expected]
+
+
+@pytest.mark.parametrize(("last_status", "runs"), [("idle", True), ("completed", False), ("waiting", False)])
+def test_backlog_promotion_runs_only_for_idle_queue(monkeypatch, tmp_path, last_status, runs):
+    state = AutoloopState()
+    telemetry = {}
+    calls = []
+    payload = {"ran": True, "applied": ["PLF-1"], "unfinished_worktrees": [{"ticket": "ticket-007"}]}
+
+    def monag(project, hp, emit):
+        calls.append(project)
+        return payload
+
+    monkeypatch.setattr(scan_phase, "_run_monag_discovery_after_idle", monag)
+    queue = QueueLoopResult(iterations=1, completed=[], failed=[], waiting=[], last_status=last_status)
+
+    result = scan_phase.handle_backlog_promotion_after_idle(
+        tmp_path, state, queue, telemetry, lambda *a: None, lambda *a, **k: None,
+    )
+
+    if runs:
+        assert calls == [tmp_path] and result is payload
+        assert telemetry == {
+            "monag_discovery_run": True,
+            "monag_discovery_applied": 1,
+            "monag_discovery_unfinished_worktrees": 1,
+        }
+        assert state.telemetry_scan_after_idle_tickets_applied == 1
+    else:
+        assert calls == [] and result is None and telemetry == {}

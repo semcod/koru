@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-149",
+  "summary": "Run dashboard server shutdown on a bounded helper thread so Ctrl+C teardown of koru auto up --web always returns",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-149/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/operator/operator_up.py",
+    "tests/test_dashboard_logs.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "160ef40ff2f14f06074daecb2121a3074f6e7da3",
+    "targetBranch": "main",
+    "outcome": "koru auto up --web interrupt teardown stops the background dashboard within a bounded ~2s join instead of deadlocking inside BaseServer.shutdown()",
+    "nonGoals": [
+      "No change to dashboard serving, routes, SSE/WS streaming or port selection",
+      "No change to autonomous cycle logic, queue behavior or autopilot daemon lifecycle",
+      "No new runtime dependencies"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep _shutdown_web_dashboard as the teardown owner but move server.shutdown()/server_close() onto a helper daemon thread joined with a 2s timeout; the koru-serve-bg serve thread is already a daemon and keeps its bounded join",
+      "components": [
+        {
+          "name": "autonomous-up-web-teardown",
+          "paths": [
+            "src/koru/autonomy/operator/operator_up.py",
+            "tests/test_dashboard_logs.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore inline server.shutdown()/server_close() calls in _shutdown_web_dashboard and drop the regression tests"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_dashboard_logs.py -k TestWebDashboardShutdown"
+        ],
+        "evidence": "Bounded-shutdown regression tests pass"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest tests/test_dashboard_logs.py tests/test_serve.py"
+        ],
+        "evidence": "Dashboard and serve suites stay green"
+      }
+    ]
+  }
+}

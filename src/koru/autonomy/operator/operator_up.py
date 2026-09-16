@@ -9,6 +9,8 @@ facade and passes its monkeypatchable callables in here.
 from __future__ import annotations
 
 import argparse
+import contextlib
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -42,6 +44,8 @@ class AutonomousUpContext:
     diagnostic_state_dir: Path | None
     wup_process: Any
     auto_pipeline_state: Any
+    serve_server: Any = None
+    serve_thread: Any = None
 
 
 def autonomous_context_resource_kwargs(resources: tuple[object, ...]) -> dict[str, object]:
@@ -194,6 +198,7 @@ def run_autonomous_up_loop(
         )
     finally:
         restore_env_vars(context.strict_env)
+        _shutdown_web_dashboard(context)
         cleanup_session(
             context.previous_stdio_format_env,
             previous_sigterm,
@@ -220,7 +225,73 @@ def action_up(
     context, rc = prepare_up_context(args)
     if context is None:
         return rc
+    _maybe_start_web_dashboard(context, stdio_info)
     return run_up_loop(context)
+
+
+def _maybe_start_web_dashboard(
+    context: AutonomousUpContext,
+    stdio_info: Callable[..., None],
+) -> None:
+    """Start ``koru serve`` in a background thread when ``--web`` was passed."""
+    if not getattr(context.args, "web", False):
+        return
+    fmt = getattr(context.args, "emit_events", "human")
+    try:
+        from koruapi.dashboard_serve import ServeConfig, start_serve_background
+        from koruapi.dashboard_serve_utils import DEFAULT_HOST, DEFAULT_PORT
+    except ImportError:
+        stdio_info("koru auto --web: dashboard module unavailable; skipping", fmt=fmt)
+        return
+    config = ServeConfig(
+        project=context.project,
+        host=DEFAULT_HOST,
+        port=DEFAULT_PORT,
+        open_browser=True,
+        queue_name=context.queue_name,
+        auto_port=True,
+        lan=False,
+        workspace=None,
+    )
+    try:
+        server, thread = start_serve_background(
+            config, log=lambda msg: stdio_info(str(msg), fmt=fmt)
+        )
+        context.serve_server = server
+        context.serve_thread = thread
+    except Exception as exc:  # noqa: BLE001 — advisory; must not block the loop
+        stdio_info(f"koru auto --web: dashboard start failed: {exc}", fmt=fmt)
+
+
+def _close_serve_server(server: Any) -> None:
+    with contextlib.suppress(Exception):
+        server.shutdown()
+        server.server_close()
+
+
+def _shutdown_web_dashboard(context: AutonomousUpContext) -> None:
+    """Shut down the background dashboard server if it was started by ``--web``.
+
+    ``BaseServer.shutdown()`` blocks until the ``serve_forever`` loop exits and
+    has no timeout of its own; if that loop is stalled, calling it inline would
+    hang Ctrl+C cleanup. Run it on a helper daemon thread with a bounded join
+    so interrupt teardown always returns; the daemon serve thread cannot block
+    process exit either way.
+    """
+    server = getattr(context, "serve_server", None)
+    thread = getattr(context, "serve_thread", None)
+    if server is not None:
+        stopper = threading.Thread(
+            target=_close_serve_server,
+            args=(server,),
+            name="koru-serve-stop",
+            daemon=True,
+        )
+        stopper.start()
+        stopper.join(timeout=2.0)
+    if thread is not None:
+        with contextlib.suppress(Exception):
+            thread.join(timeout=2.0)
 
 
 __all__ = [
