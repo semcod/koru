@@ -214,6 +214,17 @@ def list_sessions(url: str) -> list[dict[str, Any]]:
     return items if isinstance(items, list) else []
 
 
+def _normalize_model(model: dict[str, str] | None) -> dict[str, str] | None:
+    """Translate to the server schema ``{"id": ..., "providerID": ...}``."""
+    if not isinstance(model, dict):
+        return None
+    model_id = model.get("id") or model.get("modelID")
+    provider = model.get("providerID") or model.get("providerId")
+    if not model_id or not provider:
+        return None
+    return {"id": str(model_id), "providerID": str(provider)}
+
+
 def create_session(
     url: str,
     *,
@@ -227,8 +238,9 @@ def create_session(
         body["title"] = title
     if agent:
         body["agent"] = agent
-    if model:
-        body["model"] = model
+    normalized = _normalize_model(model)
+    if normalized:
+        body["model"] = normalized
     if directory:
         body["location"] = {"directory": directory}
     data = _api_request(url, "/api/session", method="POST", body=body)
@@ -244,14 +256,36 @@ def session_messages(url: str, session_id: str, *, limit: int = 60) -> list[dict
     return items[-limit:]
 
 
-def send_prompt(url: str, session_id: str, text: str) -> dict[str, Any]:
-    return _api_request(
+def send_prompt(
+    url: str,
+    session_id: str,
+    text: str,
+    *,
+    model: dict[str, str] | None = None,
+    agent: str | None = None,
+) -> dict[str, Any]:
+    """Fire-and-execute a prompt via ``prompt_async``.
+
+    ``POST /session/{id}/prompt`` only *queues* text for a running loop
+    (``delivery: "steer"``); an idle session never executes it. The
+    ``prompt_async`` route starts the agent loop and returns ``204``.
+    It is mounted without the ``/api`` prefix — that prefix falls through
+    to the SPA handler.
+    """
+    body: dict[str, Any] = {"parts": [{"type": "text", "text": text}]}
+    normalized = _normalize_model(model)
+    if normalized:
+        body["model"] = normalized
+    if agent:
+        body["agent"] = agent
+    _api_request(
         url,
-        f"/api/session/{session_id}/prompt",
+        f"/session/{session_id}/prompt_async",
         method="POST",
-        body={"prompt": {"text": text}},
+        body=body,
         timeout=10.0,
     )
+    return {"ok": True, "session_id": session_id, "delivery": "async"}
 
 
 def pending_requests(url: str) -> dict[str, list[dict[str, Any]]]:
@@ -383,6 +417,10 @@ def stop_instance(project: Path, instance_id: str) -> dict[str, Any]:
     entries = load_registry(project)
     target = next((e for e in entries if e.get("id") == instance_id), None)
     if target is None:
+        # Adopted-but-unpersisted ``opencode serve`` processes are still
+        # addressable: refuse rather than reporting them as unknown.
+        target = _find_instance(project, instance_id)
+    if target is None:
         return {"ok": False, "error": f"unknown instance {instance_id!r}"}
     if not target.get("managed"):
         return {"ok": False, "error": "instance is not koru-managed; stop refused"}
@@ -494,20 +532,25 @@ def terminal_prompt(project: Path, body: dict[str, Any]) -> dict[str, Any]:
         return {"error": f"unknown instance {instance_id!r}"}
     url = str(entry["url"])
     session_id = str(body.get("session_id") or "").strip()
+    model = body.get("model")
+    model = model if isinstance(model, dict) else None
+    agent = str(body.get("agent") or "").strip() or None
     if not session_id:
-        model = body.get("model")
-        sess = create_session(
-            url,
-            title=text[:60],
-            agent=str(body.get("agent") or "").strip() or None,
-            model=model if isinstance(model, dict) else None,
-            directory=str(project),
-        )
+        try:
+            sess = create_session(
+                url,
+                title=text[:60],
+                agent=agent,
+                model=model,
+                directory=str(project),
+            )
+        except (urllib.error.URLError, OSError, ValueError) as exc:
+            return {"error": f"failed to create session: {exc}"}
         if not sess or not sess.get("id"):
             return {"error": "failed to create session"}
         session_id = str(sess["id"])
     try:
-        result = send_prompt(url, session_id, text)
+        result = send_prompt(url, session_id, text, model=model, agent=agent)
     except (urllib.error.URLError, OSError, ValueError) as exc:
         return {"error": str(exc)}
     return {"ok": True, "session_id": session_id, "result": result}
