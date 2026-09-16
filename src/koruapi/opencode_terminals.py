@@ -209,6 +209,7 @@ def create_session(
     title: str = "",
     agent: str | None = None,
     model: dict[str, str] | None = None,
+    directory: str | None = None,
 ) -> dict[str, Any] | None:
     body: dict[str, Any] = {}
     if title:
@@ -217,6 +218,8 @@ def create_session(
         body["agent"] = agent
     if model:
         body["model"] = model
+    if directory:
+        body["location"] = {"directory": directory}
     data = _api_request(url, "/api/session", method="POST", body=body)
     item = data.get("data", data) if isinstance(data, dict) else data
     return item if isinstance(item, dict) else None
@@ -487,6 +490,7 @@ def terminal_prompt(project: Path, body: dict[str, Any]) -> dict[str, Any]:
             title=text[:60],
             agent=str(body.get("agent") or "").strip() or None,
             model=model if isinstance(model, dict) else None,
+            directory=str(project),
         )
         if not sess or not sess.get("id"):
             return {"error": "failed to create session"}

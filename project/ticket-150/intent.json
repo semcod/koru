@@ -28,7 +28,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "160ef40ff2f14f06074daecb2121a3074f6e7da3",
+    "acceptedBaseSha": "0b8d17a75e8add75c153e2b8104a9955bffa0305",
     "targetBranch": "main",
     "outcome": "Terminals tab: grid of opencode serve instances, per-instance session view, prompt input, permission/question replies, koru supervisor auto-answering via opencode HTTP API",
     "nonGoals": [
