@@ -278,3 +278,38 @@ class TestWebDashboardStart:
         context = argparse.Namespace(args=args, project=".", queue_name=None)
         operator_up._maybe_start_web_dashboard(context, stdio_info)
         assert calls == []
+
+
+class TestLogsTabSseReconnectGuard:
+    """Regression tests: the 5s dashboard refresh must not churn the SSE
+    connection — reconnecting re-reads the whole nfo log server-side."""
+
+    @staticmethod
+    def _template() -> str:
+        path = (
+            Path(__file__).resolve().parent.parent
+            / "src" / "koruapi" / "dashboard_template.html"
+        )
+        return path.read_text(encoding="utf-8")
+
+    def test_connect_guard_exists(self) -> None:
+        html = self._template()
+        assert "logSSE.readyState !== EventSource.CLOSED" in html
+
+    def test_render_logs_panel_only_connects_when_absent(self) -> None:
+        html = self._template()
+        assert "logSSE || logSSE.readyState === EventSource.CLOSED" in html
+
+    def test_logs_tab_fast_first_paint(self) -> None:
+        html = self._template()
+        assert 'state.tab === "logs" && !lastRenderPayload' in html
+
+    def test_entries_repopulate_after_rerender(self) -> None:
+        html = self._template()
+        # When the panel DOM is rebuilt while the stream stays open, cached
+        # entries are repainted rather than waiting for the next event.
+        assert "setTimeout(reRenderLogs, 0)" in html
+
+    def test_history_deduped_on_reconnect(self) -> None:
+        html = self._template()
+        assert "logSeen.has(key)" in html
