@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-157",
+  "summary": "terminals: prompt_async model schema {providerID, modelID}",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-157/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_terminals.py",
+    "tests/test_dashboard_terminals.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0ce5f1cba39fa4f553dd160145ff3210dd60e1aa",
+    "targetBranch": "main",
+    "outcome": "prompt_async rejects the session-create model schema: the server wants {providerID, modelID} on prompt routes but {id, providerID} on session create. _normalize_model gains a style parameter; send_prompt emits the prompt-route shape so dashboard prompts with an explicit model stop returning HTTP 400.",
+    "nonGoals": [
+      "no changes to supervisor loop or dashboard JS",
+      "no serve-based drive lane",
+      "no new endpoints"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "single _normalize_model(model, style) helper emits {id, providerID} for session create and {providerID, modelID} for prompt_async; verified live against opencode serve 1.17.8",
+      "components": [
+        {
+          "name": "dashboard/terminals",
+          "paths": [
+            "src/koruapi/opencode_terminals.py",
+            "tests/test_dashboard_terminals.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_dashboard_terminals.py -q"
+        ],
+        "evidence": "send_prompt body uses {providerID, modelID}; live prompt_async returned 204 and produced an assistant reply"
+      }
+    ]
+  }
+}

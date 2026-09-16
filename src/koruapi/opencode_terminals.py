@@ -214,14 +214,23 @@ def list_sessions(url: str) -> list[dict[str, Any]]:
     return items if isinstance(items, list) else []
 
 
-def _normalize_model(model: dict[str, str] | None) -> dict[str, str] | None:
-    """Translate to the server schema ``{"id": ..., "providerID": ...}``."""
+def _normalize_model(
+    model: dict[str, str] | None, *, style: str = "create"
+) -> dict[str, str] | None:
+    """Normalize a caller model dict to the route-specific server schema.
+
+    The opencode API is inconsistent: session create wants
+    ``{"id", "providerID"}`` while ``prompt_async`` wants
+    ``{"providerID", "modelID"}``.
+    """
     if not isinstance(model, dict):
         return None
     model_id = model.get("id") or model.get("modelID")
     provider = model.get("providerID") or model.get("providerId")
     if not model_id or not provider:
         return None
+    if style == "prompt":
+        return {"providerID": str(provider), "modelID": str(model_id)}
     return {"id": str(model_id), "providerID": str(provider)}
 
 
@@ -273,7 +282,7 @@ def send_prompt(
     to the SPA handler.
     """
     body: dict[str, Any] = {"parts": [{"type": "text", "text": text}]}
-    normalized = _normalize_model(model)
+    normalized = _normalize_model(model, style="prompt")
     if normalized:
         body["model"] = normalized
     if agent:
