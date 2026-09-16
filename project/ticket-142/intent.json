@@ -22,10 +22,16 @@
     "project/new-ticket.sh",
     "scripts/install-agent-hosts.sh"
   ],
-  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
   "stacks": [],
-  "dependsOn": ["ticket-065"],
-  "conflictsWith": [],
+  "dependsOn": [
+    "ticket-065"
+  ],
+  "conflictsWith": [
+    "ticket-154"
+  ],
   "integrationTicket": null,
   "delivery": {
     "acceptedBaseSha": "e63b83ca5eadd9b83a8fe1efba27b14dce7c47f8",
@@ -55,13 +61,24 @@
       "components": [
         {
           "name": "managed-governance-package",
-          "paths": [".governance/**", "AGENTS.md", "CLAUDE.md", "GEMINI.md", "package.json", "pyproject.toml"]
+          "paths": [
+            ".governance/**",
+            "AGENTS.md",
+            "CLAUDE.md",
+            "GEMINI.md",
+            "package.json",
+            "pyproject.toml"
+          ]
         }
       ],
       "responsibilityChanges": false,
       "interfaceChanges": [],
       "dataChanges": [],
-      "ui": {"impact": "none", "states": [], "evidence": []},
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
       "rollback": "Revert the atomic managed package adoption to the previous accepted revision; do not edit individual managed files."
     },
     "runtimeDependencies": [],

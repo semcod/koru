@@ -35,12 +35,31 @@ overlaps the atomic standard-adoption update required here. Resume ticket 142
 after ticket-065 reaches a protected terminal receipt, or after its owner
 provides an accepted handoff/reconciliation.
 
-**Resolved 2026-09-16**: ticket-065 reached its terminal receipt — PR #249
-merged as of 07:15Z, branch deleted, workspace released. The recorded
-SESSION_EXECUTION_AUTHORIZATION (execution, push, merge) is reaffirmed by the
-owner's "tak" in the resuming session. Resuming under D-142-0001's
-future route: refresh the exact head against main, re-run all gates, and keep
-the protected Validator as the only merge authority.
+**Update 2026-09-16 (session 2)**: the ticket-065 blocker cleared (PR #249
+merged 07:15Z). Work resumed: staged adoption committed (`0766ab7e`), head
+refreshed against main (`2d0c6eb8`), `goal governance adopt --latest` confirms
+files match 0.20.32 @ `b6ba9c21` exactly; governance gate GOV-PASS. PR #265
+opened, but the protected **Koru Docs 0.5** local gate fails on the five
+`SNAPSHOT_MIGRATION.md` findings: the 0.20.32 package newly vendors
+`docs/information/snapshot-migration.md` into `.governance/docs/` with
+`owner: wellmanifest/new-project` and no `scope`, which docs 0.5 rejects
+(cross-repository deliverables). The protected job (`check-koru-docs.py`)
+hardcodes docs 0.5.0 / revision `71c296aa` with no candidate-selected pin, and
+`--managed-copies` (the 0.6.0 exemption for exactly this case) does not exist
+in 0.5.0. Upstream `wellmanifest/new-project` at HEAD still ships the same
+frontmatter, so this is a cross-standard incompatibility, not a koru content
+defect. Hand-edits are forbidden (managed file, lock-bound).
+
+**Blocker (current)**: adoption of 0.20.32 cannot pass protected publication
+until one of:
+1. `wellmanifest/new-project` ships adopter-conformant vendored docs (or stops
+   vendoring into `.governance/docs/`), or
+2. the protected koru docs job is upgraded to docs 0.6.0 with a verified
+   `--managed-copies` inventory (subactor/onedev-agent protected change).
+
+PR #265 stays open with the failing check as waiting evidence; the branch
+holds the complete verified adoption state. Do not re-push an unchanged
+effect.
 
 ## Tracking boundary
 
