@@ -7,6 +7,7 @@ import yaml
 
 from koru.queue.planfile_sync import (
     PlanfileSyncConfig,
+    defer_sync_on_create,
     load_planfile_sync_config,
     stamp_ticket_integrations,
     sync_after_ticket_create,
@@ -61,6 +62,27 @@ def test_sync_after_ticket_create_stamps_and_syncs(tmp_path: Path, monkeypatch) 
     monkeypatch.setattr("koru.queue.planfile_sync._sync_integration", _fake_sync_integration)
     result = sync_after_ticket_create(tmp_path, "REFACTOR-001")
     assert result.ok is True
+    assert sync_calls == ["github"]
+
+
+def test_defer_sync_on_create_suppresses_per_ticket_sync(tmp_path: Path, monkeypatch) -> None:
+    policy_dir = tmp_path / ".planfile" / ".koru"
+    policy_dir.mkdir(parents=True)
+    (policy_dir / "policy.yaml").write_text("planfile_sync:\n  integrations: [github]\n", encoding="utf-8")
+
+    sync_calls: list[str] = []
+    monkeypatch.setattr(
+        "koru.queue.planfile_sync._sync_integration",
+        lambda integration, project, *, direction, dry_run: sync_calls.append(integration),
+    )
+
+    with defer_sync_on_create():
+        with defer_sync_on_create():
+            sync_after_ticket_create(tmp_path, "REFACTOR-001")
+        sync_after_ticket_create(tmp_path, "REFACTOR-002")
+    assert sync_calls == []
+
+    sync_after_ticket_create(tmp_path, "REFACTOR-003")
     assert sync_calls == ["github"]
 
 
