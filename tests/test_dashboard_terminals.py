@@ -49,6 +49,36 @@ class TestRegistry:
         assert updated is not None and updated["auto_answer"] is False
         assert ot.set_auto_answer(tmp_path, "nope", True) is None
 
+    def test_set_auto_answer_adopts_discovered_process(self, tmp_path: Path) -> None:
+        discovered = [
+            {"id": "proc-4101", "url": "http://127.0.0.1:4101",
+             "pid": 99999, "label": "opencode serve :4101",
+             "managed": False, "auto_answer": False}
+        ]
+        with patch.object(ot, "_scan_serve_processes", return_value=discovered):
+            entry = ot.set_auto_answer(tmp_path, "proc-4101", True)
+        assert entry is not None
+        assert entry["auto_answer"] is True
+        assert entry["managed"] is False
+        entries = ot.load_registry(tmp_path)
+        assert len(entries) == 1
+        assert entries[0]["url"] == "http://127.0.0.1:4101"
+        assert entries[0]["auto_answer"] is True
+        # Stop is still refused for an adopted but unmanaged instance.
+        assert "not koru-managed" in ot.stop_instance(tmp_path, entry["id"])["error"]
+
+    def test_discovered_process_gets_stable_id(self, tmp_path: Path) -> None:
+        discovered = [
+            {"id": "proc-4101", "url": "http://127.0.0.1:4101",
+             "pid": 99999, "label": "opencode serve :4101",
+             "managed": False, "auto_answer": False}
+        ]
+        with patch.object(ot, "_scan_serve_processes", return_value=discovered):
+            instances = ot.discover_instances(tmp_path, probe=False)
+            # The same id now resolves for prompt/reply/detail lookups.
+            assert ot.terminal_detail(tmp_path, "proc-4101")["id"] == "proc-4101"
+        assert instances[0]["id"] == "proc-4101"
+
 
 class TestApiClient:
     def test_api_request_get(self) -> None:
