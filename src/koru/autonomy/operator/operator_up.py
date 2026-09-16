@@ -235,11 +235,12 @@ def _maybe_start_web_dashboard(
     """Start ``koru serve`` in a background thread when ``--web`` was passed."""
     if not getattr(context.args, "web", False):
         return
+    fmt = getattr(context.args, "emit_events", "human")
     try:
         from koruapi.dashboard_serve import ServeConfig, start_serve_background
         from koruapi.dashboard_serve_utils import DEFAULT_HOST, DEFAULT_PORT
     except ImportError:
-        stdio_info("koru auto --web: dashboard module unavailable; skipping")
+        stdio_info("koru auto --web: dashboard module unavailable; skipping", fmt=fmt)
         return
     config = ServeConfig(
         project=context.project,
@@ -252,11 +253,13 @@ def _maybe_start_web_dashboard(
         workspace=None,
     )
     try:
-        server, thread = start_serve_background(config, log=lambda msg: stdio_info(str(msg)))
+        server, thread = start_serve_background(
+            config, log=lambda msg: stdio_info(str(msg), fmt=fmt)
+        )
         context.serve_server = server
         context.serve_thread = thread
     except Exception as exc:  # noqa: BLE001 — advisory; must not block the loop
-        stdio_info(f"koru auto --web: dashboard start failed: {exc}")
+        stdio_info(f"koru auto --web: dashboard start failed: {exc}", fmt=fmt)
 
 
 def _shutdown_web_dashboard(context: AutonomousUpContext) -> None:

@@ -221,3 +221,60 @@ class TestWebFlagParser:
 
         args = _parse_autonomous_args(["up"], invoked_as_auto=True)
         assert args.web is False
+
+
+class TestWebDashboardStart:
+    """Regression: _maybe_start_web_dashboard must pass fmt to stdio_info."""
+
+    def test_log_callable_supplies_fmt(self, monkeypatch) -> None:
+        import argparse
+        import sys
+        import types
+
+        from koru.autonomy.operator import operator_up
+
+        logged: list[str] = []
+
+        def stdio_info(msg: str, *, fmt: str) -> None:
+            logged.append(f"{fmt}:{msg}")
+
+        fake_serve = types.ModuleType("koruapi.dashboard_serve")
+
+        class ServeConfig:  # noqa: D401 - minimal stub
+            def __init__(self, **kwargs: object) -> None:
+                self.kwargs = kwargs
+
+        def start_serve_background(config, log=None):
+            assert log is not None
+            log("koru serve: port 8767 busy — bound to 8768 instead")
+            return object(), object()
+
+        fake_serve.ServeConfig = ServeConfig
+        fake_serve.start_serve_background = start_serve_background
+        fake_utils = types.ModuleType("koruapi.dashboard_serve_utils")
+        fake_utils.DEFAULT_HOST = "127.0.0.1"
+        fake_utils.DEFAULT_PORT = 8767
+        monkeypatch.setitem(sys.modules, "koruapi.dashboard_serve", fake_serve)
+        monkeypatch.setitem(sys.modules, "koruapi.dashboard_serve_utils", fake_utils)
+
+        args = argparse.Namespace(web=True, emit_events="human")
+        context = argparse.Namespace(args=args, project=".", queue_name=None)
+        operator_up._maybe_start_web_dashboard(context, stdio_info)
+
+        assert logged and all(entry.startswith("human:") for entry in logged)
+        assert "bound to 8768" in logged[0]
+
+    def test_web_dashboard_skipped_without_flag(self) -> None:
+        import argparse
+
+        from koru.autonomy.operator import operator_up
+
+        calls: list[str] = []
+
+        def stdio_info(msg: str, *, fmt: str) -> None:
+            calls.append(msg)
+
+        args = argparse.Namespace(web=False, emit_events="human")
+        context = argparse.Namespace(args=args, project=".", queue_name=None)
+        operator_up._maybe_start_web_dashboard(context, stdio_info)
+        assert calls == []

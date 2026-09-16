@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-147",
+  "summary": "web-flag-stdio-fmt-fix",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-147/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/operator/operator_up.py",
+    "tests/test_dashboard_logs.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3f6824a506282e0a405ae260a640e7b28fcdb91e",
+    "targetBranch": "main",
+    "outcome": "Fix TypeError crash in koru auto up --web: stdio_info requires keyword-only fmt",
+    "nonGoals": [
+      "no new features",
+      "no parser changes"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "pass fmt=context.args.emit_events to stdio_info in _maybe_start_web_dashboard",
+      "components": [
+        {
+          "name": "autonomous-up",
+          "paths": [
+            "src/koru/autonomy/operator/operator_up.py",
+            "tests/test_dashboard_logs.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_dashboard_logs.py -q"
+        ],
+        "evidence": "all tests pass including fmt regression"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "koru auto up --max-cycles 1 --web --no-autopilot"
+        ],
+        "evidence": "dashboard binds, no TypeError in log"
+      }
+    ]
+  }
+}
