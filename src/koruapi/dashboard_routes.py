@@ -255,6 +255,18 @@ def _get_plugin_logs(handler: Any, _config: ServeConfig) -> None:
     handler._safe_respond_json(dashboard_plugin_logs_payload)
 
 
+def _get_logs_json(handler: Any, _config: ServeConfig) -> None:
+    from koruapi.dashboard_logs import handle_logs_json_request
+
+    handle_logs_json_request(handler, _config)
+
+
+def _handle_sse_logs(handler: Any, config: ServeConfig) -> None:
+    from koruapi.dashboard_logs import handle_sse_logs_request
+
+    handle_sse_logs_request(handler, config)
+
+
 def _redirect_create_project_ticket_prompt(handler: Any, _config: ServeConfig) -> None:
     qs = parse_qs(urlparse(handler.path).query)
     query = dict(PROJECT_DISCOVERY_PROMPT_QUERY)
@@ -504,6 +516,7 @@ _GET_ROUTES: dict[str, _GetHandler] = {
     "/api/observe/trace": _get_observe_trace,
     "/api/interfaces": _get_interfaces,
     "/api/environment": _get_environment,
+    "/api/logs": _get_logs_json,
     "/llm/prompt/create-ticket-for-project": _redirect_create_project_ticket_prompt,
     "/llm/action/create-ticket-for-project": _get_create_project_ticket_action,
 }
@@ -539,6 +552,9 @@ def _handle_dashboard_get(handler: Any, config: ServeConfig) -> None:
 
         if serve_browser_capture_http(handler, path, project=config.project, method="GET"):
             return
+    if path == "/api/logs/stream":
+        _handle_sse_logs(handler, config)
+        return
     route = _GET_ROUTES.get(path)
     if route is not None:
         route(handler, config)

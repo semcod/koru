@@ -1,0 +1,113 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-146",
+  "summary": "Add --web flag to koru auto up to start dashboard with WebSocket live log streaming (ERROR/WARNING/INFO) and NL ticket creation panel",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-146/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomous.py",
+    "src/koru/autonomy/operator/operator_up.py",
+    "src/koruapi/dashboard_routes.py",
+    "src/koruapi/dashboard_logs.py",
+    "src/koruapi/dashboard_template.html",
+    "tests/test_dashboard_logs.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9c330f9deb231859d5555bfcebb257b9decebcf7",
+    "targetBranch": "main",
+    "outcome": "Add --web flag to koru auto up and SSE log streaming to the dashboard",
+    "nonGoals": [
+      "No change to autonomous cycle logic or queue behavior",
+      "No new runtime dependencies (SSE uses stdlib http.server)",
+      "No change to existing dashboard routes or ticket creation flow"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 120,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Consume --web in _parse_autonomous_args before argparse (avoids parser file conflicts), wire start_serve_background in action_up, add SSE endpoint via dashboard_logs.py, add Logs tab to template",
+      "components": [
+        {
+          "name": "autonomous-args",
+          "paths": [
+            "src/koru/autonomous.py",
+            "src/koru/autonomy/operator/operator_up.py"
+          ]
+        },
+        {
+          "name": "dashboard",
+          "paths": [
+            "src/koruapi/dashboard_routes.py",
+            "src/koruapi/dashboard_logs.py",
+            "src/koruapi/dashboard_template.html"
+          ]
+        },
+        {
+          "name": "tests",
+          "paths": [
+            "tests/test_dashboard_logs.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "multi-state",
+        "states": [
+          "loading",
+          "error",
+          "success"
+        ],
+        "evidence": [
+          "dashboard_template.html Logs tab with SSE connect/error states and level filters"
+        ]
+      },
+      "rollback": "Remove --web flag, dashboard_logs.py, /api/logs routes, and Logs tab from template"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_dashboard_logs.py -k TestWebFlagParser"
+        ],
+        "evidence": "--web flag exists and defaults to false"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest tests/test_dashboard_logs.py -k TestSseLogStream"
+        ],
+        "evidence": "SSE endpoint yields structured log events with level field"
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python -m pytest tests/test_dashboard_logs.py"
+        ],
+        "evidence": "All tests pass"
+      }
+    ]
+  }
+}
