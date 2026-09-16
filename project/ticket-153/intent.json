@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-153",
+  "summary": "scan-llm-executor-routing",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-153/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/planfile_sync.py",
+    "src/koru/scan_ticket_emission.py",
+    "tests/test_planfile_sync.py",
+    "tests/test_scan.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a61c6a83b6fa9cb6d1cf874e0e9c190d6ea2487d",
+    "targetBranch": "main",
+    "outcome": "Batch per-ticket planfile sync during scan --apply: defer sync_after_ticket_create inside the apply loop, run one sync_planfile_integrations afterwards, drop per-ticket --sync flag. Cuts ~40min first-cycle scan to minutes when many tickets are created.",
+    "nonGoals": [
+      "no executor.kind flip to llm (llm executor returns text only; code work goes through autopilot->opencode drive)",
+      "no changes to planfile repo sync internals",
+      "no scan signal/dedupe changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "defer_sync_on_create() reentrant context in planfile_sync.py gates sync_after_ticket_create; apply_scan_suggestions wraps the create loop and calls sync_planfile_integrations once when tickets were applied; planfile-CLI create drops --sync",
+      "components": [
+        {
+          "name": "queue/scan",
+          "paths": [
+            "src/koru/queue/planfile_sync.py",
+            "src/koru/scan_ticket_emission.py",
+            "tests/test_planfile_sync.py",
+            "tests/test_scan.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["pytest tests/test_planfile_sync.py tests/test_scan.py -q"],
+        "evidence": "deferred create does not sync per ticket; one batch sync runs after apply loop"
+      }
+    ]
+  }
+}
