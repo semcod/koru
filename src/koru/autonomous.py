@@ -1181,11 +1181,31 @@ def _apply_replace_existing_flags(args: Any, invoked_as_auto: bool) -> None:
     _autonomous_cli_config.apply_replace_existing_flags(args, invoked_as_auto)
 
 
+def _consume_web_flag(argv: list[str]) -> tuple[list[str], bool]:
+    """Strip ``--web``/``--no-web`` tokens before argparse.
+
+    The flag lives outside ``operator_parser.py`` so concurrent tickets can
+    extend the ``up`` parser without write conflicts.
+    """
+    web = False
+    cleaned: list[str] = []
+    for token in argv:
+        if token == "--web":
+            web = True
+        elif token == "--no-web":
+            web = False
+        else:
+            cleaned.append(token)
+    return cleaned, web
+
+
 def _parse_autonomous_args(argv: list[str], *, invoked_as_auto: bool) -> argparse.Namespace:
+    argv, web_flag = _consume_web_flag(argv)
     argv = _normalize_autonomous_argv(argv)
     auto_user_options, argv = _configure_auto_mode_args(argv, None, invoked_as_auto)
 
     args = _build_parser().parse_args(argv)
+    args.web = web_flag
     args._invoked_as_auto = bool(invoked_as_auto)
     _apply_auto_pipeline_flags(args, invoked_as_auto)
     args._auto_user_options = auto_user_options
