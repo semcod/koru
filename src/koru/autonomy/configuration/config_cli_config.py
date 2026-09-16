@@ -68,13 +68,18 @@ def _openrouter_model_from_strategy(strategy: dict[str, Any]) -> str:
 
 
 def apply_autonomy_strategy_defaults(args: Any) -> None:
-    """Apply ``koru.yaml`` autonomy.strategy as runtime defaults for ``koru auto``.
+    """Apply ``koru.yaml`` autonomy.strategy as runtime defaults for every loop start.
 
     Explicit CLI flags still win. The strategy file is meant to describe the
     workflow, so these defaults make that contract operational without taking
     control away from one-off command invocations.
+
+    ``koru autonomous up`` is the form long-running services use, so it reads the
+    same declared strategy as the ``koru auto`` alias. Gating this on the alias
+    left a deployed loop silently running argparse defaults while its
+    ``koru.yaml`` declared something else.
     """
-    if not getattr(args, "_invoked_as_auto", False) or getattr(args, "action", "") != "up":
+    if getattr(args, "action", "") != "up":
         return
     try:
         from koru.autonomy_strategy import load_autonomy_strategy
@@ -154,9 +159,12 @@ def configure_auto_mode_args(
 ) -> tuple[set[str], list[str]]:
     """Configure arguments for auto mode and return user options and normalized argv."""
     auto_user_options: set[str] = set()
-    if invoked_as_auto and argv and argv[0] == "up":
+    if argv and argv[0] == "up":
+        # Collected for every ``up``: the strategy defaults must know which
+        # options the caller set explicitly, whichever entry point was used.
         auto_user_options = collect_argv_options(argv[1:])
-        argv = expand_auto_up_defaults(argv)
+        if invoked_as_auto:
+            argv = expand_auto_up_defaults(argv)
     return auto_user_options, argv
 
 
