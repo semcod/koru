@@ -212,6 +212,49 @@
     text-align: center;
   }
   a { color: var(--accent); }
+  .term-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+  .term-card {
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px;
+    cursor: pointer;
+  }
+  .term-card:hover { border-color: var(--accent); }
+  .term-card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .term-card .term-head { display: flex; align-items: center; gap: 8px; }
+  .term-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .term-dot.ok { background: #2ecc71; }
+  .term-dot.err { background: #e74c3c; }
+  .term-card .term-label { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .term-badges { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .term-badge { font-size: 11px; padding: 2px 7px; border-radius: 10px; border: 1px solid var(--border); }
+  .term-badge.warn { border-color: #f39c12; color: #f39c12; }
+  .term-badge.err { border-color: #e74c3c; color: #e74c3c; }
+  .term-badge.ok { border-color: #2ecc71; color: #2ecc71; }
+  .term-detail { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+  .term-sessions { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+  .term-session-btn {
+    font-size: 12px; padding: 3px 10px; border-radius: 12px; cursor: pointer;
+    border: 1px solid var(--border); background: transparent; color: var(--fg);
+  }
+  .term-session-btn.active { border-color: var(--accent); color: var(--accent); }
+  .term-messages {
+    max-height: 380px; overflow-y: auto; border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px; font-size: 12px; font-family: monospace;
+    background: var(--bg); white-space: pre-wrap; word-break: break-word;
+  }
+  .term-msg { margin-bottom: 8px; }
+  .term-msg .role { font-weight: 700; margin-right: 6px; }
+  .term-pending { margin: 10px 0; padding: 8px; border: 1px solid #f39c12; border-radius: 6px; }
+  .term-pending .opts { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .term-reply-btn {
+    font-size: 12px; padding: 3px 12px; border-radius: 4px; cursor: pointer;
+    border: 1px solid var(--border); background: transparent; color: var(--fg);
+  }
+  .term-reply-btn:hover { border-color: var(--accent); }
+  .term-input-row { display: flex; gap: 8px; margin-top: 10px; }
+  .term-input-row input {
+    flex: 1; padding: 6px 10px; border: 1px solid var(--border);
+    border-radius: 6px; background: var(--bg); color: var(--fg);
+  }
   @media (max-width: 760px) {
     header {
       align-items: flex-start;
@@ -315,6 +358,7 @@ const tabs = [
   ["policy", "Policy"],
   ["plugin-logs", "Plugin logs"],
   ["logs", "Logs"],
+  ["terminals", "Terminals"],
   ["system", "System config"],
   ["settings", "Settings"],
   ["all", "All"],
@@ -1009,6 +1053,9 @@ function renderViewContent(ctx, topo, runtime, configPayload, envConfigPayload) 
     logs: [
       renderLogsPanel(),
     ],
+    terminals: [
+      renderTerminalsPanel(),
+    ],
     system: [
       renderEnvConfig(envConfigPayload),
       renderSystemConfig(configPayload),
@@ -1261,6 +1308,321 @@ function connectLogSSE() {
     setStatus("error: " + e.message, "pill err");
   }
 }
+
+// --- Terminals tab: grid of opencode serve instances + supervisor ---
+
+let termData = null;        // last /api/terminals payload
+let termSelected = null;    // selected instance id
+let termSession = null;     // selected session id
+let termDetail = null;      // last /api/terminals/detail payload
+let termMessages = null;    // last /api/terminals/messages payload
+let termMsgKey = null;      // "iid|sid" of the loaded messages
+
+function renderTerminalsPanel() {
+  // Like the Logs tab: keep state across the 5s view re-render and repaint
+  // from cache instead of refetching on every cycle.
+  if (!termData) {
+    setTimeout(loadTerminals, 50);
+  } else {
+    setTimeout(paintTerminals, 0);
+  }
+  return panel("Terminals — opencode instances", `
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+      <button type="button" class="term-reply-btn" onclick="termSpawn()">+ Spawn opencode serve</button>
+      <span class="muted" style="font-size:12px;">Supervisor auto-answers permission/question requests on instances with
+        <span class="term-badge ok">auto</span> — pending requests show as
+        <span class="term-badge warn">!</span> badges.</span>
+    </div>
+    <div id="term-grid" class="term-grid"><span class="muted">loading…</span></div>
+    <div id="term-detail" class="term-detail" style="display:none;"></div>
+  `);
+}
+
+async function loadTerminals() {
+  try {
+    const res = await fetch("/api/terminals" + projectQuery(), { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    termData = await res.json();
+  } catch (e) {
+    termData = { error: e.message, instances: [] };
+  }
+  if (state.tab === "terminals" || state.tab === "all") paintTerminals();
+}
+
+function paintTerminals() {
+  const grid = $("term-grid");
+  if (!grid || !termData) return;
+  if (termData.error) {
+    grid.innerHTML = `<span class="err">terminals: ${esc(termData.error)}</span>`;
+    return;
+  }
+  const instances = termData.instances || [];
+  if (!instances.length) {
+    grid.innerHTML = `<span class="muted">No opencode instances. Spawn one or start
+      <code>opencode serve</code> in a terminal — it is auto-discovered.</span>`;
+    return;
+  }
+  grid.innerHTML = instances.map(inst => {
+    const pend = inst.pending || {};
+    const badges = [];
+    badges.push(`<span class="term-badge ${inst.healthy ? "ok" : "err"}">${inst.healthy ? "up" : "down"}</span>`);
+    badges.push(`<span class="term-badge">${(inst.sessions || []).length} sess</span>`);
+    if (pend.permissions) badges.push(`<span class="term-badge err">! ${pend.permissions} perm</span>`);
+    if (pend.questions) badges.push(`<span class="term-badge warn">? ${pend.questions} ask</span>`);
+    if (inst.auto_answer) badges.push(`<span class="term-badge ok">auto</span>`);
+    const sel = termSelected === inst.id ? " selected" : "";
+    return `<div class="term-card${sel}" onclick="termSelect('${attr(inst.id)}')">
+      <div class="term-head">
+        <span class="term-dot ${inst.healthy ? "ok" : "err"}"></span>
+        <span class="term-label">${esc(inst.label)}</span>
+      </div>
+      <div class="muted" style="font-size:11px;margin-top:4px;">${esc(inst.url)}</div>
+      <div class="term-badges">${badges.join("")}</div>
+    </div>`;
+  }).join("");
+  paintTermDetail();
+}
+
+async function termSelect(iid) {
+  if (termSelected === iid) {
+    termSelected = null; termSession = null; termDetail = null; termMessages = null;
+    paintTermDetail();
+    return;
+  }
+  termSelected = iid;
+  termSession = null;
+  termDetail = null;
+  termMessages = null;
+  paintTerminals();
+  await loadTermDetail(iid);
+}
+
+async function loadTermDetail(iid) {
+  try {
+    const res = await fetch(
+      "/api/terminals/detail?iid=" + encodeURIComponent(iid)
+        + (state.project ? "&project=" + encodeURIComponent(state.project) : ""),
+      { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    termDetail = await res.json();
+  } catch (e) {
+    termDetail = { error: e.message };
+  }
+  paintTermDetail();
+}
+
+function paintTermDetail() {
+  const el = $("term-detail");
+  if (!el) return;
+  if (!termSelected || !termDetail) {
+    el.style.display = "none";
+    el.innerHTML = "";
+    return;
+  }
+  el.style.display = "block";
+  if (termDetail.error) {
+    el.innerHTML = `<span class="err">${esc(termDetail.error)}</span>`;
+    return;
+  }
+  const inst = termDetail;
+  const sessions = inst.sessions || [];
+  const sessBtns = sessions.map(s =>
+    `<button type="button" class="term-session-btn ${termSession === s.id ? "active" : ""}"
+       onclick="termSessionSelect('${attr(s.id)}')">${esc(s.title || s.id)}</button>`
+  ).join("");
+  const pending = inst.pending_requests || { permissions: [], questions: [] };
+  const pendHtml = [];
+  for (const p of pending.permissions || []) {
+    pendHtml.push(`<div class="term-pending">
+      <b>Permission:</b> ${esc(p.action || "?")}
+      <span class="muted">${esc((p.resources || []).join(", ").slice(0, 160))}</span>
+      <div class="opts">
+        <button class="term-reply-btn" onclick="termReply('${attr(p.sessionID)}','${attr(p.id)}','permission','once')">allow once</button>
+        <button class="term-reply-btn" onclick="termReply('${attr(p.sessionID)}','${attr(p.id)}','permission','always')">always</button>
+        <button class="term-reply-btn" onclick="termReply('${attr(p.sessionID)}','${attr(p.id)}','permission','reject')">reject</button>
+      </div>
+    </div>`);
+  }
+  for (const q of pending.questions || []) {
+    for (const [qi, item] of (q.questions || []).entries()) {
+      const opts = (item.options || []).map(o =>
+        `<button class="term-reply-btn" onclick="termQuestionReply('${attr(q.sessionID)}','${attr(q.id)}',[${qi}],'${attr(o.label || "")}')">${esc(o.label || "?")}</button>`
+      ).join("");
+      pendHtml.push(`<div class="term-pending">
+        <b>Question:</b> ${esc(item.header || "")} — ${esc(item.question || "")}
+        <div class="opts">${opts}</div>
+      </div>`);
+    }
+  }
+  const controls = `
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+      <b>${esc(inst.label)}</b>
+      <a href="${attr(inst.url)}" target="_blank" rel="noopener" style="font-size:12px;">open opencode UI ↗</a>
+      <button type="button" class="term-reply-btn" onclick="termToggleAuto('${attr(inst.id)}', ${!inst.auto_answer})">
+        ${inst.auto_answer ? "disable auto-answer" : "enable auto-answer"}</button>
+      ${inst.managed ? `<button type="button" class="term-reply-btn" onclick="termStop('${attr(inst.id)}')">stop</button>` : ""}
+    </div>`;
+  el.innerHTML = controls
+    + `<div class="term-sessions">${sessBtns || '<span class="muted">no sessions yet — send a prompt below</span>'}</div>`
+    + pendHtml.join("")
+    + `<div id="term-msg-box" class="term-messages">${termMessagesHtml()}</div>`
+    + `<div class="term-input-row">
+        <input id="term-prompt-input" type="text" placeholder="message the selected session (or start a new one)…"
+          onkeydown="if(event.key==='Enter')termSendPrompt()" />
+        <button type="button" class="term-reply-btn" onclick="termSendPrompt()">send</button>
+      </div>`;
+}
+
+function termMessagesHtml() {
+  if (!termSession) return '<span class="muted">select a session to view its messages</span>';
+  if (termMsgKey !== termSelected + "|" + termSession) return '<span class="muted">loading…</span>';
+  const msgs = (termMessages && termMessages.messages) || [];
+  if (!msgs.length) return '<span class="muted">no messages yet</span>';
+  return msgs.map(m => {
+    const type = m.type || m.role || "?";
+    let text = "";
+    if (typeof m.text === "string") text = m.text;
+    else if (Array.isArray(m.content)) {
+      text = m.content.map(c => {
+        if (c.text) return c.text;
+        if (c.name) return `[tool: ${c.name}]`;
+        return "";
+      }).filter(Boolean).join("\n");
+    } else if (m.command) {
+      text = "$ " + m.command + (m.output ? "\n" + m.output : "");
+    }
+    if (text.length > 4000) text = text.slice(0, 4000) + "…";
+    const color = type === "user" ? "#4a9eff" : type === "assistant" ? "#2ecc71" : "#95a5a6";
+    return `<div class="term-msg"><span class="role" style="color:${color};">${esc(type)}</span>${esc(text)}</div>`;
+  }).join("");
+}
+
+async function termSessionSelect(sid) {
+  termSession = sid;
+  termMessages = null;
+  paintTermDetail();
+  await loadTermMessages();
+}
+
+async function loadTermMessages() {
+  if (!termSelected || !termSession) return;
+  try {
+    const res = await fetch(
+      "/api/terminals/messages?iid=" + encodeURIComponent(termSelected)
+        + "&sid=" + encodeURIComponent(termSession)
+        + (state.project ? "&project=" + encodeURIComponent(state.project) : ""),
+      { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    termMessages = await res.json();
+    termMsgKey = termSelected + "|" + termSession;
+  } catch (e) {
+    termMessages = { error: e.message, messages: [] };
+    termMsgKey = termSelected + "|" + termSession;
+  }
+  const box = $("term-msg-box");
+  if (box) {
+    box.innerHTML = termMessagesHtml();
+    box.scrollTop = box.scrollHeight;
+  }
+}
+
+async function termPost(path, body) {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(requestBody(body)),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
+  return data;
+}
+
+async function termReply(sessionID, requestID, kind, reply) {
+  try {
+    await termPost("/api/terminals/reply",
+      { iid: termSelected, session_id: sessionID, request_id: requestID, kind, reply });
+    await loadTermDetail(termSelected);
+  } catch (e) {
+    alert("reply failed: " + e.message);
+  }
+}
+
+async function termQuestionReply(sessionID, requestID, idxs, label) {
+  // answers: array per question; we set the chosen label at each given index.
+  const pending = (termDetail && termDetail.pending_requests) || {};
+  const req = (pending.questions || []).find(q => q.id === requestID);
+  const count = req ? (req.questions || []).length : 1;
+  const answers = [];
+  for (let i = 0; i < count; i++) {
+    answers.push(idxs.includes(i) ? [label] : [((req.questions[i].options || [])[0] || {}).label || ""]);
+  }
+  try {
+    await termPost("/api/terminals/reply",
+      { iid: termSelected, session_id: sessionID, request_id: requestID, kind: "question", answers });
+    await loadTermDetail(termSelected);
+  } catch (e) {
+    alert("reply failed: " + e.message);
+  }
+}
+
+async function termSendPrompt() {
+  const input = $("term-prompt-input");
+  const text = input ? input.value.trim() : "";
+  if (!text || !termSelected) return;
+  try {
+    const res = await termPost("/api/terminals/prompt",
+      { iid: termSelected, session_id: termSession || "", text });
+    if (input) input.value = "";
+    if (res.session_id) termSession = res.session_id;
+    await loadTermDetail(termSelected);
+    await loadTermMessages();
+  } catch (e) {
+    alert("prompt failed: " + e.message);
+  }
+}
+
+async function termSpawn() {
+  try {
+    const res = await termPost("/api/terminals/spawn", {});
+    if (res.instance) termSelected = res.instance.id;
+    await loadTerminals();
+    if (termSelected) await loadTermDetail(termSelected);
+  } catch (e) {
+    alert("spawn failed: " + e.message);
+  }
+}
+
+async function termStop(iid) {
+  if (!confirm("Stop this opencode serve instance?")) return;
+  try {
+    await termPost("/api/terminals/stop", { iid });
+    if (termSelected === iid) { termSelected = null; termDetail = null; }
+    await loadTerminals();
+    paintTermDetail();
+  } catch (e) {
+    alert("stop failed: " + e.message);
+  }
+}
+
+async function termToggleAuto(iid, enabled) {
+  try {
+    await termPost("/api/terminals/auto", { iid, enabled });
+    await loadTerminals();
+    if (termSelected === iid) await loadTermDetail(iid);
+  } catch (e) {
+    alert("auto toggle failed: " + e.message);
+  }
+}
+
+// Terminals poller — fetches only while the tab is visible.
+setInterval(function () {
+  if (state.tab !== "terminals" && state.tab !== "all") return;
+  loadTerminals();
+  if (termSelected) {
+    loadTermDetail(termSelected);
+    if (termSession) loadTermMessages();
+  }
+}, 3000);
 
 function renderPluginLogs() {
   setTimeout(loadPluginLogsAsync, 50);
@@ -1710,10 +2072,10 @@ async function refresh() {
     renderDashboardControls(dash);
     renderTabs();
     syncUrlState({ replace: true });
-    // Fast first paint for the Logs tab: the view does not depend on the
-    // slow context/topology/config endpoints — render it immediately so the
-    // SSE stream can connect while the rest of the brief loads.
-    if (state.tab === "logs" && !lastRenderPayload) {
+    // Fast first paint for the Logs and Terminals tabs: neither view depends
+    // on the slow context/topology/config endpoints — render immediately so
+    // the SSE stream / terminals poller can start while the brief loads.
+    if ((state.tab === "logs" || state.tab === "terminals") && !lastRenderPayload) {
       lastRenderPayload = { ctx: {}, topo: {}, runtime: {}, configPayload: {}, envConfigPayload: {} };
       renderCurrentViewFromCache();
     }

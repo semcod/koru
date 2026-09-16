@@ -7,9 +7,10 @@ living status and new backlog items immediately.
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -234,9 +235,27 @@ def sync_planfile_integrations(
     )
 
 
+_create_sync_deferred = 0
+
+
+@contextlib.contextmanager
+def defer_sync_on_create() -> Iterator[None]:
+    """Suppress per-ticket sync inside bulk creation loops.
+
+    Callers are responsible for running ``sync_planfile_integrations`` once
+    after the loop finishes. Reentrant.
+    """
+    global _create_sync_deferred
+    _create_sync_deferred += 1
+    try:
+        yield
+    finally:
+        _create_sync_deferred -= 1
+
+
 def sync_after_ticket_create(project: Path, ticket_id: str) -> PlanfileSyncResult:
     config = load_planfile_sync_config(project)
-    if not config.enabled or not config.on_create:
+    if _create_sync_deferred > 0 or not config.enabled or not config.on_create:
         return PlanfileSyncResult(ok=True, integrations=())
     return sync_planfile_integrations(project, ticket_ids=[ticket_id])
 
@@ -252,6 +271,7 @@ __all__ = [
     "PlanfileSyncConfig",
     "PlanfileSyncResult",
     "configured_remote_integrations",
+    "defer_sync_on_create",
     "load_planfile_sync_config",
     "resolve_sync_integrations",
     "stamp_ticket_integrations",

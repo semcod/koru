@@ -78,7 +78,6 @@ def create_ticket(
         cmd.extend(["--label", label])
     for file_path in suggestion.files:
         cmd.extend(["--files", file_path])
-    cmd.append("--sync")
     try:
         result = use_runner(cmd, project)
     except (FileNotFoundError, OSError) as exc:
@@ -189,6 +188,8 @@ def apply_scan_suggestions(
     apply_create_result: Callable[..., None],
     log_scan_decision: Callable[..., None],
 ) -> ScanResult:
+    from koru.queue.planfile_sync import defer_sync_on_create, sync_planfile_integrations
+
     existing = existing_scan_titles(project, source=source, runner=runner)
     applied: list[str] = []
     skipped: list[str] = []
@@ -196,25 +197,29 @@ def apply_scan_suggestions(
     skipped_create_failed: list[str] = []
     skipped_create_failed_details: list[str] = []
 
-    for suggestion in suggestions:
-        duplicate = scan_duplicate_skip(suggestion, existing)
-        if duplicate is not None:
-            reason, message = duplicate
-            skipped.append(suggestion.title)
-            skipped_as_duplicate.append(suggestion.title)
-            log_scan_decision(suggestion, decision="skipped", reason=reason, message=message)
-            continue
+    with defer_sync_on_create():
+        for suggestion in suggestions:
+            duplicate = scan_duplicate_skip(suggestion, existing)
+            if duplicate is not None:
+                reason, message = duplicate
+                skipped.append(suggestion.title)
+                skipped_as_duplicate.append(suggestion.title)
+                log_scan_decision(suggestion, decision="skipped", reason=reason, message=message)
+                continue
 
-        create_result = create_ticket(project, suggestion, source=source, runner=runner)
-        apply_create_result(
-            suggestion,
-            create_result,
-            applied=applied,
-            skipped=skipped,
-            skipped_as_duplicate=skipped_as_duplicate,
-            skipped_create_failed=skipped_create_failed,
-            skipped_create_failed_details=skipped_create_failed_details,
-        )
+            create_result = create_ticket(project, suggestion, source=source, runner=runner)
+            apply_create_result(
+                suggestion,
+                create_result,
+                applied=applied,
+                skipped=skipped,
+                skipped_as_duplicate=skipped_as_duplicate,
+                skipped_create_failed=skipped_create_failed,
+                skipped_create_failed_details=skipped_create_failed_details,
+            )
+
+    if applied:
+        sync_planfile_integrations(project)
 
     return ScanResult(
         suggestions=suggestions,

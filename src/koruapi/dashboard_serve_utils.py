@@ -17,6 +17,7 @@ import re
 import signal
 import subprocess
 import sys
+import threading
 import time
 from dataclasses import dataclass
 from http.server import ThreadingHTTPServer
@@ -162,9 +163,37 @@ def _build_handler_for(config: ServeConfig) -> type:
     return build_dashboard_handler(config)
 
 
+class DashboardHTTPServer(ThreadingHTTPServer):
+    """Threading HTTP server that never blocks shutdown on live connections.
+
+    Handler threads are daemons and ``server_close()`` does not wait for them,
+    so an open SSE stream or keep-alive request cannot stall Ctrl+C teardown.
+    Long-running handlers (SSE) poll ``shutdown_event`` to exit promptly after
+    the listener is closed, and expected client-disconnect errors are not
+    reported as socketserver tracebacks.
+    """
+
+    daemon_threads = True
+    block_on_close = False
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.shutdown_event = threading.Event()
+        super().__init__(*args, **kwargs)
+
+    def server_close(self) -> None:
+        self.shutdown_event.set()
+        super().server_close()
+
+    def handle_error(self, request: Any, client_address: Any) -> None:
+        exc = sys.exc_info()[1]
+        if isinstance(exc, (BrokenPipeError, ConnectionResetError)):
+            return
+        super().handle_error(request, client_address)
+
+
 def build_server(config: ServeConfig) -> ThreadingHTTPServer:
     """Construct (but do not start) the dashboard HTTP server."""
-    return ThreadingHTTPServer((config.host, config.port), _build_handler_for(config))
+    return DashboardHTTPServer((config.host, config.port), _build_handler_for(config))
 
 
 def _bound_port(server: ThreadingHTTPServer) -> int:

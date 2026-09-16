@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-152",
+  "summary": "Apply koru.yaml autonomy strategy defaults to koru autonomous up",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-152/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/configuration/config_cli_config.py",
+    "tests/test_autonomous.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a61c6a83b6fa9cb6d1cf874e0e9c190d6ea2487d",
+    "targetBranch": "main",
+    "outcome": "A project's declared autonomy.strategy in koru.yaml configures every `up` loop start, so a long-running `koru autonomous up` service resolves the same idle-discovery and planning-assistant defaults as the `koru auto` alias, while explicit CLI options and environment overrides keep priority.",
+    "nonGoals": [
+      "Change any default in the packaged strategy or in argparse",
+      "Change which discovery tools the idle fallback chain runs, including the paid nxdo planner",
+      "Restrict the fallback chain to the tools a strategy declares",
+      "Deploy or restart any running autonomous service"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Key the strategy defaults on the resolved `up` action instead of the `koru auto` alias flag, and collect the caller's explicit argv options for every `up` so the existing user-option precedence keeps working for the explicit command. Only the alias still expands the auto-mode default argument set.",
+      "components": [
+        {
+          "name": "autonomy-strategy-defaults",
+          "paths": [
+            "src/koru/autonomy/configuration/config_cli_config.py",
+            "tests/test_autonomous.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit, or pass the explicit flag the service needs (for example `--no-scan-after-idle-queue`), which wins over the strategy either way."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          ".venv/bin/pytest -o addopts='' -q tests/test_autonomous.py tests/test_autonomy_strategy.py tests/test_planning_llm.py tests/test_scan_phase.py tests/test_cycle_backlog_promotion.py tests/test_monag_discovery.py"
+        ],
+        "evidence": "246 passed (4 new autonomous-up strategy tests; the two existing koru-auto tests unchanged)."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh --base origin/main --head HEAD --actor agent",
+          ".venv/bin/ruff check src/koru/autonomy/configuration/config_cli_config.py tests/test_autonomous.py"
+        ],
+        "evidence": "Ruff passed; governance recorded on the committed HEAD."
+      }
+    ]
+  }
+}
