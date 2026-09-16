@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-156",
+  "summary": "terminals: execute prompts via prompt_async + model normalization",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-156/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_terminals.py",
+    "tests/test_dashboard_terminals.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "072c0db48e5f66d3236e20804e3131c20a33c80f",
+    "targetBranch": "main",
+    "outcome": "Dashboard terminal prompts actually execute: send_prompt switches to POST /session/{id}/prompt_async (the /api prompt route only steer-queues); create_session/send_prompt normalize model dicts to the server schema {id, providerID}; create_session failures surface as error dicts instead of crashing the handler; stop on an adopted-but-unpersisted instance reports the not-koru-managed refusal.",
+    "nonGoals": [
+      "no changes to supervisor loop or dashboard JS",
+      "no serve-based drive lane (tillm opencode run stays the drive mechanism)",
+      "no new endpoints"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "prompt_async (unprefixed /session route) executes prompts on idle sessions; /api/session/{id}/prompt only steers a running loop. Server model schema is {id, providerID} — normalize caller-provided {providerID, modelID}.",
+      "components": [
+        {
+          "name": "dashboard/terminals",
+          "paths": [
+            "src/koruapi/opencode_terminals.py",
+            "tests/test_dashboard_terminals.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_dashboard_terminals.py -q"
+        ],
+        "evidence": "send_prompt posts parts[] to /session/{id}/prompt_async; model normalized to {id, providerID}; create_session HTTP error returns error dict"
+      }
+    ]
+  }
+}

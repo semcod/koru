@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import urllib.error
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -98,15 +99,63 @@ class TestApiClient:
 
     def test_send_prompt_body(self) -> None:
         fake = MagicMock()
-        fake.read.return_value = b"{}"
+        fake.read.return_value = b""
         fake.__enter__ = lambda s: s
         fake.__exit__ = lambda *a: False
         with patch("urllib.request.urlopen", return_value=fake) as mock:
-            ot.send_prompt("http://x", "ses_9", "hello")
+            result = ot.send_prompt("http://x", "ses_9", "hello")
         req = mock.call_args[0][0]
         body = json.loads(req.data.decode())
-        assert body == {"prompt": {"text": "hello"}}
-        assert req.full_url == "http://x/api/session/ses_9/prompt"
+        # prompt_async executes immediately; /prompt only steer-queues.
+        assert body == {"parts": [{"type": "text", "text": "hello"}]}
+        assert req.full_url == "http://x/session/ses_9/prompt_async"
+        assert result["ok"] is True
+
+    def test_send_prompt_passes_normalized_model_and_agent(self) -> None:
+        fake = MagicMock()
+        fake.read.return_value = b""
+        fake.__enter__ = lambda s: s
+        fake.__exit__ = lambda *a: False
+        with patch("urllib.request.urlopen", return_value=fake) as mock:
+            ot.send_prompt(
+                "http://x",
+                "ses_9",
+                "hi",
+                model={"providerID": "zai", "modelID": "glm-5.3"},
+                agent="build",
+            )
+        body = json.loads(mock.call_args[0][0].data.decode())
+        assert body["model"] == {"id": "glm-5.3", "providerID": "zai"}
+        assert body["agent"] == "build"
+
+    def test_create_session_normalizes_model(self) -> None:
+        fake = MagicMock()
+        fake.read.return_value = json.dumps({"data": {"id": "ses_7"}}).encode()
+        fake.__enter__ = lambda s: s
+        fake.__exit__ = lambda *a: False
+        with patch("urllib.request.urlopen", return_value=fake) as mock:
+            sess = ot.create_session(
+                "http://x",
+                title="t",
+                model={"providerID": "zai", "modelID": "glm-5.3"},
+            )
+        assert sess == {"id": "ses_7"}
+        body = json.loads(mock.call_args[0][0].data.decode())
+        assert body["model"] == {"id": "glm-5.3", "providerID": "zai"}
+
+    def test_terminal_prompt_session_create_failure_returns_error(
+        self, tmp_path: Path
+    ) -> None:
+        entry = ot.register_instance(tmp_path, url="http://x:9", managed=False)
+
+        def boom(*a, **k):
+            raise urllib.error.HTTPError("u", 400, "Bad Request", None, None)
+
+        with patch.object(ot, "create_session", side_effect=boom):
+            result = ot.terminal_prompt(
+                tmp_path, {"iid": entry["id"], "text": "hi"}
+            )
+        assert "failed to create session" in result["error"]
 
     def test_pending_requests_tolerates_failure(self) -> None:
         def boom(*a, **k):
@@ -124,6 +173,19 @@ class TestSpawnStop:
     def test_stop_refuses_unmanaged(self, tmp_path: Path) -> None:
         entry = ot.register_instance(tmp_path, url="http://x:9", managed=False)
         result = ot.stop_instance(tmp_path, entry["id"])
+        assert result["ok"] is False
+        assert "not koru-managed" in result["error"]
+
+    def test_stop_refuses_adopted_unmanaged(self, tmp_path: Path) -> None:
+        # Discovered via /proc but never persisted: still a managed=false
+        # refusal, not "unknown instance".
+        discovered = [
+            {"id": "proc-4101", "url": "http://127.0.0.1:4101",
+             "pid": 99999, "label": "opencode serve :4101",
+             "managed": False, "auto_answer": False}
+        ]
+        with patch.object(ot, "_scan_serve_processes", return_value=discovered):
+            result = ot.stop_instance(tmp_path, "proc-4101")
         assert result["ok"] is False
         assert "not koru-managed" in result["error"]
 
