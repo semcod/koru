@@ -24,7 +24,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "e63b83ca5eadd9b83a8fe1efba27b14dce7c47f8",
+    "acceptedBaseSha": "3b714c44b23b7c799936eb8182ecae4de86533e1",
     "targetBranch": "main",
     "outcome": "Operators can publish semcod/koru pull requests locally with standard-pack conformance, OneDev profile gates, and the deployed local Validator exact-head merge path without target-repo GitHub Actions.",
     "nonGoals": [
@@ -74,7 +74,7 @@
         "criterion": "AC-01",
         "commands": [
           "bash -n scripts/publish-local-onedev-validator.sh",
-          "python .governance/governance_check.py --root . --actor ci --base e63b83ca5eadd9b83a8fe1efba27b14dce7c47f8 --head HEAD",
+          "python .governance/governance_check.py --root . --actor ci --base 3b714c44b23b7c799936eb8182ecae4de86533e1 --head HEAD",
           "rg -n 'run-local-direct-pr.sh|--expected-head-sha|--key-file' scripts/publish-local-onedev-validator.sh"
         ],
         "evidence": "The exact checkout passes the local governance gate; protected dry-run remains blocked by the deployed executor image missing /app/docker/pr/check-koru-docs.py."

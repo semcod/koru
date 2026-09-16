@@ -1,0 +1,91 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-144",
+  "summary": "Promote monag backlog whenever the autonomous queue is idle",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-144/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/phases/scan_phase.py",
+    "src/koru/autonomy/cycle_queue_scan.py",
+    "src/koru/autonomy/cycle/cycle.py",
+    "tests/test_scan_phase.py",
+    "tests/test_cycle_backlog_promotion.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2e07082dbbfed07c67e2f033383877fbbe5db37f",
+    "targetBranch": "main",
+    "outcome": "Every autonomous cycle whose queue loop ends idle runs the ticket-143 monag backlog promotion, independent of the opt-in scan-after-idle discovery; when it promoted tickets, idle scan and paid discovery are skipped for that cycle.",
+    "nonGoals": [
+      "Change which tickets monag promotion accepts",
+      "Enable scan-after-idle discovery by default",
+      "Deploy or restart any running autonomous service"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Move the monag promotion call out of the idle discovery fallback chain, which only runs when scan_after_idle_queue is enabled (default false), into the pre-drive cycle phase directly after the queue loop.",
+      "components": [
+        {
+          "name": "idle-queue-backlog-promotion",
+          "paths": [
+            "src/koru/autonomy/phases/scan_phase.py",
+            "src/koru/autonomy/cycle_queue_scan.py",
+            "src/koru/autonomy/cycle/cycle.py",
+            "tests/test_scan_phase.py",
+            "tests/test_cycle_backlog_promotion.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Set KORU_MONAG_ENABLE=0 or revert the ticket commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          ".venv/bin/pytest -o addopts='' -q tests/test_cycle_backlog_promotion.py tests/test_scan_phase.py tests/test_monag_discovery.py tests/test_nxdo_discovery.py tests/test_autonomous.py"
+        ],
+        "evidence": "215 passed."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh --base origin/main --head HEAD --actor agent",
+          ".venv/bin/ruff check src/koru/autonomy/phases/scan_phase.py src/koru/autonomy/cycle_queue_scan.py src/koru/autonomy/cycle/cycle.py tests/test_scan_phase.py tests/test_cycle_backlog_promotion.py"
+        ],
+        "evidence": "Ruff passed; governance recorded on the committed HEAD."
+      }
+    ]
+  }
+}
