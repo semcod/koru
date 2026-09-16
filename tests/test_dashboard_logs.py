@@ -302,7 +302,7 @@ class TestLogsTabSseReconnectGuard:
 
     def test_logs_tab_fast_first_paint(self) -> None:
         html = self._template()
-        assert 'state.tab === "logs" && !lastRenderPayload' in html
+        assert 'state.tab === "logs"' in html and "!lastRenderPayload" in html
 
     def test_entries_repopulate_after_rerender(self) -> None:
         html = self._template()

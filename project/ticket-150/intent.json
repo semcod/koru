@@ -1,0 +1,96 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-150",
+  "summary": "terminals-tab-opencode-grid-supervisor",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-150/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_terminals.py",
+    "src/koruapi/opencode_supervisor.py",
+    "src/koruapi/dashboard_routes.py",
+    "src/koruapi/dashboard_template.html",
+    "src/koruapi/dashboard_serve.py",
+    "tests/test_dashboard_terminals.py",
+    "tests/test_dashboard_logs.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "160ef40ff2f14f06074daecb2121a3074f6e7da3",
+    "targetBranch": "main",
+    "outcome": "Terminals tab: grid of opencode serve instances, per-instance session view, prompt input, permission/question replies, koru supervisor auto-answering via opencode HTTP API",
+    "nonGoals": [
+      "no TUI scraping",
+      "no WS terminal relay",
+      "no changes to tillm or opencode"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 55,
+    "budgets": {
+      "maxImplementationFiles": 7,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "opencode serve HTTP API: registry file in .planfile/.koru, urllib client, dashboard proxy routes, Terminals tab, supervisor thread auto-replies to permission/question requests (questions via SubLLM)",
+      "components": [
+        {
+          "name": "dashboard",
+          "paths": [
+            "src/koruapi/opencode_terminals.py",
+            "src/koruapi/opencode_supervisor.py",
+            "src/koruapi/dashboard_routes.py",
+            "src/koruapi/dashboard_template.html",
+            "src/koruapi/dashboard_serve.py",
+            "tests/test_dashboard_terminals.py",
+            "tests/test_dashboard_logs.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "single-state",
+        "states": [
+          "success"
+        ],
+        "evidence": [
+          "Terminals tab lists instances, detail shows session messages, reply buttons resolve pending requests"
+        ]
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_dashboard_terminals.py -q"
+        ],
+        "evidence": "terminals registry/client/supervisor tests pass"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest tests/test_dashboard_logs.py -q"
+        ],
+        "evidence": "existing dashboard tests still pass"
+      }
+    ]
+  }
+}
