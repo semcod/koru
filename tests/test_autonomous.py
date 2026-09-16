@@ -1012,6 +1012,106 @@ autonomy:
     assert args.semcod_artifacts is True
 
 
+def _write_idle_discovery_strategy(project: Path, *, enabled: bool) -> None:
+    (project / "koru.yaml").write_text(
+        f"""
+schema: '1.0'
+autonomy:
+  strategy:
+    idle_discovery:
+      enabled: {'true' if enabled else 'false'}
+      min_interval_seconds: 123
+      tools:
+        automated:
+        - koru_scan
+        - code2llm
+        artifact_sources: []
+""",
+        encoding="utf-8",
+    )
+
+
+def test_autonomous_up_applies_koru_yaml_strategy_defaults(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """A long-running ``koru autonomous up`` service honours its declared strategy.
+
+    The deployed loop uses this form, not the ``koru auto`` alias, so gating the
+    defaults on the alias left ``idle_discovery.enabled: true`` inert while
+    argparse kept ``--scan-after-idle-queue`` at ``False``.
+    """
+    monkeypatch.delenv("KORU_AUTO_PIPELINE", raising=False)
+    monkeypatch.delenv("SCAN_AFTER_IDLE_QUEUE", raising=False)
+    _write_idle_discovery_strategy(tmp_path, enabled=True)
+
+    with patch.object(autonomous_mod, "_action_up", return_value=0) as action_up:
+        rc = autonomous_mod.autonomous_main(["up", "--project", str(tmp_path)])
+
+    assert rc == 0
+    args = action_up.call_args.args[0]
+    assert args.scan_after_idle_queue is True
+    assert args.scan_after_idle_min_interval == 123
+    assert args.semcod_artifacts is True
+
+
+def test_autonomous_up_strategy_can_disable_idle_discovery(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTO_PIPELINE", raising=False)
+    monkeypatch.delenv("SCAN_AFTER_IDLE_QUEUE", raising=False)
+    _write_idle_discovery_strategy(tmp_path, enabled=False)
+
+    with patch.object(autonomous_mod, "_action_up", return_value=0) as action_up:
+        rc = autonomous_mod.autonomous_main(["up", "--project", str(tmp_path)])
+
+    assert rc == 0
+    args = action_up.call_args.args[0]
+    assert args.scan_after_idle_queue is False
+    assert args.semcod_artifacts is False
+
+
+def test_autonomous_up_cli_flags_override_koru_yaml_strategy_defaults(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("KORU_AUTO_PIPELINE", raising=False)
+    monkeypatch.delenv("SCAN_AFTER_IDLE_QUEUE", raising=False)
+    _write_idle_discovery_strategy(tmp_path, enabled=True)
+
+    with patch.object(autonomous_mod, "_action_up", return_value=0) as action_up:
+        rc = autonomous_mod.autonomous_main(
+            [
+                "up",
+                "--project",
+                str(tmp_path),
+                "--no-scan-after-idle-queue",
+                "--scan-after-idle-min-interval",
+                "7",
+                "--no-semcod-artifacts",
+            ],
+        )
+
+    assert rc == 0
+    args = action_up.call_args.args[0]
+    assert args.scan_after_idle_queue is False
+    assert args.scan_after_idle_min_interval == 7
+    assert args.semcod_artifacts is False
+
+
+def test_autonomous_up_without_strategy_keeps_argparse_defaults(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.delenv("KORU_AUTO_PIPELINE", raising=False)
+    monkeypatch.delenv("SCAN_AFTER_IDLE_QUEUE", raising=False)
+
+    with patch.object(autonomous_mod, "_action_up", return_value=0) as action_up:
+        rc = autonomous_mod.autonomous_main(["up", "--project", str(tmp_path)])
+
+    assert rc == 0
+    args = action_up.call_args.args[0]
+    assert args.scan_after_idle_queue is False
+
+
 def test_auto_invocation_can_enable_adaptive_pipeline(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("KORU_AUTO_PIPELINE", "1")
     with patch.object(autonomous_mod, "_action_up", return_value=0) as action_up:
