@@ -3,6 +3,8 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
+from packaging.requirements import Requirement
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -20,8 +22,10 @@ def test_base_runtime_dependencies_stay_small() -> None:
 
     assert project["dependencies"] == [
         "gillm>=0.1.24",
+        "jsonschema>=4.0,<5.0",
         "pyyaml>=6.0,<7.0",
         "rich>=14.3.4",
+        "korullm>=0.1.0,<2.0",
         # Zero-dep shell-client registry/driver; core so `--ide claude` can
         # never silently fall through to an editor lane.
         "tillm>=0.1.35",
@@ -37,14 +41,22 @@ def test_root_install_exposes_coru_console_script() -> None:
 
 def test_all_extra_matches_union_of_other_extras() -> None:
     optional = _pyproject()["project"]["optional-dependencies"]
+    def requirement_key(requirement: str) -> tuple[str, str, tuple[str, ...]]:
+        parsed = Requirement(requirement)
+        return parsed.name, str(parsed.specifier), tuple(sorted(parsed.extras))
+
     expected = {
-        requirement
+        requirement_key(requirement)
         for extra, requirements in optional.items()
         if extra != "all"
         for requirement in requirements
     }
 
-    assert set(optional["all"]) == expected
+    # Environment markers may be intentionally widened in the aggregate extra
+    # (for example, a Python >=3.9 marker is redundant for Koru's >=3.12
+    # support). Compare package, extras and bounds while retaining strict
+    # detection of missing or changed requirements.
+    assert {requirement_key(requirement) for requirement in optional["all"]} == expected
 
 
 def test_vision_extras_install_the_public_screen_observation_owner() -> None:

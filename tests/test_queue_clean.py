@@ -29,6 +29,7 @@ from koru.queue_clean import (
     CleanupReport,
     LegacySkippedCandidate,
     _build_legacy_skipped_note,
+    _list_tickets,
     clean_queue,
     find_candidates,
     find_legacy_skipped_candidates,
@@ -302,6 +303,27 @@ def test_clean_queue_handles_empty_list_gracefully(tmp_path):
     assert report.candidates == []
     assert report.applied == []
     assert report.failed == []
+
+
+def test_queue_list_recovers_legacy_records_when_cli_omits_them(tmp_path):
+    sprint = tmp_path / ".planfile" / "sprints" / "current.yaml"
+    sprint.parent.mkdir(parents=True)
+    sprint.write_text(
+        """sprint:
+  tickets:
+    PLF-legacy:
+      id: PLF-legacy
+      name: Historical skipped work
+      status: skipped
+""",
+        encoding="utf-8",
+    )
+
+    listed = _list_tickets(tmp_path, lambda *_args, **_kwargs: _ok("[]"))
+
+    assert [ticket["id"] for ticket in listed] == ["PLF-legacy"]
+    assert listed[0]["legacy_status"] == "skipped"
+    assert listed[0]["status_diagnostic"]["action"].startswith("run koru queue")
 
 
 def test_cleanup_candidate_explanation_is_human_readable():

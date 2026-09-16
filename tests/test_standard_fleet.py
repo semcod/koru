@@ -127,6 +127,91 @@ def test_malformed_lock_is_reported_without_guessing_a_pin(tmp_path: Path) -> No
     )
 
 
+def test_default_scope_excludes_external_local_and_duplicate_checkouts(tmp_path: Path) -> None:
+    standard = tmp_path / "new-project"
+    standard_revision = _init_repo(standard, {"VERSION": "0.20.29\n"})
+    primary = tmp_path / "wellmanifest" / "primary"
+    _init_repo(
+        primary,
+        {".governance/manifest.lock.json": _lock("0.20.29", standard_revision)},
+        remote="git@github.com:wellmanifest/primary.git",
+    )
+    duplicate = tmp_path / "copies" / "primary"
+    _init_repo(
+        duplicate,
+        {".governance/manifest.lock.json": _lock("0.20.28", "0" * 40)},
+        remote="git@github.com:wellmanifest/primary.git",
+    )
+    external = tmp_path / "other" / "external"
+    _init_repo(
+        external,
+        {".governance/manifest.lock.json": _lock("0.20.28", "0" * 40)},
+        remote="git@github.com:other/external.git",
+    )
+    local = tmp_path / "semcod" / "local-only"
+    _init_repo(local, {".governance/manifest.lock.json": _lock("0.20.28", "0" * 40)})
+
+    report = scan_standard_fleet(tmp_path, standard)
+
+    assert report.discovered == 4
+    assert report.repositories == 1
+    assert report.current == 1
+    assert report.candidates == ()
+    excluded = {item.identity: item for item in report.excluded}
+    assert excluded["wellmanifest/primary"].reasons == ("duplicate-clone",)
+    assert excluded["other/external"].reasons == ("organization-not-allowed",)
+    assert excluded[f"local:{local}"].reasons == ("local-origin",)
+    payload = report.to_dict(include_excluded=True)
+    assert payload["excluded"] == 3
+    assert len(payload["excludedRepositories"]) == 3
+
+
+def test_scope_can_explicitly_include_external_and_local_checkouts(tmp_path: Path) -> None:
+    standard = tmp_path / "new-project"
+    _init_repo(standard, {"VERSION": "0.20.29\n"})
+    external = tmp_path / "other" / "external"
+    _init_repo(
+        external,
+        {".governance/manifest.lock.json": _lock("0.20.28", "0" * 40)},
+        remote="https://github.com/other/external.git",
+    )
+    local = tmp_path / "local-only"
+    _init_repo(local, {".governance/manifest.lock.json": _lock("0.20.28", "0" * 40)})
+
+    report = scan_standard_fleet(
+        tmp_path,
+        standard,
+        organizations=("other",),
+        include_local=True,
+    )
+
+    assert report.repositories == 2
+    assert {item.identity for item in report.candidates} == {
+        "other/external",
+        f"local:{local}",
+    }
+
+
+def test_linked_worktree_is_excluded_even_when_its_path_is_not_pruned(tmp_path: Path) -> None:
+    standard = tmp_path / "new-project"
+    standard_revision = _init_repo(standard, {"VERSION": "0.20.29\n"})
+    primary = tmp_path / "wellmanifest" / "primary"
+    _init_repo(
+        primary,
+        {".governance/manifest.lock.json": _lock("0.20.29", standard_revision)},
+        remote="git@github.com:wellmanifest/primary.git",
+    )
+    linked = tmp_path / "linked-primary"
+    _git(primary, "worktree", "add", "--detach", str(linked))
+    try:
+        report = scan_standard_fleet(tmp_path, standard)
+    finally:
+        _git(primary, "worktree", "remove", "--force", str(linked))
+
+    linked_excluded = next(item for item in report.excluded if item.path == linked.resolve())
+    assert "linked-worktree" in linked_excluded.reasons
+
+
 def test_emit_uses_stable_key_and_waiting_input_without_write_authority(
     tmp_path: Path,
 ) -> None:

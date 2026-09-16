@@ -14,7 +14,7 @@ from koru.cli_fleet import (
     discover_projects,
     fleet_main,
 )
-from koru.standard_fleet import StandardFleetReport, StandardRelease
+from koru.standard_fleet import StandardExcluded, StandardFleetReport, StandardRelease
 
 
 def _make_policy_project(root: Path, *parts: str) -> Path:
@@ -178,11 +178,26 @@ class TestFleetMain:
         )
         observed: dict[str, object] = {}
 
-        def fake_scan(workspace: Path, standard_root: Path, *, workers: int) -> StandardFleetReport:
+        def fake_scan(
+            workspace: Path,
+            standard_root: Path,
+            *,
+            workers: int,
+            organizations: list[str] | None,
+            include_external: bool,
+            include_local: bool,
+            include_worktrees: bool,
+            include_duplicates: bool,
+        ) -> StandardFleetReport:
             observed.update(
                 workspace=workspace,
                 standard_root=standard_root,
                 workers=workers,
+                organizations=organizations,
+                include_external=include_external,
+                include_local=include_local,
+                include_worktrees=include_worktrees,
+                include_duplicates=include_duplicates,
             )
             return expected
 
@@ -205,6 +220,60 @@ class TestFleetMain:
             "workspace": tmp_path,
             "standard_root": tmp_path / "standard",
             "workers": 3,
+            "organizations": None,
+            "include_external": False,
+            "include_local": False,
+            "include_worktrees": False,
+            "include_duplicates": False,
         }
         assert payload["schema"] == "koru.standard-fleet-report/v1"
         assert payload["current"] == 1
+
+    def test_standard_inventory_shows_excluded_repositories(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+    ) -> None:
+        release = StandardRelease("0.20.29", "a" * 40, tmp_path / "standard")
+        expected = StandardFleetReport(
+            workspace=tmp_path,
+            standard=release,
+            repositories=1,
+            current=0,
+            candidates=(),
+            excluded=(
+                StandardExcluded(
+                    path=tmp_path / "copy",
+                    identity="other/copy",
+                    reasons=("organization-not-allowed",),
+                ),
+            ),
+            discovered=2,
+        )
+
+        def fake_scan(
+            workspace: Path,
+            standard_root: Path,
+            *,
+            workers: int,
+            organizations: list[str] | None,
+            include_external: bool,
+            include_local: bool,
+            include_worktrees: bool,
+            include_duplicates: bool,
+        ) -> StandardFleetReport:
+            return expected
+
+        monkeypatch.setattr("koru.standard_fleet.scan_standard_fleet", fake_scan)
+        rc = fleet_main(
+            [
+                "standard-inventory",
+                str(tmp_path),
+                "--standard-root",
+                str(tmp_path / "standard"),
+            ]
+        )
+
+        assert rc == 0
+        output = capsys.readouterr().out
+        assert "Excluded repositories:" in output
+        assert "other/copy: organization-not-allowed" in output
+        assert str(tmp_path / "copy") in output
