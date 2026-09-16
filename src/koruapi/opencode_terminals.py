@@ -258,7 +258,9 @@ def create_session(
 
 
 def session_messages(url: str, session_id: str, *, limit: int = 60) -> list[dict[str, Any]]:
-    data = _api_request(url, f"/api/session/{session_id}/message")
+    # The unprefixed route returns conversation messages (info+parts); the
+    # /api variant serves a different event projection (e.g. agent-switched).
+    data = _api_request(url, f"/session/{session_id}/message")
     items = data.get("data", data) if isinstance(data, dict) else data
     if not isinstance(items, list):
         return []

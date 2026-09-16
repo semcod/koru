@@ -97,6 +97,21 @@ class TestApiClient:
         with pytest.raises(ValueError):
             ot.reply_permission("http://x", "ses_1", "per_1", "bogus")
 
+    def test_session_messages_uses_unprefixed_route(self) -> None:
+        fake = MagicMock()
+        fake.read.return_value = json.dumps(
+            [{"info": {"role": "user"}, "parts": []}]
+        ).encode()
+        fake.__enter__ = lambda s: s
+        fake.__exit__ = lambda *a: False
+        with patch("urllib.request.urlopen", return_value=fake) as mock:
+            msgs = ot.session_messages("http://x", "ses_9")
+        req = mock.call_args[0][0]
+        # /api/session/{id}/message returns an event projection, not
+        # conversation messages — the unprefixed route is the real one.
+        assert req.full_url == "http://x/session/ses_9/message"
+        assert msgs == [{"info": {"role": "user"}, "parts": []}]
+
     def test_send_prompt_body(self) -> None:
         fake = MagicMock()
         fake.read.return_value = b""
