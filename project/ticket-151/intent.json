@@ -1,0 +1,78 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-151",
+  "summary": "serve-shutdown-sse-daemon-threads",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-151/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/dashboard_serve_utils.py",
+    "src/koruapi/dashboard_logs.py",
+    "tests/test_dashboard_serve_shutdown.py",
+    "tests/test_dashboard_logs.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "91bece57556fe411692ef729bfa08a23b6e37eff",
+    "targetBranch": "main",
+    "outcome": "DashboardHTTP server with daemon_threads and no block-on-close plus an SSE stop_event so Ctrl+C teardown never hangs on open /api/logs/stream connections; client-disconnect tracebacks suppressed",
+    "nonGoals": [
+      "no koru auto N numeric shorthand (owned by ticket-145 multi-agent semantics)",
+      "no frontend changes to stale-tab polling"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "DashboardHTTPServer(ThreadingHTTPServer) with daemon_threads=True, block_on_close=False, shutdown_event set on server_close and observed by sse_log_stream; handle_error suppresses ConnectionResetError/BrokenPipeError",
+      "components": [
+        {
+          "name": "dashboard",
+          "paths": [
+            "src/koruapi/dashboard_serve_utils.py",
+            "src/koruapi/dashboard_logs.py",
+            "tests/test_dashboard_serve_shutdown.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": ["pytest tests/test_dashboard_serve_shutdown.py -q"],
+        "evidence": "shutdown returns promptly with open SSE client; generator honors stop_event"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": ["pytest tests/test_dashboard_logs.py -q"],
+        "evidence": "existing SSE log tests still pass with the new stop_event kwarg"
+      }
+    ]
+  }
+}
