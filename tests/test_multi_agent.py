@@ -140,3 +140,17 @@ def test_orchestrator_build_worker_env():
     assert env.get("KORU_AUTOPILOT_IDE") == "crush"
     assert env.get("KORU_TILLM_CLIENT") == "crush"
     assert env.get("TILLM_PROVIDER") == "z.ai"
+
+
+def test_build_worker_command():
+    config = MultiAgentConfig(workers=2, worker_dry_run=True)
+    orchestrator = MultiAgentOrchestrator(config)
+    task = TaskItem(project=Path("/tmp/p1"), ticket_id="PLF-1", sprint="backlog")
+    cmd = orchestrator.build_worker_command(task)
+    assert "ticket" in cmd
+    assert "auto" in cmd
+    assert "PLF-1" in cmd
+    assert "--sprint" in cmd
+    assert "backlog" in cmd
+    assert "--dry-run" in cmd
+

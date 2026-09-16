@@ -26,6 +26,7 @@ class MultiAgentConfig:
     client: str | None = None
     provider: str | None = None
     dry_run: bool = False
+    worker_dry_run: bool = False
     max_tickets: int = 100
     timeout_per_ticket: float = 1800.0
 
@@ -36,6 +37,7 @@ class TaskItem:
     ticket_id: str
     title: str = ""
     status: str = "open"
+    sprint: str = "current"
 
 
 @dataclass
@@ -97,6 +99,11 @@ def parse_multi_agent_args(argv: list[str]) -> MultiAgentConfig:
         help="Plan and preview tasks and worker assignments without executing.",
     )
     parser.add_argument(
+        "--worker-dry-run",
+        action="store_true",
+        help="Run spawned workers with --dry-run for safe parallel integration testing.",
+    )
+    parser.add_argument(
         "--max-tickets",
         type=int,
         default=100,
@@ -116,6 +123,7 @@ def parse_multi_agent_args(argv: list[str]) -> MultiAgentConfig:
         client=args.client,
         provider=args.provider,
         dry_run=args.dry_run,
+        worker_dry_run=args.worker_dry_run,
         max_tickets=args.max_tickets,
     )
 
@@ -189,33 +197,51 @@ def sync_github_planfile(project: Path, timeout: int = 60) -> bool:
 
 
 def get_pending_tasks_for_project(project: Path) -> list[TaskItem]:
-    """Retrieve actionable tickets from project's Planfile current sprint or tickets."""
+    """Retrieve actionable tickets from project's Planfile current sprint (or backlog if current is empty)."""
     tasks: list[TaskItem] = []
-    current_sprint = project / ".planfile" / "sprints" / "current.yaml"
+    if yaml is None:
+        return tasks
 
-    if yaml is not None and current_sprint.is_file():
+    sprints_dir = project / ".planfile" / "sprints"
+    if not sprints_dir.is_dir():
+        return tasks
+
+    def _read_tickets_from_yaml(path: Path, sprint_name: str) -> list[TaskItem]:
+        items: list[TaskItem] = []
+        if not path.is_file():
+            return items
         try:
-            data = yaml.safe_load(current_sprint.read_text(encoding="utf-8"))
+            data = yaml.safe_load(path.read_text(encoding="utf-8"))
             if isinstance(data, dict):
-                raw_tickets = data.get("tickets", {})
+                raw_tickets = (
+                    data.get("tickets")
+                    or (data.get("sprint", {}).get("tickets") if isinstance(data.get("sprint"), dict) else None)
+                    or {}
+                )
                 if isinstance(raw_tickets, dict):
                     for ticket_id, ticket_info in raw_tickets.items():
                         if isinstance(ticket_info, dict):
                             status = str(ticket_info.get("status", "open")).lower()
                             if status in {"open", "ready", "todo", "in_progress"}:
                                 title = str(ticket_info.get("name") or ticket_info.get("title") or "")
-                                tasks.append(
+                                items.append(
                                     TaskItem(
                                         project=project,
                                         ticket_id=ticket_id,
                                         title=title,
                                         status=status,
+                                        sprint=sprint_name,
                                     )
                                 )
         except Exception:
             pass
+        return items
 
-    return tasks
+    current_tasks = _read_tickets_from_yaml(sprints_dir / "current.yaml", "current")
+    if current_tasks:
+        return current_tasks
+
+    return _read_tickets_from_yaml(sprints_dir / "backlog.yaml", "backlog")
 
 
 class MultiAgentOrchestrator:
@@ -256,10 +282,17 @@ class MultiAgentOrchestrator:
             "--project",
             str(task.project),
         ]
+        if task.sprint != "current":
+            cmd.extend(["--sprint", task.sprint])
+        if self.config.worker_dry_run:
+            cmd.append("--dry-run")
         return cmd
 
     def build_worker_env(self) -> dict[str, str]:
         env = dict(os.environ)
+        src_path = str(Path(__file__).resolve().parents[1])
+        existing_pythonpath = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = f"{src_path}:{existing_pythonpath}" if existing_pythonpath else src_path
         if self.config.client:
             env["KORU_AUTOPILOT_IDE"] = self.config.client
             env["KORU_TILLM_CLIENT"] = self.config.client
@@ -362,6 +395,14 @@ class MultiAgentOrchestrator:
 
             if eligible_idx is not None and len(self.active_workers) < self.config.workers and not self._interrupted:
                 task = queue.pop(eligible_idx)
+                if task.sprint == "backlog" and not self.config.dry_run and not self.config.worker_dry_run:
+                    py = os.environ.get("PY") or sys.executable
+                    subprocess.run(
+                        [py, "-m", "planfile.cli", "ticket", "move", task.ticket_id, "current"],
+                        cwd=str(task.project),
+                        capture_output=True,
+                    )
+                    task.sprint = "current"
                 cmd = self.build_worker_command(task)
                 env = self.build_worker_env()
                 print(
