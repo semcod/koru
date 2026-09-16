@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-142",
+  "summary": "Document adopted Wellmanifest standards in AGENTS instructions",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-142/**",
+    ".aider.conf.yml",
+    ".cursor/rules/new-project-standard.mdc",
+    ".github/copilot-instructions.md",
+    ".governance/**",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "GEMINI.md",
+    "package.json",
+    "pyproject.toml",
+    "project/new-ticket.sh",
+    "scripts/install-agent-hosts.sh"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": ["ticket-065"],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e63b83ca5eadd9b83a8fe1efba27b14dce7c47f8",
+    "targetBranch": "main",
+    "outcome": "Adopt the latest verified wellmanifest/new-project package through Goal and keep Koru's managed host/governance files hash-bound.",
+    "nonGoals": [
+      "No hand-edited managed files or lock digests",
+      "No product runtime behavior changes",
+      "No edits in other repositories"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 90,
+    "standardAdoption": {
+      "sourceRepository": "wellmanifest/new-project",
+      "fromRevision": "d54878a105a20d84dd554f205bc177dcacc8730a",
+      "toRevision": "b6ba9c21a65a6a5648ecf904b64c3b75295e136f"
+    },
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use Goal's verified standard adoption process to replace the complete managed package and regenerate its exact lock from the published revision.",
+      "components": [
+        {
+          "name": "managed-governance-package",
+          "paths": [".governance/**", "AGENTS.md", "CLAUDE.md", "GEMINI.md", "package.json", "pyproject.toml"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the atomic managed package adoption to the previous accepted revision; do not edit individual managed files."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "goal governance adopt --latest --target-root . --check",
+          "python3 -m json.tool .governance/standard-adoption.json",
+          "./project/governance-check.sh",
+          "git diff --check"
+        ],
+        "evidence": "Local manifest, governance and whitespace checks plus protected exact-head evidence."
+      }
+    ]
+  }
+}
