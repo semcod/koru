@@ -136,6 +136,19 @@ def _stop_prior_and_acquire_start_lock(project: Path):
     return start_lock
 
 
+def _is_multi_agent_argv(argv: list[str]) -> bool:
+    if not argv:
+        return False
+    first = argv[0]
+    if first.isdigit() and int(first) > 0:
+        return True
+    return any(
+        arg in {"--workers", "-n", "--concurrency"}
+        or arg.startswith(("--workers=", "-n=", "--concurrency="))
+        for arg in argv
+    )
+
+
 def _auto_main(argv: list[str]) -> int:
     """``koru auto``: stop prior autonomous/auto loops, then start with ``--replace-existing``.
 
@@ -145,6 +158,10 @@ def _auto_main(argv: list[str]) -> int:
     """
     from koru.cli import _peek_project_from_argv, _should_suggest_wizard
     help_requested = any(arg in {"-h", "--help"} for arg in argv)
+    if _is_multi_agent_argv(argv):
+        from koru.multi_agent import run_multi_agent_auto
+
+        return run_multi_agent_auto(argv)
     # ``koru auto up`` is equivalent to ``koru auto``; argv normalization injects
     # the ``up`` subcommand once — a redundant token here becomes a duplicate.
     # Preserve it for ``koru auto up --help`` so argparse shows the subcommand

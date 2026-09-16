@@ -156,6 +156,7 @@ def _add_up_autopilot_args(up: argparse.ArgumentParser) -> None:
             "aider",
             "cline",
             "codex",
+            "crush",
             "gemini-cli",
             "opencode",
             "qwen-code",

@@ -154,6 +154,7 @@ _FALLBACK_SHELL_CLIENTS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("aider", "aider", ("aider",)),
     ("cline", "Cline", ("cline",)),
     ("codex", "Codex CLI", ("codex",)),
+    ("crush", "Crush", ("crush",)),
     ("devin", "Devin CLI", ("devin",)),
     ("gemini-cli", "Gemini CLI", ("gemini",)),
     ("opencode", "OpenCode", ("opencode",)),
