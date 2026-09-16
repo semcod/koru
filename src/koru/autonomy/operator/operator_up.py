@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -262,14 +263,32 @@ def _maybe_start_web_dashboard(
         stdio_info(f"koru auto --web: dashboard start failed: {exc}", fmt=fmt)
 
 
+def _close_serve_server(server: Any) -> None:
+    with contextlib.suppress(Exception):
+        server.shutdown()
+        server.server_close()
+
+
 def _shutdown_web_dashboard(context: AutonomousUpContext) -> None:
-    """Shut down the background dashboard server if it was started by ``--web``."""
+    """Shut down the background dashboard server if it was started by ``--web``.
+
+    ``BaseServer.shutdown()`` blocks until the ``serve_forever`` loop exits and
+    has no timeout of its own; if that loop is stalled, calling it inline would
+    hang Ctrl+C cleanup. Run it on a helper daemon thread with a bounded join
+    so interrupt teardown always returns; the daemon serve thread cannot block
+    process exit either way.
+    """
     server = getattr(context, "serve_server", None)
     thread = getattr(context, "serve_thread", None)
     if server is not None:
-        with contextlib.suppress(Exception):
-            server.shutdown()
-            server.server_close()
+        stopper = threading.Thread(
+            target=_close_serve_server,
+            args=(server,),
+            name="koru-serve-stop",
+            daemon=True,
+        )
+        stopper.start()
+        stopper.join(timeout=2.0)
     if thread is not None:
         with contextlib.suppress(Exception):
             thread.join(timeout=2.0)
