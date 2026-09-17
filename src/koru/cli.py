@@ -8,10 +8,8 @@ import sys
 from collections.abc import Callable
 from pathlib import Path
 
-import koru.autonomous as _autonomous
 import koru.cli_parser as _cli_parser
 from koru.agents import detect_agent_options  # noqa: F401 - legacy CLI monkeypatch hook
-from koru.autoloop_cli import autoloop_main
 from koru.autonomy.operator.operator_runtime import (
     cli_should_reexec,
     maybe_sync_project_koru_package,
@@ -19,19 +17,32 @@ from koru.autonomy.operator.operator_runtime import (
     project_venv_reexec_env,
     resolve_cli_project,
 )
-from koru.autopilot.cli_command import autopilot_main
 from koru.cli_loop import command_loop_main as _command_loop_main
-from koru.cli_scan import scan_main as _scan_main
-from koru.dev_sync import dev_main
 from koru.env_flags import env_truthy as _env_truthy
-from koru.git_cli import git_main
 from koru.global_control import disabled_message as _global_disabled_message
 from koru.global_control import is_globally_disabled as _is_globally_disabled
 
 _build_parser = _cli_parser._build_parser
 _command_value = _cli_parser._command_value
-autonomous_main = _autonomous.autonomous_main
-stop_prior_autonomous_for_auto_start = _autonomous.stop_prior_autonomous_for_auto_start
+
+
+def autonomous_main(argv: list[str]) -> int:
+    """Lazy proxy: ``koru.autonomous`` pulls in the cycle/dashboard/MCP/nlp2uri
+    stack, so importing it eagerly here slowed every ``koru`` invocation,
+    including ``--help``/``--version``. Kept as a plain module-level function
+    (rather than folded into ``_SUBCOMMANDS`` via ``_lazy_module_main``) so
+    ``mock.patch("koru._legacy_cli_impl.autonomous_main", ...)`` keeps working
+    unchanged in tests.
+    """
+    import koru.autonomous as _autonomous
+
+    return _autonomous.autonomous_main(argv)
+
+
+def stop_prior_autonomous_for_auto_start(*args, **kwargs):
+    import koru.autonomous as _autonomous
+
+    return _autonomous.stop_prior_autonomous_for_auto_start(*args, **kwargs)
 
 
 def _is_bare_invocation(args: argparse.Namespace) -> bool:
@@ -177,7 +188,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     ),
     "serve": lambda argv: _lazy_module_main("koru.cli_serve", "_serve_main", argv),
     "self": lambda argv: _lazy_module_main("koru.cli_self", "self_main", argv),
-    "scan": _scan_main,
+    "scan": lambda argv: _lazy_module_main("koru.cli_scan", "scan_main", argv),
     "refactor-planfile-handoff": lambda argv: _lazy_module_main(
         "koru.cli_refactor_planfile_handoff",
         "_refactor_planfile_handoff_main",
@@ -190,7 +201,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "queue": lambda argv: _lazy_module_main("koru.cli_queue", "queue_main", argv),
     "replay": lambda argv: _lazy_module_main("koru.cli_replay", "replay_main", argv),
     "gc": lambda argv: _lazy_module_main("koru.cli_gc", "gc_main", argv),
-    "git": git_main,
+    "git": lambda argv: _lazy_module_main("koru.git_cli", "git_main", argv),
     "tools": lambda argv: _lazy_module_main("koru.cli_tools", "_tools_main", argv),
     "mcp-serve": lambda argv: _lazy_module_main("koruapi.mcp", "mcp_main", argv),
     "ide-router": lambda argv: _lazy_module_main(
@@ -200,8 +211,10 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     ),
     "ide": lambda argv: _lazy_module_main("koru.cli_ide", "ide_main", argv),
     "imgl": lambda argv: _lazy_module_main("koru.cli_imgl", "imgl_main", argv),
-    "autopilot": autopilot_main,
-    "autoloop": autoloop_main,
+    "autopilot": lambda argv: _lazy_module_main(
+        "koru.autopilot.cli_command", "autopilot_main", argv
+    ),
+    "autoloop": lambda argv: _lazy_module_main("koru.autoloop_cli", "autoloop_main", argv),
     "autonomous": autonomous_main,
     "auto": lambda argv: _lazy_module_main("koru.cli_auto", "_auto_main", argv),
     "fleet": lambda argv: _lazy_module_main("koru.cli_fleet", "fleet_main", argv),
@@ -217,7 +230,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
         argv,
     ),
     "tagi": lambda argv: _lazy_module_main("koru.cli_tagi", "tagi_main", argv),
-    "dev": dev_main,
+    "dev": lambda argv: _lazy_module_main("koru.dev_sync", "dev_main", argv),
     "on": lambda argv: _lazy_module_main("koru.cli_global_control", "on_main", argv),
     "off": lambda argv: _lazy_module_main("koru.cli_global_control", "off_main", argv),
     "status": lambda argv: _lazy_module_main("koru.cli_global_control", "status_main", argv),
