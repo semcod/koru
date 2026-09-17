@@ -1,0 +1,77 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-167",
+  "summary": "Split god module src/koru/queue_clean.py into a queue_clean/ package (STARTER-672)",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-167/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue_clean.py",
+    "src/koru/queue_clean/**",
+    "tests/test_queue_clean.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f5735489fffe69b525ead2c1df74871ba74f045d",
+    "targetBranch": "main",
+    "outcome": "src/koru/queue_clean.py (592L god module) is split into a queue_clean/ package — cleanup.py + legacy_skipped.py — with back-compat re-exports; STARTER-672 satisfied.",
+    "nonGoals": [
+      "Change public API signatures or behavior.",
+      "Touch other queue modules.",
+      "Add runtime dependencies."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Module-to-package split by responsibility: cleanup.py (fixture sweep) and legacy_skipped.py (status migration); __init__.py re-exports the full existing surface including private helpers imported by tests.",
+      "components": [
+        {
+          "name": "queue-clean-package",
+          "paths": [
+            "src/koru/queue_clean.py",
+            "src/koru/queue_clean/**"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Delete the queue_clean/ package and restore queue_clean.py; imports remain identical."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_queue_clean.py -x -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Existing queue_clean tests pass unchanged against the package; governance gate passes."
+      }
+    ]
+  }
+}
