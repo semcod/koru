@@ -118,15 +118,29 @@ def parse_next_ticket(
             ),
         )
 
-        return next(
-            (
-                entry
-                for entry in runnable_tickets
-                if interactive or not _should_skip_deferred_human(entry)
-            ),
-            None,
-        )
+        eligible = [
+            entry
+            for entry in runnable_tickets
+            if interactive or not _should_skip_deferred_human(entry)
+        ]
+        if not eligible:
+            return None
+        if interactive:
+            return eligible[0]
+        # A human ticket is a terminal ``waiting_input`` for the drain loop,
+        # so picking it while machine-runnable tickets remain stalls the
+        # whole queue behind work only a person can finish. Defer human
+        # tickets until they are the only runnable ones left.
+        non_human = [entry for entry in eligible if not _is_human_executor(entry)]
+        return non_human[0] if non_human else eligible[0]
     return None
+
+
+def _is_human_executor(ticket: dict) -> bool:
+    """Mirror ``_resolve_executor_kind``: a missing or empty kind is human."""
+    executor = ticket.get("executor")
+    kind = executor.get("kind") if isinstance(executor, dict) else None
+    return kind is None or str(kind).strip().lower() in {"", "human"}
 
 
 def _should_skip_deferred_human(ticket: dict) -> bool:

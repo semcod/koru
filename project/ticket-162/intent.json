@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-162",
+  "summary": "queue-defers-human-executor-tickets",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-162/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/ticket.py",
+    "tests/test_queue_ticket_selection.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ab88508a2340bfed002a191131f9be74d5282d53",
+    "targetBranch": "main",
+    "outcome": "The planfile queue no longer stalls behind human-executor tickets. parse_next_ticket in non-interactive mode serves llm/shell/api tickets first and returns a human ticket (waiting_input) only when nothing else is runnable; interactive mode is unchanged. Tickets without executor.kind defer like human tickets.",
+    "nonGoals": [
+      "no changes to the drain loop or runner execution semantics",
+      "no new statuses; waiting_input still terminates the loop when only human tickets remain"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "parse_next_ticket partitions eligible tickets by executor kind in non-interactive mode; _is_human_executor mirrors _resolve_executor_kind so missing/empty kind counts as human",
+      "components": [
+        {
+          "name": "queue/ticket-selection",
+          "paths": [
+            "src/koru/queue/ticket.py",
+            "tests/test_queue_ticket_selection.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_queue_ticket_selection.py -q"
+        ],
+        "evidence": "human tickets defer behind runnable work non-interactively; waiting_input is reached only when no machine work remains"
+      }
+    ]
+  }
+}
