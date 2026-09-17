@@ -121,9 +121,14 @@ def scan_pytest_collect(
     project: Path,
     *,
     runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]] | None = None,
-    timeout_seconds: float = 30.0,
+    timeout_seconds: float = 60.0,
 ) -> list[Suggestion]:
-    """Probe pytest collection; surface every collection failure as a ticket."""
+    """Probe pytest collection; surface every collection failure as a ticket.
+
+    The default budget covers a cold collection of this repository's
+    ~4400-test suite (~40s with no bytecode cache); the governance bridge
+    is disabled for the probe, so the budget measures collection only.
+    """
     if not (project / "tests").exists() and not (project / "pyproject.toml").exists():
         return []
 
@@ -138,7 +143,16 @@ def scan_pytest_collect(
         )
 
     use_runner = runner or _default_runner
-    cmd = get_python_cmd(project) + ["-m", "pytest", "--collect-only", "-q", "--no-header"]
+    # ``--collect-only`` is a read-only inventory probe. The managed
+    # ``wellmanifest_governance`` bridge runs the full governance-check
+    # subprocess at session start (~25s on this host) and aborts collection
+    # with an INTERNALERROR when the checkout is dirty — neither helps a
+    # collection probe inside a 30s budget, so the plugin stays off here.
+    # ``-p no:`` is a no-op for projects that never loaded the plugin.
+    cmd = get_python_cmd(project) + [
+        "-m", "pytest", "--collect-only", "-q", "--no-header",
+        "-p", "no:wellmanifest_governance",
+    ]
     try:
         result = use_runner(cmd, project)
     except subprocess.TimeoutExpired:
