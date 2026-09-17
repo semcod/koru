@@ -12,11 +12,13 @@ the dashboard grid.
 
 from __future__ import annotations
 
+import datetime
 import json
 import os
 import re
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -33,6 +35,31 @@ _TICKET_RE = re.compile(r"\b(PLF-\d+|STARTER-\d+)\b", re.IGNORECASE)
 _TICKET_SCAN_WINDOW_MS = 3 * 24 * 3600 * 1000
 _TICKET_SCAN_SESSIONS = 8
 _session_ticket_cache: dict[tuple[str, str], tuple[int, str | None]] = {}
+
+DEFAULT_FAILOVER_TTL_SECONDS = 3600.0  # 1 hour default if reset time unknown
+_EXHAUSTION_LOCK = threading.Lock()
+_EXHAUSTED_PROVIDERS: dict[str, dict[str, Any]] = {}
+
+# Patterns that indicate provider rate limit / quota exhaustion
+_EXHAUSTION_ERROR_PATTERNS = [
+    re.compile(r"usage limit reached", re.IGNORECASE),
+    re.compile(r"rate limit", re.IGNORECASE),
+    re.compile(r"quota exceeded", re.IGNORECASE),
+    re.compile(r"resource has been exhausted", re.IGNORECASE),
+    re.compile(r"credit limit", re.IGNORECASE),
+    re.compile(r"insufficient_quota", re.IGNORECASE),
+    re.compile(r"AI_APICallError", re.IGNORECASE),
+    re.compile(r"\b429\b"),
+]
+_RESET_TIME_RE = re.compile(
+    r"reset at\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})", re.IGNORECASE
+)
+_LOG_STREAM_ERROR_RE = re.compile(
+    r'level=ERROR\s+run=(\w+)\s+message="stream error"\s+'
+    r'providerID=([a-zA-Z0-9_-]+)\s+modelID=([a-zA-Z0-9_.-]+)\s+'
+    r'(?:session\.id=([^\s]+)\s+)?'
+    r'.*?error\.error="([^"]+)"'
+)
 
 
 def _koru_dir(project: Path) -> Path:
@@ -244,6 +271,237 @@ def list_providers(url: str) -> list[dict[str, Any]]:
             }
         )
     return out
+
+
+def parse_exhaustion_from_error(
+    error_text: str, *, default_ttl: float = DEFAULT_FAILOVER_TTL_SECONDS
+) -> tuple[bool, float, str]:
+    """Parse error text for quota/rate limit signals.
+
+    Returns (is_exhausted, ttl_seconds, reason).
+    If a reset time like 'reset at 2026-09-17 18:48:17' is found,
+    ttl_seconds is calculated until that time.
+    """
+    if not error_text:
+        return False, 0.0, ""
+    matched = False
+    for pat in _EXHAUSTION_ERROR_PATTERNS:
+        if pat.search(error_text):
+            matched = True
+            break
+    if not matched:
+        return False, 0.0, ""
+
+    ttl = default_ttl
+    match = _RESET_TIME_RE.search(error_text)
+    if match:
+        raw_ts = match.group(1)
+        try:
+            dt = datetime.datetime.strptime(raw_ts, "%Y-%m-%d %H:%M:%S").replace(
+                tzinfo=datetime.timezone.utc
+            )
+            now_dt = datetime.datetime.now(datetime.timezone.utc)
+            delta = (dt - now_dt).total_seconds()
+            if delta > 0:
+                ttl = delta
+        except Exception:
+            pass
+    return True, max(1.0, ttl), error_text.strip()
+
+
+def mark_provider_exhausted(
+    provider_id: str,
+    ttl_seconds: float = DEFAULT_FAILOVER_TTL_SECONDS,
+    *,
+    reason: str = "",
+    reset_at: float | None = None,
+) -> dict[str, Any]:
+    """Mark a provider ID as exhausted until reset_at or now + ttl_seconds."""
+    provider = str(provider_id).strip().lower()
+    if not provider:
+        return {}
+    now = time.time()
+    if reset_at is None:
+        reset_at = now + ttl_seconds
+    record = {
+        "providerID": provider,
+        "reason": reason or "Quota/rate limit reached",
+        "marked_at": now,
+        "reset_at": reset_at,
+    }
+    with _EXHAUSTION_LOCK:
+        _EXHAUSTED_PROVIDERS[provider] = record
+    return record
+
+
+def is_provider_exhausted(provider_id: str) -> bool:
+    """Return True if the provider is currently marked exhausted and not expired."""
+    provider = str(provider_id).strip().lower()
+    if not provider:
+        return False
+    now = time.time()
+    with _EXHAUSTION_LOCK:
+        record = _EXHAUSTED_PROVIDERS.get(provider)
+        if not record:
+            return False
+        if now >= record["reset_at"]:
+            del _EXHAUSTED_PROVIDERS[provider]
+            return False
+        return True
+
+
+def get_exhausted_providers() -> dict[str, dict[str, Any]]:
+    """Return a dictionary of currently exhausted providers with remaining seconds."""
+    now = time.time()
+    out = {}
+    with _EXHAUSTION_LOCK:
+        expired = []
+        for pid, record in _EXHAUSTED_PROVIDERS.items():
+            rem = record["reset_at"] - now
+            if rem <= 0:
+                expired.append(pid)
+            else:
+                out[pid] = {
+                    "providerID": record["providerID"],
+                    "reason": record["reason"],
+                    "marked_at": record["marked_at"],
+                    "reset_at": record["reset_at"],
+                    "remaining_seconds": round(rem, 1),
+                }
+        for pid in expired:
+            del _EXHAUSTED_PROVIDERS[pid]
+    return out
+
+
+def clear_provider_exhaustion(provider_id: str | None = None) -> None:
+    """Clear exhaustion status for one provider or all."""
+    with _EXHAUSTION_LOCK:
+        if provider_id is None:
+            _EXHAUSTED_PROVIDERS.clear()
+        else:
+            _EXHAUSTED_PROVIDERS.pop(str(provider_id).strip().lower(), None)
+
+
+def scan_opencode_log_for_exhaustion(
+    log_path: Path | None = None,
+    max_bytes: int = 128 * 1024,
+) -> list[dict[str, Any]]:
+    """Scan the tail of opencode.log for stream errors and rate limits.
+
+    Automatically marks detected failing providers as exhausted.
+    Returns list of parsed error events.
+    """
+    if log_path is None:
+        log_path = Path.home() / ".local" / "share" / "opencode" / "log" / "opencode.log"
+    if not log_path.is_file():
+        return []
+    try:
+        size = log_path.stat().st_size
+        offset = max(0, size - max_bytes)
+        with log_path.open("rb") as f:
+            if offset > 0:
+                f.seek(offset)
+            raw = f.read().decode("utf-8", "ignore")
+    except OSError:
+        return []
+
+    detected: list[dict[str, Any]] = []
+    for match in _LOG_STREAM_ERROR_RE.finditer(raw):
+        run_id, provider_id, model_id, session_id, error_msg = match.groups()
+        is_ex, ttl, _ = parse_exhaustion_from_error(error_msg)
+        if is_ex:
+            record = mark_provider_exhausted(provider_id, ttl_seconds=ttl, reason=error_msg)
+            detected.append({
+                "run": run_id,
+                "providerID": provider_id,
+                "modelID": model_id,
+                "sessionID": session_id or "",
+                "error": error_msg,
+                "reset_at": record.get("reset_at"),
+            })
+    return detected
+
+
+def get_instance_config(url: str) -> dict[str, Any]:
+    """Fetch instance /config without raising exceptions."""
+    try:
+        data = _api_request(url, "/config", timeout=1.5)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def get_available_models(url: str) -> list[dict[str, str]]:
+    """Return available models on the instance in preference order:
+    [{"providerID": ..., "modelID": ...}]
+    """
+    models: list[dict[str, str]] = []
+    cfg = get_instance_config(url)
+    default_model_str = cfg.get("model")
+    default_entry: dict[str, str] | None = None
+    if isinstance(default_model_str, str) and "/" in default_model_str:
+        p, m = default_model_str.split("/", 1)
+        default_entry = {"providerID": p.strip(), "modelID": m.strip()}
+
+    providers = cfg.get("provider") if isinstance(cfg.get("provider"), dict) else {}
+    for pid, pdata in providers.items():
+        if not isinstance(pdata, dict):
+            continue
+        pmodels = pdata.get("models") if isinstance(pdata.get("models"), dict) else {}
+        for mid in pmodels.keys():
+            entry = {"providerID": str(pid), "modelID": str(mid)}
+            if default_entry and entry == default_entry:
+                continue
+            models.append(entry)
+
+    if default_entry:
+        models.insert(0, default_entry)
+
+    if not models:
+        for p in list_providers(url):
+            pid = p.get("id")
+            if pid:
+                models.append({"providerID": str(pid), "modelID": "default"})
+    return models
+
+
+def resolve_active_terminal_model(
+    url: str,
+    requested_model: dict[str, str] | None = None,
+) -> tuple[dict[str, str] | None, dict[str, str] | None]:
+    """Resolve active model with automatic failover if provider is exhausted.
+
+    Returns (resolved_model, failover_info):
+    - resolved_model: {"providerID": ..., "modelID": ...} or None
+    - failover_info: {"from": failed_provider, "to": resolved_provider, "model": model_id} or None
+    """
+    req_provider = None
+    if isinstance(requested_model, dict):
+        req_provider = requested_model.get("providerID") or requested_model.get("providerId")
+
+    if req_provider and not is_provider_exhausted(str(req_provider)):
+        return _normalize_model(requested_model, style="prompt"), None
+
+    available = get_available_models(url)
+    unexhausted = [m for m in available if not is_provider_exhausted(m["providerID"])]
+
+    if unexhausted:
+        chosen = unexhausted[0]
+        failover = None
+        if req_provider and req_provider != chosen["providerID"]:
+            failover = {
+                "from": str(req_provider),
+                "to": chosen["providerID"],
+                "model": chosen["modelID"],
+            }
+        return chosen, failover
+
+    fallback = (
+        _normalize_model(requested_model, style="prompt")
+        if requested_model
+        else (available[0] if available else None)
+    )
+    return fallback, None
 
 
 def _normalize_model(
@@ -662,6 +920,7 @@ def instance_status(entry: dict[str, Any]) -> dict[str, Any]:
         }
     )
     row["providers"] = list_providers(url)
+    row["exhausted_providers"] = get_exhausted_providers()
     try:
         pending = pending_requests(url)
         row["pending"] = {
@@ -682,6 +941,7 @@ def terminals_payload(project: Path) -> dict[str, Any]:
         "instances": rows,
         "total": len(rows),
         "healthy": sum(1 for r in rows if r["healthy"]),
+        "exhausted_providers": get_exhausted_providers(),
     }
 
 
@@ -694,6 +954,7 @@ def terminal_detail(project: Path, instance_id: str) -> dict[str, Any]:
     if detail["healthy"]:
         pending = pending_requests(url)
         detail["pending_requests"] = pending
+    detail["exhausted_providers"] = get_exhausted_providers()
     return detail
 
 
@@ -733,25 +994,78 @@ def terminal_prompt(project: Path, body: dict[str, Any]) -> dict[str, Any]:
     model = body.get("model")
     model = model if isinstance(model, dict) else None
     agent = str(body.get("agent") or "").strip() or None
+
+    # Refresh provider exhaustion from recent log
+    scan_opencode_log_for_exhaustion()
+
+    # Resolve active model with automatic failover if provider is exhausted
+    active_model, failover_meta = resolve_active_terminal_model(url, requested_model=model)
+
     if not session_id:
+        sess = None
         try:
             sess = create_session(
                 url,
                 title=text[:60],
                 agent=agent,
-                model=model,
+                model=active_model,
                 directory=str(project),
             )
         except (urllib.error.URLError, OSError, ValueError) as exc:
-            return {"error": f"failed to create session: {exc}"}
+            is_ex, ttl, reason = parse_exhaustion_from_error(str(exc))
+            if is_ex and active_model:
+                mark_provider_exhausted(active_model["providerID"], ttl_seconds=ttl, reason=reason)
+                retry_model, _ = resolve_active_terminal_model(url)
+                if retry_model and retry_model.get("providerID") != active_model.get("providerID"):
+                    failover_meta = {
+                        "from": active_model["providerID"],
+                        "to": retry_model["providerID"],
+                        "model": retry_model["modelID"],
+                    }
+                    active_model = retry_model
+                    try:
+                        sess = create_session(
+                            url,
+                            title=text[:60],
+                            agent=agent,
+                            model=active_model,
+                            directory=str(project),
+                        )
+                    except Exception:
+                        sess = None
+            if not sess or not sess.get("id"):
+                return {"error": f"failed to create session: {exc}"}
         if not sess or not sess.get("id"):
             return {"error": "failed to create session"}
         session_id = str(sess["id"])
+
     try:
-        result = send_prompt(url, session_id, text, model=model, agent=agent)
+        result = send_prompt(url, session_id, text, model=active_model, agent=agent)
     except (urllib.error.URLError, OSError, ValueError) as exc:
+        is_ex, ttl, reason = parse_exhaustion_from_error(str(exc))
+        if is_ex and active_model:
+            mark_provider_exhausted(active_model["providerID"], ttl_seconds=ttl, reason=reason)
+            retry_model, _ = resolve_active_terminal_model(url)
+            if retry_model and retry_model.get("providerID") != active_model.get("providerID"):
+                try:
+                    result = send_prompt(url, session_id, text, model=retry_model, agent=agent)
+                    failover_meta = {
+                        "from": active_model["providerID"],
+                        "to": retry_model["providerID"],
+                        "model": retry_model["modelID"],
+                    }
+                    out = {"ok": True, "session_id": session_id, "result": result}
+                    if failover_meta:
+                        out["failover"] = failover_meta
+                    return out
+                except Exception as retry_exc:
+                    return {"error": f"prompt failed after failover retry: {retry_exc}"}
         return {"error": str(exc)}
-    return {"ok": True, "session_id": session_id, "result": result}
+
+    out = {"ok": True, "session_id": session_id, "result": result}
+    if failover_meta:
+        out["failover"] = failover_meta
+    return out
 
 
 def terminal_reply(project: Path, body: dict[str, Any]) -> dict[str, Any]:
@@ -783,18 +1097,27 @@ def terminal_reply(project: Path, body: dict[str, Any]) -> dict[str, Any]:
 
 
 __all__ = [
+    "clear_provider_exhaustion",
     "discover_instances",
+    "get_available_models",
+    "get_exhausted_providers",
+    "get_instance_config",
     "instance_health",
+    "is_provider_exhausted",
     "list_providers",
     "list_sessions",
     "load_registry",
+    "mark_provider_exhausted",
     "normalize_message",
+    "parse_exhaustion_from_error",
     "pending_requests",
     "register_instance",
     "registry_path",
     "reply_permission",
     "reply_question",
+    "resolve_active_terminal_model",
     "save_registry",
+    "scan_opencode_log_for_exhaustion",
     "session_messages",
     "send_prompt",
     "set_auto_answer",

@@ -400,7 +400,7 @@ class TestSupervisor:
             return_value=[self._entry(auto_answer=False)],
         ):
             stats = ocs.supervise_once(tmp_path, log=lambda m: None)
-        assert stats == {"permissions": 0, "questions": 0,
+        assert stats == {"permissions": 0, "questions": 0, "failovers": 0,
                          "errors": 0, "instances": 0}
 
     def test_question_answers_shape(self, tmp_path: Path) -> None:
@@ -442,6 +442,192 @@ class TestSupervisor:
         with patch.dict(sys.modules, {"korullm": fake_mod}):
             answers = ocs._question_answers_via_llm(tmp_path, req, lambda m: None)
         assert answers == [["A"]]
+
+
+class TestProviderFailover:
+    def setup_method(self) -> None:
+        ot.clear_provider_exhaustion()
+
+    def teardown_method(self) -> None:
+        ot.clear_provider_exhaustion()
+
+    def test_exhaustion_tracker_lifecycle(self) -> None:
+        assert not ot.is_provider_exhausted("zai")
+        ot.mark_provider_exhausted("zai", ttl_seconds=10.0, reason="limit test")
+        assert ot.is_provider_exhausted("zai")
+        exhausted = ot.get_exhausted_providers()
+        assert "zai" in exhausted
+        assert exhausted["zai"]["reason"] == "limit test"
+        assert exhausted["zai"]["remaining_seconds"] > 0
+
+        ot.mark_provider_exhausted("expired-p", ttl_seconds=-1.0)
+        assert not ot.is_provider_exhausted("expired-p")
+
+        ot.clear_provider_exhaustion("zai")
+        assert not ot.is_provider_exhausted("zai")
+
+    def test_parse_exhaustion_from_error(self) -> None:
+        err1 = "AI_APICallError: Usage limit reached for 5 hour. Your limit will reset at 2026-09-17 18:48:17"
+        is_ex, ttl, reason = ot.parse_exhaustion_from_error(err1)
+        assert is_ex is True
+        assert ttl > 0
+        assert "Usage limit reached" in reason
+
+        err2 = "HTTP 429: Too Many Requests"
+        is_ex, ttl, _ = ot.parse_exhaustion_from_error(err2)
+        assert is_ex is True
+
+        err3 = "Connection refused by peer"
+        is_ex, _, _ = ot.parse_exhaustion_from_error(err3)
+        assert is_ex is False
+
+    def test_scan_opencode_log_for_exhaustion(self, tmp_path: Path) -> None:
+        log_file = tmp_path / "opencode.log"
+        log_file.write_text(
+            'timestamp=2026-09-17T10:40:31.387Z level=ERROR run=db234658 message="stream error" '
+            'providerID=zai modelID=glm-5.3 session.id=ses_test123 small=false agent=build mode=primary '
+            'error.error="AI_APICallError: Usage limit reached for 5 hour. Your limit will reset at 2026-09-17 18:48:17"\n',
+            encoding="utf-8",
+        )
+        detected = ot.scan_opencode_log_for_exhaustion(log_path=log_file)
+        assert len(detected) == 1
+        assert detected[0]["providerID"] == "zai"
+        assert detected[0]["sessionID"] == "ses_test123"
+        assert ot.is_provider_exhausted("zai")
+
+    def test_get_available_models(self) -> None:
+        cfg = {
+            "model": "deepseek/deepseek-v4-pro",
+            "provider": {
+                "zai": {"models": {"glm-5.3": {}}},
+                "deepseek": {"models": {"deepseek-v4-pro": {}}},
+            },
+        }
+        with patch.object(ot, "get_instance_config", return_value=cfg):
+            models = ot.get_available_models("http://127.0.0.1:4101")
+        assert len(models) == 2
+        assert models[0] == {"providerID": "deepseek", "modelID": "deepseek-v4-pro"}
+        assert models[1] == {"providerID": "zai", "modelID": "glm-5.3"}
+
+    def test_resolve_active_terminal_model_failover(self) -> None:
+        cfg = {
+            "model": "zai/glm-5.3",
+            "provider": {
+                "zai": {"models": {"glm-5.3": {}}},
+                "deepseek": {"models": {"deepseek-v4-pro": {}}},
+            },
+        }
+        with patch.object(ot, "get_instance_config", return_value=cfg):
+            chosen, failover = ot.resolve_active_terminal_model(
+                "http://127.0.0.1:4101",
+                requested_model={"providerID": "zai", "modelID": "glm-5.3"},
+            )
+            assert chosen == {"providerID": "zai", "modelID": "glm-5.3"}
+            assert failover is None
+
+            ot.mark_provider_exhausted("zai", ttl_seconds=600.0)
+            chosen, failover = ot.resolve_active_terminal_model(
+                "http://127.0.0.1:4101",
+                requested_model={"providerID": "zai", "modelID": "glm-5.3"},
+            )
+            assert chosen == {"providerID": "deepseek", "modelID": "deepseek-v4-pro"}
+            assert failover == {
+                "from": "zai",
+                "to": "deepseek",
+                "model": "deepseek-v4-pro",
+            }
+
+    def test_terminal_prompt_auto_failover_retry(self, tmp_path: Path) -> None:
+        cfg = {
+            "model": "zai/glm-5.3",
+            "provider": {
+                "zai": {"models": {"glm-5.3": {}}},
+                "deepseek": {"models": {"deepseek-v4-pro": {}}},
+            },
+        }
+        entry = {
+            "id": "proc-4101",
+            "url": "http://127.0.0.1:4101",
+            "pid": 1234,
+            "managed": False,
+            "auto_answer": True,
+        }
+        calls = []
+
+        def fake_send(url, session_id, text, model=None, agent=None):
+            calls.append(model)
+            if model and model.get("providerID") == "zai":
+                raise urllib.error.HTTPError(
+                    url, 429, "Rate limit reached", {}, None
+                )
+            return {"ok": True}
+
+        with (
+            patch.object(ot, "_find_instance", return_value=entry),
+            patch.object(ot, "get_instance_config", return_value=cfg),
+            patch.object(ot, "send_prompt", side_effect=fake_send),
+            patch.object(ot, "scan_opencode_log_for_exhaustion", return_value=[]),
+        ):
+            res = ot.terminal_prompt(
+                tmp_path,
+                {
+                    "iid": "proc-4101",
+                    "session_id": "ses_1",
+                    "text": "do something",
+                    "model": {"providerID": "zai", "modelID": "glm-5.3"},
+                },
+            )
+        assert res["ok"] is True
+        assert "failover" in res
+        assert res["failover"]["from"] == "zai"
+        assert res["failover"]["to"] == "deepseek"
+        assert ot.is_provider_exhausted("zai")
+
+    def test_supervisor_steers_on_stream_error(self, tmp_path: Path) -> None:
+        cfg = {
+            "model": "deepseek/deepseek-v4-pro",
+            "provider": {
+                "zai": {"models": {"glm-5.3": {}}},
+                "deepseek": {"models": {"deepseek-v4-pro": {}}},
+            },
+        }
+        entry = {
+            "id": "proc-4101",
+            "url": "http://127.0.0.1:4101",
+            "pid": 1234,
+            "managed": False,
+            "auto_answer": True,
+            "healthy": True,
+        }
+        log_events = [
+            {
+                "run": "r1",
+                "providerID": "zai",
+                "modelID": "glm-5.3",
+                "sessionID": "ses_stuck",
+                "error": "Usage limit reached",
+            }
+        ]
+        prompts_sent = []
+
+        def fake_prompt(url, sid, text, model=None, agent=None):
+            prompts_sent.append((url, sid, text, model))
+            return {"ok": True}
+
+        with (
+            patch.object(ocs, "discover_instances", return_value=[entry]),
+            patch.object(ocs, "pending_requests", return_value={"permissions": [], "questions": []}),
+            patch.object(ocs, "list_sessions", return_value=[{"id": "ses_stuck"}]),
+            patch.object(ocs, "scan_opencode_log_for_exhaustion", return_value=log_events),
+            patch.object(ot, "get_instance_config", return_value=cfg),
+            patch.object(ocs, "send_prompt", side_effect=fake_prompt),
+        ):
+            stats = ocs.supervise_once(tmp_path, log=lambda m: None)
+
+        assert stats["failovers"] == 1
+        assert len(prompts_sent) == 1
+        assert prompts_sent[0][1] == "ses_stuck"
+        assert prompts_sent[0][3] == {"providerID": "deepseek", "modelID": "deepseek-v4-pro"}
 
 
 class TestTemplate:
