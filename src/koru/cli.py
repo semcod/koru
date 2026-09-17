@@ -26,7 +26,7 @@ _build_parser = _cli_parser._build_parser
 _command_value = _cli_parser._command_value
 
 
-def autonomous_main(argv: list[str]) -> int:
+def autonomous_main(argv: list[str], **kwargs) -> int:
     """Lazy proxy: ``koru.autonomous`` pulls in the cycle/dashboard/MCP/nlp2uri
     stack, so importing it eagerly here slowed every ``koru`` invocation,
     including ``--help``/``--version``. Kept as a plain module-level function
@@ -36,7 +36,7 @@ def autonomous_main(argv: list[str]) -> int:
     """
     import koru.autonomous as _autonomous
 
-    return _autonomous.autonomous_main(argv)
+    return _autonomous.autonomous_main(argv, **kwargs)
 
 
 def stop_prior_autonomous_for_auto_start(*args, **kwargs):

@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-164",
+  "summary": "auto-cli-legacy-proxy-kwarg",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-164/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli.py",
+    "tests/test_cli_legacy_proxy.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e5b98fcd8f5b6e8bead5c6463db4bb7faadc3c72",
+    "targetBranch": "main",
+    "outcome": "koru auto maintenance/start paths stop crashing: the koru._legacy_cli_impl.autonomous_main lazy proxy in src/koru/cli.py forwards **kwargs (invoked_as_auto) to koru.autonomous.autonomous_main, matching the signature cli_auto._legacy_attr callers use",
+    "nonGoals": [
+      "no changes to koru/cli_auto.py legacy-attr resolution itself",
+      "no changes to koru.autonomous.autonomous_main semantics"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "accept and forward **kwargs in the legacy autonomous_main proxy; stop_prior_autonomous_for_auto_start already forwards *args/**kwargs",
+      "components": [
+        {
+          "name": "cli/legacy-proxy",
+          "paths": [
+            "src/koru/cli.py",
+            "tests/test_cli_legacy_proxy.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_cli_legacy_proxy.py -q"
+        ],
+        "evidence": "legacy proxy forwards invoked_as_auto kwarg; koru auto status no longer raises TypeError"
+      }
+    ]
+  }
+}
