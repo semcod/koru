@@ -4,7 +4,7 @@
   "summary": "context: prompt token budget gating, cache exclusions, and target AST slicing",
   "workstream": "application",
   "classification": {
-    "kind": "REFACTOR",
+    "kind": "SERVICE",
     "priority": "P2",
     "origin": "health"
   },
@@ -23,7 +23,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "5fb556507c571765c9bc4fc5db9a35e40e698bc4",
+    "acceptedBaseSha": "5fb5565082ef3838218195d5edaf1d1dbe1cb8da",
     "targetBranch": "main",
     "outcome": "Project context assembly enforces deterministic budget ceilings, excludes cache artifacts, and performs focused AST symbol/line slicing on oversized files.",
     "nonGoals": [

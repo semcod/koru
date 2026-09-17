@@ -182,7 +182,7 @@ class TestBuildProjectContext(unittest.TestCase):
     def test_secrets_never_included(self):
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
-            (project / ".env").write_text("OPENROUTER_API_KEY=sk-secret123", encoding="utf-8")
+            (project / ".env").write_text("OPENROUTER_API_KEY=test-secret-key-12345", encoding="utf-8")
             (project / ".env.production").write_text(
                 "DB_PASSWORD=hunter2", encoding="utf-8"
             )
@@ -196,7 +196,7 @@ class TestBuildProjectContext(unittest.TestCase):
             result = build_project_context(project, request)
             self.assertIsNotNone(result)
             assert result is not None
-            self.assertNotIn("sk-secret123", result.text)
+            self.assertNotIn("test-secret-key-12345", result.text)
             self.assertNotIn("hunter2", result.text)
             self.assertNotIn("BEGIN RSA PRIVATE KEY", result.text)
             self.assertNotIn(".env", result.included_files)
@@ -568,7 +568,7 @@ class TestLlmContextEndToEnd(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             (project / ".env").write_text(
-                "OPENROUTER_API_KEY=sk-super-secret\nDB_PASSWORD=hunter2\n",
+                "OPENROUTER_API_KEY=test-super-secret-key\nDB_PASSWORD=hunter2\n",
                 encoding="utf-8",
             )
             (project / "README.md").write_text("# Safe file", encoding="utf-8")
@@ -584,7 +584,7 @@ class TestLlmContextEndToEnd(unittest.TestCase):
 
         self.assertEqual(result.status, "completed")
         context = request.get("context_text", "")
-        self.assertNotIn("sk-super-secret", context)
+        self.assertNotIn("test-super-secret-key", context)
         self.assertNotIn("hunter2", context)
 
     def test_context_metadata_recorded_in_request(self):
