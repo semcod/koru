@@ -4,7 +4,6 @@ Safety contract and detection rules are documented in
 ``koru.queue_clean`` (the package docstring).
 """
 
-
 import json
 import os
 import re
@@ -19,7 +18,6 @@ from typing import Any
 
 from koru.context import FIXTURE_LABELS
 from koru.planfile_compat import merge_missing_ticket_records
-
 
 QUEUE_CLEAN_TAG = "KORU-QUEUE-CLEAN"
 """Marker prefix written to ``outputs.notes`` on every cleaned ticket."""
@@ -278,8 +276,7 @@ def _list_tickets(
         if report.recovered_ticket_count:
             return merged
         raise RuntimeError(
-            f"planfile ticket list failed (exit {result.returncode}): "
-            f"{(result.stderr or result.stdout or '').strip()}",
+            f"planfile ticket list failed (exit {result.returncode}): {(result.stderr or result.stdout or '').strip()}",
         )
     stdout = (result.stdout or "").strip()
     if not stdout:
@@ -363,5 +360,3 @@ def clean_queue(
         except RuntimeError as exc:
             report.failed.append((candidate.ticket_id, str(exc)))
     return report
-
-

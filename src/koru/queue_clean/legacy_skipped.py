@@ -4,14 +4,12 @@ Retires the invalid ``skipped`` status through a versioned,
 auditable rule (``koru.queue.legacy-skipped-migration/v1``).
 """
 
-
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-
 
 # ---------------------------------------------------------------------------
 # Legacy ``skipped`` ticket migration (STARTER-600)
@@ -51,10 +49,7 @@ class LegacySkippedCandidate:
 
     def explanation(self) -> str:
         labels = ",".join(self.labels) if self.labels else "(no labels)"
-        return (
-            f"{self.ticket_id} skipped -> {self.rule.target_status} "
-            f"[{labels}] ({self.rule.schema})"
-        )
+        return f"{self.ticket_id} skipped -> {self.rule.target_status} [{labels}] ({self.rule.schema})"
 
 
 @dataclass
