@@ -223,21 +223,138 @@ class TestPayloads:
              "managed": True, "auto_answer": True},
             {"id": "b", "url": "http://b", "healthy": False},
         ]
+        sessions = [{
+            "id": "ses_1", "slug": "s",
+            "location": {"directory": "/p/x"},
+            "model": {"id": "glm-5.3", "providerID": "zai"},
+            "agent": "build",
+            "time": {"updated": 0},
+        }]
         with (
             patch.object(ot, "discover_instances", return_value=instances),
-            patch.object(ot, "list_sessions", return_value=[{"id": "ses_1", "slug": "s"}]),
+            patch.object(ot, "list_sessions", return_value=sessions),
             patch.object(
                 ot, "pending_requests",
                 return_value={"permissions": [{"id": "per_1"}], "questions": []},
+            ),
+            patch.object(
+                ot, "list_providers",
+                return_value=[{"id": "zai", "name": "Z.ai",
+                               "api_type": "aisdk",
+                               "api_url": "https://api.z.ai"}],
             ),
         ):
             payload = ot.terminals_payload(tmp_path)
         assert payload["total"] == 2
         assert payload["healthy"] == 1
         a = next(r for r in payload["instances"] if r["id"] == "a")
-        assert a["sessions"] == [{"id": "ses_1", "slug": "s",
-                                  "title": "s", "directory": None, "cost": None}]
+        srow = a["sessions"][0]
+        assert srow["id"] == "ses_1"
+        assert srow["title"] == "s"
+        # directory comes from location.directory, not the flat field
+        assert srow["directory"] == "/p/x"
+        assert srow["model"] == "glm-5.3"
+        assert srow["provider"] == "zai"
+        assert srow["agent"] == "build"
+        assert srow["ticket"] is None
+        assert a["project_dirs"] == ["/p/x"]
+        assert a["models"] == ["zai/glm-5.3"]
+        assert a["providers"][0]["api_url"] == "https://api.z.ai"
+        assert a["active_ticket"] is None
         assert a["pending"] == {"permissions": 1, "questions": 0}
+
+    def test_session_ticket_extracted_from_recent_user_prompt(
+        self, tmp_path: Path
+    ) -> None:
+        import time as _time
+
+        now_ms = int(_time.time() * 1000)
+        sess = {"id": "ses_t", "time": {"updated": now_ms}}
+        messages = [
+            {"info": {"role": "user"},
+             "parts": [{"type": "text",
+                        "text": "Work on planfile ticket STARTER-578: fix"}]},
+            {"info": {"role": "assistant"},
+             "parts": [{"type": "text", "text": "done"}]},
+        ]
+        with patch.object(ot, "session_messages", return_value=messages):
+            assert ot._session_ticket("http://x", sess) == "STARTER-578"
+
+    def test_session_ticket_skips_stale_sessions(self) -> None:
+        sess = {"id": "ses_old", "time": {"updated": 1}}
+        with patch.object(
+            ot, "session_messages", side_effect=AssertionError("no fetch")
+        ):
+            assert ot._session_ticket("http://x", sess) is None
+
+    def test_session_ticket_caches_per_updated(self) -> None:
+        import time as _time
+
+        now_ms = int(_time.time() * 1000)
+        sess = {"id": "ses_c", "time": {"updated": now_ms}}
+        calls = []
+
+        def fake(url, sid, **kw):
+            calls.append(sid)
+            return []
+
+        with patch.object(ot, "session_messages", side_effect=fake):
+            assert ot._session_ticket("http://x", sess) is None
+            assert ot._session_ticket("http://x", sess) is None
+        assert calls == ["ses_c"]
+
+    def test_normalize_message_opencode_shape(self) -> None:
+        raw = {
+            "info": {"role": "assistant", "agent": "build",
+                     "modelID": "glm-5.3", "providerID": "zai",
+                     "time": {"created": 123}},
+            "parts": [
+                {"type": "step-start"},
+                {"type": "text", "text": "OK"},
+                {"type": "tool", "tool": "bash",
+                 "state": {"title": "pytest -q"}},
+                {"type": "reasoning", "text": "thinking"},
+            ],
+        }
+        out = ot.normalize_message(raw)
+        assert out["role"] == "assistant"
+        assert out["model"] == "glm-5.3"
+        assert out["provider"] == "zai"
+        assert out["created"] == 123
+        assert "OK" in out["text"]
+        assert "[tool: bash] pytest -q" in out["text"]
+        assert "[reasoning]" in out["text"]
+        assert "step-start" not in out["text"]
+
+    def test_terminal_messages_normalizes(self, tmp_path: Path) -> None:
+        entry = ot.register_instance(tmp_path, url="http://x:9")
+        raw = [{"info": {"role": "user"},
+                "parts": [{"type": "text", "text": "say ok"}]}]
+        with (
+            patch.object(ot, "discover_instances",
+                         return_value=[entry]),
+            patch.object(ot, "session_messages", return_value=raw),
+        ):
+            payload = ot.terminal_messages(tmp_path, entry["id"], "ses_1")
+        assert payload["messages"] == [
+            {"role": "user", "text": "say ok", "agent": None,
+             "model": None, "provider": None, "created": None}
+        ]
+
+    def test_list_providers_sanitizes_request_body(self) -> None:
+        fake = MagicMock()
+        fake.read.return_value = json.dumps(
+            {"data": [{"id": "zai", "name": "Z.ai",
+                       "api": {"type": "aisdk", "url": "https://api.z.ai"},
+                       "request": {"body": {"apiKey": "secret"}}}]}
+        ).encode()
+        fake.__enter__ = lambda s: s
+        fake.__exit__ = lambda *a: False
+        with patch("urllib.request.urlopen", return_value=fake):
+            providers = ot.list_providers("http://x")
+        assert providers == [{"id": "zai", "name": "Z.ai",
+                              "api_type": "aisdk",
+                              "api_url": "https://api.z.ai"}]
 
     def test_terminal_detail_unknown(self, tmp_path: Path) -> None:
         with patch.object(ot, "discover_instances", return_value=[]):
@@ -351,3 +468,15 @@ class TestTemplate:
     def test_terminals_fast_paint(self) -> None:
         html = self._html()
         assert 'state.tab === "terminals"' in html
+
+    def test_terminals_renders_opencode_parts_shape(self) -> None:
+        html = self._html()
+        # Raw {info, parts} messages must render — the bug showed "?".
+        assert "m.parts" in html
+        assert "info.role" in html
+
+    def test_terminals_cards_show_ticket_project_model_api(self) -> None:
+        html = self._html()
+        for marker in ("active_ticket", "project_dirs", "providers",
+                       "s.ticket", "s.model"):
+            assert marker in html
