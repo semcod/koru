@@ -1370,6 +1370,14 @@ function paintTerminals() {
     if (pend.permissions) badges.push(`<span class="term-badge err">! ${pend.permissions} perm</span>`);
     if (pend.questions) badges.push(`<span class="term-badge warn">? ${pend.questions} ask</span>`);
     if (inst.auto_answer) badges.push(`<span class="term-badge ok">auto</span>`);
+    const dirs = inst.project_dirs || [];
+    const models = inst.models || [];
+    const apis = [...new Set((inst.providers || []).map(p => p.api_url).filter(Boolean))];
+    const ctx = [];
+    if (inst.active_ticket) ctx.push(`<div style="font-size:11px;margin-top:4px;">ticket <span class="term-badge ok">${esc(inst.active_ticket)}</span></div>`);
+    if (dirs.length) ctx.push(`<div class="muted" style="font-size:11px;margin-top:2px;" title="${attr(dirs.join("\n"))}">project: ${esc(dirs.join(", "))}</div>`);
+    if (models.length) ctx.push(`<div class="muted" style="font-size:11px;margin-top:2px;">llm: ${esc(models.join(", "))}</div>`);
+    if (apis.length) ctx.push(`<div class="muted" style="font-size:11px;margin-top:2px;" title="${attr(apis.join("\n"))}">api: ${esc(apis.join(", "))}</div>`);
     const sel = termSelected === inst.id ? " selected" : "";
     return `<div class="term-card${sel}" onclick="termSelect('${attr(inst.id)}')">
       <div class="term-head">
@@ -1377,6 +1385,7 @@ function paintTerminals() {
         <span class="term-label">${esc(inst.label)}</span>
       </div>
       <div class="muted" style="font-size:11px;margin-top:4px;">${esc(inst.url)}</div>
+      ${ctx.join("")}
       <div class="term-badges">${badges.join("")}</div>
     </div>`;
   }).join("");
@@ -1426,10 +1435,14 @@ function paintTermDetail() {
   }
   const inst = termDetail;
   const sessions = inst.sessions || [];
-  const sessBtns = sessions.map(s =>
-    `<button type="button" class="term-session-btn ${termSession === s.id ? "active" : ""}"
-       onclick="termSessionSelect('${attr(s.id)}')">${esc(s.title || s.id)}</button>`
-  ).join("");
+  const sessBtns = sessions.map(s => {
+    const meta = [];
+    if (s.ticket) meta.push(`<span class="term-badge">${esc(s.ticket)}</span>`);
+    if (s.model) meta.push(`<span class="muted" style="font-size:10px;">${esc(s.provider ? s.provider + "/" + s.model : s.model)}</span>`);
+    const titleAttr = s.directory ? ` title="${attr(s.directory)}"` : "";
+    return `<button type="button" class="term-session-btn ${termSession === s.id ? "active" : ""}"${titleAttr}
+       onclick="termSessionSelect('${attr(s.id)}')">${esc(s.title || s.id)}${meta.length ? " " + meta.join(" ") : ""}</button>`;
+  }).join("");
   const pending = inst.pending_requests || { permissions: [], questions: [] };
   const pendHtml = [];
   for (const p of pending.permissions || []) {
@@ -1479,10 +1492,22 @@ function termMessagesHtml() {
   const msgs = (termMessages && termMessages.messages) || [];
   if (!msgs.length) return '<span class="muted">no messages yet</span>';
   return msgs.map(m => {
-    const type = m.type || m.role || "?";
+    const info = (m && typeof m.info === "object" && m.info) || {};
+    const type = m.role || m.type || info.role || "?";
     let text = "";
-    if (typeof m.text === "string") text = m.text;
-    else if (Array.isArray(m.content)) {
+    if (typeof m.text === "string" && m.text) {
+      text = m.text;
+    } else if (Array.isArray(m.parts)) {
+      // Raw opencode shape: {info:{role}, parts:[{type,text|tool|…}]}
+      text = m.parts.map(p => {
+        if (!p || typeof p !== "object") return "";
+        if (p.type === "text" && p.text) return p.text;
+        if (p.type === "reasoning" && p.text) return "[reasoning]\n" + p.text;
+        if (p.type === "tool") return `[tool: ${p.tool || p.name || "?"}]`;
+        if (p.type === "file") return `[file: ${p.filename || p.url || ""}]`;
+        return "";
+      }).filter(Boolean).join("\n");
+    } else if (Array.isArray(m.content)) {
       text = m.content.map(c => {
         if (c.text) return c.text;
         if (c.name) return `[tool: ${c.name}]`;
@@ -1492,8 +1517,13 @@ function termMessagesHtml() {
       text = "$ " + m.command + (m.output ? "\n" + m.output : "");
     }
     if (text.length > 4000) text = text.slice(0, 4000) + "…";
+    const model = m.model ? (m.provider ? `${m.provider}/${m.model}` : m.model)
+      : (info.modelID ? `${info.providerID || ""}/${info.modelID}` : "");
+    const meta = [m.agent || info.agent || "", model].filter(Boolean).join(" · ");
     const color = type === "user" ? "#4a9eff" : type === "assistant" ? "#2ecc71" : "#95a5a6";
-    return `<div class="term-msg"><span class="role" style="color:${color};">${esc(type)}</span>${esc(text)}</div>`;
+    return `<div class="term-msg"><span class="role" style="color:${color};">${esc(type)}</span>`
+      + (meta ? `<span class="muted" style="font-size:10px;margin-right:6px;">${esc(meta)}</span>` : "")
+      + `${esc(text)}</div>`;
   }).join("");
 }
 

@@ -26,6 +26,13 @@ from typing import Any
 REGISTRY_NAME = "opencode-instances.json"
 _REQUEST_TIMEOUT = 2.0
 _LISTEN_RE = re.compile(r"opencode server listening on (https?://\S+)")
+_TICKET_RE = re.compile(r"\b(PLF-\d+|STARTER-\d+)\b", re.IGNORECASE)
+# Only sessions touched inside this window are scanned for a ticket id —
+# reading full conversations for every session on each dashboard poll would be
+# too expensive.
+_TICKET_SCAN_WINDOW_MS = 3 * 24 * 3600 * 1000
+_TICKET_SCAN_SESSIONS = 8
+_session_ticket_cache: dict[tuple[str, str], tuple[int, str | None]] = {}
 
 
 def _koru_dir(project: Path) -> Path:
@@ -214,6 +221,31 @@ def list_sessions(url: str) -> list[dict[str, Any]]:
     return items if isinstance(items, list) else []
 
 
+def list_providers(url: str) -> list[dict[str, Any]]:
+    """Sanitized provider catalog — never exposes request bodies or keys."""
+    try:
+        data = _api_request(url, "/api/provider", timeout=1.5)
+    except Exception:
+        return []
+    items = data.get("data", data) if isinstance(data, dict) else data
+    if not isinstance(items, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        api = item.get("api") if isinstance(item.get("api"), dict) else {}
+        out.append(
+            {
+                "id": item.get("id"),
+                "name": item.get("name"),
+                "api_type": api.get("type"),
+                "api_url": api.get("url"),
+            }
+        )
+    return out
+
+
 def _normalize_model(
     model: dict[str, str] | None, *, style: str = "create"
 ) -> dict[str, str] | None:
@@ -265,6 +297,69 @@ def session_messages(url: str, session_id: str, *, limit: int = 60) -> list[dict
     if not isinstance(items, list):
         return []
     return items[-limit:]
+
+
+def normalize_message(msg: dict[str, Any]) -> dict[str, Any]:
+    """Flatten an opencode ``{info, parts}`` message for the dashboard.
+
+    The conversation route returns ``info.role`` plus typed ``parts``
+    (``text``, ``reasoning``, ``tool``, ``step-start``, ``file`` …). The
+    renderer expects ``{role, text}``; normalization happens here so the
+    dashboard API stays stable if the server shape drifts again. Legacy flat
+    shapes (``text``/``content``/``command``) are accepted too.
+    """
+    if not isinstance(msg, dict):
+        return {"role": "?", "text": str(msg)}
+    info = msg.get("info") if isinstance(msg.get("info"), dict) else msg
+    role = info.get("role") or msg.get("type") or "?"
+    chunks: list[str] = []
+    parts = msg.get("parts")
+    if isinstance(parts, list):
+        for part in parts:
+            if not isinstance(part, dict):
+                continue
+            ptype = part.get("type")
+            text = part.get("text")
+            if ptype == "text" and text:
+                chunks.append(str(text))
+            elif ptype == "reasoning" and text:
+                chunks.append("[reasoning]\n" + str(text))
+            elif ptype == "tool":
+                name = part.get("tool") or part.get("name") or "?"
+                state = part.get("state")
+                title = state.get("title") if isinstance(state, dict) else None
+                chunks.append(f"[tool: {name}]" + (f" {title}" if title else ""))
+            elif ptype == "file":
+                chunks.append(
+                    f"[file: {part.get('filename') or part.get('url') or ''}]"
+                )
+            elif ptype in ("step-start", "step-finish", "snapshot", "patch"):
+                continue
+            elif text:
+                chunks.append(str(text))
+    if not chunks:
+        if isinstance(msg.get("text"), str):
+            chunks.append(msg["text"])
+        elif isinstance(msg.get("content"), list):
+            for c in msg["content"]:
+                if isinstance(c, dict):
+                    if c.get("text"):
+                        chunks.append(str(c["text"]))
+                    elif c.get("name"):
+                        chunks.append(f"[tool: {c['name']}]")
+        elif msg.get("command"):
+            out = msg.get("output")
+            chunks.append("$ " + str(msg["command"]) + (f"\n{out}" if out else ""))
+    model = info.get("model") if isinstance(info.get("model"), dict) else {}
+    ts = info.get("time") if isinstance(info.get("time"), dict) else {}
+    return {
+        "role": role,
+        "text": "\n".join(c for c in chunks if c).strip(),
+        "agent": info.get("agent"),
+        "model": info.get("modelID") or model.get("modelID") or model.get("id"),
+        "provider": info.get("providerID") or model.get("providerID"),
+        "created": ts.get("created"),
+    }
 
 
 def send_prompt(
@@ -447,6 +542,62 @@ def stop_instance(project: Path, instance_id: str) -> dict[str, Any]:
     return {"ok": True, "stopped": stopped, "pid": pid}
 
 
+def _session_updated_ms(sess: dict[str, Any]) -> int:
+    ts = sess.get("time")
+    if isinstance(ts, dict):
+        try:
+            return int(ts.get("updated") or ts.get("created") or 0)
+        except (TypeError, ValueError):
+            return 0
+    return 0
+
+
+def _session_directory(sess: dict[str, Any]) -> str | None:
+    loc = sess.get("location")
+    if isinstance(loc, dict) and loc.get("directory"):
+        return str(loc["directory"])
+    return sess.get("directory")
+
+
+def _extract_ticket_id(text: str) -> str | None:
+    match = _TICKET_RE.search(text or "")
+    return match.group(1).upper() if match else None
+
+
+def _session_ticket(url: str, sess: dict[str, Any]) -> str | None:
+    """Most recent planfile ticket id mentioned in user prompts, cached."""
+    sid = sess.get("id")
+    if not sid:
+        return None
+    updated = _session_updated_ms(sess)
+    if not updated or updated < (time.time() * 1000) - _TICKET_SCAN_WINDOW_MS:
+        return None
+    key = (url, str(sid))
+    cached = _session_ticket_cache.get(key)
+    if cached is not None and cached[0] == updated:
+        return cached[1]
+    ticket = None
+    try:
+        messages = session_messages(url, str(sid), limit=100)
+        for msg in reversed(messages):
+            info = msg.get("info") if isinstance(msg.get("info"), dict) else {}
+            if info.get("role") != "user":
+                continue
+            for part in msg.get("parts") or []:
+                if isinstance(part, dict) and part.get("type") == "text":
+                    ticket = _extract_ticket_id(str(part.get("text") or ""))
+                    if ticket:
+                        break
+            if ticket:
+                break
+    except Exception:
+        ticket = None
+    if len(_session_ticket_cache) > 500:
+        _session_ticket_cache.clear()
+    _session_ticket_cache[key] = (updated, ticket)
+    return ticket
+
+
 def instance_status(entry: dict[str, Any]) -> dict[str, Any]:
     """Aggregate one instance row for the grid: sessions + pending counts."""
     url = str(entry.get("url", ""))
@@ -460,6 +611,10 @@ def instance_status(entry: dict[str, Any]) -> dict[str, Any]:
         "healthy": bool(entry.get("healthy")),
         "sessions": [],
         "pending": {"permissions": 0, "questions": 0},
+        "providers": [],
+        "active_ticket": None,
+        "project_dirs": [],
+        "models": [],
     }
     if not row["healthy"]:
         return row
@@ -468,16 +623,45 @@ def instance_status(entry: dict[str, Any]) -> dict[str, Any]:
     except Exception:
         row["healthy"] = False
         return row
+    srow_by_id: dict[str, dict[str, Any]] = {}
     for sess in sessions:
-        row["sessions"].append(
-            {
-                "id": sess.get("id"),
-                "slug": sess.get("slug"),
-                "title": sess.get("title") or sess.get("slug") or sess.get("id"),
-                "directory": sess.get("directory"),
-                "cost": sess.get("cost"),
-            }
-        )
+        model = sess.get("model") if isinstance(sess.get("model"), dict) else {}
+        srow = {
+            "id": sess.get("id"),
+            "slug": sess.get("slug"),
+            "title": sess.get("title") or sess.get("slug") or sess.get("id"),
+            "directory": _session_directory(sess),
+            "cost": sess.get("cost"),
+            "agent": sess.get("agent"),
+            "model": model.get("id") or model.get("modelID"),
+            "provider": model.get("providerID"),
+            "updated": _session_updated_ms(sess) or None,
+            "ticket": None,
+        }
+        row["sessions"].append(srow)
+        if sess.get("id"):
+            srow_by_id[str(sess["id"])] = srow
+    recent = sorted(sessions, key=_session_updated_ms, reverse=True)[
+        :_TICKET_SCAN_SESSIONS
+    ]
+    for sess in recent:
+        srow = srow_by_id.get(str(sess.get("id") or ""))
+        if srow is None:
+            continue
+        srow["ticket"] = _session_ticket(url, sess)
+        if row["active_ticket"] is None and srow["ticket"]:
+            row["active_ticket"] = srow["ticket"]
+    row["project_dirs"] = sorted(
+        {s["directory"] for s in row["sessions"] if s.get("directory")}
+    )
+    row["models"] = sorted(
+        {
+            f"{s['provider']}/{s['model']}" if s.get("provider") else s["model"]
+            for s in row["sessions"]
+            if s.get("model")
+        }
+    )
+    row["providers"] = list_providers(url)
     try:
         pending = pending_requests(url)
         row["pending"] = {
@@ -523,7 +707,10 @@ def terminal_messages(
         messages = session_messages(str(entry["url"]), session_id, limit=limit)
     except Exception as exc:
         return {"error": str(exc), "messages": []}
-    return {"messages": messages, "session_id": session_id}
+    return {
+        "messages": [normalize_message(m) for m in messages],
+        "session_id": session_id,
+    }
 
 
 def _find_instance(project: Path, instance_id: str) -> dict[str, Any] | None:
@@ -598,8 +785,10 @@ def terminal_reply(project: Path, body: dict[str, Any]) -> dict[str, Any]:
 __all__ = [
     "discover_instances",
     "instance_health",
+    "list_providers",
     "list_sessions",
     "load_registry",
+    "normalize_message",
     "pending_requests",
     "register_instance",
     "registry_path",
