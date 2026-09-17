@@ -32,14 +32,13 @@ A ticket is a cleanup candidate when **any** of the following holds:
   that many days (combined with the above — never a sole criterion).
 """
 
-
 from koru.queue_clean.cleanup import (
     ACTIVE_STATUSES,
     CLEANABLE_STATUSES_DEFAULT,
-    CleanupCandidate,
-    CleanupReport,
     FIXTURE_NAME_PATTERN,
     QUEUE_CLEAN_TAG,
+    CleanupCandidate,
+    CleanupReport,
     _build_close_note,
     _close_ticket,
     _list_tickets,
@@ -49,10 +48,10 @@ from koru.queue_clean.cleanup import (
 from koru.queue_clean.legacy_skipped import (
     LEGACY_SKIPPED_MIGRATION_SCHEMA,
     LEGACY_SKIPPED_MIGRATION_TAG,
+    MIGRATION_RULE_V1,
     LegacySkippedCandidate,
     LegacySkippedMigrationReport,
     LegacySkippedMigrationRule,
-    MIGRATION_RULE_V1,
     _build_legacy_skipped_note,
     find_legacy_skipped_candidates,
     load_raw_sprint_tickets,
@@ -77,4 +76,8 @@ __all__ = [
     "find_legacy_skipped_candidates",
     "load_raw_sprint_tickets",
     "migrate_legacy_skipped",
+    "_build_close_note",
+    "_build_legacy_skipped_note",
+    "_close_ticket",
+    "_list_tickets",
 ]

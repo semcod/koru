@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-168",
+  "summary": "ruff fix queue_clean package imports",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-168/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue_clean/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3be5f38dcabfa1c96c0056523df6378ae1e55043",
+    "targetBranch": "main",
+    "outcome": "src/koru/queue_clean package passes `ruff check` and `ruff format --check`; fixes I001/F401 lint debt merged via PR #306.",
+    "nonGoals": [
+      "Change behavior or public API.",
+      "Touch other modules."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Pure `ruff check --fix` + `ruff format` output: sorted imports and explicit __all__ re-exports; no semantic change.",
+      "components": [
+        {
+          "name": "queue-clean-package",
+          "paths": [
+            "src/koru/queue_clean/**"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; lint violations return but behavior is unchanged.",
+      "interfaceChanges": []
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "ruff check src/koru/queue_clean/",
+          "ruff format --check src/koru/queue_clean/",
+          "python3 -m pytest tests/test_queue_clean.py -x -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Ruff clean on the package; 22/22 queue_clean tests pass; governance gate passes."
+      }
+    ]
+  }
+}
