@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-163",
+  "summary": "scan-collect-only-skips-governance-plugin",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-163/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/scan.py",
+    "tests/test_scan.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ab88508a2340bfed002a191131f9be74d5282d53",
+    "targetBranch": "main",
+    "outcome": "koru scan's pytest --collect-only probe passes -p no:wellmanifest_governance so the managed governance bridge no longer spawns the ~25s gate subprocess during read-only inventory collection, fixing the recurring pytest_collect_timeout tickets (STARTER-675); probe timeout_seconds raised 30->60 to cover cold collection of the ~4400-test suite (~40s uncached)",
+    "nonGoals": [
+      "no changes to the managed wellmanifest_governance.py bridge (pinned by adoption lock; upstream fix is a separate standard adoption)",
+      "no changes to real test sessions, which keep full gate enforcement"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "append -p no:wellmanifest_governance to the collect-only probe argv; pytest treats it as a no-op for projects without the plugin; default timeout_seconds raised to 60 for cold-cache collection",
+      "components": [
+        {
+          "name": "scan/pytest-probe",
+          "paths": [
+            "src/koru/scan.py",
+            "tests/test_scan.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_scan.py -q"
+        ],
+        "evidence": "probe argv contains -p no:wellmanifest_governance"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "timeout 30 python3 -m pytest --collect-only -q --no-header -p no:wellmanifest_governance"
+        ],
+        "evidence": "collection finishes well inside the 30s probe budget"
+      }
+    ]
+  }
+}
