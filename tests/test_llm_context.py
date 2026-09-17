@@ -649,6 +649,120 @@ class TestLlmContextEndToEnd(unittest.TestCase):
         meta = request.get("context_metadata", {})
         self.assertTrue(meta.get("truncated"))
 
+    def test_cache_directories_and_pickle_files_excluded(self):
+        self.assertTrue(_is_excluded(".code2llm_cache/data.pkl"))
+        self.assertTrue(_is_excluded(".dirac-symbol-index/index.json"))
+        self.assertTrue(_is_excluded(".koru/state.json"))
+        self.assertTrue(_is_excluded(".worktrees/ticket-123/README.md"))
+        self.assertTrue(_is_excluded("models/checkpoint.pkl"))
+        self.assertTrue(_is_excluded("data/dump.pickle"))
+        self.assertTrue(_is_excluded(".pytest_cache/v/cache/nodeids"))
+
+    def test_default_max_context_chars_applied_when_unspecified(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "large.py").write_text("# comment\n" + "x = 1\n" * 8000, encoding="utf-8")
+            request = {"prompt": "analyse", "context_files": ["large.py"]}
+            result = build_project_context(project, request)
+            self.assertIsNotNone(result)
+            assert result is not None
+            self.assertTrue(result.truncated)
+            self.assertLessEqual(len(result.text), DEFAULT_MAX_CONTEXT_CHARS)
+            self.assertGreater(result.total_chars, DEFAULT_MAX_CONTEXT_CHARS)
+
+    def test_large_file_ast_symbol_slice(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            code_parts = [
+                "import os\nimport sys\n\n",
+                "def small_func_a():\n    return 1\n\n",
+            ]
+            for i in range(120):
+                code_parts.append(
+                    f"def dummy_{i}():\n"
+                    f"    # padding block with lots of lines to ensure file exceeds threshold\n"
+                    f"    val = 'sample data string for testing purposes' * 4\n"
+                    f"    return {i}\n\n"
+                )
+            code_parts.append(
+                "def target_heavy_function(arg1, arg2):\n"
+                "    '''Documentation for target function.'''\n"
+                "    result = arg1 + arg2\n"
+                "    return result * 2\n\n"
+            )
+            for i in range(120, 240):
+                code_parts.append(
+                    f"def dummy_{i}():\n"
+                    f"    # padding block with lots of lines to ensure file exceeds threshold\n"
+                    f"    val = 'sample data string for testing purposes' * 4\n"
+                    f"    return {i}\n\n"
+                )
+
+            full_code = "".join(code_parts)
+            self.assertGreater(len(full_code), 12_000)
+            (project / "big_module.py").write_text(full_code, encoding="utf-8")
+
+            request = {
+                "prompt": "Refactor target_heavy_function",
+                "context_files": ["big_module.py"],
+                "target_symbol": "target_heavy_function",
+            }
+            result = build_project_context(project, request)
+            self.assertIsNotNone(result)
+            assert result is not None
+            self.assertIn("target_heavy_function", result.text)
+            self.assertIn("focused AST slice for 'target_heavy_function'", result.text)
+            self.assertNotIn("def dummy_200():", result.text)
+            self.assertLess(len(result.text), 6000)
+
+    def test_target_symbol_detected_from_code2llm_description(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            code_parts = ["import math\n\n"]
+            for i in range(150):
+                code_parts.append(
+                    f"def filler_{i}():\n"
+                    f"    # filler line with extra length to exceed slice threshold\n"
+                    f"    msg = 'long filler text for code2llm detection test' * 3\n"
+                    f"    return {i}\n\n"
+                )
+            code_parts.append(
+                "def god_function_worker():\n"
+                "    print('complex logic')\n"
+                "    return 42\n\n"
+            )
+            full_code = "".join(code_parts)
+            self.assertGreater(len(full_code), 12_000)
+            (project / "worker.py").write_text(full_code, encoding="utf-8")
+
+            request = {
+                "prompt": "Make smallest refactor",
+                "ticket_description": "code2llm reports `God Function: god_function_worker` in `worker.py:450`.",
+                "context_files": ["worker.py"],
+            }
+            result = build_project_context(project, request)
+            self.assertIsNotNone(result)
+            assert result is not None
+            self.assertIn("god_function_worker", result.text)
+            self.assertIn("focused AST slice for 'god_function_worker'", result.text)
+            self.assertNotIn("def filler_120():", result.text)
+
+    def test_resolve_target_symbol_and_line_from_prompt(self):
+        from koru.queue.context import _resolve_target_symbol_and_line
+
+        req = {
+            "prompt": (
+                "code2llm reports `God Function: refresh_photo_vql_sidecar` in "
+                "`src/koru/integrations/vdisplay_client.py:2442`.\n"
+                "Function 'refresh_photo_vql_sidecar' is oversized: CC=9, fan-out=21, mutations=27."
+            )
+        }
+        sym, line = _resolve_target_symbol_and_line(
+            "src/koru/integrations/vdisplay_client.py", req
+        )
+        self.assertEqual(sym, "refresh_photo_vql_sidecar")
+        self.assertEqual(line, 2442)
+
 
 if __name__ == "__main__":
     unittest.main()
