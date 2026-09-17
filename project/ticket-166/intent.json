@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-166",
+  "summary": "context: prompt token budget gating, cache exclusions, and target AST slicing",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-166/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/context.py",
+    "tests/test_llm_context.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5fb5565082ef3838218195d5edaf1d1dbe1cb8da",
+    "targetBranch": "main",
+    "outcome": "Project context assembly enforces deterministic budget ceilings, excludes cache artifacts, and performs focused AST symbol/line slicing on oversized files.",
+    "nonGoals": [
+      "no changes to shell executor or non-llm queues",
+      "no external network dependencies in unit tests"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Filter cache and serialization artifacts from tree/content, reinstate DEFAULT_MAX_CONTEXT_CHARS as fallback ceiling, and extract AST slices for targeted functions when files exceed threshold.",
+      "components": [
+        {
+          "name": "queue/context",
+          "paths": [
+            "src/koru/queue/context.py",
+            "tests/test_llm_context.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m unittest tests/test_llm_context.py"
+        ],
+        "evidence": "all unit tests pass in tests/test_llm_context.py"
+      }
+    ]
+  }
+}

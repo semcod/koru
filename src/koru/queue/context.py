@@ -19,17 +19,21 @@ Security defaults:
 
 from __future__ import annotations
 
+import ast
 import fnmatch
 import logging
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 _logger = logging.getLogger(__name__)
 
-# Compatibility constant for callers that display the former default. Context
-# assembly no longer applies it unless a ticket explicitly supplies a cap.
+# Default maximum context characters applied when a ticket does not specify an explicit limit
 DEFAULT_MAX_CONTEXT_CHARS: int = 32_000
+
+# Files exceeding this size will be sliced when target symbol or line metadata is available
+LARGE_FILE_SLICE_THRESHOLD_CHARS: int = 12_000
 
 # --- Security exclusions (always applied, non-negotiable) -------------------
 
@@ -39,9 +43,10 @@ _ALWAYS_EXCLUDED_NAMES: frozenset[str] = frozenset(
         ".env",
         "secrets",
         "credentials",
-        # VCS
+        # VCS & worktrees
         ".git",
-        # Generated / binary / large dependency trees
+        ".worktrees",
+        # Generated / binary / large dependency trees / internal caches
         "node_modules",
         "vendor",
         "__pycache__",
@@ -50,6 +55,12 @@ _ALWAYS_EXCLUDED_NAMES: frozenset[str] = frozenset(
         "dist",
         "build",
         ".eggs",
+        ".code2llm_cache",
+        ".dirac-symbol-index",
+        ".koru",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
         # IDE / OS
         ".DS_Store",
     }
@@ -79,10 +90,13 @@ _ALWAYS_EXCLUDED_SUFFIXES: tuple[str, ...] = (
     ".tar",
     ".gz",
     ".bz2",
-    # Databases / dumps
+    # Databases / dumps / caches
     ".sqlite",
     ".db",
     ".sql",
+    ".pkl",
+    ".pickle",
+    ".parquet",
     # Media
     ".png",
     ".jpg",
@@ -104,6 +118,7 @@ _ALWAYS_EXCLUDED_GLOB_PATTERNS: tuple[str, ...] = (
     "secrets/**",
     "credentials/**",
     ".git/**",
+    ".worktrees/**",
     "node_modules/**",
     "vendor/**",
     "__pycache__/**",
@@ -114,6 +129,15 @@ _ALWAYS_EXCLUDED_GLOB_PATTERNS: tuple[str, ...] = (
     "build/**",
     ".eggs/**",
     "*.egg-info/**",
+    ".code2llm_cache/**",
+    ".dirac-symbol-index/**",
+    ".koru/**",
+    ".pytest_cache/**",
+    ".mypy_cache/**",
+    ".ruff_cache/**",
+    "*.pkl",
+    "*.pickle",
+    "*.parquet",
     ".coverage",
     "coverage.xml",
     "*.log",
@@ -308,10 +332,113 @@ def _context_files_to_include(project: Path, request: dict[str, Any]) -> list[st
     return files_to_include
 
 
+def _resolve_target_symbol_and_line(
+    rel_path: str, request: dict[str, Any]
+) -> tuple[str | None, int | None]:
+    """Resolve target symbol name and line number for rel_path from request metadata."""
+    symbol = request.get("target_symbol")
+    line = request.get("target_line")
+    if symbol is not None or line is not None:
+        return (str(symbol) if symbol else None, int(line) if line is not None else None)
+
+    # Inspect prompt and ticket_description for code smell / location markers
+    text_corpus = " ".join(
+        [
+            str(request.get("prompt") or ""),
+            str(request.get("ticket_description") or ""),
+        ]
+    )
+    if not text_corpus:
+        return None, None
+
+    filename = Path(rel_path).name
+    # Match path:line, e.g. vdisplay_client.py:2442 or src/foo.py:123
+    line_pattern = rf"(?:[\w./\-]+/)?{re.escape(filename)}:(\d+)"
+    m_line = re.search(line_pattern, text_corpus)
+    if m_line and line is None:
+        try:
+            line = int(m_line.group(1))
+        except ValueError:
+            pass
+
+    # Match symbol name in common reports (e.g. God Function: func_name or Function 'func_name')
+    symbol_patterns = (
+        r"`(?:God Function|Feature Envy|Long Method|Shotgun Surgery|Data Clump):\s*([a-zA-Z0-9_]+)`",
+        r"(?:Function|Method|class|function|def)\s+['\"`]?([a-zA-Z0-9_]+)['\"`]?",
+        r"`([a-zA-Z0-9_]+)`\s+with\s+CC=",
+    )
+    for pat in symbol_patterns:
+        m_sym = re.search(pat, text_corpus)
+        if m_sym and symbol is None:
+            candidate = m_sym.group(1).strip()
+            if candidate and not candidate.isdigit() and len(candidate) > 1:
+                symbol = candidate
+                break
+
+    return (str(symbol) if symbol else None, int(line) if line is not None else None)
+
+
+def _extract_python_symbol_slice(
+    content: str, symbol_name: str, context_lines: int = 15
+) -> tuple[str, int, int] | None:
+    """Extract a focused AST slice around symbol_name in Python code."""
+    try:
+        tree = ast.parse(content)
+    except SyntaxError:
+        return None
+
+    lines = content.splitlines()
+    import_lines: list[str] = []
+    # Collect top-level imports to preserve module context
+    for node in tree.body:
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            end = getattr(node, "end_lineno", node.lineno)
+            import_lines.extend(lines[node.lineno - 1 : end])
+        elif not isinstance(node, ast.Expr):
+            # Stop collecting imports once definition bodies start
+            if len(import_lines) >= 20:
+                break
+
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            if node.name == symbol_name:
+                start = max(1, node.lineno - context_lines)
+                end = min(len(lines), getattr(node, "end_lineno", node.lineno) + context_lines)
+                header_parts = []
+                if import_lines:
+                    header_parts.append("\n".join(import_lines[:30]))
+                header_parts.append(
+                    f"# ... [focused AST slice for '{symbol_name}': lines {start}-{end} of {len(lines)}] ..."
+                )
+                body = "\n".join(lines[start - 1 : end])
+                header_parts.append(body)
+                return "\n\n".join(header_parts), start, end
+    return None
+
+
+def _extract_line_slice(
+    content: str, target_line: int, window: int = 80
+) -> tuple[str, int, int]:
+    """Extract a window of lines around target_line."""
+    lines = content.splitlines()
+    start = max(1, target_line - window)
+    end = min(len(lines), target_line + window)
+    header = f"# ... [focused slice around line {target_line}: lines {start}-{end} of {len(lines)}] ..."
+    body = "\n".join(lines[start - 1 : end])
+    return f"{header}\n\n{body}", start, end
+
+
 def _context_file_sections(
-    project: Path, files_to_include: list[str]
+    project: Path,
+    files_to_include: list[str],
+    request: dict[str, Any] | None = None,
 ) -> tuple[list[str], list[str]]:
-    """Return ``(markdown_sections, included_files)`` for readable files."""
+    """Return ``(markdown_sections, included_files)`` for readable files.
+
+    When a file exceeds ``LARGE_FILE_SLICE_THRESHOLD_CHARS`` and target symbol
+    or line metadata is present, a focused slice is generated instead of dumping
+    the entire file.
+    """
     sections: list[str] = []
     included_files: list[str] = []
     for rel in files_to_include:
@@ -319,7 +446,25 @@ def _context_file_sections(
         if content is None:
             continue
         lang = Path(rel).suffix.lstrip(".")
-        sections.append(f"## {rel}\n\n```{lang}\n{content}\n```")
+        slice_info = None
+
+        if request and len(content) > LARGE_FILE_SLICE_THRESHOLD_CHARS:
+            target_symbol, target_line = _resolve_target_symbol_and_line(rel, request)
+            if target_symbol and lang == "py":
+                ast_res = _extract_python_symbol_slice(content, target_symbol)
+                if ast_res:
+                    sliced_content, start_l, end_l = ast_res
+                    content = sliced_content
+                    slice_info = f"focused slice for '{target_symbol}', lines {start_l}-{end_l}"
+            elif target_line is not None:
+                sliced_content, start_l, end_l = _extract_line_slice(content, target_line)
+                content = sliced_content
+                slice_info = f"focused slice around line {target_line}, lines {start_l}-{end_l}"
+
+        header = f"## {rel}"
+        if slice_info:
+            header += f" ({slice_info})"
+        sections.append(f"{header}\n\n```{lang}\n{content}\n```")
         included_files.append(rel)
     return sections, included_files
 
@@ -355,7 +500,7 @@ def build_project_context(
     sections: list[str] = []
 
     file_sections, included_files = _context_file_sections(
-        project, _context_files_to_include(project, request)
+        project, _context_files_to_include(project, request), request=request
     )
     sections.extend(file_sections)
 
@@ -371,13 +516,17 @@ def build_project_context(
     full_text = "\n\n".join(sections)
     max_chars = request.get("max_context_chars")
     if max_chars is None:
-        truncated, total_chars = False, 0
-    else:
+        max_chars = DEFAULT_MAX_CONTEXT_CHARS
+
+    if int(max_chars) > 0:
         full_text, truncated, total_chars = _truncate_context_text(
             full_text, int(max_chars)
         )
+    else:
+        truncated, total_chars = False, 0
+
     visible_files = [
-        rel for rel in included_files if f"## {rel}\n" in full_text
+        rel for rel in included_files if f"## {rel}" in full_text
     ]
     return ContextResult(
         text=full_text,
