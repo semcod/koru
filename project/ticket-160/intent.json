@@ -1,0 +1,91 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-160",
+  "summary": "Lazy-import heavy CLI subcommand modules to fix slow --help/--version",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-160/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli.py",
+    "src/koru/cli/__init__.py",
+    "tests/test_cli.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a104676a14fbf92dd03c671497802169066cc484",
+    "targetBranch": "main",
+    "outcome": "`koru --help`/`koru --version` (and every other subcommand not actually invoked) no longer eagerly import koru.autonomous, koru.cli_auto, koru.cli_scan, koru.git_cli, koru.autopilot.cli_command, koru.autoloop_cli or koru.cli_ide_router at module-import time. `import koru.cli` drops from ~0.6s to ~0.3s, removing the dashboard/MCP/nlp2uri cost chain from trivial CLI calls, which was causing WUP's 5s (now 15s) quick-probe timeout to flake under load.",
+    "nonGoals": [
+      "no change to subcommand behavior or output",
+      "no change to the mock.patch(\"koru._legacy_cli_impl.autonomous_main\", ...) test contract",
+      "no resolution of the underlying koru-shell TestQL flakiness itself (WUP/STARTER-667), only the root-cause import cost it exposed"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Route scan/git/autopilot/autoloop/dev through the existing _lazy_module_main pattern already used by most subcommands. Turn autonomous_main and stop_prior_autonomous_for_auto_start into thin wrapper functions that import koru.autonomous only when called, preserving mock.patch(\"koru._legacy_cli_impl.autonomous_main\", ...) since the attribute still exists at import time. In the koru.cli package compat shim, replace the eager `from koru.cli_ide_router import ide_router_main` and `from koru.cli_auto import _auto_main` with a module __getattr__ that imports on first access.",
+      "components": [
+        {
+          "name": "cli-entry",
+          "paths": [
+            "src/koru/cli.py",
+            "src/koru/cli/__init__.py",
+            "tests/test_cli.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_cli.py -q"
+        ],
+        "evidence": "existing autonomous/auto dispatch tests and mock.patch targets on koru._legacy_cli_impl keep passing"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest tests/test_ide_router.py tests/test_agent_backends_cli.py tests/test_autonomous.py -q"
+        ],
+        "evidence": "ide_router_main/_auto_main stay importable from koru.cli and behave identically"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -c \"import time; t0=time.monotonic(); import koru.cli; print(time.monotonic()-t0)\""
+        ],
+        "evidence": "import koru.cli drops from ~0.6s to ~0.3s; koru.autonomous/cli_ide_router/cli_auto/cli_scan/git_cli/autopilot.cli_command/autoloop_cli absent from -X importtime output for `koru --version`"
+      }
+    ]
+  }
+}
