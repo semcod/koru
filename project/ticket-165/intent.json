@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-165",
+  "summary": "terminals: dynamic provider failover without server restart",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-165/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_supervisor.py",
+    "src/koruapi/opencode_terminals.py",
+    "tests/test_dashboard_terminals.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6d7480ae13ec73a1dac84d16aba4ccdfc3862b14",
+    "targetBranch": "main",
+    "outcome": "OpenCode terminals and supervisor dynamically switch to unexhausted providers (e.g. deepseek/deepseek-v4-pro when zai hits 5-hour quota) without restarting opencode serve instances.",
+    "nonGoals": [
+      "no changes to dashboard html template",
+      "no external network requests during unit tests"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Track provider exhaustion per URL/provider with TTL; resolve_active_terminal_model picks unexhausted provider from GET /config catalog; supervisor auto-detects stream errors and re-prompts with fallback model",
+      "components": [
+        {
+          "name": "dashboard/terminals",
+          "paths": [
+            "src/koruapi/opencode_terminals.py",
+            "src/koruapi/opencode_supervisor.py",
+            "tests/test_dashboard_terminals.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_dashboard_terminals.py -q"
+        ],
+        "evidence": "failover functions and supervisor steering pass all unit tests"
+      }
+    ]
+  }
+}

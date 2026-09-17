@@ -26,14 +26,19 @@ from typing import Any, Callable
 
 from koruapi.opencode_terminals import (
     discover_instances,
+    list_sessions,
     pending_requests,
     reply_permission,
     reply_question,
+    resolve_active_terminal_model,
+    scan_opencode_log_for_exhaustion,
+    send_prompt,
 )
 
 DEFAULT_INTERVAL = 3.0
 
 LogFn = Callable[[str], None]
+_steered_sessions: dict[str, float] = {}
 
 
 def _default_log(message: str) -> None:
@@ -134,7 +139,24 @@ def _question_answers_via_llm(
 
 def supervise_once(project: Path, *, log: LogFn = _default_log) -> dict[str, int]:
     """One supervisor pass over every auto-answer instance. Returns counts."""
-    stats = {"permissions": 0, "questions": 0, "errors": 0, "instances": 0}
+    stats = {
+        "permissions": 0,
+        "questions": 0,
+        "failovers": 0,
+        "errors": 0,
+        "instances": 0,
+    }
+    log_events = scan_opencode_log_for_exhaustion()
+    for ev in log_events:
+        log(f"provider {ev['providerID']} exhausted: {ev['error'][:80]}")
+
+    now = time.time()
+    if len(_steered_sessions) > 500:
+        cutoff = now - 3600.0
+        for sid, t in list(_steered_sessions.items()):
+            if t < cutoff:
+                del _steered_sessions[sid]
+
     for entry in discover_instances(project):
         if not entry.get("auto_answer"):
             continue
@@ -142,6 +164,46 @@ def supervise_once(project: Path, *, log: LogFn = _default_log) -> dict[str, int
         if not url or not entry.get("healthy"):
             continue
         stats["instances"] += 1
+
+        if log_events:
+            try:
+                active_sessions = {
+                    str(s.get("id")): s
+                    for s in list_sessions(url)
+                    if isinstance(s, dict) and s.get("id")
+                }
+            except Exception:
+                active_sessions = {}
+
+            for ev in log_events:
+                sid = ev.get("sessionID")
+                failing_pid = ev.get("providerID")
+                if not sid or not failing_pid or sid not in active_sessions:
+                    continue
+                last_steered = _steered_sessions.get(sid, 0.0)
+                if now - last_steered < 120.0:
+                    continue
+                fallback_model, _ = resolve_active_terminal_model(url)
+                if (
+                    fallback_model
+                    and fallback_model.get("providerID") != failing_pid
+                ):
+                    try:
+                        steer_text = (
+                            f"Supervisor failover: provider '{failing_pid}' exhausted. "
+                            f"Continuing autonomous execution with {fallback_model['providerID']}/{fallback_model['modelID']}."
+                        )
+                        send_prompt(url, sid, steer_text, model=fallback_model)
+                        _steered_sessions[sid] = now
+                        stats["failovers"] += 1
+                        log(
+                            f"{url}: session {sid} auto-steered to fallback "
+                            f"{fallback_model['providerID']}/{fallback_model['modelID']}"
+                        )
+                    except Exception as exc:
+                        stats["errors"] += 1
+                        log(f"{url}: failover steering failed for {sid}: {exc}")
+
         try:
             pending = pending_requests(url)
         except Exception as exc:
