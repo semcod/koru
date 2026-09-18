@@ -94,6 +94,15 @@ def validate_source_registry_snapshot(document: Mapping[str, Any]) -> dict[str, 
     if valid_until <= created_at:
         raise PlanningError("source snapshot validity interval is not increasing")
 
+    resolutions, sources, sources_by_need = _validate_snapshot_resolutions(snapshot)
+    evidence_by_role = _validate_snapshot_evidence(snapshot, sources)
+    _validate_snapshot_candidates(snapshot, resolutions, sources, sources_by_need, evidence_by_role)
+    return snapshot
+
+
+def _validate_snapshot_resolutions(
+    snapshot: Mapping[str, Any],
+) -> tuple[dict[str, Mapping[str, Any]], dict[str, Mapping[str, Any]], dict[str, set[str]]]:
     resolutions: dict[str, Mapping[str, Any]] = {}
     sources: dict[str, Mapping[str, Any]] = {}
     sources_by_need: dict[str, set[str]] = {}
@@ -118,7 +127,12 @@ def validate_source_registry_snapshot(document: Mapping[str, Any]) -> dict[str, 
             if existing is not None and canonical_json(existing) != canonical_json(row):
                 raise PlanningError("Subactor Config source differs between resolution responses")
             sources[row["id"]] = row
+    return resolutions, sources, sources_by_need
 
+
+def _validate_snapshot_evidence(
+    snapshot: Mapping[str, Any], sources: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Mapping[str, Any]]:
     evidence_by_role: dict[str, Mapping[str, Any]] = {}
     for item in snapshot["evidence"]:
         role = item["role"]
@@ -133,7 +147,16 @@ def validate_source_registry_snapshot(document: Mapping[str, Any]) -> dict[str, 
             raise PlanningError(f"{role} evidence is not bound to its discovered source kind")
         if source["availability"]["state"] != "ready":
             raise PlanningError(f"{role} evidence source is not ready")
+    return evidence_by_role
 
+
+def _validate_snapshot_candidates(
+    snapshot: Mapping[str, Any],
+    resolutions: Mapping[str, Any],
+    sources: Mapping[str, Mapping[str, Any]],
+    sources_by_need: Mapping[str, set[str]],
+    evidence_by_role: Mapping[str, Mapping[str, Any]],
+) -> None:
     required_source_ids = {item["sourceId"] for item in evidence_by_role.values()}
     binding_ids: set[str] = set()
     for candidate in snapshot["candidates"]:
@@ -152,7 +175,6 @@ def validate_source_registry_snapshot(document: Mapping[str, Any]) -> dict[str, 
         if binding_id in binding_ids:
             raise PlanningError("source snapshot contains duplicate binding IDs")
         binding_ids.add(binding_id)
-    return snapshot
 
 
 def policy_input_hash(
@@ -181,6 +203,15 @@ def validate_policy_decision(document: Mapping[str, Any]) -> dict[str, Any]:
         raise PlanningError("policy decision must be an object")
     decision = deepcopy(dict(document))
     reject_secret_material(decision)
+    _validate_decision_shape(decision)
+    if decision.get("decision") not in {"admit-plan", "deny-plan"}:
+        raise PlanningError("policy decision verdict is invalid")
+    if decision.get("authority") != "evidence-only" or decision.get("executionAuthorityGranted") is not False:
+        raise PlanningError("policy decision attempts to grant execution authority")
+    return decision
+
+
+def _validate_decision_shape(decision: dict[str, Any]) -> None:
     if set(decision) != _POLICY_FIELDS:
         raise PlanningError("policy decision fields do not match the closed input contract")
     if decision.get("schema") != "koru.poa/policy-decision-input/v1":
@@ -198,11 +229,6 @@ def validate_policy_decision(document: Mapping[str, Any]) -> dict[str, Any]:
     decision_payload = {key: value for key, value in decision.items() if key != "decisionSha256"}
     if sha256_json(decision_payload) != decision["decisionSha256"]:
         raise PlanningError("policy decision digest differs from canonical bytes")
-    if decision.get("decision") not in {"admit-plan", "deny-plan"}:
-        raise PlanningError("policy decision verdict is invalid")
-    if decision.get("authority") != "evidence-only" or decision.get("executionAuthorityGranted") is not False:
-        raise PlanningError("policy decision attempts to grant execution authority")
-    return decision
 
 
 def compile_inert_plan(

@@ -1,0 +1,84 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-170",
+  "summary": "reduce CC: profile load, source snapshot, verify inference",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-170/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/poa/planning.py",
+    "src/koru/queue/todo2code_gate.py",
+    "src/koru/ticket_command/profile.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b3d54870fb1a35d06d39da39da71b8788879985b",
+    "targetBranch": "main",
+    "outcome": "Six functions over the CC=15 limit are decomposed into helpers without behavior change: validate_source_registry_snapshot (30), load_profile (26), infer_project_verify_commands (25), run_todo2code_gate (21), resolve_project_verify_commands (17), validate_policy_decision (17).",
+    "nonGoals": [
+      "Change behavior or public API.",
+      "Refactor unrelated functions.",
+      "Add runtime dependencies."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract pure helpers per function: _validate_snapshot_resolutions/_validate_snapshot_evidence/_validate_snapshot_candidates/_validate_decision_shape (poa/planning), _profile_root/_validate_profile_delivery/_validate_validator_pin (ticket_command/profile), _verify_from_koru_yaml/_verify_from_package_json/_verify_toolchain_fallback/_compose_wrapped_commands/_run_verify_commands/_gate_findings/_diagnostics_cleared (queue/todo2code_gate). Messages and decision order preserved.",
+      "components": [
+        {
+          "name": "poa-planning",
+          "paths": [
+            "src/koru/poa/planning.py"
+          ]
+        },
+        {
+          "name": "ticket-gates",
+          "paths": [
+            "src/koru/ticket_command/profile.py",
+            "src/koru/queue/todo2code_gate.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; helpers inline back into the six functions."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "lizard src/koru/queue/todo2code_gate.py src/koru/poa/planning.py src/koru/ticket_command/profile.py",
+          "python3 -m pytest tests/test_poa_contracts.py tests/test_todo2code_autonomous_gate.py tests/test_queue_verify_profiles.py tests/test_environment_profile.py tests/test_todo2code_discovery.py -x -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "No function >15 in touched files; existing tests pass unchanged; governance gate passes."
+      }
+    ]
+  }
+}

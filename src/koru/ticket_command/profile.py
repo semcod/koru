@@ -78,6 +78,19 @@ def load_profile(url: str, path: Path) -> dict:
     if not isinstance(spec, dict):
         raise ValueError(f"no local execution profile for {repository}")
     spec = dict(spec)
+    root = _profile_root(spec, path, repository)
+    _validate_profile_delivery(spec, repository, root)
+    return {
+        **spec,
+        "primary": root,
+        "repository": repository,
+        "number": number,
+        "url": url,
+        "profile_sha256": hashlib.sha256(raw).hexdigest(),
+    }
+
+
+def _profile_root(spec: dict, path: Path, repository: str) -> Path:
     root = Path(spec["primary"]).expanduser().absolute()
     no_symlinks(root)
     if path.absolute().is_relative_to(root):
@@ -93,6 +106,10 @@ def load_profile(url: str, path: Path) -> dict:
         f"https://github.com/{repository}",
     }:
         raise ValueError("origin does not match the requested repository")
+    return root
+
+
+def _validate_profile_delivery(spec: dict, repository: str, root: Path) -> None:
     mode = spec.get("delivery")
     if mode not in {"main-only", "validator"}:
         raise ValueError("profile must declare main-only or validator delivery")
@@ -104,24 +121,20 @@ def load_profile(url: str, path: Path) -> dict:
         if not isinstance(argv, list) or not argv or any(not isinstance(v, str) or not v for v in argv):
             raise ValueError("verification commands must be nonempty argv arrays")
     if mode == "validator":
-        validator = spec.get("validator", {})
-        launcher = Path(validator.get("launcher", ""))
-        no_symlinks(launcher.absolute())
-        if (
-            launcher.name != "run-local-direct-pr.sh"
-            or not launcher.is_absolute()
-            or not launcher.is_file()
-            or launcher.is_relative_to(root)
-            or hashlib.sha256(launcher.read_bytes()).hexdigest() != validator.get("sha256")
-            or not validator.get("key_file")
-        ):
-            raise ValueError("protected local OneDev/Validator adapter is not pinned outside the repository")
-        validator_environment(validator, root)
-    return {
-        **spec,
-        "primary": root,
-        "repository": repository,
-        "number": number,
-        "url": url,
-        "profile_sha256": hashlib.sha256(raw).hexdigest(),
-    }
+        _validate_validator_pin(spec, root)
+
+
+def _validate_validator_pin(spec: dict, root: Path) -> None:
+    validator = spec.get("validator", {})
+    launcher = Path(validator.get("launcher", ""))
+    no_symlinks(launcher.absolute())
+    if (
+        launcher.name != "run-local-direct-pr.sh"
+        or not launcher.is_absolute()
+        or not launcher.is_file()
+        or launcher.is_relative_to(root)
+        or hashlib.sha256(launcher.read_bytes()).hexdigest() != validator.get("sha256")
+        or not validator.get("key_file")
+    ):
+        raise ValueError("protected local OneDev/Validator adapter is not pinned outside the repository")
+    validator_environment(validator, root)
