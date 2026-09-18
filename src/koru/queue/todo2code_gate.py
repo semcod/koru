@@ -7,39 +7,54 @@ import json
 import shlex
 import subprocess
 import sys
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
 from koru.queue.todo2code_support import build_pipeline_cmd
 
 
 def infer_project_verify_commands(project: Path) -> list[list[str]]:
     """Return all declared completion gates, or one conventional fallback."""
+    for detector in (_verify_from_koru_yaml, _verify_from_package_json):
+        commands = detector(project)
+        if commands:
+            return commands
+    return _verify_toolchain_fallback(project)
+
+
+def _verify_from_koru_yaml(project: Path) -> list[list[str]]:
     koru_yaml = project / "koru.yaml"
-    if koru_yaml.is_file():
-        try:
-            import yaml
+    if not koru_yaml.is_file():
+        return []
+    try:
+        import yaml
 
-            data = yaml.safe_load(koru_yaml.read_text(encoding="utf-8")) or {}
-            commands = (((data.get("when") or {}).get("before_complete_ticket") or {}).get(
-                "commands",
-            ) or [])
-            declared = [str(command).strip() for command in commands if str(command).strip()]
-            if declared:
-                return [["sh", "-lc", command] for command in declared]
-        except (OSError, AttributeError, ValueError):
-            pass
+        data = yaml.safe_load(koru_yaml.read_text(encoding="utf-8")) or {}
+        commands = (((data.get("when") or {}).get("before_complete_ticket") or {}).get(
+            "commands",
+        ) or [])
+    except (OSError, AttributeError, ValueError):
+        return []
+    declared = [str(command).strip() for command in commands if str(command).strip()]
+    return [["sh", "-lc", command] for command in declared]
 
+
+def _verify_from_package_json(project: Path) -> list[list[str]]:
     package_json = project / "package.json"
-    if package_json.is_file():
-        try:
-            scripts = (json.loads(package_json.read_text(encoding="utf-8")) or {}).get("scripts") or {}
-        except (OSError, ValueError, json.JSONDecodeError):
-            scripts = {}
-        for name in ("verify", "test"):
-            if str(scripts.get(name) or "").strip():
-                return [["npm", "run", name]]
+    if not package_json.is_file():
+        return []
+    try:
+        scripts = (json.loads(package_json.read_text(encoding="utf-8")) or {}).get("scripts") or {}
+    except (OSError, ValueError, json.JSONDecodeError):
+        scripts = {}
+    for name in ("verify", "test"):
+        if str(scripts.get(name) or "").strip():
+            return [["npm", "run", name]]
+    return []
 
+
+def _verify_toolchain_fallback(project: Path) -> list[list[str]]:
     if (project / "pyproject.toml").is_file() or (project / "pytest.ini").is_file():
         if (project / "tests").is_dir():
             return [[sys.executable, "-m", "pytest", "-q"]]
@@ -106,6 +121,12 @@ def resolve_project_verify_commands(project: Path) -> tuple[list[list[str]], str
     config, error = _docker_verification(project)
     if error:
         return [], error
+    return _compose_wrapped_commands(project, config, commands, compose)
+
+
+def _compose_wrapped_commands(
+    project: Path, config: Mapping[str, Any], commands: list[list[str]], compose: Path,
+) -> tuple[list[list[str]], str | None]:
     declared = config.get("commands") if isinstance(config.get("commands"), list) else []
     container_commands = [
         ["sh", "-lc", str(command).strip()]
@@ -161,14 +182,9 @@ def run_todo2code_gate(
     if verify_error:
         return False, verify_error
 
-    for verify in verify_commands:
-        tested = _run(verify, project)
-        if tested.returncode != 0:
-            detail = (tested.stderr or tested.stdout or "project verify failed").strip()
-            return False, (
-                f"project verify failed ({tested.returncode}) for "
-                f"{shlex.join(verify)}: {detail[-4000:]}"
-            )
+    verify_failure = _run_verify_commands(verify_commands, project)
+    if verify_failure:
+        return False, verify_failure
 
     output = project / ".intent-koru-gate"
     analysed = _run(build_pipeline_cmd(t2c, project, out_dir=output), project)
@@ -176,14 +192,17 @@ def run_todo2code_gate(
         detail = (analysed.stderr or analysed.stdout or "todo2code pipeline failed").strip()
         return False, f"todo2code pipeline failed ({analysed.returncode}): {detail[-4000:]}"
 
-    try:
-        latest = json.loads((output / "latest.json").read_text(encoding="utf-8"))
-        run_directory = project / str(latest["runDirectory"])
-        diagnostics = json.loads((run_directory / "diagnostics.json").read_text(encoding="utf-8"))
-        findings = [item for item in diagnostics.get("diagnostics", []) if isinstance(item, dict)]
-    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
-        return False, f"todo2code gate artifacts are unreadable: {exc}"
+    findings, findings_error = _gate_findings(output, project)
+    if findings_error:
+        return False, findings_error
 
+    findings_failure = _diagnostics_cleared(findings, diagnostic_ids)
+    if findings_failure:
+        return False, findings_failure
+    return True, "project tests passed and target todo2code diagnostics cleared"
+
+
+def _diagnostics_cleared(findings: list[dict], diagnostic_ids: Sequence[str]) -> str | None:
     expected = {value for value in diagnostic_ids if value}
     remaining = sorted(
         str(item.get("id")) for item in findings if str(item.get("id") or "") in expected
@@ -192,10 +211,33 @@ def run_todo2code_gate(
         str(item.get("id")) for item in findings if item.get("severity") == "blocking"
     )
     if remaining:
-        return False, f"target diagnostics still open: {', '.join(remaining)}"
+        return f"target diagnostics still open: {', '.join(remaining)}"
     if blocking:
-        return False, f"blocking diagnostics present after patch: {', '.join(blocking)}"
-    return True, "project tests passed and target todo2code diagnostics cleared"
+        return f"blocking diagnostics present after patch: {', '.join(blocking)}"
+    return None
+
+
+def _run_verify_commands(verify_commands: list[list[str]], project: Path) -> str | None:
+    for verify in verify_commands:
+        tested = _run(verify, project)
+        if tested.returncode != 0:
+            detail = (tested.stderr or tested.stdout or "project verify failed").strip()
+            return (
+                f"project verify failed ({tested.returncode}) for "
+                f"{shlex.join(verify)}: {detail[-4000:]}"
+            )
+    return None
+
+
+def _gate_findings(output: Path, project: Path) -> tuple[list[dict] | None, str | None]:
+    try:
+        latest = json.loads((output / "latest.json").read_text(encoding="utf-8"))
+        run_directory = project / str(latest["runDirectory"])
+        diagnostics = json.loads((run_directory / "diagnostics.json").read_text(encoding="utf-8"))
+        findings = [item for item in diagnostics.get("diagnostics", []) if isinstance(item, dict)]
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        return None, f"todo2code gate artifacts are unreadable: {exc}"
+    return findings, None
 
 
 def main(argv: Sequence[str] | None = None) -> int:
