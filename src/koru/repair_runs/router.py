@@ -69,25 +69,29 @@ def load_model_registry(project: Path) -> tuple[ModelSpec, ...]:
         return ()
     specs = []
     for entry in entries:
-        if not isinstance(entry, dict):
-            continue
-        model = str(entry.get("model") or "").strip()
-        if not model:
-            continue
-        try:
-            max_attempts = max(1, int(entry.get("max_attempts") or 1))
-        except (TypeError, ValueError):
-            max_attempts = 1
-        specs.append(
-            ModelSpec(
-                id=str(entry.get("id") or model),
-                model=model,
-                provider=str(entry.get("provider") or "openrouter"),
-                capabilities=tuple(str(c) for c in (entry.get("capabilities") or [])),
-                max_attempts=max_attempts,
-            ),
-        )
+        spec = _model_spec_from_entry(entry)
+        if spec is not None:
+            specs.append(spec)
     return tuple(specs)
+
+
+def _model_spec_from_entry(entry: object) -> ModelSpec | None:
+    if not isinstance(entry, dict):
+        return None
+    model = str(entry.get("model") or "").strip()
+    if not model:
+        return None
+    try:
+        max_attempts = max(1, int(entry.get("max_attempts") or 1))
+    except (TypeError, ValueError):
+        max_attempts = 1
+    return ModelSpec(
+        id=str(entry.get("id") or model),
+        model=model,
+        provider=str(entry.get("provider") or "openrouter"),
+        capabilities=tuple(str(c) for c in (entry.get("capabilities") or [])),
+        max_attempts=max_attempts,
+    )
 
 
 def classify_invocation(result) -> str | None:

@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-169",
+  "summary": "reduce CC: scan mirrors, model router, ticket hygiene",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-169/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/ticket_hygiene.py",
+    "src/koru/repair_runs/model_router.py",
+    "src/koru/repair_runs/router.py",
+    "src/koru/scan.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3f5ca4259feca904a51dcc47d274d92c97316ea2",
+    "targetBranch": "main",
+    "outcome": "Four functions over the CC=15 limit are decomposed into helpers without behavior change: _layers_dup_modules_are_extern_mirrors (16), load_model_registry (16), route (17), run_ticket_hygiene (17). STARTER-678/684/686/687 satisfied.",
+    "nonGoals": [
+      "Change behavior or public API.",
+      "Refactor unrelated functions.",
+      "Add runtime dependencies."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 40,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract pure helpers per function: _layers_dup_module_roots (scan), _model_spec_from_entry (router), _switch_or_exhaust (model_router), _is_todo2code_ticket/_junk_archive_reason/_stale_archive_reason (ticket_hygiene). Call sites keep identical semantics and messages.",
+      "components": [
+        {
+          "name": "scan-and-hygiene",
+          "paths": [
+            "src/koru/scan.py",
+            "src/koru/autonomy/ticket_hygiene.py"
+          ]
+        },
+        {
+          "name": "repair-runs-routing",
+          "paths": [
+            "src/koru/repair_runs/router.py",
+            "src/koru/repair_runs/model_router.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; helpers inline back into the four functions."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "lizard src/koru/scan.py src/koru/repair_runs/router.py src/koru/repair_runs/model_router.py src/koru/autonomy/ticket_hygiene.py",
+          "python3 -m pytest tests/test_repair_model_router.py tests/test_repair_router.py tests/test_ticket_hygiene.py tests/test_scan.py tests/test_scan_split.py -x -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "All four functions at CC<=15; existing tests pass unchanged; governance gate passes."
+      }
+    ]
+  }
+}

@@ -833,13 +833,8 @@ _TOON_LAYER_DUP_MODULE_RE = re.compile(
 )
 
 
-def _layers_dup_modules_are_extern_mirrors(text: str) -> bool | None:
-    """Inspect LAYERS ``×DUP`` rows.
-
-    Returns ``True`` when every ×DUP-marked module appears under both an
-    ``extern/`` layer root and a non-extern root (vendored mirror). Returns
-    ``None`` when the text has no module-level ×DUP markers.
-    """
+def _layers_dup_module_roots(text: str) -> dict[str, set[str]]:
+    """Collect ``module -> {layer roots}`` for every ×DUP row in LAYERS."""
     current_root: str | None = None
     module_roots: dict[str, set[str]] = {}
     in_layers = False
@@ -861,6 +856,17 @@ def _layers_dup_modules_are_extern_mirrors(text: str) -> bool | None:
         mod_m = _TOON_LAYER_DUP_MODULE_RE.match(line)
         if mod_m and current_root:
             module_roots.setdefault(mod_m.group("module"), set()).add(current_root)
+    return module_roots
+
+
+def _layers_dup_modules_are_extern_mirrors(text: str) -> bool | None:
+    """Inspect LAYERS ``×DUP`` rows.
+
+    Returns ``True`` when every ×DUP-marked module appears under both an
+    ``extern/`` layer root and a non-extern root (vendored mirror). Returns
+    ``None`` when the text has no module-level ×DUP markers.
+    """
+    module_roots = _layers_dup_module_roots(text)
     if not module_roots:
         return None
     for roots in module_roots.values():
@@ -1746,7 +1752,6 @@ def _todo2code_plan_suggestion(
     priority = priority_map.get(str(plan.get("priority") or "").upper(), "normal")
     if priority not in {"high", "normal", "low"}:
         priority = "normal"
-    evidence = plan.get("evidence") if isinstance(plan.get("evidence"), dict) else {}
     return Suggestion(
         signal="todo2code_plan", title=f"[todo2code] {title}",
         description=(
@@ -1755,12 +1760,22 @@ def _todo2code_plan_suggestion(
         ),
         priority=priority, labels=("todo2code", "code-change", "scan", "useful-code-change"),
         files=tuple(paths[:12]),
-        source_context={"signal": "todo2code_code_change_plan", "dedupe_key": dedupe_key(plan),
-                        "plan_id": str(plan.get("id") or "").strip() or None,
-                        "plan_hash": str(plan.get("planHash") or "").strip() or None,
-                        "source_tool": source,
-                        "diagnostic_ids": [str(v) for v in (evidence.get("diagnosticIds") or []) if str(v).strip()]},
+        source_context=_todo2code_source_context(plan, dedupe_key=dedupe_key, source=source),
     )
+
+
+def _todo2code_source_context(
+    plan: dict[str, Any], *, dedupe_key: Callable[[dict[str, Any]], str], source: str,
+) -> dict[str, Any]:
+    evidence = plan.get("evidence") if isinstance(plan.get("evidence"), dict) else {}
+    return {
+        "signal": "todo2code_code_change_plan",
+        "dedupe_key": dedupe_key(plan),
+        "plan_id": str(plan.get("id") or "").strip() or None,
+        "plan_hash": str(plan.get("planHash") or "").strip() or None,
+        "source_tool": source,
+        "diagnostic_ids": [str(v) for v in (evidence.get("diagnosticIds") or []) if str(v).strip()],
+    }
 
 
 def _scan_todo2code_plans(project: Path) -> list[Suggestion]:
