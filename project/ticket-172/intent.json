@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-172",
+  "summary": "Repair manifest lock target-set integrity before adopting Wellmanifest new-project 0.20.33",
+  "workstream": "integration",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-172/**",
+    "project/TICKETS.md",
+    ".governance/manifest.lock.json"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [
+    "ticket-173"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6b65c7f23a162f7be9077197500160ecb6a8dddc",
+    "targetBranch": "main",
+    "outcome": "Restore the adoption lock's managed target set so it equals the package manifest's managed strategies, removing the hand-added extendable .governance/manifest.json pin that blocks the verified 0.20.33 standard adoption proof.",
+    "nonGoals": [
+      "No standard version change in this slice",
+      "No managed-file content changes",
+      "No .gitignore changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Remove exactly the hand-added .governance/manifest.json entry from .governance/manifest.lock.json so the lock's target set matches the package manifest's managed strategies; all remaining digests stay unchanged.",
+      "components": [
+        {
+          "name": "governance-adoption-lock",
+          "paths": [
+            ".governance/manifest.lock.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the lock repair commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh",
+          "git diff --check"
+        ],
+        "evidence": "Governance gate passes and the lock target set equals the package manifest managed strategies."
+      }
+    ]
+  }
+}
