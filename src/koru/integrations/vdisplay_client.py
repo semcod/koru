@@ -1630,12 +1630,14 @@ def _photo_vql_refresh_screenshot(src: str, png: Path, ide: str) -> dict[str, An
     return None
 
 
-def _photo_vql_reload_sidecar_meta(vql: Path) -> tuple[dict[str, Any], list, int]:
-    """(meta, elements, main_layer_count) freshly loaded from the VQL sidecar."""
+def _photo_vql_reload_sidecar_meta(vql: Path) -> dict[str, Any]:
+    """Fresh (meta, elements, main_layers) context loaded from the VQL sidecar."""
     meta = load_vql_metadata(str(vql), allow_stale=True)
-    elements = meta.get("ui_elements") or meta.get("layers") or []
-    main_layers = _main_vql_layer_count(vql)
-    return meta, elements, main_layers
+    return {
+        "meta": meta,
+        "elements": meta.get("ui_elements") or meta.get("layers") or [],
+        "main_layers": _main_vql_layer_count(vql),
+    }
 
 
 def _photo_vql_observe_when_empty(
@@ -1648,8 +1650,9 @@ def _photo_vql_observe_when_empty(
     meta: dict[str, Any],
     elements: list,
     main_layers: int,
-) -> tuple[dict[str, Any], list, int, dict[str, Any], dict[str, Any] | None]:
-    """Re-observe an empty sidecar; returns (meta, elements, main_layers, observe_subprocess, early_out)."""
+) -> dict[str, Any]:
+    """Re-observe an empty sidecar; returns loaded context with an optional early_out."""
+    loaded = {"meta": meta, "elements": elements, "main_layers": main_layers}
     observe_subprocess = _refresh_vql_sidecar_via_vdisplay_observe(
         png=png,
         vql=vql,
@@ -1657,9 +1660,9 @@ def _photo_vql_observe_when_empty(
         ide=ide,
     )
     if observe_subprocess.get("ok"):
-        meta, elements, main_layers = _photo_vql_reload_sidecar_meta(vql)
+        loaded = _photo_vql_reload_sidecar_meta(vql)
     try:
-        if main_layers == 0:
+        if loaded["main_layers"] == 0:
             _ensure_real_imgl_on_path()
             from vdisplay.integrations.pipeline import observe_screen
 
@@ -1668,22 +1671,22 @@ def _photo_vql_observe_when_empty(
                 capture_meta={"path": str(png.resolve()), "source": src},
                 write_sidecar=True,
             )
-            meta, elements, main_layers = _photo_vql_reload_sidecar_meta(vql)
+            loaded = _photo_vql_reload_sidecar_meta(vql)
     except Exception as exc:
         out = {
             "ok": True,
             "source": src,
             "png": str(png.resolve()),
             "vql": str(vql.resolve()) if vql.is_file() else str(vql),
-            "elements": len(elements),
-            "main_vql_layers": main_layers,
+            "elements": len(loaded["elements"]),
+            "main_vql_layers": loaded["main_layers"],
             "observe_subprocess": observe_subprocess,
             "observe_fallback_error": str(exc),
         }
         if session is not None:
             out["session_dir"] = str(session)
-        return meta, elements, main_layers, observe_subprocess, out
-    return meta, elements, main_layers, observe_subprocess, None
+        return {**loaded, "observe_subprocess": observe_subprocess, "early_out": out}
+    return {**loaded, "observe_subprocess": observe_subprocess, "early_out": None}
 
 
 def _photo_vql_refresh_annotate_observe(
@@ -1733,60 +1736,97 @@ def _photo_vql_refresh_finalize_out(
     return out
 
 
-def refresh_photo_vql_sidecar(*, source: str | None = None, ide: str = "auto") -> dict[str, Any]:
-    """Capture fresh screenshot + VQL sidecar for photo-VQL drive (observe via vdisplay CLI/agent)."""
+def _photo_vql_refresh_context(*, source: str | None, ide: str) -> dict[str, Any]:
+    """Resolve and pin the source/session/png/vql context for a sidecar refresh."""
     src = source or _vdisplay_source_for_ide(ide)
     os.environ["KORU_VDISPLAY_SOURCE"] = src
     session = _autonomy_session.active_session_dir()
     png = _resolve_photo_png_path(src)
-    vql = png.with_suffix(png.suffix + ".vql.json")
     png.parent.mkdir(parents=True, exist_ok=True)
+    return {
+        "src": src,
+        "ide": ide,
+        "session": session,
+        "png": png,
+        "vql": png.with_suffix(png.suffix + ".vql.json"),
+    }
 
+
+def _photo_vql_refresh_observe_if_empty(ctx: dict[str, Any]) -> dict[str, Any] | None:
+    """Re-observe an empty sidecar into the context; returns an early-out result or None."""
+    if ctx["main_layers"] > 0 or not ctx["png"].is_file():
+        return None
+    observed = _photo_vql_observe_when_empty(
+        png=ctx["png"],
+        vql=ctx["vql"],
+        src=ctx["src"],
+        ide=ctx["ide"],
+        session=ctx["session"],
+        meta=ctx["meta"],
+        elements=ctx["elements"],
+        main_layers=ctx["main_layers"],
+    )
+    early_out = observed["early_out"]
+    if early_out is not None:
+        return early_out
+    ctx.update(
+        meta=observed["meta"],
+        elements=observed["elements"],
+        main_layers=observed["main_layers"],
+        observe_subprocess=observed["observe_subprocess"],
+    )
+    return None
+
+
+def _photo_vql_refresh_capture(ctx: dict[str, Any]) -> dict[str, Any] | None:
+    """Dry-run gate + screenshot + sidecar reload; returns an early-out result or None."""
     if _dry_run():
-        return _photo_vql_refresh_dry_run_out(src, png, vql, session)
-
-    capture_error = _photo_vql_refresh_screenshot(src, png, ide)
+        return _photo_vql_refresh_dry_run_out(ctx["src"], ctx["png"], ctx["vql"], ctx["session"])
+    capture_error = _photo_vql_refresh_screenshot(ctx["src"], ctx["png"], ctx["ide"])
     if capture_error is not None:
         return capture_error
+    os.environ["KORU_VDISPLAY_VQL_PATH"] = str(ctx["vql"])
+    loaded = _photo_vql_reload_sidecar_meta(ctx["vql"])
+    loaded["observe_subprocess"] = None
+    ctx.update(loaded)
+    return _photo_vql_refresh_observe_if_empty(ctx)
 
-    os.environ["KORU_VDISPLAY_VQL_PATH"] = str(vql)
-    meta, elements, main_layers = _photo_vql_reload_sidecar_meta(vql)
-    observe_subprocess: dict[str, Any] | None = None
-    if main_layers == 0 and png.is_file():
-        meta, elements, main_layers, observe_subprocess, early_out = _photo_vql_observe_when_empty(
-            png=png,
-            vql=vql,
-            src=src,
-            ide=ide,
-            session=session,
-            meta=meta,
-            elements=elements,
-            main_layers=main_layers,
-        )
-        if early_out is not None:
-            return early_out
 
+def _photo_vql_refresh_stale_out(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Staleness + result fields + observe annotation for the refresh result."""
     stale, freshness = _autonomy_session.vql_sidecar_is_stale(
-        vql,
-        png,
-        ide=ide,
-        layer_count=len(elements),
-        window_mismatch=_photo_vql_ide_window_warning(ide=ide, meta=meta),
-        capture_validation=meta.get("capture_validation"),
+        ctx["vql"],
+        ctx["png"],
+        ide=ctx["ide"],
+        layer_count=len(ctx["elements"]),
+        window_mismatch=_photo_vql_ide_window_warning(ide=ctx["ide"], meta=ctx["meta"]),
+        capture_validation=ctx["meta"].get("capture_validation"),
     )
     out: dict[str, Any] = {
         "ok": True,
-        "source": src,
-        "png": str(png.resolve()) if png.is_file() else str(png),
-        "vql": str(vql.resolve()) if vql.is_file() else str(vql),
-        "elements": len(elements),
-        "main_vql_layers": main_layers,
-        "vql_source": meta.get("_source"),
+        "source": ctx["src"],
+        "png": str(ctx["png"].resolve()) if ctx["png"].is_file() else str(ctx["png"]),
+        "vql": str(ctx["vql"].resolve()) if ctx["vql"].is_file() else str(ctx["vql"]),
+        "elements": len(ctx["elements"]),
+        "main_vql_layers": ctx["main_layers"],
+        "vql_source": ctx["meta"].get("_source"),
         "freshness": freshness,
         "sidecar_stale": stale,
     }
-    _photo_vql_refresh_annotate_observe(out, main_layers, observe_subprocess)
-    return _photo_vql_refresh_finalize_out(out, ide=ide, meta=meta, png=png, vql=vql, session=session)
+    _photo_vql_refresh_annotate_observe(out, ctx["main_layers"], ctx["observe_subprocess"])
+    return out
+
+
+def refresh_photo_vql_sidecar(*, source: str | None = None, ide: str = "auto") -> dict[str, Any]:
+    """Capture fresh screenshot + VQL sidecar for photo-VQL drive (observe via vdisplay CLI/agent)."""
+    ctx = _photo_vql_refresh_context(source=source, ide=ide)
+    early_out = _photo_vql_refresh_capture(ctx)
+    if early_out is not None:
+        return early_out
+    out = _photo_vql_refresh_stale_out(ctx)
+    return _photo_vql_refresh_finalize_out(
+        out, ide=ctx["ide"], meta=ctx["meta"], png=ctx["png"], vql=ctx["vql"], session=ctx["session"]
+    )
 
 
 def _vdisplay_capture_failure_hint(error: str) -> str | None:

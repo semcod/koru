@@ -75,3 +75,34 @@ Call order, kwargs, early-return payloads and the public API are unchanged.
   full `vdisplay or vql` selection passes (175 passed, 4 skipped,
   657 subtests passed).
 - AC-11: `ruff check` clean; `./project/governance-check.sh` GOV-PASS.
+
+## Slice 4: STARTER-586 (2026-09-19)
+
+The same file's refresher `refresh_photo_vql_sidecar` was reported by code2llm
+as `God Function` (CC=9, fan-out=21, mutations=27; planfile ticket
+STARTER-586). Active scope already belongs to this ticket
+(`rejectActiveScopeOverlap`), so the slice continues here.
+
+Split the refresh flow into module phase helpers over a `ctx` context dict:
+`_photo_vql_refresh_context`, `_photo_vql_refresh_capture`,
+`_photo_vql_refresh_observe_if_empty` and `_photo_vql_refresh_stale_out`, with
+the final session/persistence tail still owned by the pre-existing
+`_photo_vql_refresh_finalize_out`. `_photo_vql_reload_sidecar_meta` and
+`_photo_vql_observe_when_empty` now return context dicts instead of tuples
+(single call site each, inside this flow). Resolution order, env pins,
+early-return payloads, kwargs and the public API are unchanged.
+
+- AC-12: `refresh_photo_vql_sidecar` no longer trips the code2llm
+  god-function thresholds (was CC=9/fan-out=21/mutations=27; now
+  CC=2/fan-out=4/mutations=3 measured by an isolated full-config
+  `code2llm.api.analyze` of the module before/after).
+- AC-13: No new code2llm smell entries introduced for this file in the
+  isolated before/after scan (god entries 71 -> 69: the target and the
+  pre-existing `_photo_vql_observe_when_empty` entry disappear, the latter
+  improving from mutations=15 to mutations=6; `_photo_vql_refresh_finalize_out`
+  remains flagged exactly as before this slice).
+- AC-14: tests/test_photo_vql_drive.py, tests/test_photo_vql_orchestrator.py,
+  tests/test_vdisplay_control_fallback.py pass (119 passed, 4 skipped); the
+  full `vdisplay or vql` selection passes (175 passed, 4 skipped,
+  657 subtests passed).
+- AC-15: `ruff check` clean; `./project/governance-check.sh` GOV-PASS.
