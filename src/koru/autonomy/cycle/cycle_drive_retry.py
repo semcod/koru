@@ -576,8 +576,10 @@ def _drive_shell_client(
     *,
     prompt: str,
     project: Path | None,
+    task: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], bool]:
     """Drive a vendor CLI (claude-code, aider, codex, …) headlessly via tillm."""
+    from koru.task_model_policy import drive_with_model_policy
     from koru.tillm_bridge import drive_shell_chat
 
     timeout_seconds: float | None = None
@@ -588,7 +590,8 @@ def _drive_shell_client(
         except ValueError:
             timeout_seconds = None
     try:
-        reply = drive_shell_chat(
+        reply = drive_with_model_policy(
+            drive_shell_chat, task=task,
             client_id=client_id,
             project=project or Path.cwd(),
             prompt=prompt,
@@ -666,12 +669,13 @@ def _invoke_client_autopilot_drive(
     require_plugin: bool,
     strategy_hint: str | None = None,
     project: Path | None = None,
+    task: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], bool]:
     from koru.tillm_bridge import shell_drive_client_id
 
     shell_client = shell_drive_client_id(autopilot_ide)
     if shell_client:
-        reply, ok = _drive_shell_client(shell_client, prompt=prompt, project=project)
+        reply, ok = _drive_shell_client(shell_client, prompt=prompt, project=project, task=task)
         if ok:
             return reply, ok
         rescue = _shell_drive_editor_rescue(
@@ -894,6 +898,7 @@ def _run_drive_retry_loop(
     engine: EnvironmentDecisionEngine,
     strategy_hint: str | None = None,
     project: Path | None = None,
+    task: dict[str, Any] | None = None,
     _hp: Callable[..., Any],
 ) -> tuple[dict[str, Any], bool]:
     previous_signature: str | None = None
@@ -906,6 +911,7 @@ def _run_drive_retry_loop(
             require_plugin=require_plugin,
             strategy_hint=strategy_hint,
             project=project,
+            **({"task": task} if task else {}),
         )
         if ok:
             break
@@ -969,6 +975,14 @@ def _execute_autopilot_drive(
     strategy_hint = consume_pending_submit_strategy_hint(state)
     if strategy_hint:
         _hp(f"  autopilot: submit strategy hint={strategy_hint}")
+    from koru.task_model_policy import load_routing_task
+
+    routing_ticket = _resolve_waiting_ticket_id(queue_result)
+    if not routing_ticket and idle_prompt_kind == "idle_ticket_prompt":
+        routing_ticket = extract_ticket_id_from_text(decision.prompt)
+    from koru.tillm_bridge import shell_drive_client_id
+
+    task = load_routing_task(project, routing_ticket) if shell_drive_client_id(autopilot_ide) else {}
     reply, ok = _run_drive_retry_loop(
         client,
         prompt=decision.prompt,
@@ -979,6 +993,7 @@ def _execute_autopilot_drive(
         engine=engine,
         strategy_hint=strategy_hint,
         project=project,
+        **({"task": task} if task else {}),
         _hp=_hp,
     )
 

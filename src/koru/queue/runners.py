@@ -337,11 +337,14 @@ def run_shell_llm_request(
     Reuses the same tillm bridge as the autopilot drive lane, so the ticket
     executes headlessly against the operator's existing CLI login.
     """
+    from koru.task_model_policy import drive_with_model_policy
     from koru.tillm_bridge import drive_shell_chat
 
     prompt, model, profile, timeout = _resolve_shell_llm_call_args(request)
     try:
-        reply = drive_shell_chat(
+        reply = drive_with_model_policy(
+            drive_shell_chat, task=request.get("task"),
+            explicit_model=str(request.get("model") or ""),
             client_id=client_id,
             project=project,
             prompt=prompt,
@@ -353,7 +356,8 @@ def run_shell_llm_request(
     except Exception as exc:  # noqa: BLE001 - surface any bridge failure as a blocked ticket
         return _shell_llm_error_result(client_id, model, exc)
 
-    return _parse_shell_llm_reply(reply, model, client_id)
+    selected_model = (reply.get("model_routing") or {}).get("requested_model", model)
+    return _parse_shell_llm_reply(reply, selected_model, client_id)
 
 
 def _build_llm_messages(request: dict[str, Any]) -> list[dict[str, str]]:
