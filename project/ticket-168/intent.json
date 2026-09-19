@@ -13,6 +13,8 @@
     "TODO.md",
     "project/TICKETS.md",
     "src/koru/autonomy/execution_lease_watcher.py",
+    "src/koru/cli.py",
+    "src/koru/git_cli.py",
     "src/koru/queue/**",
     "src/koru/queue_cli_helpers.py",
     "src/koruapi/mcp_server_planfile.py",
@@ -28,9 +30,9 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "c361edeaf1491410118c45eddca72e14561b9c13",
+    "acceptedBaseSha": "79143991ef69e5b68b405cd7e89b8dd3463ffd14",
     "targetBranch": "main",
-    "outcome": "Add an authoritative execution-lease coordinator for planfile tickets: heartbeat, deadline, grace-period takeover, and actor/lease audit.",
+    "outcome": "Add safe git token and profile switching CLI commands and lease heartbeat audit.",
     "nonGoals": [
       "Change unrelated modules."
     ],
@@ -38,14 +40,21 @@
     "estimatedMinutes": 60,
     "budgets": {
       "maxImplementationFiles": 10,
-      "maxAffectedComponents": 3,
+      "maxAffectedComponents": 4,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
     },
     "architecture": {
       "status": "accepted",
-      "decision": "koru.queue.lease projects heartbeat/deadline/takeover/release decisions and keeps an append-only audit.",
+      "decision": "koru.queue.lease projects heartbeat/deadline/takeover/release decisions and keeps an append-only audit; git_cli adds credential rotation porcelain.",
       "components": [
+        {
+          "name": "git-cli",
+          "paths": [
+            "src/koru/git_cli.py",
+            "src/koru/cli.py"
+          ]
+        },
         {
           "name": "queue-lease-coordinator",
           "paths": [

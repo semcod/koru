@@ -202,6 +202,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "replay": lambda argv: _lazy_module_main("koru.cli_replay", "replay_main", argv),
     "gc": lambda argv: _lazy_module_main("koru.cli_gc", "gc_main", argv),
     "git": lambda argv: _lazy_module_main("koru.git_cli", "git_main", argv),
+    "github": lambda argv: _lazy_module_main("koru.git_cli", "github_main", argv),
     "tools": lambda argv: _lazy_module_main("koru.cli_tools", "_tools_main", argv),
     "mcp-serve": lambda argv: _lazy_module_main("koruapi.mcp", "mcp_main", argv),
     "ide-router": lambda argv: _lazy_module_main(
@@ -247,6 +248,7 @@ _ALLOWED_WHEN_DISABLED: frozenset[str] = frozenset({
     "events",
     "context",
     "git",
+    "github",
     "gc",
     "scan",
     "gate",
