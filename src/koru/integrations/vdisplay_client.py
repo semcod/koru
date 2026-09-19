@@ -5827,6 +5827,168 @@ def _photo_vql_persist_drive_result(
             pass
 
 
+def _photo_vql_entry_gate_blocker(
+    *, ide: str, source: str, is_code_edit: bool, mismatch: dict[str, Any] | None
+) -> dict | None:
+    """Entry blockers for perform_photo_vql_focus_and_edit: stale metadata, capture mismatch, map-source preflight."""
+    err = _photo_vql_stale_metadata_gate(ide=ide, is_code_edit=is_code_edit)
+    if err is None:
+        err = _photo_vql_capture_mismatch_gate(mismatch=mismatch, ide=ide, is_code_edit=is_code_edit)
+    if err is None:
+        err = _photo_vql_map_source_preflight_gate(ide=ide, source=source, is_code_edit=is_code_edit)
+    return err
+
+
+def _photo_vql_selected_target(
+    *, ide: str, source: str, is_code_edit: bool, image_path: str | None, mismatch: dict[str, Any] | None
+) -> dict[str, Any]:
+    """Select the photo VQL chat/editor target and resolve its mismatch/map-source context."""
+    t = get_vql_editor_target_from_photo() if is_code_edit else get_vql_chat_target_from_photo(ide=ide)
+    target_desc = "editor/open-file" if is_code_edit else "chat"
+    blocked, map_source_mismatch = _photo_vql_target_map_mismatch_gate(
+        t, ide=ide, source=source, is_code_edit=is_code_edit
+    )
+    if blocked is not None:
+        return {"blocked": blocked}
+    return {
+        "blocked": None,
+        "t": t,
+        "target_desc": target_desc,
+        "map_source_mismatch": map_source_mismatch,
+        "mismatch": _photo_vql_maybe_clear_mismatch(t, ide=ide, mismatch=mismatch),
+        "image_path": image_path if image_path is not None else _resolve_photo_png_path_from_vql(source=source),
+        "is_code_edit": is_code_edit,
+    }
+
+
+def _photo_vql_refined_plan(
+    *, prompt: str, ide: str, source: str, mismatch: dict[str, Any] | None, selected: dict[str, Any]
+) -> dict[str, Any]:
+    """Refine the selected target (corner heuristics + optional LLM vision) and pre-check the command plan."""
+    refined = _photo_vql_refined_target(
+        prompt=prompt, t=selected["t"], source=source, image_path=selected["image_path"], ide=ide
+    )
+    command_plan = _photo_vql_command_plan_pre_act(
+        t=refined[0],
+        x=refined[1],
+        y=refined[2],
+        source=source,
+        ide=ide,
+        prompt=prompt,
+        llm_decision=refined[3],
+        is_code_edit=selected["is_code_edit"],
+        mismatch=mismatch,
+    )
+    blocked = _photo_vql_unverified_chat_gate(
+        command_plan=command_plan,
+        t=refined[0],
+        target_desc=selected["target_desc"],
+        x=refined[1],
+        y=refined[2],
+        ide=ide,
+        mismatch=mismatch,
+        is_code_edit=selected["is_code_edit"],
+    )
+    if blocked is not None:
+        return {"blocked": blocked}
+    return {
+        "blocked": None,
+        "t": refined[0],
+        "x": refined[1],
+        "y": refined[2],
+        "llm_decision": refined[3],
+        "command_plan": command_plan,
+    }
+
+
+def _photo_vql_edit_stages(
+    *, prompt: str, ide: str, source: str, plan: dict[str, Any], selected: dict[str, Any]
+) -> dict[str, Any]:
+    """Run the focus, edit and post-paste verification stages of the photo VQL pipeline."""
+    focus_res = _photo_vql_focus_target(
+        target=plan["t"],
+        ide=ide,
+        source=source,
+        is_code_edit=selected["is_code_edit"],
+        llm_decision=plan["llm_decision"],
+    )
+    edit_res = _photo_vql_edit_result(
+        prompt,
+        x=plan["x"],
+        y=plan["y"],
+        target_desc=selected["target_desc"],
+        source=source,
+        ide=ide,
+        focus_res=focus_res,
+        target=plan["t"],
+        command_plan=plan["command_plan"],
+    )
+    combined_ok = _photo_vql_combined_ok_after_edit(
+        edit_res=edit_res,
+        t=plan["t"],
+        ide=ide,
+        mismatch=selected["mismatch"],
+        command_plan=plan["command_plan"],
+        is_code_edit=selected["is_code_edit"],
+    )
+    post_paste = _photo_vql_post_paste_verification(
+        prompt=prompt,
+        t=plan["t"],
+        command_plan=plan["command_plan"],
+        combined_ok=combined_ok,
+        edit_res=edit_res,
+        is_code_edit=selected["is_code_edit"],
+        ide=ide,
+        x=plan["x"],
+        y=plan["y"],
+    )
+    return {
+        "focus_res": focus_res,
+        "edit_res": edit_res,
+        "verification": post_paste[0],
+        "combined_ok": post_paste[1],
+    }
+
+
+def _photo_vql_edit_pipeline(
+    *, prompt: str, ide: str, source: str, submit: bool, plan: dict[str, Any], selected: dict[str, Any]
+) -> dict:
+    """Execute the edit stages + submit step, then assemble and persist the combined photo VQL result."""
+    stages = _photo_vql_edit_stages(prompt=prompt, ide=ide, source=source, plan=plan, selected=selected)
+    submit_step = _photo_vql_submit_step(
+        submit=submit, combined_ok=stages["combined_ok"], edit_res=stages["edit_res"], ide=ide, source=source
+    )
+    combined = _photo_vql_assemble_combined(
+        combined_ok=submit_step[2],
+        target_desc=selected["target_desc"],
+        t=plan["t"],
+        focus_res=stages["focus_res"],
+        edit_res=stages["edit_res"],
+        x=plan["x"],
+        y=plan["y"],
+        prompt=prompt,
+        ide=ide,
+        is_code_edit=selected["is_code_edit"],
+        llm_decision=plan["llm_decision"],
+        submitted=submit_step[0],
+        command_plan=plan["command_plan"],
+        verification=stages["verification"],
+        submit_result=submit_step[1],
+        mismatch=selected["mismatch"],
+        map_source_mismatch=selected["map_source_mismatch"],
+    )
+    _photo_vql_persist_drive_result(
+        combined,
+        t=plan["t"],
+        llm_decision=plan["llm_decision"],
+        mismatch=selected["mismatch"],
+        verification=stages["verification"],
+        ide=ide,
+        prompt=prompt,
+    )
+    return combined
+
+
 def perform_photo_vql_focus_and_edit(
     prompt: str,
     *,
@@ -5855,143 +6017,24 @@ def perform_photo_vql_focus_and_edit(
     IDE independent (dane z foto, nie z pluginu).
     """
     mismatch = _photo_vql_ide_capture_mismatch(ide=ide) if ide and ide != "auto" else None
-    use_llm_vision = os.environ.get("KORU_VDISPLAY_LLM_VISION_DECISION", "").strip().lower() in {"1", "true", "yes", "on"}  # noqa: E501, F841
 
-    err = _photo_vql_stale_metadata_gate(ide=ide, is_code_edit=is_code_edit)
+    err = _photo_vql_entry_gate_blocker(ide=ide, source=source, is_code_edit=is_code_edit, mismatch=mismatch)
     if err is not None:
         return err
 
-    # Strict match mainly for is_code_edit (precise editor file edits need correct capture of the open file).
-    # Chat on JetBrains also requires a matching capture unless explicitly overridden — LLM vision cannot
-    # reliably locate PyCharm chat when the screenshot shows Cursor (wrong window layer / VQL inputs).
-    err = _photo_vql_capture_mismatch_gate(mismatch=mismatch, ide=ide, is_code_edit=is_code_edit)
-    if err is not None:
-        return err
+    selected = _photo_vql_selected_target(
+        ide=ide, source=source, is_code_edit=is_code_edit, image_path=image_path, mismatch=mismatch
+    )
+    if selected["blocked"] is not None:
+        return selected["blocked"]
 
-    blocked = _photo_vql_map_source_preflight_gate(
-        ide=ide, source=source, is_code_edit=is_code_edit
+    plan = _photo_vql_refined_plan(
+        prompt=prompt, ide=ide, source=source, mismatch=selected["mismatch"], selected=selected
     )
-    if blocked is not None:
-        return blocked
+    if plan["blocked"] is not None:
+        return plan["blocked"]
 
-    if is_code_edit:
-        t = get_vql_editor_target_from_photo()
-        target_desc = "editor/open-file"
-    else:
-        t = get_vql_chat_target_from_photo(ide=ide)
-        target_desc = "chat"
-
-    blocked, map_source_mismatch = _photo_vql_target_map_mismatch_gate(
-        t, ide=ide, source=source, is_code_edit=is_code_edit
-    )
-    if blocked is not None:
-        return blocked
-
-    mismatch = _photo_vql_maybe_clear_mismatch(t, ide=ide, mismatch=mismatch)
-
-    if image_path is None:
-        image_path = _resolve_photo_png_path_from_vql(source=source)
-
-    t, x, y, llm_decision = _photo_vql_refined_target(
-        prompt=prompt, t=t, source=source, image_path=image_path, ide=ide
-    )
-
-    command_plan = _photo_vql_command_plan_pre_act(
-        t=t,
-        x=x,
-        y=y,
-        source=source,
-        ide=ide,
-        prompt=prompt,
-        llm_decision=llm_decision,
-        is_code_edit=is_code_edit,
-        mismatch=mismatch,
-    )
-
-    blocked = _photo_vql_unverified_chat_gate(
-        command_plan=command_plan,
-        t=t,
-        target_desc=target_desc,
-        x=x,
-        y=y,
-        ide=ide,
-        mismatch=mismatch,
-        is_code_edit=is_code_edit,
-    )
-    if blocked is not None:
-        return blocked
-
-    focus_res = _photo_vql_focus_target(
-        target=t,
-        ide=ide,
-        source=source,
-        is_code_edit=is_code_edit,
-        llm_decision=llm_decision,
-    )
-    edit_res = _photo_vql_edit_result(
-        prompt,
-        x=x,
-        y=y,
-        target_desc=target_desc,
-        source=source,
-        ide=ide,
-        focus_res=focus_res,
-        target=t,
-        command_plan=command_plan,
-    )
-
-    combined_ok = _photo_vql_combined_ok_after_edit(
-        edit_res=edit_res,
-        t=t,
-        ide=ide,
-        mismatch=mismatch,
-        command_plan=command_plan,
-        is_code_edit=is_code_edit,
-    )
-    verification, combined_ok = _photo_vql_post_paste_verification(
-        prompt=prompt,
-        t=t,
-        command_plan=command_plan,
-        combined_ok=combined_ok,
-        edit_res=edit_res,
-        is_code_edit=is_code_edit,
-        ide=ide,
-        x=x,
-        y=y,
-    )
-    submitted, submit_result, combined_ok = _photo_vql_submit_step(
-        submit=submit, combined_ok=combined_ok, edit_res=edit_res, ide=ide, source=source
-    )
-
-    combined = _photo_vql_assemble_combined(
-        combined_ok=combined_ok,
-        target_desc=target_desc,
-        t=t,
-        focus_res=focus_res,
-        edit_res=edit_res,
-        x=x,
-        y=y,
-        prompt=prompt,
-        ide=ide,
-        is_code_edit=is_code_edit,
-        llm_decision=llm_decision,
-        submitted=submitted,
-        command_plan=command_plan,
-        verification=verification,
-        submit_result=submit_result,
-        mismatch=mismatch,
-        map_source_mismatch=map_source_mismatch,
-    )
-    _photo_vql_persist_drive_result(
-        combined,
-        t=t,
-        llm_decision=llm_decision,
-        mismatch=mismatch,
-        verification=verification,
-        ide=ide,
-        prompt=prompt,
-    )
-    return combined
+    return _photo_vql_edit_pipeline(prompt=prompt, ide=ide, source=source, submit=submit, plan=plan, selected=selected)
 
 
 def move_mouse_to_vql_target_and_focus_keyboard(target: dict | None = None, *, ide: str = "auto", source: str = "DP-1") -> dict:  # noqa: E501
