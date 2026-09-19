@@ -32,6 +32,48 @@ def _ticket_args(command: list[str]) -> list[str]:
 
 
 class TestPlanfileCommand(unittest.TestCase):
+    def test_structured_queue_probe_rejects_unusable_candidates(self) -> None:
+        cases = [
+            SimpleNamespace(returncode=1, stdout=b"", stderr=b"No module named 'planfile'"),
+            SimpleNamespace(returncode=1, stdout=b"planfile 0.1.123", stderr=b"failed"),
+            OSError("launcher unavailable"),
+            subprocess.TimeoutExpired(["planfile", "--version"], 2),
+        ]
+        for index, result in enumerate(cases):
+            with self.subTest(case=index):
+                _planfile_supports_structured_queue_json.cache_clear()
+                kwargs = {"side_effect": result} if isinstance(result, Exception) else {"return_value": result}
+                with patch("koru.queue.ticket.subprocess.run", **kwargs):
+                    self.assertFalse(_planfile_supports_structured_queue_json("/tmp/broken-planfile"))
+        _planfile_supports_structured_queue_json.cache_clear()
+
+    def test_successful_versionless_probe_remains_compatible(self) -> None:
+        _planfile_supports_structured_queue_json.cache_clear()
+        with patch("koru.queue.ticket.subprocess.run", return_value=_ok("planfile development")):
+            self.assertTrue(_planfile_supports_structured_queue_json("/tmp/legacy-planfile"))
+        _planfile_supports_structured_queue_json.cache_clear()
+
+    @unittest.skipIf(os.name == "nt", "POSIX launcher regression")
+    def test_broken_sibling_launcher_falls_through_to_project_launcher(self) -> None:
+        from koru.queue.ticket import resolve_planfile_base_command
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            project = root / "koru"
+            broken = root / "planfile" / ".venv" / "bin" / "planfile"
+            working = project / ".venv" / "bin" / "planfile"
+            for path, script in [
+                (broken, "#!/bin/sh\necho \"No module named 'planfile'\" >&2\nexit 1\n"),
+                (working, "#!/bin/sh\necho 'planfile 0.1.123'\n"),
+            ]:
+                path.parent.mkdir(parents=True)
+                path.write_text(script, encoding="utf-8")
+                path.chmod(0o755)
+            _planfile_supports_structured_queue_json.cache_clear()
+            with patch.dict(os.environ, {"KORU_PLANFILE_CMD": ""}):
+                self.assertEqual(resolve_planfile_base_command(project), [str(working)])
+            _planfile_supports_structured_queue_json.cache_clear()
+
     def test_structured_queue_probe_handles_non_utf8_bytes(self) -> None:
         _planfile_supports_structured_queue_json.cache_clear()
         with patch(
@@ -253,6 +295,10 @@ class TestPlanfileCommand(unittest.TestCase):
             ),
             patch("koru.queue.ticket.find_spec", side_effect=fake_find_spec),
             patch(
+                "koru.queue.ticket._planfile_supports_structured_queue_json",
+                return_value=True,
+            ),
+            patch(
                 "koru.queue.ticket.shutil.which",
                 return_value="/usr/bin/planfile",
             ),
@@ -307,6 +353,10 @@ class TestPlanfileCommand(unittest.TestCase):
                 return_value=None,
             ),
             patch("koru.queue.ticket.find_spec", side_effect=fake_find_spec),
+            patch(
+                "koru.queue.ticket._planfile_supports_structured_queue_json",
+                return_value=True,
+            ),
             patch(
                 "koru.queue.ticket.shutil.which",
                 return_value="/usr/bin/planfile",
