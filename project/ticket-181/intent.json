@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-181",
+  "summary": "Document verified Flash routing pilot and model history rollout",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-181/**",
+    "docs/analysis/simple-task-model-routing.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [
+    "ticket-179"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9ce405d00bb52e009774d88ead6993febc45858e",
+    "targetBranch": "main",
+    "outcome": "Update canonical model-routing analysis with actual canary, Planfile compatibility, UI and deployment evidence.",
+    "nonGoals": [
+      "Change provider catalogs or SubLLM ticket082 owned files",
+      "Change execution or merge authority",
+      "Claim a requested model as observed",
+      "Classify refactors from title keywords",
+      "Log prompts or credentials"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Opt-in simple-model override for bounded lint metadata; preserve explicit pins and default for unknown scope. Read-only OpenCode session/message projections and optional installed SubLLM usage API supply actual history. Persist separate routing receipts without inferred joins.",
+      "components": [
+        {
+          "name": "documentation",
+          "paths": [
+            "docs/analysis/simple-task-model-routing.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket179 and remove the opt-in simple-model environment setting."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh",
+          "git diff --check"
+        ],
+        "evidence": "Pinned Docs checker prepare/complete, indexed canonical report and exact source/receipt references."
+      }
+    ]
+  }
+}
