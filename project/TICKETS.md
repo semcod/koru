@@ -148,6 +148,7 @@ project analysis or human-owned ticket inputs.
 | **ticket-142** | [`README.md`](./ticket-142/README.md) | - | - | - | - | - |
 | **ticket-143** | [`README.md`](./ticket-143/README.md) | - | - | - | - | - |
 | **ticket-144** | [`README.md`](./ticket-144/README.md) | - | - | - | - | - |
+| **ticket-145** | [`README.md`](./ticket-145/README.md) | - | - | - | - | - |
 | **ticket-146** | [`README.md`](./ticket-146/README.md) | - | - | - | - | - |
 | **ticket-147** | [`README.md`](./ticket-147/README.md) | - | - | - | - | - |
 | **ticket-148** | [`README.md`](./ticket-148/README.md) | - | - | - | - | - |
@@ -156,6 +157,7 @@ project analysis or human-owned ticket inputs.
 | **ticket-151** | [`README.md`](./ticket-151/README.md) | - | - | - | - | - |
 | **ticket-152** | [`README.md`](./ticket-152/README.md) | - | - | - | - | - |
 | **ticket-153** | [`README.md`](./ticket-153/README.md) | - | - | - | - | - |
+| **ticket-154** | [`README.md`](./ticket-154/README.md) | - | - | - | - | - |
 | **ticket-155** | [`README.md`](./ticket-155/README.md) | - | - | - | - | - |
 | **ticket-156** | [`README.md`](./ticket-156/README.md) | - | - | - | - | - |
 | **ticket-157** | [`README.md`](./ticket-157/README.md) | - | - | - | - | - |
@@ -172,4 +174,5 @@ project analysis or human-owned ticket inputs.
 | **ticket-169** | [`README.md`](./ticket-169/README.md) | - | - | - | - | - |
 | **ticket-170** | [`README.md`](./ticket-170/README.md) | - | - | - | - | - |
 | **ticket-171** | [`README.md`](./ticket-171/README.md) | - | - | - | - | - |
+| **ticket-173** | [`README.md`](./ticket-173/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->
