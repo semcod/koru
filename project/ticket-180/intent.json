@@ -1,0 +1,98 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-180",
+  "summary": "Display observed model history and parse logs safely",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-180/**",
+    "src/koruapi/dashboard_logs.py",
+    "src/koruapi/dashboard_routes.py",
+    "src/koruapi/dashboard_template.html",
+    "tests/test_dashboard_logs.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [
+    "ticket-179"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9ce405d00bb52e009774d88ead6993febc45858e",
+    "targetBranch": "main",
+    "outcome": "Dashboard Models tab exposes observed providers, models, times and token counts separately from routing decisions; log parsing never executes input.",
+    "nonGoals": [
+      "Change provider catalogs or SubLLM ticket082 owned files",
+      "Change execution or merge authority",
+      "Claim a requested model as observed",
+      "Classify refactors from title keywords",
+      "Log prompts or credentials"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Opt-in simple-model override for bounded lint metadata; preserve explicit pins and default for unknown scope. Read-only OpenCode session/message projections and optional installed SubLLM usage API supply actual history. Persist separate routing receipts without inferred joins.",
+      "components": [
+        {
+          "name": "dashboard",
+          "paths": [
+            "src/koruapi/dashboard_logs.py",
+            "src/koruapi/dashboard_routes.py",
+            "src/koruapi/dashboard_template.html",
+            "tests/test_dashboard_logs.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "GET /api/model-history"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "multi-state",
+        "states": [
+          "loading",
+          "empty",
+          "error",
+          "success"
+        ],
+        "evidence": [
+          "Browser readback of actual OpenCode history, filters and source coverage."
+        ]
+      },
+      "rollback": "Revert ticket179 and remove the opt-in simple-model environment setting."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_dashboard_logs.py tests/test_dashboard_html.py tests/test_dashboard_terminals.py -q"
+        ],
+        "evidence": "Parser adversarial payload and dashboard regression tests."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh",
+          "git diff --check"
+        ],
+        "evidence": "Browser acceptance and scope checks."
+      }
+    ]
+  }
+}
