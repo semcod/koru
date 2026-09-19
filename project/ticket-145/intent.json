@@ -1,0 +1,100 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-145",
+  "summary": "Multi-agent orchestration auto N across projects and Planfile tickets",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-145/**",
+    "src/koru/cli_auto.py",
+    "src/koru/multi_agent.py",
+    "src/koru/tillm_bridge.py",
+    "src/koru/agents.py",
+    "src/koru/autonomy/operator/operator_parser.py",
+    "tests/test_cli_auto.py",
+    "tests/test_multi_agent.py",
+    "tests/test_tillm_registry_contract.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2e07082dbbfed07c67e2f033383877fbbe5db37f",
+    "targetBranch": "main",
+    "outcome": "Allow `koru auto N` to launch N concurrent agents across projects/tasks in a workspace (such as ~/github/semcod/*), coordinating Planfile tickets with GitHub sync and supporting tillm shell clients including crush.",
+    "nonGoals": [
+      "Direct commits to main branch in governed child repositories",
+      "Bypassing target repositories' own governance gates or worktree policies"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add multi-agent dispatcher in `src/koru/multi_agent.py` and hook it into `src/koru/cli_auto.py` when a numeric worker count or multi-agent flags are detected. Support project discovery across workspace directories, GitHub Planfile synchronization per project, and concurrency-controlled worker pool execution.",
+      "components": [
+        {
+          "name": "cli-auto",
+          "paths": [
+            "src/koru/cli_auto.py",
+            "src/koru/multi_agent.py",
+            "tests/test_cli_auto.py",
+            "tests/test_multi_agent.py"
+          ]
+        },
+        {
+          "name": "tillm-bridge",
+          "paths": [
+            "src/koru/tillm_bridge.py",
+            "src/koru/agents.py",
+            "src/koru/autonomy/operator/operator_parser.py",
+            "tests/test_tillm_registry_contract.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "koru auto <N> [--workspace DIR] [--sync] [--client CLIENT] [--provider PROVIDER] [--dry-run] [--max-tickets N]"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commits on ticket-145 branch."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_multi_agent.py tests/test_cli_auto.py tests/test_tillm_bridge.py"
+        ],
+        "evidence": "Focused unit tests pass."
+      },
+      {
+        "criterion": "AC-06",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes."
+      }
+    ]
+  }
+}

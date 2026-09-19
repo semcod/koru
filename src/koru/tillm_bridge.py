@@ -21,6 +21,7 @@ def ensure_local_tillm_path() -> None:
     if env_path:
         candidates.append(Path(env_path).expanduser())
     candidates.append(Path(__file__).resolve().parents[3] / "tillm" / "src")
+    candidates.append(Path.home() / "github" / "autogrammar" / "tillm" / "src")
     for candidate in candidates:
         if candidate.is_dir():
             value = str(candidate)
@@ -69,6 +70,7 @@ _FALLBACK_SHELL_CLIENT_TOKENS = frozenset(
         "claude-code",
         "cline",
         "codex",
+        "crush",
         "devin",
         "gemini-cli",
         "opencode",
