@@ -5,35 +5,35 @@
   "claimedLevel": "S4",
   "source": {
     "repository": "wellmanifest/git-lifecycle",
-    "revision": "37a1fe04d9f3e9ca021018ed85790886c9827cc9",
+    "revision": "2f8ba2ee724fce603ead2c3067c698d3c2ce0e59",
     "contract": {
       "path": "standard/git-lifecycle.schema.json",
-      "uri": "https://github.com/wellmanifest/git-lifecycle/blob/37a1fe04d9f3e9ca021018ed85790886c9827cc9/standard/git-lifecycle.schema.json",
+      "uri": "https://github.com/wellmanifest/git-lifecycle/blob/2f8ba2ee724fce603ead2c3067c698d3c2ce0e59/standard/git-lifecycle.schema.json",
       "sha256": "de3bb3711cb96e90e916253bfddb211b9abba2d0666af061ae6b316a5a689268"
     },
     "conformance": {
       "path": "standard/conformance.py",
-      "uri": "https://github.com/wellmanifest/git-lifecycle/blob/37a1fe04d9f3e9ca021018ed85790886c9827cc9/standard/conformance.py",
+      "uri": "https://github.com/wellmanifest/git-lifecycle/blob/2f8ba2ee724fce603ead2c3067c698d3c2ce0e59/standard/conformance.py",
       "sha256": "752f9ffe0912f67732092f3a426bd301b7fda17b749ac09acf70345d242b0e56"
     }
   },
   "localBindings": [],
   "ciReceipt": {
-    "sha256": "5fcefbee2042e1495f29c2230393a4fc461405a0c8d62448d4fcd0fbaded5024",
+    "sha256": "077bbf7c992a7ef7d8c1c714ea58a676f85c15123a754c37f61d938a5e56651c",
     "snapshot": {
       "schema": "semcod.ci-check-receipt/v1",
       "repository": "wellmanifest/git-lifecycle",
-      "subjectSha": "37a1fe04d9f3e9ca021018ed85790886c9827cc9",
+      "subjectSha": "2f8ba2ee724fce603ead2c3067c698d3c2ce0e59",
       "workflowPath": ".github/workflows/lifecycle-conformance.yml",
       "workflowSha256": "50de2e56fb5d7c6e8d2ac1ecdbbf426239b453b1b8eb4ececd21e9c14fe7cc5b",
-      "runId": 34093088090,
+      "runId": 35437736089,
       "runAttempt": 1,
       "event": "push",
-      "jobId": 101650569238,
+      "jobId": 105883159990,
       "checkName": "standards / lifecycle conformance",
       "conclusion": "success",
-      "completedAt": "2026-09-07T06:56:48Z",
-      "sourceUri": "https://api.github.com/repos/wellmanifest/git-lifecycle/actions/jobs/101650569238"
+      "completedAt": "2026-09-19T10:33:42Z",
+      "sourceUri": "https://api.github.com/repos/wellmanifest/git-lifecycle/actions/jobs/105883159990"
     }
   },
   "protectionReceipt": {

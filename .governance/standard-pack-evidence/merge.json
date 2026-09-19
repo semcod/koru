@@ -5,35 +5,35 @@
   "claimedLevel": "S4",
   "source": {
     "repository": "wellmanifest/merge",
-    "revision": "2a55d6de7eb5dbc92d59b9e2ed8f3fbd30b4fa8a",
+    "revision": "d514ea17cdd0dda3e3a540779d91ed53951f76b0",
     "contract": {
       "path": "standard/merge-decision.schema.json",
-      "uri": "https://github.com/wellmanifest/merge/blob/2a55d6de7eb5dbc92d59b9e2ed8f3fbd30b4fa8a/standard/merge-decision.schema.json",
+      "uri": "https://github.com/wellmanifest/merge/blob/d514ea17cdd0dda3e3a540779d91ed53951f76b0/standard/merge-decision.schema.json",
       "sha256": "6cf3766abab6834555ec1275dee4ca42e60ceb99fe57c73b0130e443e9eb53f1"
     },
     "conformance": {
       "path": "standard/conformance.py",
-      "uri": "https://github.com/wellmanifest/merge/blob/2a55d6de7eb5dbc92d59b9e2ed8f3fbd30b4fa8a/standard/conformance.py",
+      "uri": "https://github.com/wellmanifest/merge/blob/d514ea17cdd0dda3e3a540779d91ed53951f76b0/standard/conformance.py",
       "sha256": "71d85445d77bb4231bdb8bf057a92e7ffe9d5fe5ea8594d04b0b09eea6980d06"
     }
   },
   "localBindings": [],
   "ciReceipt": {
-    "sha256": "2315c53908efffd19d828262af82f415407cae70463e8f7778932b9cff365f79",
+    "sha256": "303e103d0a51f1864c053ea0dc349d4c9d6f3506020e4a434f42cdd40aedf12d",
     "snapshot": {
       "schema": "semcod.ci-check-receipt/v1",
       "repository": "wellmanifest/merge",
-      "subjectSha": "2a55d6de7eb5dbc92d59b9e2ed8f3fbd30b4fa8a",
+      "subjectSha": "d514ea17cdd0dda3e3a540779d91ed53951f76b0",
       "workflowPath": ".github/workflows/conformance.yml",
       "workflowSha256": "85813777a80b0b1133787edcab75734967e4239f6f55427406855fbf3100ef27",
-      "runId": 32667429909,
+      "runId": 35432179806,
       "runAttempt": 1,
       "event": "push",
-      "jobId": 97262951471,
+      "jobId": 105868631501,
       "checkName": "conformance",
       "conclusion": "success",
-      "completedAt": "2026-08-23T21:24:46Z",
-      "sourceUri": "https://api.github.com/repos/wellmanifest/merge/actions/jobs/97262951471"
+      "completedAt": "2026-09-19T08:30:32Z",
+      "sourceUri": "https://api.github.com/repos/wellmanifest/merge/actions/jobs/105868631501"
     }
   },
   "protectionReceipt": {
