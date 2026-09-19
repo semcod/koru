@@ -1,4 +1,4 @@
-# Ticket 168: ruff fix queue_clean package imports
+# Ticket 168: ticket lease heartbeat, grace-period takeover, and actor/lease audit (STARTER-604)
 
 - **ID**: ticket-168
 - **Owner**: unresolved:human
@@ -8,11 +8,11 @@
 
 ## Goal and scope
 
-To be completed from human-owned input.
+Add an authoritative execution-lease coordinator for planfile tickets (STARTER-604).
 
 ## Acceptance criteria
 
-- [ ] AC-01: Scope is approved by a human owner.
+- [x] AC-01: Lease coordinator, queue runner and MCP planfile server tests pass.
 
 ## Tracking boundary
 

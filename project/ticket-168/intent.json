@@ -1,7 +1,7 @@
 {
   "schema": "new-project.intent/v3",
   "ticket": "ticket-168",
-  "summary": "ruff fix queue_clean package imports",
+  "summary": "ticket lease heartbeat, grace-period takeover, and actor/lease audit (STARTER-604)",
   "workstream": "application",
   "classification": {
     "kind": "SERVICE",
@@ -12,7 +12,13 @@
     "project/ticket-168/**",
     "TODO.md",
     "project/TICKETS.md",
-    "src/koru/queue_clean/**"
+    "src/koru/autonomy/execution_lease_watcher.py",
+    "src/koru/queue/**",
+    "src/koru/queue_cli_helpers.py",
+    "src/koruapi/mcp_server_planfile.py",
+    "tests/test_mcp_server.py",
+    "tests/test_planfile_queue.py",
+    "tests/test_queue_lease.py"
   ],
   "forbiddenPaths": [
     "project/ticket-*/user-*.md"
@@ -22,29 +28,44 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "3be5f38dcabfa1c96c0056523df6378ae1e55043",
+    "acceptedBaseSha": "c361edeaf1491410118c45eddca72e14561b9c13",
     "targetBranch": "main",
-    "outcome": "src/koru/queue_clean package passes `ruff check` and `ruff format --check`; fixes I001/F401 lint debt merged via PR #306.",
+    "outcome": "Add an authoritative execution-lease coordinator for planfile tickets: heartbeat, deadline, grace-period takeover, and actor/lease audit.",
     "nonGoals": [
-      "Change behavior or public API.",
-      "Touch other modules."
+      "Change unrelated modules."
     ],
-    "complexity": "S",
-    "estimatedMinutes": 15,
+    "complexity": "L",
+    "estimatedMinutes": 60,
     "budgets": {
-      "maxImplementationFiles": 3,
-      "maxAffectedComponents": 1,
+      "maxImplementationFiles": 10,
+      "maxAffectedComponents": 3,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Pure `ruff check --fix` + `ruff format` output: sorted imports and explicit __all__ re-exports; no semantic change.",
+      "decision": "koru.queue.lease projects heartbeat/deadline/takeover/release decisions and keeps an append-only audit.",
       "components": [
         {
-          "name": "queue-clean-package",
+          "name": "queue-lease-coordinator",
           "paths": [
-            "src/koru/queue_clean/**"
+            "src/koru/queue/**",
+            "src/koru/queue_cli_helpers.py",
+            "src/koru/autonomy/execution_lease_watcher.py"
+          ]
+        },
+        {
+          "name": "mcp-server-planfile",
+          "paths": [
+            "src/koruapi/mcp_server_planfile.py"
+          ]
+        },
+        {
+          "name": "queue-tests",
+          "paths": [
+            "tests/test_mcp_server.py",
+            "tests/test_planfile_queue.py",
+            "tests/test_queue_lease.py"
           ]
         }
       ],
@@ -55,7 +76,7 @@
         "states": [],
         "evidence": []
       },
-      "rollback": "Revert the commit; lint violations return but behavior is unchanged.",
+      "rollback": "Revert the commit; previous queue behavior restored.",
       "interfaceChanges": []
     },
     "runtimeDependencies": [],
@@ -63,12 +84,10 @@
       {
         "criterion": "AC-01",
         "commands": [
-          "ruff check src/koru/queue_clean/",
-          "ruff format --check src/koru/queue_clean/",
-          "python3 -m pytest tests/test_queue_clean.py -x -q",
+          "python3 -m pytest tests/test_mcp_server.py tests/test_planfile_queue.py tests/test_queue_lease.py -x -q",
           "./project/governance-check.sh"
         ],
-        "evidence": "Ruff clean on the package; 22/22 queue_clean tests pass; governance gate passes."
+        "evidence": "Lease coordinator, queue runner and MCP planfile server tests pass."
       }
     ]
   }

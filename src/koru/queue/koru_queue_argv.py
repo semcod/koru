@@ -1,8 +1,9 @@
-"""Shared ``argv`` for spawning ``python -m koru --queue`` (MCP, scripts, tests).
+"""Shared ``argv`` for spawning ``python -m koru --queue`` (scripts, tests).
 
 Keeps one definition of the queue subprocess contract next to
 :func:`koru.queue.run_planfile_queue_loop`, which is what ``koru --queue --loop``
-uses in-process.
+uses in-process. In-process callers (MCP ``koru_run_ticket`` via
+:func:`koru.queue.runner.run_queue_single_shot`) skip the subprocess entirely.
 """
 
 from __future__ import annotations

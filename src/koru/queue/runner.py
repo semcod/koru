@@ -12,6 +12,13 @@ from typing import Any
 from koru.queue.context import build_project_context
 from koru.queue.evidence import completion_gap
 from koru.queue.human import default_human_prompt
+from koru.queue.lease import (
+    ACTION_RELEASE,
+    can_claim,
+    projected_deadline,
+    projected_takeover_at,
+    record_lease_event,
+)
 from koru.queue.living_status import lease_expiry_text, update_living_status
 from koru.queue.locking import claim_lease_seconds_str, queue_runner_lock, ticket_claim_or_error
 from koru.queue.patch_mode import (
@@ -86,6 +93,16 @@ def _handle_human_ticket(
             executor_kind="human",
             message=prompt,
         )
+    decision = can_claim(ticket, actor)
+    if not decision.ok:
+        return QueueRunResult(
+            status="lease_held",
+            ticket_id=ticket_id,
+            executor_kind="human",
+            message=decision.reason,
+            exit_code=1,
+            stderr=decision.reason,
+        )
     claimed = ticket_claim_or_error(
         project,
         ticket_id,
@@ -99,13 +116,22 @@ def _handle_human_ticket(
         ["ticket", "start", ticket_id],
         runner=planfile_runner,
     )
+    lease_seconds = int(claim_lease_seconds_str())
     update_living_status(
         project,
         ticket,
         state="in_progress",
         actor=actor,
-        lease_expires_at=lease_expiry_text(lease_seconds=int(claim_lease_seconds_str())),
+        lease_expires_at=lease_expiry_text(lease_seconds=lease_seconds),
         runner=planfile_runner,
+    )
+    record_lease_event(
+        project,
+        ticket_id,
+        action=decision.action,
+        actor=actor,
+        deadline=projected_deadline(lease_seconds),
+        takeover_boundary=projected_takeover_at(lease_seconds),
     )
     planfile_lifecycle_command(
         project,
@@ -119,6 +145,12 @@ def _handle_human_ticket(
         actor=actor,
         lease_expires_at=None,
         runner=planfile_runner,
+    )
+    record_lease_event(
+        project,
+        ticket_id,
+        action=ACTION_RELEASE,
+        actor=actor,
     )
     return QueueRunResult(
         status="completed",
@@ -167,6 +199,15 @@ def _claim_and_start(
     actor: str,
     planfile_runner: Callable[[list[str], Path], CommandResult],
 ) -> QueueRunResult | None:
+    decision = can_claim(ticket, actor)
+    if not decision.ok:
+        return QueueRunResult(
+            status="lease_held",
+            ticket_id=ticket_id,
+            message=decision.reason,
+            exit_code=1,
+            stderr=decision.reason,
+        )
     claimed = ticket_claim_or_error(project, ticket_id, actor, planfile_runner=planfile_runner)
     if claimed:
         return claimed
@@ -175,13 +216,22 @@ def _claim_and_start(
         ["ticket", "start", ticket_id],
         runner=planfile_runner,
     )
+    lease_seconds = int(claim_lease_seconds_str())
     update_living_status(
         project,
         ticket,
         state="in_progress",
         actor=actor,
-        lease_expires_at=lease_expiry_text(lease_seconds=int(claim_lease_seconds_str())),
+        lease_expires_at=lease_expiry_text(lease_seconds=lease_seconds),
         runner=planfile_runner,
+    )
+    record_lease_event(
+        project,
+        ticket_id,
+        action=decision.action,
+        actor=actor,
+        deadline=projected_deadline(lease_seconds),
+        takeover_boundary=projected_takeover_at(lease_seconds),
     )
     return None
 
@@ -501,6 +551,12 @@ def _finalize_ticket(
             message=reason,
             runner=planfile_runner,
         )
+    record_lease_event(
+        project,
+        ticket_id,
+        action=ACTION_RELEASE,
+        actor=actor,
+    )
 
     return QueueRunResult(
         status=status,
@@ -918,4 +974,38 @@ def run_next_planfile_task(
             llm_runner=llm_runner,
             prompt_runner=prompt_runner,
         )
+    )
+
+
+SUCCESS_QUEUE_STATUSES = frozenset({"completed", "idle", "waiting_input", "dry_run"})
+
+
+def queue_run_exit_success(status: str) -> bool:
+    """Whether a queue run outcome maps to exit code 0 (``koru --queue`` contract)."""
+    return status in SUCCESS_QUEUE_STATUSES
+
+
+def run_queue_single_shot(
+    *,
+    project: Path,
+    ticket_id: str,
+    mode: str = "apply",
+    actor: str | None = None,
+    queue_name: str | None = None,
+) -> QueueRunResult:
+    """Run one targeted ticket via the same entrypoint as ``koru --queue`` single mode.
+
+    Non-CLI callers (the MCP ``koru_run_ticket`` tool) go through here so a
+    headless run executes exactly what the CLI single mode executes:
+    :func:`run_next_planfile_task` with ``target_ticket_id`` set and the
+    default runner set. ``mode="dry"`` maps to ``dry_run=True``
+    (``--dry-run`` parity); *actor* / *queue_name* mirror the CLI flags.
+    """
+    return run_next_planfile_task(
+        project=project,
+        actor=actor or "koru-shell",
+        dry_run=(mode == "dry"),
+        queue_name=queue_name,
+        target_ticket_id=ticket_id,
+        interactive=False,
     )
