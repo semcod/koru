@@ -373,3 +373,26 @@ class TestWebDashboardShutdown:
         from koru.autonomy.operator import operator_up
 
         operator_up._shutdown_web_dashboard(self._context(None, None))
+
+
+def test_log_parser_never_executes_repr(tmp_path):
+    marker = tmp_path / 'executed'
+    payload = f"__import__('pathlib').Path({str(marker)!r}).write_text('unsafe') or {{}}"
+    entry = _parse_nfo_line(json.dumps({'kwargs': payload, 'function_name': 'nfo.event'}))
+    assert not marker.exists()
+    assert entry['message'] == 'nfo.event'
+
+
+def test_log_parser_handles_non_mapping_records():
+    assert _parse_nfo_line('[]') is None
+    assert _parse_nfo_line(json.dumps({'kwargs': '[1, 2]', 'function_name': 'nfo.event'}))['message'] == 'nfo.event'
+
+
+def test_model_history_endpoint_rejects_invalid_limit():
+    from unittest.mock import Mock
+
+    from koruapi.dashboard_routes import _get_model_history
+    handler = Mock(path="/api/model-history?limit=invalid")
+    _get_model_history(handler, Mock())
+    handler._send_json.assert_called_once_with({"error": "Invalid limit"}, status=400)
+    handler._selected_project.assert_not_called()

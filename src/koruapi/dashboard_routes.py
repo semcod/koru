@@ -255,6 +255,18 @@ def _get_plugin_logs(handler: Any, _config: ServeConfig) -> None:
     handler._safe_respond_json(dashboard_plugin_logs_payload)
 
 
+def _get_model_history(handler: Any, _config: ServeConfig) -> None:
+    from koru.model_history import model_history_payload
+
+    query = parse_qs(urlparse(handler.path).query)
+    try:
+        limit = int(query.get("limit", ["100"])[0])
+    except ValueError:
+        handler._send_json({"error": "Invalid limit"}, status=400)
+        return
+    handler._safe_respond_json(lambda: model_history_payload(handler._selected_project(), limit=limit))
+
+
 def _get_logs_json(handler: Any, _config: ServeConfig) -> None:
     from koruapi.dashboard_logs import handle_logs_json_request
 
@@ -628,6 +640,7 @@ _GET_ROUTES: dict[str, _GetHandler] = {
     "/api/interfaces": _get_interfaces,
     "/api/environment": _get_environment,
     "/api/logs": _get_logs_json,
+    "/api/model-history": _get_model_history,
     "/api/terminals": _get_terminals,
     "/api/terminals/detail": _get_terminal_detail,
     "/api/terminals/messages": _get_terminal_messages,
