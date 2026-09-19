@@ -1,0 +1,50 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-174",
+  "summary": "Reject unusable Planfile queue executables",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-174/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/ticket.py",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "86268c4937f47b913d1076631b36c8e3d5825c58",
+    "targetBranch": "main",
+    "outcome": "Koru skips discovered Planfile launchers whose version probe fails and selects the next usable queue executable.",
+    "nonGoals": ["Change explicit command pin policy", "Modify standard adoption", "Alter queue execution or ticket claims"],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {"maxImplementationFiles": 2, "maxAffectedComponents": 1, "maxPublicInterfaceChanges": 0, "maxRuntimeDependencies": 0},
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reject unsuccessful capability probes before parsing version output; retain successful versionless launcher compatibility.",
+      "components": [{"name": "queue-command-resolution", "paths": ["src/koru/queue/ticket.py", "tests/test_planfile_queue.py"]}],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert this queue probe change through a reviewed commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-01", "commands": ["python -m pytest tests/test_planfile_queue.py tests/test_planfile_cmd_fallback.py tests/test_queue_ticket_selection.py -q"], "evidence": "Probe failures and real broken sibling launcher regression are covered alongside existing queue behavior."},
+      {"criterion": "AC-02", "commands": ["python -m pytest tests/test_planfile_queue.py -q"], "evidence": "A real executable that exits with a missing-module error cannot shadow the working project launcher."},
+      {"criterion": "AC-03", "commands": ["./project/governance-check.sh", "git diff --check"], "evidence": "Approved scope and repository governance checks pass."}
+    ]
+  }
+}

@@ -286,7 +286,9 @@ def _planfile_supports_structured_queue_json(executable: str) -> bool:
             timeout=2,
         )
     except (OSError, subprocess.SubprocessError):
-        return True
+        return False
+    if result.returncode != 0:
+        return False
     version = _parse_version_tuple(
         f"{_decode_subprocess_output(result.stdout)}\n"
         f"{_decode_subprocess_output(result.stderr)}"
