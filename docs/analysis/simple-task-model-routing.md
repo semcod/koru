@@ -3,7 +3,7 @@
   "schema": "wellmanifest.docs/document/v1",
   "id": "simple-task-model-routing",
   "kind": "analysis",
-  "version": 2,
+  "version": 4,
   "title": "Koru: model dla prostych zadan i pilotaz Flash",
   "status": "proposed",
   "owner": "semcod/koru",
@@ -11,7 +11,7 @@
   "created": "2026-09-19",
   "updated": "2026-09-19",
   "review_after": "2026-09-26",
-  "source_revision": "684463445c60d5701b67de47a942924d1b114f67",
+  "source_revision": "9ce405d00bb52e009774d88ead6993febc45858e",
   "affected_repositories": [
     "semcod/koru"
   ],
@@ -19,12 +19,129 @@
     "https://github.com/semcod/koru/blob/684463445c60d5701b67de47a942924d1b114f67/src/koru/autonomy/cycle/cycle_drive_retry.py",
     "https://github.com/semcod/koru/issues/353",
     "https://docs.z.ai/guides/overview/pricing",
-    "https://docs.astral.sh/ruff/linter/#fix-safety"
+    "https://docs.astral.sh/ruff/linter/#fix-safety",
+    "https://github.com/semcod/koru/pull/361",
+    "https://github.com/semcod/koru/pull/362",
+    "https://github.com/subactor/subllm/pull/83"
   ]
 }
 ---
 
 # Koru: wybór modelu dla prostych zadań
+
+
+## Aktualizacja v4: odczyt działającego dziennika SubLLM, 19:57 UTC
+
+API Koru zwróciło teraz SubLLM `status=ready` i pięć zapisów aplikacji
+`koru-agent`, funkcja `planning-assistant`, z okresu 19:54:23–19:56:38 UTC.
+Trzy mają status success dla `zai/glm-5.3` z licznikami wejście/wyjście
+203/400, 202/277 i 179/105. Pozostałe dwa mają status error dla jednego
+request_id: `zai/glm-5.3` i `openrouter/z-ai/glm-5.3-flash`, bez liczników.
+Widok odróżnia te błędy od udanej wiadomości Flash w pilotażu OpenCode.
+To dane producenta SubLLM; nie przypisujemy ich do konkretnego projektu,
+ticketu ani do naszej próby OpenCode. Nie diagnozujemy przyczyny błędów z
+samych metadanych. Stan empty opisany w v3 jest wcześniejszą obserwacją.
+
+Chromium pokazał `OpenCode: available; SubLLM: ready`, filtr Flash obejmował
+zarówno udany zapis OpenCode, jak i błędny zapis SubLLM. Brak błędów JavaScript.
+Digest bezpiecznego odczytu SHA-256: `67bc749f64a5b0369aae3d433ce2ffcfc94b343a60d85c88eee3e8b2fe133ad4`.
+
+## Aktualizacja v3: poprawka i rzeczywisty pilotaż, 2026-09-19
+
+Poniższe starsze ustalenia opisują rewizję sprzed poprawki. Aktualny kod routingu
+jest scalony w PR361 (merge `9ce405d00bb52e009774d88ead6993febc45858e`).
+Widok Models w PR362 jest przygotowany i przetestowany, ale w chwili tej obserwacji
+nie ma jeszcze potwierdzenia jego scalenia ani wdrożenia do aktywnej usługi.
+Head interfejsu: `1380262f3e05f0df334215a65d58a0a144f553b5`.
+OneDev zweryfikował ten head z bazą `9ce405d0`: 133 testy i 4 subtesty oraz
+przypięty checker dokumentacji przeszły; pozostałe wymagane statusy są zielone.
+Próba niezależnego Validatora o 19:54 UTC zakończyła się
+`LOCAL_DIRECT_PR_APP_LOOKUP_FAILED` (HTTP403, limit API konta5669657),
+przed oceną zmian. To blokada publikacji, nie odrzucenie kodu przez recenzenta.
+
+### Zachowanie i konfiguracja
+
+`KORU_TILLM_SIMPLE_MODEL=zai/glm-5.3-flash` włącza wybór dla OpenCode.
+`KORU_TILLM_MODEL` nadal określa zwykły model; jawny wybór CLI lub ticketu ma
+pierwszeństwo. To konfiguracja operatora, nie nowy katalog dostawców.
+Polityka HTTP pozostaje własnością SubLLM.
+
+W aktualnym Planfile używać zachowywanego rozszerzenia `source.context`:
+
+```json
+{
+  "files": ["src/example.py"],
+  "source": {
+    "tool": "ruff",
+    "context": {
+      "model_routing": {"llm_task_kind": "lint_fix", "ruff_codes": ["F401"]}
+    }
+  }
+}
+```
+
+Wymagane są jeden względny plik Python w src/tests/test i najwyżej 10 reguł
+z listy F401, F541, I001, UP017, UP035. Oznaczenia refaktoryzacji, code2llm,
+bezpieczeństwa, governance i zależności wykluczają obniżenie modelu.
+Nieznany zakres zachowuje zwykły model. Tytuł „proste” ani sam tag Ruff nie
+wystarczają. Istniejące zgłoszenia nie zostały masowo przeklasyfikowane.
+Rzeczywiste zgłoszenie nxdo PLF-070 obejmowało 96 ustaleń w wielu plikach;
+nie nadaje się do automatycznego uznania za mały lint.
+
+Pierwsza wersja rozszerzenia `inputs` nie była zgodna z bieżącym Planfile,
+który usuwa nieznane pola TicketInputs. Poprawka używa `source.context.model_routing`;
+przejście przez rzeczywisty model Planfile zachowało metadane i wybór Flash.
+Bezpośredni starszy caller może nadal przekazać równoważne pola inputs.
+
+### Zaobserwowane wykonanie i testy
+
+Izolowany, rzeczywisty OpenCode dostał model wybrany przez funkcję polityki Koru,
+bez przypięcia modelu w samym zadaniu. Żądanie wymagało jedynie odpowiedzi OK;
+uprawnienia do narzędzi były wyłączone. Odczyt dokładnego identyfikatora sesji
+`ses_f44d3b408ffeM9lfggGmR9WB3P` potwierdził wiadomość asystenta
+`zai/glm-5.3-flash`, status completed, 6148 tokenów wejścia i 4 wyjścia,
+2026-09-19 19:37:20 UTC. To dowód inferencji, nie ukończenia poprawki kodu
+ani pomiar oszczędności całej kolejki. Nie publikujemy promptów ani odpowiedzi.
+
+Bezpieczny digest prywatnego receipt SHA-256: `759310bc3075c7debe6ded416b67064d67e81ca52016d86364445cc55a6138d2`.
+
+- Routing: 215 testów i 11 subtestów po zmianie bazy; po poprawce zgodności
+  Planfile dodatkowo 144 testy i 4 subtesty obejmujące zmienione ścieżki.
+- Interfejs i parser: 98 testów; Ruff i governance bez błędów.
+- Chromium: rzeczywista sesja Flash, filtr modelu, pusty wynik i stan HTTP503,
+  bez błędów JavaScript. Podgląd lokalny: http://127.0.0.1:8771/?tab=models.
+- Parser logów używa `ast.literal_eval`; test z próbą wykonania kodu nie tworzy pliku.
+
+### Zakres danych i wdrożenia
+
+Models oddziela żądany model z `.planfile/.koru/model-routing.jsonl` od odczytów
+rzeczywistych wiadomości OpenCode. Pokazuje czas, dostawcę, model, status i tokeny;
+brak liczników pozostaje unknown. Nie zgaduje związku sesji z ticketem i nie
+prezentuje kosztów jako rozliczenia. OpenCode obejmuje wybrany projekt oraz jego
+.worktrees. SubLLM obejmuje aplikację koru-agent we wszystkich projektach;
+CLI OpenCode nie przechodzi przez SubLLM.
+
+Konsument wykrywa już scalone API SubLLM z PR83 (main `a271eef`);
+w chwili kontroli dziennik zwrócił empty. Jest to kod dostarczony, lecz nie dowód
+zarejestrowania płatnego żądania Koru przez SubLLM. Widok pokazuje tę różnicę.
+
+Aktywna koru-lane-koru.service nadal miała PID2882503 i działający proces OpenCode.
+Nie restartowano jej w trakcie zadania. Globalny wybór Flash w tej usłudze nie jest
+jeszcze potwierdzony; potrzebne są bezpieczna granica między zadaniami, wdrożenie
+zweryfikowanego kodu, włączenie konfiguracji oraz odczyt nowej sesji.
+
+### Luka w dowodach publikacji
+
+PR361 scaliła niezależna aplikacja ifuri-validator-agent. Git potwierdza obecność
+obu commitów, w tym poprawki `60510a80`. Widoczna aprobata dotyczyła `acf71f47`
+i po dopchnięciu poprawki miała stan DISMISSED. Odczyt statusów nowego commita
+nie zawierał onedev/local-verify. Nie traktujemy wcześniejszej aprobaty jako
+walidacji nowego HEAD. To wymaga sprawdzenia wyścigu aktualizacji gałęzi z merge
+w chronionym adapterze; sama obserwacja nie rozstrzyga mechanizmu błędu.
+Trwały wniosek Planfile: STARTER-735, właściciel runtime subactor/validator-agent.
+
+## Historyczna obserwacja sprzed wdrożenia routingu
+
 
 <!-- docs:section question -->
 ## Pytanie
