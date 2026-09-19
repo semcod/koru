@@ -1,15 +1,10 @@
 from __future__ import annotations
 
-import subprocess
 import sys
 from pathlib import Path
-
-import pytest
+from typing import Any
 
 from koru import mcp_server
-
-# These tests use subprocess and are slow; skip by default
-pytestmark = pytest.mark.slow
 
 
 def test_initialize_message_returns_server_info() -> None:
@@ -113,105 +108,113 @@ def test_tool_validate_ide_command_scenario() -> None:
     assert payload["validation"]["normalized"]["ide"] == "windsurf"
 
 
-def test_run_ticket_invokes_queue_mode_with_exact_ticket(monkeypatch, tmp_path: Path) -> None:
-    called: dict[str, list[str]] = {}
-
-    def _fake_popen(cmd, **kwargs):
-        called["cmd"] = list(cmd)
-
-        # Return a mock Popen object with communicate() returning success
-        class MockPopen:
-            def communicate(self, timeout=None):
-                return "ok", ""
-
-            def poll(self):
-                return 0
-
-            returncode = 0
-            pid = 12345
-
-        return MockPopen()
-
+def test_run_ticket_delegates_to_shared_single_shot_helper(monkeypatch, tmp_path: Path) -> None:
     import koruapi.mcp_server_planfile as mcp_planfile
+    from koru.queue.types import QueueRunResult
 
-    monkeypatch.setattr(mcp_planfile.subprocess, "Popen", _fake_popen)
+    calls: list[dict[str, Any]] = []
+
+    def _fake_single_shot(**kwargs):
+        calls.append(kwargs)
+        return QueueRunResult(
+            status="completed",
+            ticket_id=kwargs["ticket_id"],
+            executor_kind="shell",
+            exit_code=0,
+            stdout="ok",
+        )
+
+    monkeypatch.setattr(mcp_planfile, "run_queue_single_shot", _fake_single_shot)
 
     result = mcp_server.tool_run_ticket(
         {
             "project_root": str(tmp_path),
             "ticket_id": "PLF-123",
             "mode": "dry",
-            "max_steps": 2,
+            "actor": " koru-mcp ",
+            "queue_name": " default ",
         },
     )
 
     assert result["status"] == "success"
-    assert "cmd" in called
-    assert "--queue" in called["cmd"]
-    assert "--dry-run" in called["cmd"]
-    assert called["cmd"][called["cmd"].index("--ticket") + 1] == "PLF-123"
-    assert "note" not in result
-
-
-def test_run_ticket_timeout_updates_job_status(monkeypatch, tmp_path: Path) -> None:
-    def _fake_popen(cmd, **kwargs):
-        # Return a mock Popen object that raises TimeoutExpired on communicate()
-        class MockPopen:
-            def __init__(self):
-                self.killed = False
-
-            def communicate(self, timeout=None):
-                if self.killed:
-                    return "", ""
-                raise subprocess.TimeoutExpired(cmd=cmd, timeout=timeout)
-
-            def kill(self):
-                self.killed = True
-
-            def poll(self):
-                return None
-
-            pid = 12345
-
-        return MockPopen()
-
-    import koruapi.mcp_server_planfile as mcp_planfile
-
-    monkeypatch.setattr(mcp_planfile.subprocess, "Popen", _fake_popen)
-
-    result = mcp_server.tool_run_ticket(
+    assert result["queue_status"] == "completed"
+    assert result["ticket_id"] == "PLF-123"
+    assert result["executor_kind"] == "shell"
+    assert calls == [
         {
-            "project_root": str(tmp_path),
-            "ticket_id": "PLF-TIMEOUT",
-            "mode": "apply",
-        },
-    )
-
-    assert result["status"] == "timeout"
-    assert "timed out" in result["logs"][0]
+            "project": tmp_path.resolve(),
+            "ticket_id": "PLF-123",
+            "mode": "dry",
+            "actor": "koru-mcp",
+            "queue_name": "default",
+        }
+    ]
 
     status_payload = mcp_server.tool_job_status({"job_id": result["job_id"]})
-    assert status_payload["status"] == "timeout"
-    assert status_payload["current_step"] == "timeout"
+    assert status_payload["status"] == "success"
+    assert status_payload["current_step"] == "completed"
+
+
+def test_run_ticket_maps_failed_queue_result(monkeypatch, tmp_path: Path) -> None:
+    import koruapi.mcp_server_planfile as mcp_planfile
+    from koru.queue.types import QueueRunResult
+
+    def _fake_single_shot(**kwargs):
+        return QueueRunResult(
+            status="failed",
+            ticket_id=kwargs["ticket_id"],
+            executor_kind="llm",
+            exit_code=2,
+            stderr="model 500",
+        )
+
+    monkeypatch.setattr(mcp_planfile, "run_queue_single_shot", _fake_single_shot)
+
+    result = mcp_server.tool_run_ticket(
+        {"project_root": str(tmp_path), "ticket_id": "PLF-FAIL"},
+    )
+
+    assert result["status"] == "failed"
+    assert result["queue_status"] == "failed"
+    assert result["exit_code"] == 2
+    assert any("model 500" in line for line in result["logs"])
+
+    status_payload = mcp_server.tool_job_status({"job_id": result["job_id"]})
+    assert status_payload["status"] == "failed"
+    assert status_payload["current_step"] == "failed"
+
+
+def test_run_ticket_waiting_input_maps_to_success_like_cli(monkeypatch, tmp_path: Path) -> None:
+    import koruapi.mcp_server_planfile as mcp_planfile
+    from koru.queue.types import QueueRunResult
+
+    def _fake_single_shot(**kwargs):
+        return QueueRunResult(
+            status="waiting_input",
+            ticket_id=kwargs["ticket_id"],
+            executor_kind="human",
+            message="need operator input",
+        )
+
+    monkeypatch.setattr(mcp_planfile, "run_queue_single_shot", _fake_single_shot)
+
+    result = mcp_server.tool_run_ticket(
+        {"project_root": str(tmp_path), "ticket_id": "PLF-HUMAN"},
+    )
+
+    assert result["status"] == "success"
+    assert result["queue_status"] == "waiting_input"
+    assert "exit_code" not in result
+    assert any("need operator input" in line for line in result["logs"])
 
 
 def test_run_ticket_error_updates_job_status(monkeypatch, tmp_path: Path) -> None:
-    def _fake_popen(cmd, **kwargs):
-        # Return a mock Popen object that raises exception on communicate()
-        class MockPopen:
-            def communicate(self, timeout=None):
-                raise RuntimeError("boom")
-
-            def poll(self):
-                return None
-
-            pid = 12345
-
-        return MockPopen()
-
     import koruapi.mcp_server_planfile as mcp_planfile
 
-    monkeypatch.setattr(mcp_planfile.subprocess, "Popen", _fake_popen)
+    def _boom(**kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(mcp_planfile, "run_queue_single_shot", _boom)
 
     result = mcp_server.tool_run_ticket(
         {
@@ -227,6 +230,45 @@ def test_run_ticket_error_updates_job_status(monkeypatch, tmp_path: Path) -> Non
     status_payload = mcp_server.tool_job_status({"job_id": result["job_id"]})
     assert status_payload["status"] == "error"
     assert status_payload["current_step"] == "error"
+
+
+def test_single_shot_helper_maps_args_to_queue_runner(monkeypatch, tmp_path: Path) -> None:
+    import koru.queue.runner as queue_runner
+    from koru.queue.types import QueueRunResult
+
+    captured: dict[str, Any] = {}
+
+    def _fake_run_next(**kwargs):
+        captured.update(kwargs)
+        return QueueRunResult(status="dry_run", ticket_id=kwargs["target_ticket_id"])
+
+    monkeypatch.setattr(queue_runner, "run_next_planfile_task", _fake_run_next)
+
+    result = queue_runner.run_queue_single_shot(
+        project=tmp_path,
+        ticket_id="PLF-9",
+        mode="dry",
+    )
+
+    assert result.status == "dry_run"
+    assert captured == {
+        "project": tmp_path,
+        "actor": "koru-shell",
+        "dry_run": True,
+        "queue_name": None,
+        "target_ticket_id": "PLF-9",
+        "interactive": False,
+    }
+
+
+def test_queue_exit_success_matches_cli_contract() -> None:
+    from koru.queue import SUCCESS_QUEUE_STATUSES, queue_run_exit_success
+
+    assert SUCCESS_QUEUE_STATUSES == {"completed", "idle", "waiting_input", "dry_run"}
+    assert queue_run_exit_success("dry_run")
+    assert queue_run_exit_success("waiting_input")
+    assert not queue_run_exit_success("failed")
+    assert not queue_run_exit_success("target_not_runnable")
 
 
 def test_regix_gate_command_uses_workdir_not_project(tmp_path: Path) -> None:
