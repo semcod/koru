@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-158",
+  "summary": "terminals: session messages use unprefixed /session/{id}/message",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-158/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_terminals.py",
+    "tests/test_dashboard_terminals.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f9771b5c91f68295ed3c1cead4ab9fc15fe3d7fd",
+    "targetBranch": "main",
+    "outcome": "session_messages reads /session/{id}/message (unprefixed). The /api-prefixed variant returns an event log (agent-switched) instead of conversation messages, so the dashboard Messages view was empty for live sessions.",
+    "nonGoals": [
+      "no changes to supervisor loop or dashboard JS",
+      "no new endpoints"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "opencode serve mounts the conversation message route only at /session/{id}/message; the /api variant serves a different event projection",
+      "components": [
+        {
+          "name": "dashboard/terminals",
+          "paths": [
+            "src/koruapi/opencode_terminals.py",
+            "tests/test_dashboard_terminals.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_dashboard_terminals.py -q"
+        ],
+        "evidence": "session_messages requests /session/{id}/message; live call returns user+assistant messages with parts"
+      }
+    ]
+  }
+}

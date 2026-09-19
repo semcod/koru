@@ -214,31 +214,44 @@ def route(
 
     # Model-changing failures (and an exhausted timeout) look for a fresh model.
     if code in _MODEL_CHANGING or code in _TRANSIENT_THEN_SWITCH or not code:
-        candidates = [m for m in _eligible(registry, attempts) if last_model is None or m.model != last_model.model]
-        # If only the last model is left with budget, do not re-pick it here —
-        # a policy block or bad output will just repeat.
-        if candidates:
-            return RoutingDecision(
-                verb=SWITCH_MODEL,
-                reason=f"{code or 'unknown failure'}: this model cannot proceed; trying the next configured model",
-                next_model=candidates[0],
-                retryable=True,
-            )
-        return RoutingDecision(
-            verb=MODEL_EXHAUSTED,
-            reason="every configured model has been tried without a usable result",
-            escalate=True,
+        return _switch_or_exhaust(
+            registry,
+            attempts,
+            last_model,
+            switch_reason=f"{code or 'unknown failure'}: this model cannot proceed; trying the next configured model",
+            exhausted_reason="every configured model has been tried without a usable result",
         )
 
     # Unknown code: treat conservatively as a model change, then exhaustion.
+    return _switch_or_exhaust(
+        registry,
+        attempts,
+        last_model,
+        switch_reason=f"unrecognised failure {code!r}; trying the next model",
+        exhausted_reason=f"unrecognised failure {code!r} and no models left",
+    )
+
+
+def _switch_or_exhaust(
+    registry: list[ModelSpec],
+    attempts: list,
+    last_model: ModelSpec | None,
+    *,
+    switch_reason: str,
+    exhausted_reason: str,
+) -> RoutingDecision:
+    # If only the last model is left with budget, do not re-pick it here —
+    # a policy block or bad output will just repeat.
     candidates = [m for m in _eligible(registry, attempts) if last_model is None or m.model != last_model.model]
     if candidates:
         return RoutingDecision(
             verb=SWITCH_MODEL,
-            reason=f"unrecognised failure {code!r}; trying the next model",
+            reason=switch_reason,
             next_model=candidates[0],
             retryable=True,
         )
     return RoutingDecision(
-        verb=MODEL_EXHAUSTED, reason=f"unrecognised failure {code!r} and no models left", escalate=True,
+        verb=MODEL_EXHAUSTED,
+        reason=exhausted_reason,
+        escalate=True,
     )

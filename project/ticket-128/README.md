@@ -66,3 +66,24 @@ considered for ticket emission.
 
 This directory contains the minimal reviewed intent. Optional participant prose
 and raw command logs are not required delivery output.
+
+## Continuation 2026-09-19: land the documentation remainder
+
+The scanner code and tests of 66ceba0c reached main earlier with identical
+blobs; the branch stayed unassigned and blocked admission as an
+unassigned-branch-delta (STARTER-603 input 1). Per that ticket's owner options
+this continuation lands the remainder instead of discarding the branch:
+
+- Branch refreshed to current main (merge, no conflicts); README.md restored to
+  main's version because README.md is governance-owned and cannot ride this
+  integration slice. The five-line fleet pointer from 66ceba0c is preserved as
+  an explicit follow-up for a governance-workstream ticket.
+- intent.json re-scoped to the documentation-only remainder:
+  workstream `integration`, component `fleet-scope-docs`,
+  allowedPaths `docs/koru-fleet.md` plus tracking carriers.
+- Criterion disposition (branch-intent reconciliation): AC-01..AC-07 and the
+  scanner code `implemented` (identical blobs on main); docs/koru-fleet.md
+  scope section `implemented` by this merge; README.md pointer `partial`,
+  follow-up noted above. No criterion remains `unknown`.
+- After this merge 66ceba0c becomes an ancestor of main, which clears the
+  admission blocker without deleting restorable history.

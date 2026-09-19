@@ -296,3 +296,5 @@ Complete index of documentation in this directory. Start with
 | [`plans/capture-providers-refactor.md`](./plans/capture-providers-refactor.md) | Capture provider refactor |
 | [`plans/observation-mesh-plan.md`](./plans/observation-mesh-plan.md) | Observation mesh plan |
 | [`plans/nlp2uri-koruide-integration-refactor-plan.md`](./plans/nlp2uri-koruide-integration-refactor-plan.md) | nlp2uri IDE control integration (PL) |
+
+- [Model dla prostych zadań](analysis/simple-task-model-routing.md) — audyt Koru na NVIDIA, wybór GLM-5.3 i kryteria pilotażu Flash.

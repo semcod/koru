@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-141",
+  "summary": "Scope fleet standard scans and expose excluded repository inventory",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-141/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/standard_fleet.py",
+    "src/koru/cli_fleet.py",
+    "tests/test_standard_fleet.py",
+    "tests/test_cli_fleet.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "59609ba865f98cf319cb0b41f7662dab7f4f3787",
+    "targetBranch": "main",
+    "outcome": "Koru standard-fleet scans select primary checkouts in the configured fleet organizations by default and expose excluded local, worktree, duplicate and out-of-scope repositories through a read-only inventory without mutating adopters.",
+    "nonGoals": [
+      "Automatically adopt, commit, push, merge or delete any target repository",
+      "Silently include excluded repositories in ticket emission",
+      "Change the Wellmanifest standard or adopter pins"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Observe all governed paths in parallel, classify organization/origin/worktree/duplicate scope, expose excluded inventory separately, and pass only selected observations to the existing stale-pin and waiting-input ticket pipeline.",
+      "components": [
+        {
+          "name": "standard-fleet-scope",
+          "paths": [
+            "src/koru/standard_fleet.py",
+            "src/koru/cli_fleet.py",
+            "tests/test_standard_fleet.py",
+            "tests/test_cli_fleet.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": ["koru fleet standard-inventory"],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the scanner has no adopter-side mutation to undo."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh --base origin/main --head HEAD --actor agent",
+          ".venv/bin/ruff check src/koru/standard_fleet.py src/koru/cli_fleet.py tests/test_standard_fleet.py tests/test_cli_fleet.py"
+        ],
+        "evidence": "Governance passed on the exact local HEAD with zero errors and warnings; Ruff passed."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          ".venv/bin/pytest -o addopts='' -q tests/test_standard_fleet.py tests/test_cli_fleet.py",
+          ".venv/bin/pytest -o addopts='' -m 'not slow' -q"
+        ],
+        "evidence": "Focused suite: 27 passed. Full deterministic suite: 4163 passed, 19 skipped, 165 deselected, 977 subtests passed."
+      }
+    ]
+  }
+}

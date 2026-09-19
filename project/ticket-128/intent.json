@@ -1,23 +1,18 @@
 {
   "schema": "new-project.intent/v3",
   "ticket": "ticket-128",
-  "summary": "Add scoped and auditable fleet standard-update ticket emission",
-  "workstream": "application",
+  "summary": "Land the fleet standard-scope documentation remainder on the refreshed branch",
+  "workstream": "integration",
   "classification": {
     "kind": "SERVICE",
-    "priority": "P1",
+    "priority": "P2",
     "origin": "health"
   },
   "allowedPaths": [
     "project/ticket-128/**",
     "TODO.md",
     "project/TICKETS.md",
-    "src/koru/standard_fleet.py",
-    "src/koru/cli_fleet.py",
-    "tests/test_standard_fleet.py",
-    "tests/test_cli_fleet.py",
-    "docs/koru-fleet.md",
-    "README.md"
+    "docs/koru-fleet.md"
   ],
   "forbiddenPaths": ["project/ticket-*/user-*.md"],
   "stacks": ["python"],
@@ -25,70 +20,65 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "da2e522f344e64ff65734db8c37fb7d5906486f0",
+    "acceptedBaseSha": "fb488da0c6138341140564a49648d6bd3ec15d6f",
     "targetBranch": "main",
-      "outcome": "Koru provides a bounded read-only, organization-scoped Wellmanifest freshness scan and explicit idempotent Planfile handoff emission without mutating adopter repositories. Excluded local, worktree, duplicate and out-of-scope checkouts remain available through a read-only inventory command.",
+    "outcome": "The scoped fleet standard-update behavior and its tests already landed on main with identical blobs; this slice lands the remaining docs/koru-fleet.md standard-update scope and inventory documentation from 66ceba0c so the branch integrates and the unassigned-branch-delta admission blocker clears. The five-line README.md fleet pointer from the same commit is preserved as an explicit follow-up because README.md is governance-owned and cannot ride this integration slice.",
     "nonGoals": [
-      "Automatically adopt, commit, push, merge or delete any target repository",
-      "Refresh an untrusted or dirty standard source checkout",
-      "Replace target-owned Goal, CI or protected Validator delivery"
+      "Re-open or re-implement the already landed scanner code",
+      "Change README.md in this slice",
+      "Automatically adopt, commit, push, merge or delete any target repository"
     ],
-    "complexity": "M",
-    "estimatedMinutes": 90,
+    "complexity": "S",
+    "estimatedMinutes": 30,
     "budgets": {
-      "maxImplementationFiles": 9,
-      "maxAffectedComponents": 3,
-      "maxPublicInterfaceChanges": 2,
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Add a local, fail-closed standard release observation, bounded parallel adopter inspection and serial Planfile handoff emission. Existing target repositories remain untouched; only their own governance workflow may perform adoption.",
+      "decision": "Documentation-only integration of the superseded scanner slice: refresh the branch to the current target, keep main's README.md, and land the docs/koru-fleet.md scope section verbatim from 66ceba0c.",
       "components": [
         {
-          "name": "standard-fleet-scan",
+          "name": "fleet-scope-docs",
           "paths": [
-            "src/koru/standard_fleet.py",
-            "src/koru/cli_fleet.py",
-            "tests/test_standard_fleet.py",
-            "tests/test_cli_fleet.py"
+            "docs/koru-fleet.md"
           ]
         }
       ],
       "responsibilityChanges": false,
-        "interfaceChanges": ["koru fleet standard-update", "koru fleet standard-scan", "koru fleet standard-inventory"],
+      "interfaceChanges": [],
       "dataChanges": [],
       "ui": {
         "impact": "none",
         "states": [],
         "evidence": []
       },
-      "rollback": "Revert the ticket branch; the scanner has no adopter-side mutation to undo."
+      "rollback": "Revert the merge commit; the documentation section has no runtime effect."
     },
     "runtimeDependencies": [],
     "validation": [
       {
         "criterion": "AC-01",
         "commands": [
-          "./project/governance-check.sh --base origin/main --head HEAD --actor agent",
-          ".venv/bin/ruff check src/koru/standard_fleet.py src/koru/cli_fleet.py tests/test_standard_fleet.py tests/test_cli_fleet.py"
+          "./project/governance-check.sh --base origin/main --head HEAD --actor agent"
         ],
-        "evidence": "Governance and Ruff pass with zero errors."
+        "evidence": "Governance gate passes with zero errors for the refreshed branch."
       },
       {
         "criterion": "AC-02",
         "commands": [
-          ".venv/bin/pytest -o addopts='' -q tests/test_standard_fleet.py tests/test_cli_fleet.py",
-          ".venv/bin/pytest -o addopts='' -m 'not slow' -q"
+          "git diff --stat origin/main..HEAD"
         ],
-        "evidence": "Focused tests pass; full non-slow result is recorded in ticket README, with the three baseline failures reproduced on clean main."
+        "evidence": "Post-merge delta versus main is documentation-only: docs/koru-fleet.md plus ticket-128 carriers; no source, test or governance-projection file changes."
       },
       {
         "criterion": "AC-03",
         "commands": [
-          "koru fleet standard-update WORKSPACE --standard-root CLEAN_STANDARD --format json"
+          "git merge-base --is-ancestor 66ceba0c66922ddb0093042f00108da0f12f0f34 HEAD"
         ],
-        "evidence": "Real read-only scan found 33 governed repositories: 2 current and 31 stale; dirty and linked-worktree state was reported without target mutation."
+        "evidence": "The historical branch head remains an ancestor after integration, clearing the unassigned-branch-delta blocker without discarding history."
       }
     ]
   }

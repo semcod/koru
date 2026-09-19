@@ -142,3 +142,68 @@ def test_cli_writes_the_delegated_ticket_to_planfile(tmp_path: Path, capsys) -> 
         text=True,
     )
     assert status.stdout == ""
+
+
+def test_tracked_runtime_state_is_hidden_from_local_diff(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    subprocess.run(["git", "init", "--quiet"], cwd=project, check=True)
+    tracked = (
+        project / ".planfile" / "sprints" / "current.yaml",
+        project / ".planfile_analysis" / "analysis_summary.json",
+    )
+    for path in tracked:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("before\n", encoding="utf-8")
+    subprocess.run(
+        ["git", "add", "-f", *[str(path.relative_to(project)) for path in tracked]],
+        cwd=project,
+        check=True,
+    )
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=Koru test",
+            "-c",
+            "user.email=koru-test@example.invalid",
+            "commit",
+            "--quiet",
+            "-m",
+            "seed runtime state",
+        ],
+        cwd=project,
+        check=True,
+    )
+    proposal_path = _write_proposal(project)
+
+    def create_task(path, text, **kwargs):
+        del text, kwargs
+        tracked[0].write_text("after\n", encoding="utf-8")
+        tracked[1].write_text("after\n", encoding="utf-8")
+        return CreatedTask(
+            ticket_id="PLF-042",
+            sprint="current",
+            path=path / ".planfile/sprints/current.yaml",
+            name="runtime state",
+        )
+
+    consume_goal_proposal(project, proposal_path, create_task=create_task)
+
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=all"],
+        cwd=project,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert status.stdout == ""
+    exclude = subprocess.run(
+        ["git", "rev-parse", "--git-path", "info/exclude"],
+        cwd=project,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    excluded = Path(exclude if Path(exclude).is_absolute() else project / exclude)
+    assert ".planfile_analysis/" in excluded.read_text(encoding="utf-8")

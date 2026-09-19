@@ -46,6 +46,7 @@ from typing import Any
 
 import yaml
 
+from koru.fleet_admission import scan_admission
 from koru.scan_collection import collect_suggestions as _collect_suggestions_impl
 from koru.scan_dedupe_policy import (
     SCAN_DEDUP_SKIP_STATUSES as _SCAN_DEDUP_SKIP_STATUSES_IMPL,
@@ -121,9 +122,14 @@ def scan_pytest_collect(
     project: Path,
     *,
     runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]] | None = None,
-    timeout_seconds: float = 30.0,
+    timeout_seconds: float = 60.0,
 ) -> list[Suggestion]:
-    """Probe pytest collection; surface every collection failure as a ticket."""
+    """Probe pytest collection; surface every collection failure as a ticket.
+
+    The default budget covers a cold collection of this repository's
+    ~4400-test suite (~40s with no bytecode cache); the governance bridge
+    is disabled for the probe, so the budget measures collection only.
+    """
     if not (project / "tests").exists() and not (project / "pyproject.toml").exists():
         return []
 
@@ -138,7 +144,16 @@ def scan_pytest_collect(
         )
 
     use_runner = runner or _default_runner
-    cmd = get_python_cmd(project) + ["-m", "pytest", "--collect-only", "-q", "--no-header"]
+    # ``--collect-only`` is a read-only inventory probe. The managed
+    # ``wellmanifest_governance`` bridge runs the full governance-check
+    # subprocess at session start (~25s on this host) and aborts collection
+    # with an INTERNALERROR when the checkout is dirty — neither helps a
+    # collection probe inside a 30s budget, so the plugin stays off here.
+    # ``-p no:`` is a no-op for projects that never loaded the plugin.
+    cmd = get_python_cmd(project) + [
+        "-m", "pytest", "--collect-only", "-q", "--no-header",
+        "-p", "no:wellmanifest_governance",
+    ]
     try:
         result = use_runner(cmd, project)
     except subprocess.TimeoutExpired:
@@ -819,13 +834,8 @@ _TOON_LAYER_DUP_MODULE_RE = re.compile(
 )
 
 
-def _layers_dup_modules_are_extern_mirrors(text: str) -> bool | None:
-    """Inspect LAYERS ``×DUP`` rows.
-
-    Returns ``True`` when every ×DUP-marked module appears under both an
-    ``extern/`` layer root and a non-extern root (vendored mirror). Returns
-    ``None`` when the text has no module-level ×DUP markers.
-    """
+def _layers_dup_module_roots(text: str) -> dict[str, set[str]]:
+    """Collect ``module -> {layer roots}`` for every ×DUP row in LAYERS."""
     current_root: str | None = None
     module_roots: dict[str, set[str]] = {}
     in_layers = False
@@ -847,6 +857,17 @@ def _layers_dup_modules_are_extern_mirrors(text: str) -> bool | None:
         mod_m = _TOON_LAYER_DUP_MODULE_RE.match(line)
         if mod_m and current_root:
             module_roots.setdefault(mod_m.group("module"), set()).add(current_root)
+    return module_roots
+
+
+def _layers_dup_modules_are_extern_mirrors(text: str) -> bool | None:
+    """Inspect LAYERS ``×DUP`` rows.
+
+    Returns ``True`` when every ×DUP-marked module appears under both an
+    ``extern/`` layer root and a non-extern root (vendored mirror). Returns
+    ``None`` when the text has no module-level ×DUP markers.
+    """
+    module_roots = _layers_dup_module_roots(text)
     if not module_roots:
         return None
     for roots in module_roots.values():
@@ -1732,7 +1753,6 @@ def _todo2code_plan_suggestion(
     priority = priority_map.get(str(plan.get("priority") or "").upper(), "normal")
     if priority not in {"high", "normal", "low"}:
         priority = "normal"
-    evidence = plan.get("evidence") if isinstance(plan.get("evidence"), dict) else {}
     return Suggestion(
         signal="todo2code_plan", title=f"[todo2code] {title}",
         description=(
@@ -1741,12 +1761,22 @@ def _todo2code_plan_suggestion(
         ),
         priority=priority, labels=("todo2code", "code-change", "scan", "useful-code-change"),
         files=tuple(paths[:12]),
-        source_context={"signal": "todo2code_code_change_plan", "dedupe_key": dedupe_key(plan),
-                        "plan_id": str(plan.get("id") or "").strip() or None,
-                        "plan_hash": str(plan.get("planHash") or "").strip() or None,
-                        "source_tool": source,
-                        "diagnostic_ids": [str(v) for v in (evidence.get("diagnosticIds") or []) if str(v).strip()]},
+        source_context=_todo2code_source_context(plan, dedupe_key=dedupe_key, source=source),
     )
+
+
+def _todo2code_source_context(
+    plan: dict[str, Any], *, dedupe_key: Callable[[dict[str, Any]], str], source: str,
+) -> dict[str, Any]:
+    evidence = plan.get("evidence") if isinstance(plan.get("evidence"), dict) else {}
+    return {
+        "signal": "todo2code_code_change_plan",
+        "dedupe_key": dedupe_key(plan),
+        "plan_id": str(plan.get("id") or "").strip() or None,
+        "plan_hash": str(plan.get("planHash") or "").strip() or None,
+        "source_tool": source,
+        "diagnostic_ids": [str(v) for v in (evidence.get("diagnosticIds") or []) if str(v).strip()],
+    }
 
 
 def _scan_todo2code_plans(project: Path) -> list[Suggestion]:
@@ -2174,4 +2204,18 @@ def run_scan(
     if not apply:
         return ScanResult(suggestions=suggestions)
 
-    return _apply_scan_suggestions(project, suggestions, source=source, runner=runner)
+    admission = scan_admission(project)
+    if admission is not None and not admission["admit_new"]:
+        return ScanResult(suggestions=suggestions,
+                          skipped=[s.title for s in suggestions],
+                          fleet_admission=admission)
+    # A single observation cannot authorize a batch of newly queued tickets.
+    selected = suggestions[:1] if admission is not None else suggestions
+    result = _apply_scan_suggestions(project, selected, source=source, runner=runner)
+    if admission is None:
+        return result
+    from dataclasses import replace
+
+    return replace(result, suggestions=suggestions,
+                   skipped=[*result.skipped, *(s.title for s in suggestions[1:])],
+                   fleet_admission=admission)

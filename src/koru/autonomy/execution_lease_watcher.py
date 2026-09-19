@@ -10,17 +10,17 @@ with the current generation and fencing values before writing a worktree.
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import yaml
 
+from koru.queue.lease import TAKEOVER_GRACE_SECONDS, takeover_at
 from koru.queue.planfile_sdk import planfile_lifecycle_command
 from koru.queue.types import CommandResult
 from koru.tasks import create_nl_task
 
-TAKEOVER_GRACE_SECONDS = 600
 TAKEOVER_NOTICE_SOURCE = "koru-execution-lease-watcher"
 TAKEOVER_NOTICE_SIGNAL = "execution_lease_takeover"
 TAKEOVER_NOTICE_DEDUPE_PREFIX = "koru:execution-lease-takeover:"
@@ -48,16 +48,6 @@ def _utc_text(value: datetime) -> str:
 def _execution(ticket: dict[str, Any]) -> dict[str, Any]:
     value = ticket.get("execution")
     return value if isinstance(value, dict) else {}
-
-
-def takeover_at(ticket: dict[str, Any]) -> datetime | None:
-    """Return the takeover boundary projected by the ticket lease."""
-    execution = _execution(ticket)
-    direct = _parse_datetime(execution.get("takeover_at"))
-    if direct is not None:
-        return direct
-    expires = _parse_datetime(execution.get("lease_expires_at"))
-    return expires + timedelta(seconds=TAKEOVER_GRACE_SECONDS) if expires else None
 
 
 def _notice_context(ticket: dict[str, Any]) -> dict[str, Any] | None:

@@ -85,6 +85,8 @@
       "integration": {
         "ownedPaths": [
           ".governance/manifest.json",
+          "wellmanifest_governance.py",
+          "tests/test_wellmanifest_governance.py",
           ".governance/manifest.base.json",
           ".governance/manifest.lock.json",
           ".governance/package-manifest.json",
@@ -237,7 +239,7 @@
   ],
   "standard": {
     "id": "wellmanifest/new-project",
-    "version": "0.20.25"
+    "version": "0.20.32"
   },
   "ticket": {
     "activeStatuses": [

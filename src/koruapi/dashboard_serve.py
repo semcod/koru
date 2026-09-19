@@ -182,6 +182,12 @@ def _announce_bound_dashboard(
     )
     if config.open_browser:
         _schedule_browser_open(bound.url)
+    from koruapi.opencode_supervisor import start_supervisor
+
+    try:
+        start_supervisor(config.project, log=lambda msg: log(f"SUPERVISOR: {msg}"))
+    except Exception as exc:  # pragma: no cover — supervision is best-effort
+        log(f"SUPERVISOR: failed to start: {exc}")
 
 
 def _bind_or_print(config: ServeConfig) -> _BoundDashboard | None:

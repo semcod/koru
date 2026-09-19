@@ -78,6 +78,9 @@ from koru.autonomy.cycle_queue_scan import (
 from koru.autonomy.cycle_queue_scan import (
     _ensure_standardized_discovery_follow_up as _ensure_standardized_discovery_follow_up,
 )
+from koru.autonomy.cycle_queue_scan import (
+    _handle_backlog_promotion_after_idle as _handle_backlog_promotion_after_idle,
+)
 from koru.autonomy.cycle_queue_scan import _handle_post_run_verify as _handle_post_run_verify
 from koru.autonomy.cycle_queue_scan import _handle_queue_loop_phase as _handle_queue_loop_phase
 from koru.autonomy.cycle_queue_scan import _handle_scan_after_idle as _handle_scan_after_idle
@@ -575,19 +578,30 @@ def _run_pre_drive_cycle_phases(
         hp,
         emit,
     )
-    idle_scan_result = _handle_scan_after_idle(
+    promotion = _handle_backlog_promotion_after_idle(
         project,
         state,
-        cycle,
         queue_result,
-        config.scan_after_idle_queue,
-        config.include_semcod_artifacts,
-        config.scan_after_idle_min_interval_seconds,
-        config.topology_integration,
         cycle_telemetry,
         hp,
         emit,
     )
+    idle_scan_result = None
+    # Promoted backlog is already actionable work; discovery would only add more.
+    if not (promotion and promotion.get("applied")):
+        idle_scan_result = _handle_scan_after_idle(
+            project,
+            state,
+            cycle,
+            queue_result,
+            config.scan_after_idle_queue,
+            config.include_semcod_artifacts,
+            config.scan_after_idle_min_interval_seconds,
+            config.topology_integration,
+            cycle_telemetry,
+            hp,
+            emit,
+        )
     if idle_scan_result is not None:
         scan_result = idle_scan_result
     _update_stagnation_state(state, queue_result)

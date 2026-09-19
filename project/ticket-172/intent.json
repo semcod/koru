@@ -1,0 +1,142 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-172",
+  "summary": "Repair manifest lock target-set integrity and adopt Wellmanifest new-project 0.20.33 in two sequential atomic updater transactions",
+  "workstream": "integration",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-172/**",
+    "project/TICKETS.md",
+    ".governance/manifest.json",
+    ".governance/manifest.base.json",
+    ".governance/manifest.lock.json",
+    ".governance/package-manifest.json",
+    ".governance/standard-adoption.json",
+    ".governance/standard-pack-evidence/**",
+    "wellmanifest_governance.py",
+    "package.json",
+    "pyproject.toml"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [
+    "ticket-173"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6b65c7f23a162f7be9077197500160ecb6a8dddc",
+    "targetBranch": "main",
+    "outcome": "The adoption lock's managed target set equals the package manifest's managed strategies with drift-free digests, and Koru runs the published wellmanifest/new-project 0.20.33 projection with matching packaging pins and verified S0-S4 evidence receipts.",
+    "nonGoals": [
+      "No source, test or behaviour change in Koru itself beyond the standard-managed projection",
+      "No release and no registry publish",
+      "No changes to tickets other than ticket-172 tracking carriers"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 120,
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 5,
+      "maxPublicInterfaceChanges": 3,
+      "maxRuntimeDependencies": 3
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Repair slice: run the immutable create_adoption_lock.py updater at the currently pinned b6ba9c21 (0.20.32) with --upgrade so the drifted managed wellmanifest_governance.py is restored and the lock is regenerated, dropping ticket-154's hand-added .governance/manifest.json pin and hand-pinned drifted digest; the lock change rides with a managed package target change so the protected Validator's package-advisory atomicity contract accepts the transaction. Adoption slice (second PR after the repair merges, because the governance atomic adoption proof validates the Git base lock target set): rerun the updater at a8245857 (0.20.33), realign package.json and pyproject.toml [tool.wellmanifest] pins, and refresh standard-adoption/evidence receipts with upstream CI run 35451961370 and ruleset 20451097. The pytest --collect-only skip hand-patched by ticket-154 returns through the upstream 0.20.33 projection (wellmanifest/new-project ticket-248). Standard-managed payload files beyond this ticket's declared instance paths are owned by the updater transaction and verified through the atomic adoption proof, not by these component lists.",
+      "components": [
+        {
+          "name": "governance-adoption-instance",
+          "paths": [
+            ".governance/manifest.json",
+            ".governance/manifest.base.json",
+            ".governance/manifest.lock.json",
+            ".governance/package-manifest.json",
+            ".governance/standard-adoption.json",
+            ".governance/standard-pack-evidence/**",
+            "package.json",
+            "pyproject.toml"
+          ]
+        },
+        {
+          "name": "governance-gate-bridge",
+          "paths": [
+            "wellmanifest_governance.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [
+        "Adopted standard advances from 0.20.32 to 0.20.33 after the repair restores the 0.20.32 projection",
+        "Adoption lock target set repaired to equal managed strategies with drift-free digests"
+      ],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commits; the managed payload, lock and both packaging pins return to the pre-repair 0.20.32 state (including ticket-154's local collect-only patch)."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 .governance/standard_pack_check.py",
+          "git diff --check"
+        ],
+        "evidence": "Governance gate passes; lock target set equals the package manifest managed strategies and digests match the working tree."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "create_adoption_lock.py --target-root . --source-revision b6ba9c21a65a6a5648ecf904b64c3b75295e136f --check"
+        ],
+        "evidence": "Updater drift check (pinned standard checkout) reports up-to-date for the pinned 0.20.32 revision."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 .governance/standard_pack_check.py"
+        ],
+        "evidence": "Manifest instance files and lock bind published 0.20.33 at a8245857259d8d42115108f191c586b76cb1e2bd (adoption slice)."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "create_adoption_lock.py --target-root . --source-revision a8245857259d8d42115108f191c586b76cb1e2bd --check"
+        ],
+        "evidence": "Updater drift check (pinned standard checkout) reports up-to-date for 0.20.33 (adoption slice)."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python3 .governance/standard_pack_projection_check.py"
+        ],
+        "evidence": "S0-S4 evidence validates with upstream CI run 35451961370 and ruleset 20451097 receipts (adoption slice)."
+      },
+      {
+        "criterion": "AC-06",
+        "commands": [
+          "git diff --check"
+        ],
+        "evidence": "package.json and pyproject.toml [tool.wellmanifest] reference 0.20.33 and a8245857259d8d42115108f191c586b76cb1e2bd (adoption slice)."
+      },
+      {
+        "criterion": "AC-07",
+        "commands": [
+          "./project/governance-check.sh",
+          "git diff --check"
+        ],
+        "evidence": "Managed governance gate and whitespace checks pass on both slices."
+      }
+    ]
+  }
+}

@@ -255,6 +255,141 @@ def _get_plugin_logs(handler: Any, _config: ServeConfig) -> None:
     handler._safe_respond_json(dashboard_plugin_logs_payload)
 
 
+def _get_model_history(handler: Any, _config: ServeConfig) -> None:
+    from koru.model_history import model_history_payload
+
+    query = parse_qs(urlparse(handler.path).query)
+    try:
+        limit = int(query.get("limit", ["100"])[0])
+    except ValueError:
+        handler._send_json({"error": "Invalid limit"}, status=400)
+        return
+    handler._safe_respond_json(lambda: model_history_payload(handler._selected_project(), limit=limit))
+
+
+def _get_logs_json(handler: Any, _config: ServeConfig) -> None:
+    from koruapi.dashboard_logs import handle_logs_json_request
+
+    handle_logs_json_request(handler, _config)
+
+
+def _get_terminals(handler: Any, _config: ServeConfig) -> None:
+    from koruapi.opencode_terminals import terminals_payload
+
+    try:
+        project = handler._selected_project()
+    except ValueError as exc:
+        handler._send_json({"error": str(exc)}, status=400)
+        return
+    handler._safe_respond_json(lambda: terminals_payload(project))
+
+
+def _get_terminal_detail(handler: Any, _config: ServeConfig) -> None:
+    from koruapi.opencode_terminals import terminal_detail
+
+    try:
+        project = handler._selected_project()
+    except ValueError as exc:
+        handler._send_json({"error": str(exc)}, status=400)
+        return
+    iid = _first_query_value(handler._query_params(), "iid") or ""
+    handler._safe_respond_json(lambda: terminal_detail(project, iid))
+
+
+def _get_terminal_messages(handler: Any, _config: ServeConfig) -> None:
+    from koruapi.opencode_terminals import terminal_messages
+
+    try:
+        project = handler._selected_project()
+    except ValueError as exc:
+        handler._send_json({"error": str(exc)}, status=400)
+        return
+    qs = handler._query_params()
+    iid = _first_query_value(qs, "iid") or ""
+    sid = _first_query_value(qs, "sid") or ""
+    handler._safe_respond_json(lambda: terminal_messages(project, iid, sid))
+
+
+def _post_terminal_spawn(handler: Any, _config: ServeConfig, body: dict[str, Any]) -> None:
+    from koruapi.opencode_terminals import spawn_instance
+
+    try:
+        project = handler._selected_project(body)
+    except ValueError as exc:
+        handler._send_json({"error": str(exc)}, status=400)
+        return
+    try:
+        entry = spawn_instance(
+            project,
+            label=str(body.get("label") or "").strip(),
+            directory=str(body.get("directory") or "").strip() or None,
+            auto_answer=bool(body.get("auto_answer", True)),
+        )
+    except Exception as exc:
+        handler._send_json({"error": str(exc)}, status=500)
+        return
+    handler._send_json({"ok": True, "instance": entry})
+
+
+def _post_terminal_stop(handler: Any, _config: ServeConfig, body: dict[str, Any]) -> None:
+    from koruapi.opencode_terminals import stop_instance
+
+    try:
+        project = handler._selected_project(body)
+    except ValueError as exc:
+        handler._send_json({"error": str(exc)}, status=400)
+        return
+    iid = str(body.get("iid") or "").strip()
+    result = stop_instance(project, iid)
+    handler._send_json(result, status=200 if result.get("ok") else 400)
+
+
+def _post_terminal_auto(handler: Any, _config: ServeConfig, body: dict[str, Any]) -> None:
+    from koruapi.opencode_terminals import set_auto_answer
+
+    try:
+        project = handler._selected_project(body)
+    except ValueError as exc:
+        handler._send_json({"error": str(exc)}, status=400)
+        return
+    iid = str(body.get("iid") or "").strip()
+    entry = set_auto_answer(project, iid, bool(body.get("enabled")))
+    if entry is None:
+        handler._send_json({"error": f"unknown instance {iid!r}"}, status=404)
+        return
+    handler._send_json({"ok": True, "instance": entry})
+
+
+def _post_terminal_prompt(handler: Any, _config: ServeConfig, body: dict[str, Any]) -> None:
+    from koruapi.opencode_terminals import terminal_prompt
+
+    try:
+        project = handler._selected_project(body)
+    except ValueError as exc:
+        handler._send_json({"error": str(exc)}, status=400)
+        return
+    result = terminal_prompt(project, body)
+    handler._send_json(result, status=200 if result.get("ok") else 400)
+
+
+def _post_terminal_reply(handler: Any, _config: ServeConfig, body: dict[str, Any]) -> None:
+    from koruapi.opencode_terminals import terminal_reply
+
+    try:
+        project = handler._selected_project(body)
+    except ValueError as exc:
+        handler._send_json({"error": str(exc)}, status=400)
+        return
+    result = terminal_reply(project, body)
+    handler._send_json(result, status=200 if result.get("ok") else 400)
+
+
+def _handle_sse_logs(handler: Any, config: ServeConfig) -> None:
+    from koruapi.dashboard_logs import handle_sse_logs_request
+
+    handle_sse_logs_request(handler, config)
+
+
 def _redirect_create_project_ticket_prompt(handler: Any, _config: ServeConfig) -> None:
     qs = parse_qs(urlparse(handler.path).query)
     query = dict(PROJECT_DISCOVERY_PROMPT_QUERY)
@@ -504,6 +639,11 @@ _GET_ROUTES: dict[str, _GetHandler] = {
     "/api/observe/trace": _get_observe_trace,
     "/api/interfaces": _get_interfaces,
     "/api/environment": _get_environment,
+    "/api/logs": _get_logs_json,
+    "/api/model-history": _get_model_history,
+    "/api/terminals": _get_terminals,
+    "/api/terminals/detail": _get_terminal_detail,
+    "/api/terminals/messages": _get_terminal_messages,
     "/llm/prompt/create-ticket-for-project": _redirect_create_project_ticket_prompt,
     "/llm/action/create-ticket-for-project": _get_create_project_ticket_action,
 }
@@ -518,6 +658,11 @@ _POST_ROUTES: dict[str, _PostHandler] = {
     "/api/tickets/update": _post_ticket_update,
     "/api/tickets/reorder": _post_ticket_reorder,
     "/api/remote/drive": _post_remote_drive,
+    "/api/terminals/spawn": _post_terminal_spawn,
+    "/api/terminals/stop": _post_terminal_stop,
+    "/api/terminals/auto": _post_terminal_auto,
+    "/api/terminals/prompt": _post_terminal_prompt,
+    "/api/terminals/reply": _post_terminal_reply,
 }
 
 
@@ -525,6 +670,16 @@ def _handle_dashboard_get(handler: Any, config: ServeConfig) -> None:
     path = urlparse(handler.path).path
     if path in ("/", "/index.html"):
         handler._send(200, _load_dashboard_html().encode("utf-8"), "text/html; charset=utf-8")
+        return
+    if path in ("/favicon.svg", "/favicon.ico"):
+        handler._send(
+            200,
+            b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+            b'<rect width="48" height="48" rx="11" fill="#161922"/>'
+            b'<path d="M16 12v24m2-11 14-13M18 25l14 11" fill="none" '
+            b'stroke="#6ee7b7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            "image/svg+xml",
+        )
         return
     if path == "/health":
         handler._send_json({"ok": True})
@@ -539,6 +694,9 @@ def _handle_dashboard_get(handler: Any, config: ServeConfig) -> None:
 
         if serve_browser_capture_http(handler, path, project=config.project, method="GET"):
             return
+    if path == "/api/logs/stream":
+        _handle_sse_logs(handler, config)
+        return
     route = _GET_ROUTES.get(path)
     if route is not None:
         route(handler, config)

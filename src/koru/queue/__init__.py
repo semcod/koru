@@ -16,7 +16,12 @@ from koru.queue.patch_mode import (
     PatchOutcome,
 )
 from koru.queue.patch_transaction import PatchTransactionResult
-from koru.queue.runner import run_next_planfile_task
+from koru.queue.runner import (
+    SUCCESS_QUEUE_STATUSES,
+    queue_run_exit_success,
+    run_next_planfile_task,
+    run_queue_single_shot,
+)
 from koru.queue.runners import (
     run_api_request,
     run_llm_request,
@@ -45,10 +50,13 @@ __all__ = [
     "PatchOutcome",
     "PatchTransactionResult",
     "SHELL_RUN_NOTE_TAG",
+    "SUCCESS_QUEUE_STATUSES",
     "build_koru_queue_argv",
     "format_shell_run_note",
+    "queue_run_exit_success",
     "run_next_planfile_task",
     "run_planfile_queue_loop",
+    "run_queue_single_shot",
     "CommandResult",
     "QueueRunResult",
     "QueueLoopResult",

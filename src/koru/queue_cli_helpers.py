@@ -7,6 +7,7 @@ from typing import Any
 
 from koru.events import emit_management_event
 from koru.queue import (
+    SUCCESS_QUEUE_STATUSES,
     QueueLoopResult,
     QueueRunResult,
     run_next_planfile_task,
@@ -33,9 +34,6 @@ QUEUE_STATUS_MARKERS: dict[str, str] = {
     "target_not_runnable": "!",
     "infrastructure_error": "!",
 }
-
-SUCCESS_QUEUE_STATUSES = frozenset({"completed", "idle", "waiting_input", "dry_run"})
-
 
 def queue_status_marker(status: str) -> str:
     return QUEUE_STATUS_MARKERS.get(status, "·")

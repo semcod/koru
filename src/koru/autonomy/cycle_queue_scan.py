@@ -191,6 +191,26 @@ def _handle_queue_loop_phase(
     )
 
 
+def _handle_backlog_promotion_after_idle(
+    project: Path,
+    state: AutoloopState,
+    queue_result: QueueLoopResult,
+    cycle_telemetry: dict[str, Any],
+    _hp: callable,
+    _emit: callable,
+) -> dict[str, Any] | None:
+    from koru.autonomy.phases import scan_phase
+
+    return scan_phase.handle_backlog_promotion_after_idle(
+        project,
+        state,
+        queue_result,
+        cycle_telemetry,
+        _hp,
+        _emit,
+    )
+
+
 def _handle_scan_after_idle(
     project: Path,
     state: AutoloopState,

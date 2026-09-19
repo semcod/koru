@@ -1,0 +1,87 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-161",
+  "summary": "terminals: fix message rendering + show ticket/project/model per opencode instance",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-161/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/dashboard_routes.py",
+    "src/koruapi/dashboard_template.html",
+    "src/koruapi/opencode_terminals.py",
+    "tests/test_dashboard_terminals.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a104676a14fbf92dd03c671497802169066cc484",
+    "targetBranch": "main",
+    "outcome": "Terminals tab: session messages render again (opencode {info,parts} shape normalized to {role,text,model,provider} in terminal_messages; renderer also accepts the raw shape). Instance cards show active planfile ticket (extracted from recent session prompts), project directories, LLM models and provider API endpoints (sanitized, no keys). Session buttons carry ticket + model badges.",
+    "nonGoals": [
+      "no changes to the supervisor loop or opencode itself",
+      "no new REST endpoints; existing /api/terminals/* payloads are extended only"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 40,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "normalize {info,parts} -> {role,text,model,provider,agent,created} in koruapi.opencode_terminals.terminal_messages; enrich instance_status sessions with location.directory/model/provider/agent/updated and a cached ticket-id scan over the 8 most recently updated sessions (72h window); expose sanitized /api/provider catalog per instance",
+      "components": [
+        {
+          "name": "dashboard/terminals",
+          "paths": [
+            "src/koruapi/opencode_terminals.py",
+            "src/koruapi/dashboard_template.html",
+            "tests/test_dashboard_terminals.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "multi-state",
+        "states": ["empty", "success"],
+        "evidence": [
+          "messages view renders normalized role+text instead of '?'",
+          "instance cards show ticket/project_dirs/models/providers"
+        ]
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_dashboard_terminals.py -q"
+        ],
+        "evidence": "normalize_message and terminal_messages unit tests cover {info,parts}; instance rows carry ticket/project/model/provider; providers sanitized"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "curl -s http://127.0.0.1:8770/api/terminals/messages?iid=<iid>&sid=<sid>"
+        ],
+        "evidence": "dashboard Messages view renders user/assistant text instead of '?'"
+      }
+    ]
+  }
+}

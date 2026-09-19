@@ -176,35 +176,18 @@ def run_ticket_hygiene(
     for ticket_id, ticket in tickets.items():
         if _status(ticket) not in OPENISH:
             continue
-        if only_todo2code:
-            name = str(ticket.get("name") or "")
-            source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
-            tool = str(source.get("tool") or "")
-            if not (name.startswith("[todo2code]") or "todo2code" in tool):
-                continue
-        if not ticket_is_junk(ticket, project=project):
-            if ticket_has_stale_paths(ticket, project=project):
-                paths = _ticket_paths(ticket)
-                reason = f"stale declared paths after refactor: {', '.join(paths[:6])}"
-                if dry_run:
-                    outcome.archived.append(f"{ticket_id} (dry-run stale)")
-                    continue
-                try:
-                    _archive_ticket(project, ticket_id, reason=reason, actor=actor)
-                    outcome.archived.append(ticket_id)
-                except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
-                    outcome.errors.append(f"{ticket_id}: {exc}")
-                continue
+        if only_todo2code and not _is_todo2code_ticket(ticket):
+            continue
+        reason = _junk_archive_reason(ticket, project=project)
+        stale = False
+        if reason is None:
+            reason = _stale_archive_reason(ticket, project=project)
+            stale = reason is not None
+        if reason is None:
             outcome.kept.append(ticket_id)
             continue
-        paths = _ticket_paths(ticket)
-        reason = (
-            f"non-useful target paths: {', '.join(paths[:6])}"
-            if paths
-            else "todo2code ticket without implementable paths"
-        )
         if dry_run:
-            outcome.archived.append(f"{ticket_id} (dry-run)")
+            outcome.archived.append(f"{ticket_id} (dry-run{' stale' if stale else ''})")
             continue
         try:
             _archive_ticket(project, ticket_id, reason=reason, actor=actor)
@@ -212,6 +195,29 @@ def run_ticket_hygiene(
         except (OSError, RuntimeError, subprocess.TimeoutExpired) as exc:
             outcome.errors.append(f"{ticket_id}: {exc}")
     return outcome
+
+
+def _is_todo2code_ticket(ticket: dict) -> bool:
+    name = str(ticket.get("name") or "")
+    source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
+    tool = str(source.get("tool") or "")
+    return name.startswith("[todo2code]") or "todo2code" in tool
+
+
+def _junk_archive_reason(ticket: dict, *, project: Path) -> str | None:
+    if not ticket_is_junk(ticket, project=project):
+        return None
+    paths = _ticket_paths(ticket)
+    if not paths:
+        return "todo2code ticket without implementable paths"
+    return f"non-useful target paths: {', '.join(paths[:6])}"
+
+
+def _stale_archive_reason(ticket: dict, *, project: Path) -> str | None:
+    if not ticket_has_stale_paths(ticket, project=project):
+        return None
+    paths = _ticket_paths(ticket)
+    return f"stale declared paths after refactor: {', '.join(paths[:6])}"
 
 
 def format_hygiene_summary(outcome: HygieneOutcome) -> str:

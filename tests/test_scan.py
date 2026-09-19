@@ -195,6 +195,30 @@ class TestScanPytestCollect(unittest.TestCase):
             )
             self.assertEqual(result, [])
 
+    def test_collect_probe_disables_governance_plugin(self) -> None:
+        """The collect-only probe must not run the managed governance gate.
+
+        ``wellmanifest_governance.pytest_sessionstart`` spawns
+        ``project/governance-check.sh`` (~25s) even for inventory probes,
+        which blew the 30s scan budget (STARTER-675).
+        """
+        captured: list[list[str]] = []
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "pyproject.toml").write_text("[project]\nname='x'\n")
+
+            def runner(cmd, _p):
+                captured.append(list(cmd))
+                return _ok("4 tests collected")
+
+            result = scan_pytest_collect(project, runner=runner)
+            self.assertEqual(result, [])
+            self.assertEqual(len(captured), 1)
+            cmd = captured[0]
+            self.assertIn("--collect-only", cmd)
+            idx = cmd.index("-p")
+            self.assertEqual(cmd[idx + 1], "no:wellmanifest_governance")
+
     def test_parses_per_file_collection_errors(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
@@ -1390,6 +1414,46 @@ class TestScanSemcodArtifacts(unittest.TestCase):
             target.write_text("x = 1\n", encoding="utf-8")
             source = resolve_code2llm_source(project, ("src/mod.py",))
             self.assertEqual(source, target.resolve())
+
+
+class TestScanApplySyncBatching(unittest.TestCase):
+    def _apply(self, tmp_path: Path, *, create_ok: bool) -> tuple[object, list[Path]]:
+        from koru.scan_ticket_emission import apply_scan_suggestions
+        from koru.scan_types import CreateTicketResult
+
+        sync_calls: list[Path] = []
+        with patch(
+            "koru.queue.planfile_sync.sync_planfile_integrations",
+            lambda project: sync_calls.append(project),
+        ):
+            result = apply_scan_suggestions(
+                tmp_path,
+                [Suggestion(signal="sig", title="t", description="d")],
+                source="koru-scan",
+                runner=None,
+                existing_scan_titles=lambda *_args, **_kwargs: set(),
+                scan_duplicate_skip=lambda _suggestion, _existing: None,
+                create_ticket=lambda *_args, **_kwargs: CreateTicketResult(ok=create_ok),
+                apply_create_result=lambda suggestion, create_result, **kwargs: (
+                    kwargs["applied"].append(suggestion.title)
+                    if create_result.ok
+                    else kwargs["skipped"].append(suggestion.title)
+                ),
+                log_scan_decision=lambda *_args, **_kwargs: None,
+            )
+        return result, sync_calls
+
+    def test_applied_tickets_trigger_one_batch_sync(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result, sync_calls = self._apply(Path(tmp), create_ok=True)
+        self.assertEqual(result.applied, ["t"])
+        self.assertEqual(len(sync_calls), 1)
+
+    def test_no_applied_tickets_skip_batch_sync(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result, sync_calls = self._apply(Path(tmp), create_ok=False)
+        self.assertEqual(result.applied, [])
+        self.assertEqual(sync_calls, [])
 
 
 if __name__ == "__main__":
