@@ -96,40 +96,35 @@ def _action_publish(args: argparse.Namespace) -> int:
     return 0 if result.get("status") in {"published", "dry_run"} else 1
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="koru ci",
-        description=(
-            "Run local CI (policy command + quality gates) and optionally "
-            "dispatch subactor/validator-agent for protected GitHub merge."
-        ),
+def _add_project_option(subparser: argparse.ArgumentParser) -> None:
+    subparser.add_argument(
+        "--project",
+        type=Path,
+        default=argparse.SUPPRESS,
+        help="Project root (also accepted before subcommand: koru ci --project . run).",
     )
-    parser.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
-    sub = parser.add_subparsers(dest="subcommand", required=True)
 
-    def _add_project_to_sub(subparser: argparse.ArgumentParser) -> None:
-        subparser.add_argument(
-            "--project",
-            type=Path,
-            default=argparse.SUPPRESS,
-            help="Project root (also accepted before subcommand: koru ci --project . run).",
-        )
 
+def _build_run_subparser(sub: argparse._SubParsersAction) -> None:
     run = sub.add_parser("run", help="Run policy ci.command then quality gates.")
     run.add_argument("--skip-gates", action="store_true", help="Only run policy ci.command.")
     run.add_argument("--gates", nargs="+", help="Subset of gates (regix, redup, vallm, …).")
     run.add_argument("--no-fail-fast", action="store_true", help="Run all gates even after failure.")
     run.add_argument("--format", choices=("text", "json"), default="text")
-    _add_project_to_sub(run)
+    _add_project_option(run)
     run.set_defaults(func=_action_run)
 
+
+def _build_gates_subparser(sub: argparse._SubParsersAction) -> None:
     gates = sub.add_parser("gates", help="Run Koru quality gates only.")
     gates.add_argument("--gates", nargs="+", help="Subset of gates.")
     gates.add_argument("--no-fail-fast", action="store_true")
     gates.add_argument("--format", choices=("text", "json"), default="text")
-    _add_project_to_sub(gates)
+    _add_project_option(gates)
     gates.set_defaults(func=_action_gates)
 
+
+def _build_publish_subparser(sub: argparse._SubParsersAction) -> None:
     publish = sub.add_parser(
         "publish",
         help="Freeze PR head and dispatch validator-agent (does not self-approve).",
@@ -144,9 +139,23 @@ def build_parser() -> argparse.ArgumentParser:
     publish.add_argument("--no-wait-checks", action="store_true", help="Skip --wait-checks on dispatch.")
     publish.add_argument("--dry-run", action="store_true", help="Print frozen head and dispatch argv only.")
     publish.add_argument("--format", choices=("text", "json"), default="text")
-    _add_project_to_sub(publish)
+    _add_project_option(publish)
     publish.set_defaults(func=_action_publish)
 
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru ci",
+        description=(
+            "Run local CI (policy command + quality gates) and optionally "
+            "dispatch subactor/validator-agent for protected GitHub merge."
+        ),
+    )
+    parser.add_argument("--project", type=Path, default=Path.cwd(), help="Project root.")
+    sub = parser.add_subparsers(dest="subcommand", required=True)
+    sub_builders = (_build_run_subparser, _build_gates_subparser, _build_publish_subparser)
+    for build in sub_builders:
+        build(sub)
     return parser
 
 
