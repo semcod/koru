@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-178",
+  "summary": "Audit simple task model routing",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "docs/analysis/simple-task-model-routing.md",
+    "docs/README.md",
+    "project/ticket-178/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f59c310018cf649b06006945a0ca5dd35771701c",
+    "targetBranch": "main",
+    "outcome": "Deliver the requested evidence-based Koru model-routing audit as indexed repository documentation, with exact observed model and a bounded cost-reduction pilot recommendation.",
+    "nonGoals": [
+      "Change runtime model selection",
+      "Interrupt active Koru execution",
+      "Claim successful Flash inference or billed savings",
+      "Modify protected standards or unrelated tickets"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Repository-owned analysis records source trace, filtered live observations, provider pricing and evidence limits; no inference execution or global configuration change.",
+      "components": [
+        {
+          "name": "model-routing-analysis",
+          "paths": [
+            "docs/analysis/simple-task-model-routing.md",
+            "docs/README.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the audit document and index entry."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "git diff --check",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Trace source and read-only execution metadata; validate report metadata, index, evidence links and scope."
+      }
+    ]
+  }
+}
