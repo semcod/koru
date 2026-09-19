@@ -85,6 +85,8 @@
       "integration": {
         "ownedPaths": [
           ".governance/manifest.json",
+          "wellmanifest_governance.py",
+          "tests/test_wellmanifest_governance.py",
           ".governance/manifest.base.json",
           ".governance/manifest.lock.json",
           ".governance/package-manifest.json",

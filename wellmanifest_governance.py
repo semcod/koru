@@ -126,16 +126,32 @@ def _changed_paths(root: Path, base: str) -> list[str]:
     return sorted(paths)
 
 
+def _is_collect_only(session: object) -> bool:
+    """True when pytest runs with ``--collect-only`` (no test executes)."""
+    config = getattr(session, "config", None)
+    options = getattr(config, "option", None)
+    return bool(getattr(options, "collectonly", False))
+
+
 def pytest_sessionstart(session: object) -> None:
-    """Run repository governance once before pytest collects product tests."""
+    """Run repository governance once before pytest runs product tests.
+
+    ``--collect-only`` sessions never execute tests: they are read-only
+    inventory probes (koru scan / doctor suite-health checks, IDE test
+    discovery). The gate subprocess adds tens of seconds to collection and
+    turns unrelated checkout-governance failures into collection
+    INTERNALERRORs, so probes time out or report no signal about actual
+    suite health. Skip the gate there; every session that can execute
+    tests keeps full enforcement.
+    """
+    if _is_collect_only(session):
+        return
     config = getattr(session, "config", None)
     rootpath = getattr(config, "rootpath", Path.cwd())
     root = Path(str(rootpath)).resolve()
     gate = root / "project" / "governance-check.sh"
     if not gate.is_file():
-        raise GovernanceGateError(
-            "GOV-PACKAGING-003: managed governance gate is missing"
-        )
+        raise GovernanceGateError("GOV-PACKAGING-003: managed governance gate is missing")
     if os.environ.get("WELLMANIFEST_GOVERNANCE_ACTIVE") == "1":
         raise GovernanceGateError("GOV-PACKAGING-003: recursive gate invocation")
 
@@ -160,6 +176,4 @@ def pytest_sessionstart(session: object) -> None:
     if result.stderr:
         sys.stderr.write(result.stderr)
     if result.returncode:
-        raise GovernanceGateError(
-            f"GOV-PACKAGING-003: governance gate failed with exit code {result.returncode}"
-        )
+        raise GovernanceGateError(f"GOV-PACKAGING-003: governance gate failed with exit code {result.returncode}")
