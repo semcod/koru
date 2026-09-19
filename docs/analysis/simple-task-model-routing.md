@@ -3,7 +3,7 @@
   "schema": "wellmanifest.docs/document/v1",
   "id": "simple-task-model-routing",
   "kind": "analysis",
-  "version": 3,
+  "version": 4,
   "title": "Koru: model dla prostych zadan i pilotaz Flash",
   "status": "proposed",
   "owner": "semcod/koru",
@@ -28,6 +28,23 @@
 ---
 
 # Koru: wybór modelu dla prostych zadań
+
+
+## Aktualizacja v4: odczyt działającego dziennika SubLLM, 19:57 UTC
+
+API Koru zwróciło teraz SubLLM `status=ready` i pięć zapisów aplikacji
+`koru-agent`, funkcja `planning-assistant`, z okresu 19:54:23–19:56:38 UTC.
+Trzy mają status success dla `zai/glm-5.3` z licznikami wejście/wyjście
+203/400, 202/277 i 179/105. Pozostałe dwa mają status error dla jednego
+request_id: `zai/glm-5.3` i `openrouter/z-ai/glm-5.3-flash`, bez liczników.
+Widok odróżnia te błędy od udanej wiadomości Flash w pilotażu OpenCode.
+To dane producenta SubLLM; nie przypisujemy ich do konkretnego projektu,
+ticketu ani do naszej próby OpenCode. Nie diagnozujemy przyczyny błędów z
+samych metadanych. Stan empty opisany w v3 jest wcześniejszą obserwacją.
+
+Chromium pokazał `OpenCode: available; SubLLM: ready`, filtr Flash obejmował
+zarówno udany zapis OpenCode, jak i błędny zapis SubLLM. Brak błędów JavaScript.
+Digest bezpiecznego odczytu SHA-256: `67bc749f64a5b0369aae3d433ce2ffcfc94b343a60d85c88eee3e8b2fe133ad4`.
 
 ## Aktualizacja v3: poprawka i rzeczywisty pilotaż, 2026-09-19
 
