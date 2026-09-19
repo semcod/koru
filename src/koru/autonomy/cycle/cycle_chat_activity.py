@@ -121,10 +121,9 @@ def _inject_reflection_summary_into_prompt(
         return decision
     snippet = summary[:320]
     augmented = (
-        decision.prompt.rstrip()
-        + "\n\nRecent IDE chat context:\n"
-        + f"- {snippet}\n"
-        + "Use this context to continue from current progress. Do not restart from scratch."
+        f"{decision.prompt.rstrip()}\n\nRecent IDE chat context:\n"
+        f"- {snippet}\n"
+        "Use this context to continue from current progress. Do not restart from scratch."
     )
     return PromptDecision(
         prompt=augmented,

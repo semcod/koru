@@ -171,7 +171,7 @@ def _build_checkpoint_payload(
 
 def _write_checkpoint_payload(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp = path.with_suffix(f"{path.suffix}.tmp")
     tmp.write_text(f"{json.dumps(payload, ensure_ascii=True, indent=2)}\n", encoding="utf-8")
     tmp.replace(path)
 
