@@ -12,7 +12,9 @@
     "project/ticket-128/**",
     "TODO.md",
     "project/TICKETS.md",
-    "docs/koru-fleet.md"
+    "docs/koru-fleet.md",
+    "docs/information/koru-fleet.md",
+    "docs/README.md"
   ],
   "forbiddenPaths": ["project/ticket-*/user-*.md"],
   "stacks": ["python"],
@@ -31,7 +33,7 @@
     "complexity": "S",
     "estimatedMinutes": 30,
     "budgets": {
-      "maxImplementationFiles": 2,
+      "maxImplementationFiles": 4,
       "maxAffectedComponents": 1,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
@@ -43,7 +45,9 @@
         {
           "name": "fleet-scope-docs",
           "paths": [
-            "docs/koru-fleet.md"
+            "docs/koru-fleet.md",
+            "docs/information/koru-fleet.md",
+            "docs/README.md"
           ]
         }
       ],

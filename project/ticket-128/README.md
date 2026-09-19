@@ -81,6 +81,11 @@ this continuation lands the remainder instead of discarding the branch:
 - intent.json re-scoped to the documentation-only remainder:
   workstream `integration`, component `fleet-scope-docs`,
   allowedPaths `docs/koru-fleet.md` plus tracking carriers.
+- The adopted wellmanifest/docs standard requires base-changed documents to
+  be canonical, so the landing migrates the fleet guide: full content moves
+  to `docs/information/koru-fleet.md` (document/v2 metadata, required
+  information sections), the legacy `docs/koru-fleet.md` becomes a bounded
+  redirect map, and `docs/README.md` indexes the canonical path.
 - Criterion disposition (branch-intent reconciliation): AC-01..AC-07 and the
   scanner code `implemented` (identical blobs on main); docs/koru-fleet.md
   scope section `implemented` by this merge; README.md pointer `partial`,
