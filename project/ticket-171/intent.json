@@ -1,0 +1,78 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-171",
+  "summary": "adopt latest wellmanifest standards",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-171/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".governance/standard-adoption.json",
+    ".governance/standard-pack-evidence/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "bb57171336fd8bcd419ab7d959986aa1c7a5422c",
+    "targetBranch": "main",
+    "outcome": "Update adopted Wellmanifest standard pack registry and evidence files to current verified revisions.",
+    "nonGoals": [
+      "No product runtime behavior changes",
+      "No changes to unrelated tickets or checkouts"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Update .governance/standard-adoption.json and .governance/standard-pack-evidence/*.json to bind the verified revisions and upstream CI / ruleset receipts of wellmanifest standards (new-project 0.20.32, git-lifecycle, worktrees, merge, validation-attestation, ticket-lifecycle).",
+      "components": [
+        {
+          "name": "governance-standard-adoption",
+          "paths": [
+            ".governance/standard-adoption.json",
+            ".governance/standard-pack-evidence/**",
+            "project/ticket-171/**"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the standard pack evidence and adoption commits."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 .governance/standard_pack_check.py --root . --format json",
+          "python3 .governance/standard_pack_projection_check.py --root .",
+          "./project/governance-check.sh",
+          "git diff --check"
+        ],
+        "evidence": "Standard pack check and standard pack projection check pass with zero findings."
+      }
+    ]
+  }
+}
