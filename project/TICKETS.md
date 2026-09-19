@@ -174,5 +174,6 @@ project analysis or human-owned ticket inputs.
 | **ticket-169** | [`README.md`](./ticket-169/README.md) | - | - | - | - | - |
 | **ticket-170** | [`README.md`](./ticket-170/README.md) | - | - | - | - | - |
 | **ticket-171** | [`README.md`](./ticket-171/README.md) | - | - | - | - | - |
+| **ticket-172** | [`README.md`](./ticket-172/README.md) | - | - | - | - | - |
 | **ticket-173** | [`README.md`](./ticket-173/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->
