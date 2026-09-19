@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-184",
+  "summary": "Split standard_fleet god module into focused submodules",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-184/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/standard_fleet.py",
+    "src/koru/standard_fleet/**",
+    "tests/test_standard_fleet.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": ["python"],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f42a30a2e9db8308282e4461aa9b375c05695bef",
+    "targetBranch": "main",
+    "outcome": "src/koru/standard_fleet.py (574 lines, 6 classes, 25 functions) becomes the koru.standard_fleet package split by responsibility: models, git_observation, discovery, scan, emission and reporting submodules behind an unchanged public facade. Behavior is unchanged: the existing tests/test_standard_fleet.py and tests/test_cli_fleet.py pass without modification and every name in the former module __all__ remains importable from koru.standard_fleet.",
+    "nonGoals": [
+      "Changing the scanner's selection, exclusion or emission behavior",
+      "Altering the CLI surface in src/koru/cli_fleet.py",
+      "Renaming or removing any public name"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Convert the module to a package whose submodules own one responsibility each and re-export the previous public surface from __init__.py so cli_fleet.py and the monkeypatch target koru.standard_fleet.scan_standard_fleet keep working.",
+      "components": [
+        {
+          "name": "standard-fleet-scan",
+          "paths": [
+            "src/koru/standard_fleet.py",
+            "src/koru/standard_fleet/**"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; the previous single-module implementation is restored verbatim."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "PYTHONPATH=src .venv/bin/python -c \"import koru.standard_fleet as m; assert not [n for n in m.__all__ if not hasattr(m, n)]\""
+        ],
+        "evidence": "Every former public name resolves through the package facade."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=src .venv/bin/python -m pytest tests/test_standard_fleet.py tests/test_cli_fleet.py -q"
+        ],
+        "evidence": "Focused scanner and CLI fleet suites pass unmodified."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koru/standard_fleet && ruff format --check src/koru/standard_fleet"
+        ],
+        "evidence": "Lint and format pass on the new package."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "Governance gate passes with zero errors."
+      }
+    ]
+  }
+}
