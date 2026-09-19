@@ -23,3 +23,12 @@ No runtime model configuration or provider credential change is part of this aud
 
 Owner session codex-model-audit-178-20260919; maxActiveMinutes: 120.
 Read-only audit plus isolated documentation delivery; no independent merge authority.
+
+## Accepted follow-up, 2026-09-19
+
+User requests post-fix routing verification and a real SubLLM/Koru log-view test.
+This remains a read-only audit plus the existing canonical document. Version2
+records the resolver comparison, browser SSE/filter/terminal checks and63 tests.
+SubLLM STARTER018 and Koru STARTER734 preserve implementation gaps separately.
+Previous-head independent publication stopped before review due to configured
+GitHub account API rate limits. No approval or merge bypass is authorized.

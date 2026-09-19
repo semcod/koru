@@ -3,7 +3,7 @@
   "schema": "wellmanifest.docs/document/v1",
   "id": "simple-task-model-routing",
   "kind": "analysis",
-  "version": 1,
+  "version": 2,
   "title": "Koru: model dla prostych zadan i pilotaz Flash",
   "status": "proposed",
   "owner": "semcod/koru",
@@ -95,6 +95,56 @@ poprawki. Był to odczyt; nie zmieniono kodu ani statusów zgłoszeń.
 
 Przy identycznej liczbie tokenów wejście jest 9,33 raza, a wyjście 8,8 raza tańsze.
 To porównanie taryf API, nie zmierzona oszczędność pracy ani cena Coding Plan.
+
+### Uzupełnienie: routing i widok logów, 2026-09-19
+
+Ponowna obserwacja po publikacji audytu nadal nie znalazła wiadomości asystenta
+`glm-5.3-flash` w lokalnej bazie opencode. Audyt nie wdrażał polityki wyboru modelu.
+Test bez inferencji, na `_resolve_shell_llm_call_args` z rzeczywistym pinem lane:
+
+| Wejście do resolvera | Wybrany model |
+| --- | --- |
+| Jeden nieużywany import Ruff F401, complexity=low | zai/glm-5.3 |
+| Refaktoryzacja wielu modułów, complexity=high | zai/glm-5.3 |
+| Pierwsze zadanie z jawnym request.model=Flash | zai/glm-5.3-flash |
+
+Przekazanie jawnego modelu działa w resolverze; udana inferencja Flash ani
+klasyfikacja trudności nie zostały tym testem potwierdzone.
+
+Dashboard nie odpowiadał pod 8768/8770. Uruchomiono lokalny podgląd istniejącego
+Koru na `http://127.0.0.1:8770/`, z blokadą zastępowania istniejącego serwera,
+bez restartu lane i bez uruchamiania zadań. Test prawdziwej przeglądarki Chromium:
+
+- `?tab=logs`: HTTP 200, SSE connected, 50 wyrenderowanych wpisów;
+  przełącznik DEBUG działa, po ponownym połączeniu strumień pozostaje connected.
+- `/api/logs?limit=5`: pięć rekordów; pola `timestamp`, `level`, `message`,
+  `category`, `event`, `source`. Brak strukturalnych pól model/provider/tokeny.
+- `?tab=terminals`: dwie karty 4101 i 4102, obie `down`, zero sesji.
+- Zero błędów JavaScript w obu widokach. Nie użyto przycisków uruchamiania
+  agentów, odpowiedzi na uprawnienia ani modyfikacji konfiguracji.
+- Testy `test_dashboard_logs.py`, `test_tillm_registry_contract.py` i
+  `test_shell_drive_finalize.py`: **63 passed**, governance: zero błędów.
+
+Widok Logs działa jako strumień aktywności; nie stanowi historii wywołań modeli.
+W bazie opencode istnieją historyczne wiadomości Koru z DeepSeek V4 Pro
+(2026-09-17), GLM-5.3 przez Z.ai i OpenRouter oraz GLM-4.5-Flash (2026-09-16).
+GLM-4.5-Flash nie jest GLM-5.3-Flash. Pojedynczy zapis modelu nie dowodzi
+ukończenia zadania; bez korelacji ticket/session nie można wyliczyć skuteczności.
+
+Koru korzysta również z SubLLM, lecz headless opencode przez Tillm jest odrębną
+ścieżką. W SubLLM `069dd19f559ef5d669eda4629ccb36d4b40b7f1d` trasy
+`koru-agent/{queue-executor,planning-assistant,reflection}` preferują GLM-5.3;
+OpenRouter z domyślnym Flash jest późniejszym fallbackiem. To nie wybór według
+prostoty. `CompletionAttempt` zachowuje model/provider/wynik/czas próby,
+`poa.EventStore` jest pamięciowy, a provider-health agreguje stan dostawcy.
+Żaden z tych elementów nie jest centralną trwałą historią wszystkich wywołań Koru.
+
+Zgłoszenie SubLLM **STARTER-018** dotyczące panelu historii pozostaje `open`;
+w obserwacji nie było otwartego PR ani checkoutu implementacji tego panelu.
+To potwierdzone planowanie, nie dowód rozpoczętej realizacji. Dopisano wymaganie
+pokrycia ścieżki CLI i korelacji z ticketem. Koru **STARTER-734** rejestruje
+brak historii modeli w UI oraz zauważoną potrzebę zastąpienia `eval` w parserze
+logów dekodowaniem, które nie wykonuje kodu. W tym audycie parsera nie zmieniono.
 
 <!-- docs:section hypotheses -->
 ## Hipotezy
