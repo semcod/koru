@@ -195,3 +195,19 @@ def test_autonomous_ticket_metadata_reaches_real_shell_adapter(tmp_path, monkeyp
     )
     probe.assert_called_once_with(tmp_path, "TEST-1")
     assert ok and drive.call_args.kwargs["model"] == "zai/glm-5.3-flash"
+
+
+def test_planfile_context_contract_survives_input_projection(tmp_path, monkeypatch):
+    from koru.queue.runners import run_shell_llm_request
+    from koru.queue.ticket import ticket_llm_request
+    task = lint_task()
+    task["source"] = {"tool": "ruff", "context": {"model_routing": task.pop("inputs")}}
+    task["name"] = "lint"
+    assert choose(task)["model"] == "zai/glm-5.3-flash"
+    for k, v in ENV.items():
+        monkeypatch.setenv(k, v)
+    monkeypatch.delenv("KORU_TILLM_FORCE_MODEL", raising=False)
+    drive = Mock(return_value={"ok": True, "exit_code": 0})
+    monkeypatch.setattr("koru.tillm_bridge.drive_shell_chat", drive)
+    run_shell_llm_request(ticket_llm_request(task), tmp_path, "opencode")
+    assert drive.call_args.kwargs["model"] == "zai/glm-5.3-flash"

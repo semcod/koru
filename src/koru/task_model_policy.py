@@ -44,12 +44,17 @@ def select_task_model(
     simple = env.get("KORU_TILLM_SIMPLE_MODEL", "").strip()
     reason = "simple_model_disabled" if not simple else "unclassified_task"
     files = task.get("files")
-    codes = inputs.get("ruff_codes")
+    source = task.get("source")
+    context = source.get("context") if isinstance(source, Mapping) else None
+    routing = context.get("model_routing") if isinstance(context, Mapping) else None
+    # Planfile preserves source.context extensions but drops unknown TicketInputs.
+    routing = routing if isinstance(routing, Mapping) else inputs
+    codes = routing.get("ruff_codes")
     labels = task.get("labels")
     valid_labels = labels is None or (isinstance(labels, list) and all(isinstance(x, str) for x in labels))
     labels = set(labels or []) if valid_labels else set()
     # Smallness is a closed, structured contract, not a guess from prompt/title.
-    if simple and client_id == "opencode" and inputs.get("llm_task_kind") == "lint_fix":
+    if simple and client_id == "opencode" and routing.get("llm_task_kind") == "lint_fix":
         reason = "unbounded_lint_scope"
         if isinstance(files, list) and len(files) == 1 and isinstance(files[0], str):
             path = PurePosixPath(files[0])

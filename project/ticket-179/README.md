@@ -31,3 +31,7 @@ this slice owns only routing and model-history projections (8 implementation fil
 
 Validation: 208 existing/new regression tests and 37 focused tests passed; Ruff and diff checks pass.
 Dependent UI/parser slice: ticket180 (STARTER-734). Real-provider canary tracked privately.
+
+Planfile compatibility: canonical task facts live in source.context.model_routing
+(llm_task_kind=lint_fix, ruff_codes list). Current Planfile drops unknown input fields;
+legacy direct caller inputs remain accepted. Files and labels stay top-level.

@@ -189,7 +189,7 @@ def ticket_llm_request(ticket: dict) -> dict[str, Any] | None:
         # real refactor do not belong on the same clock.
         "timeout_seconds": inputs.get("llm_timeout_seconds"),
     }
-    request["task"] = {key: ticket[key] for key in ("id", "files", "labels") if key in ticket}
+    request["task"] = {key: ticket[key] for key in ("id", "files", "labels", "source") if key in ticket}
     request["task"]["inputs"] = {
         key: inputs[key] for key in ("llm_model", "llm_task_kind", "ruff_codes") if key in inputs
     }
