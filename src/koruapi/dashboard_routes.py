@@ -671,6 +671,16 @@ def _handle_dashboard_get(handler: Any, config: ServeConfig) -> None:
     if path in ("/", "/index.html"):
         handler._send(200, _load_dashboard_html().encode("utf-8"), "text/html; charset=utf-8")
         return
+    if path in ("/favicon.svg", "/favicon.ico"):
+        handler._send(
+            200,
+            b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+            b'<rect width="48" height="48" rx="11" fill="#161922"/>'
+            b'<path d="M16 12v24m2-11 14-13M18 25l14 11" fill="none" '
+            b'stroke="#6ee7b7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            "image/svg+xml",
+        )
+        return
     if path == "/health":
         handler._send_json({"ok": True})
         return
