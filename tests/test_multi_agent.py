@@ -153,4 +153,3 @@ def test_build_worker_command():
     assert "--sprint" in cmd
     assert "backlog" in cmd
     assert "--dry-run" in cmd
-
