@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -166,7 +167,7 @@ def _action_github_status(args: argparse.Namespace) -> int:
     if service is None:
         print(f"koru git github-status: gh2mcp unavailable: {error}", file=sys.stderr)
         return 2
-    data = service.get_status(include_token=args.include_token)
+    data = service.get_status(**{"include_token": args.include_token})
     print(json.dumps(data, indent=2, sort_keys=True))
     return 0 if data.get("configured") or data.get("gh_available") else 1
 
@@ -255,6 +256,159 @@ def _add_last_repo_parser(sub: argparse._SubParsersAction[argparse.ArgumentParse
     last_repo.set_defaults(func=_action_last_repo)
 
 
+def _action_set_token(args: argparse.Namespace) -> int:
+    token = (args.token or "").strip()
+    if not token and args.from_vault:
+        try:
+            from subactor_credential_vault import VaultLeaseClient
+            vault_url = os.environ.get("SUBACTOR_VAULT_URL", "http://127.0.0.1:8198")
+            token_file = Path(os.environ.get("SUBACTOR_VAULT_TOKEN_FILE", "~/.subactor/vault-token")).expanduser()
+            if token_file.exists():
+                client = VaultLeaseClient(vault_url, token_file)
+                lease = client.lease(
+                    entry_id="github-token",
+                    origin="koru",
+                    field="api_key",
+                    actor="koru-agent",
+                    purpose="github_sync",
+                    ticket="auto",
+                    grant="system",
+                )
+                token = lease.value
+                print("koru git: acquired GitHub token from subactor/credential-vault")
+        except Exception as exc:
+            print(f"koru git: credential-vault retrieval failed: {exc}", file=sys.stderr)
+
+    if not token:
+        print("koru git set-token: error: token is required (pass token or --from-vault)", file=sys.stderr)
+        return 1
+
+    env_path = Path(args.env_file)
+    gh_user = None
+
+    if not args.no_gh_cli:
+        try:
+            proc = subprocess.run(
+                ["gh", "auth", "login", "--with-token"],
+                input=token,
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+            if proc.returncode == 0:
+                user_proc = subprocess.run(
+                    ["gh", "api", "user", "--jq", ".login"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+                if user_proc.returncode == 0 and user_proc.stdout.strip():
+                    gh_user = user_proc.stdout.strip()
+            else:
+                err = (proc.stderr or proc.stdout).strip()
+                print(f"koru git: gh auth login warning: {err}", file=sys.stderr)
+        except Exception as exc:
+            print(f"koru git: gh CLI not available: {exc}", file=sys.stderr)
+
+    # Update .env
+    try:
+        content = ""
+        if env_path.exists():
+            content = env_path.read_text(encoding="utf-8")
+
+        lines = [
+            line for line in content.splitlines()
+            if not (
+                line.startswith("GITHUB_TOKEN=")
+                or line.startswith("GITHUB_PAT=")
+                or (gh_user and line.startswith("GITHUB_USER="))
+            )
+        ]
+        lines.append(f"GITHUB_TOKEN={token}")
+        lines.append(f"GITHUB_PAT={token}")
+        if gh_user:
+            lines.append(f"GITHUB_USER={gh_user}")
+
+        env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        print(f"koru git: saved GITHUB_TOKEN and GITHUB_PAT to {env_path}")
+    except Exception as exc:
+        print(f"koru git: failed to write to {env_path}: {exc}", file=sys.stderr)
+        return 1
+
+    masked = token[:4] + "..." + token[-4:] if len(token) > 8 else "***"
+    print(f"koru git: token updated ({masked})")
+    if gh_user:
+        print(f"koru git: gh CLI authenticated as '{gh_user}'")
+    return 0
+
+
+def _action_switch_profile(args: argparse.Namespace) -> int:
+    user = args.user.strip()
+    try:
+        proc = subprocess.run(
+            ["gh", "auth", "switch", "--user", user],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if proc.returncode != 0:
+            err = (proc.stderr or proc.stdout).strip()
+            print(f"koru git switch-profile: error: {err}", file=sys.stderr)
+            return proc.returncode
+
+        print(f"koru git: switched gh CLI active account to '{user}'")
+
+        # Sync active token to .env
+        auth_proc = subprocess.run(
+            ["gh", "auth", "token"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if auth_proc.returncode == 0 and auth_proc.stdout.strip():
+            active_cred = auth_proc.stdout.strip()
+            env_path = Path(args.env_file)
+            content = env_path.read_text(encoding="utf-8") if env_path.exists() else ""
+            lines = [
+                line for line in content.splitlines()
+                if not (
+                    line.startswith("GITHUB_TOKEN=")
+                    or line.startswith("GITHUB_PAT=")
+                    or line.startswith("GITHUB_USER=")
+                )
+            ]
+            lines.append(f"GITHUB_TOKEN={active_cred}")
+            lines.append(f"GITHUB_PAT={active_cred}")
+            lines.append(f"GITHUB_USER={user}")
+            env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            print(f"koru git: synchronized active profile token to {env_path}")
+            return 0
+        else:
+            print("koru git: warning: could not read token for switched account", file=sys.stderr)
+            return 1
+    except Exception as exc:
+        print(f"koru git switch-profile error: {exc}", file=sys.stderr)
+        return 2
+
+
+def _add_set_token_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    for cmd in ("set-token", "token"):
+        parser = sub.add_parser(cmd, help="Set GitHub token in gh CLI and project .env.")
+        parser.add_argument("token", nargs="?", default="", help="GitHub Personal Access Token.")
+        parser.add_argument("--env-file", default=".env", help="Path to .env file (default: .env).")
+        parser.add_argument("--no-gh-cli", action="store_true", help="Skip gh CLI auth login.")
+        parser.add_argument("--from-vault", action="store_true", help="Acquire token from subactor/credential-vault.")
+        parser.set_defaults(func=_action_set_token)
+
+
+def _add_switch_profile_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    for cmd in ("switch-profile", "switch"):
+        parser = sub.add_parser(cmd, help="Switch active GitHub account in gh CLI and sync to .env.")
+        parser.add_argument("user", help="GitHub username to switch to.")
+        parser.add_argument("--env-file", default=".env", help="Path to .env file (default: .env).")
+        parser.set_defaults(func=_action_switch_profile)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="koru git", description="Commit and push via koru.")
     sub = parser.add_subparsers(dest="action", required=True)
@@ -262,6 +416,8 @@ def build_parser() -> argparse.ArgumentParser:
     _add_push_parser(sub)
     _add_github_status_parser(sub)
     _add_last_repo_parser(sub)
+    _add_set_token_parser(sub)
+    _add_switch_profile_parser(sub)
     return parser
 
 
@@ -271,4 +427,9 @@ def git_main(argv: list[str]) -> int:
     return int(func(args))
 
 
-__all__ = ["git_main", "build_parser"]
+def github_main(argv: list[str]) -> int:
+    """Entry point for `koru github ...` commands."""
+    return git_main(argv)
+
+
+__all__ = ["git_main", "github_main", "build_parser"]
