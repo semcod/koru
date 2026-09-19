@@ -1909,8 +1909,8 @@ print(json.dumps({
 
 def _prepare_photo_vql_map_mismatch(
     *, map_path: str | None, src: str, desktop_probe: dict[str, Any]
-) -> tuple[dict[str, Any] | None, dict[str, Any]]:
-    """Detect GUI-map vs capture-source monitor mismatch: (map_mismatch, desktop_probe)."""
+) -> dict[str, Any]:
+    """Detect GUI-map vs capture-source monitor mismatch folded into the probe."""
     map_mismatch = None
     if map_path:
         from koru.integrations.photo_vql_monitor import map_capture_monitor_mismatch
@@ -1918,7 +1918,7 @@ def _prepare_photo_vql_map_mismatch(
         map_mismatch = map_capture_monitor_mismatch(map_path, source=src)
         if map_mismatch:
             desktop_probe = {**desktop_probe, "map_capture_mismatch": map_mismatch}
-    return map_mismatch, desktop_probe
+    return {"map_mismatch": map_mismatch, "desktop_probe": desktop_probe}
 
 
 def _prepare_photo_vql_probe_abort(
@@ -1985,8 +1985,8 @@ def _prepare_photo_vql_out_skeleton(
 
 def _prepare_photo_vql_ide_control_attempt(
     *, ide: str, src: str, ide_control: dict[str, Any] | None
-) -> tuple[dict[str, Any] | None, bool]:
-    """One auto-IDE-control attempt in the prepare retry loop: (ide_control, force_refresh)."""
+) -> dict[str, Any]:
+    """One auto-IDE-control attempt in the prepare retry loop (ide_control + force_refresh)."""
     force_refresh = False
     if _auto_ide_control_enabled():
         ide_control = ensure_vdisplay_ide_control(ide=ide, source=src)
@@ -1997,7 +1997,7 @@ def _prepare_photo_vql_ide_control_attempt(
             time.sleep(
                 float(os.environ.get("KORU_VDISPLAY_POST_FOCUS_CAPTURE_DELAY_S", "0.8"))
             )
-    return ide_control, force_refresh
+    return {"ide_control": ide_control, "force_refresh": force_refresh}
 
 
 def _prepare_photo_vql_refresh_or_reuse(
@@ -2068,6 +2068,7 @@ def _prepare_photo_vql_map_focus_fallback(
 ) -> dict[str, Any]:
     """On mismatch for JetBrains etc, do extra focus via map when map-only fallback is allowed,
     then re-capture to get correct VQL for the target IDE on the source."""
+    out["capture_matches_ide"] = False
     if not _allow_prepare_map_on_mismatch():
         return out
     mp = None
@@ -2182,100 +2183,214 @@ def _prepare_photo_vql_apply_capture_guard(
     return out
 
 
-def prepare_photo_vql_for_drive(*, ide: str) -> dict[str, Any]:
-    """Observe (if needed) + pin sidecar before koru drive / send_chat."""
-    import time
-
-    bootstrap: dict[str, Any] = {}
+def _prepare_photo_vql_drive_bootstrap() -> dict[str, Any]:
+    """Bootstrap vdisplay capture deps when the bootstrap module is importable."""
     try:
         from koru.integrations.vdisplay_agent_bootstrap import bootstrap_vdisplay_capture
 
-        bootstrap = bootstrap_vdisplay_capture()
+        return bootstrap_vdisplay_capture()
     except ImportError:
-        pass
+        return {}
 
-    src, desktop_probe = _resolve_vdisplay_source_for_ide(ide)
-    if bootstrap:
-        desktop_probe = {**desktop_probe, "vdisplay_bootstrap": bootstrap}
+
+def _pin_photo_vql_drive_env(src: str) -> None:
+    """Pin the KORU_VDISPLAY_* environment for koru drive / send_chat."""
     os.environ.setdefault("KORU_VDISPLAY_CONTROL_FALLBACK", "1")
     os.environ["KORU_VDISPLAY_SOURCE"] = src
     os.environ.pop("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", None)
 
+
+def _prepare_photo_vql_source_and_probe(*, ide: str) -> dict[str, Any]:
+    """Resolve capture source + desktop probe, fold the bootstrap and pin env."""
+    bootstrap = _prepare_photo_vql_drive_bootstrap()
+    src, desktop_probe = _resolve_vdisplay_source_for_ide(ide)
+    if bootstrap:
+        desktop_probe = {**desktop_probe, "vdisplay_bootstrap": bootstrap}
+    _pin_photo_vql_drive_env(src)
+    return {"src": src, "desktop_probe": desktop_probe, "bootstrap": bootstrap}
+
+
+def _open_photo_vql_drive_session(
+    *, ide: str, src: str, desktop_probe: dict[str, Any]
+) -> dict[str, Any]:
+    """Resolve the GUI map, begin the autonomy session and evaluate probe abort."""
     map_path = _resolve_ide_prompt_map(_ide_prompt_app_id(ide))
-    map_mismatch, desktop_probe = _prepare_photo_vql_map_mismatch(
+    mismatch = _prepare_photo_vql_map_mismatch(
         map_path=map_path, src=src, desktop_probe=desktop_probe
     )
-
     session_dir = _autonomy_session.begin_autonomy_session(ide=ide, source=src)
-    _autonomy_session.persist_autonomy_phase(session_dir, "decide", "desktop_probe", desktop_probe)
-
+    _autonomy_session.persist_autonomy_phase(
+        session_dir, "decide", "desktop_probe", mismatch["desktop_probe"]
+    )
     aborted = _prepare_photo_vql_probe_abort(
-        src=src, session_dir=session_dir, desktop_probe=desktop_probe
+        src=src, session_dir=session_dir, desktop_probe=mismatch["desktop_probe"]
     )
-    if aborted is not None:
-        return aborted
+    return {
+        "map_path": map_path,
+        "map_mismatch": mismatch["map_mismatch"],
+        "session_dir": session_dir,
+        "desktop_probe": mismatch["desktop_probe"],
+        "aborted": aborted,
+    }
 
-    retries = max(1, int(os.environ.get("KORU_VDISPLAY_IDE_CONTROL_RETRIES", "3") or "3"))
-    ide_control: dict[str, Any] | None = None
-    out = _prepare_photo_vql_out_skeleton(
-        src=src,
-        session_dir=session_dir,
-        desktop_probe=desktop_probe,
-        map_mismatch=map_mismatch,
-        bootstrap=bootstrap,
+
+def _prepare_photo_vql_drive_prep(*, ide: str) -> dict[str, Any]:
+    """Drive-prepare context: source, probe, env pins, session and abort state."""
+    source = _prepare_photo_vql_source_and_probe(ide=ide)
+    session = _open_photo_vql_drive_session(
+        ide=ide, src=source["src"], desktop_probe=source["desktop_probe"]
     )
-    loop_attempts = 0
+    return {"ide": ide, **source, **session}
 
-    for attempt in range(retries):
-        loop_attempts = attempt + 1
-        ide_control, force_refresh = _prepare_photo_vql_ide_control_attempt(
-            ide=ide, src=src, ide_control=ide_control
-        )
-        out = _prepare_photo_vql_refresh_or_reuse(
-            src=src, ide=ide, session_dir=session_dir, force_refresh=force_refresh
-        )
-        if not out.get("ok"):
-            break
-        warn = out.get("ide_window_warning") or _photo_vql_ide_window_warning(
-            ide=ide,
-            meta=load_vql_metadata(str(out.get("vql") or "")),
-        )
-        if warn:
-            out, action = _prepare_photo_vql_handle_window_warning(out, warn=warn, ide=ide, src=src)
-            if action == "break":
-                break
-        elif _capture_matches_requested_ide(ide):
-            os.environ["KORU_VDISPLAY_CAPTURE_MATCHES_IDE"] = "1"
-            out["capture_matches_ide"] = True
-            if _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}:
-                os.environ.setdefault("KORU_VDISPLAY_PREFER_PHOTO_VQL", "auto")
-            break
-        out["capture_matches_ide"] = False
-        out = _prepare_photo_vql_map_focus_fallback(
-            out,
-            ide=ide,
-            src=src,
-            ide_control=ide_control,
-            map_path=map_path,
-            map_mismatch=map_mismatch,
-        )
-        if attempt + 1 < retries:
-            time.sleep(float(os.environ.get("KORU_VDISPLAY_IDE_CONTROL_RETRY_DELAY_S", "0.6")))
 
-    out = _prepare_photo_vql_finalize_out(
+def _prepare_photo_vql_confirm_capture_match(out: dict[str, Any], *, ide: str) -> dict[str, Any]:
+    """Mark the capture as matching the requested IDE (env + out flags)."""
+    os.environ["KORU_VDISPLAY_CAPTURE_MATCHES_IDE"] = "1"
+    out["capture_matches_ide"] = True
+    if _canonical_ide(ide) in {"jetbrains", "pycharm", "idea"}:
+        os.environ.setdefault("KORU_VDISPLAY_PREFER_PHOTO_VQL", "auto")
+    return out
+
+
+def _prepare_photo_vql_attempt_outcome(
+    out: dict[str, Any],
+    *,
+    ide: str,
+    src: str,
+    ide_control: dict[str, Any] | None,
+    map_path: str | None,
+    map_mismatch: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Decide one refreshed capture: {'out': ..., 'action': 'break' | 'retry'}."""
+    warn = out.get("ide_window_warning") or _photo_vql_ide_window_warning(
+        ide=ide,
+        meta=load_vql_metadata(str(out.get("vql") or "")),
+    )
+    if warn:
+        out, action = _prepare_photo_vql_handle_window_warning(out, warn=warn, ide=ide, src=src)
+        if action == "break":
+            return {"out": out, "action": "break"}
+    elif _capture_matches_requested_ide(ide):
+        return {"out": _prepare_photo_vql_confirm_capture_match(out, ide=ide), "action": "break"}
+    out = _prepare_photo_vql_map_focus_fallback(
         out,
         ide=ide,
+        src=src,
         ide_control=ide_control,
+        map_path=map_path,
         map_mismatch=map_mismatch,
-        loop_attempts=loop_attempts,
-        session_dir=session_dir,
+    )
+    return {"out": out, "action": "retry"}
+
+
+def _prepare_photo_vql_drive_attempt(
+    *,
+    prep: dict[str, Any],
+    loop: dict[str, Any],
+    retries: int,
+) -> dict[str, Any]:
+    """Advance the observe/IDE-control retry loop by one attempt."""
+    loop_attempts = loop["loop_attempts"] + 1
+    control = _prepare_photo_vql_ide_control_attempt(
+        ide=prep["ide"], src=prep["src"], ide_control=loop["ide_control"]
+    )
+    out = _prepare_photo_vql_refresh_or_reuse(
+        src=prep["src"],
+        ide=prep["ide"],
+        session_dir=prep["session_dir"],
+        force_refresh=control["force_refresh"],
+    )
+    if not out.get("ok"):
+        return {
+            **loop,
+            "out": out,
+            "ide_control": control["ide_control"],
+            "loop_attempts": loop_attempts,
+            "stop": True,
+        }
+    outcome = _prepare_photo_vql_attempt_outcome(
+        out,
+        ide=prep["ide"],
+        src=prep["src"],
+        ide_control=control["ide_control"],
+        map_path=prep["map_path"],
+        map_mismatch=prep["map_mismatch"],
+    )
+    if outcome["action"] == "break":
+        return {
+            **loop,
+            "out": outcome["out"],
+            "ide_control": control["ide_control"],
+            "loop_attempts": loop_attempts,
+            "stop": True,
+        }
+    if loop_attempts < retries:
+        import time
+
+        time.sleep(float(os.environ.get("KORU_VDISPLAY_IDE_CONTROL_RETRY_DELAY_S", "0.6")))
+    return {
+        **loop,
+        "out": outcome["out"],
+        "ide_control": control["ide_control"],
+        "loop_attempts": loop_attempts,
+        "stop": False,
+    }
+
+
+def _prepare_photo_vql_drive_attempts(*, prep: dict[str, Any]) -> dict[str, Any]:
+    """Run the observe/IDE-control retry loop: out, ide_control, loop_attempts, stop."""
+    retries = max(1, int(os.environ.get("KORU_VDISPLAY_IDE_CONTROL_RETRIES", "3") or "3"))
+    loop: dict[str, Any] = {
+        "out": _prepare_photo_vql_out_skeleton(
+            src=prep["src"],
+            session_dir=prep["session_dir"],
+            desktop_probe=prep["desktop_probe"],
+            map_mismatch=prep["map_mismatch"],
+            bootstrap=prep["bootstrap"],
+        ),
+        "ide_control": None,
+        "loop_attempts": 0,
+    }
+    for _ in range(retries):
+        loop = _prepare_photo_vql_drive_attempt(prep=prep, loop=loop, retries=retries)
+        if loop["stop"]:
+            break
+    return loop
+
+
+def _prepare_photo_vql_drive_out(
+    *,
+    prep: dict[str, Any],
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    """Finalize, capture-guard and persist the drive-prepare out."""
+    out = _prepare_photo_vql_finalize_out(
+        result["out"],
+        ide=prep["ide"],
+        ide_control=result["ide_control"],
+        map_mismatch=prep["map_mismatch"],
+        loop_attempts=result["loop_attempts"],
+        session_dir=prep["session_dir"],
     )
     out = _prepare_photo_vql_apply_capture_guard(
-        out, ide=ide, src=src, desktop_probe=desktop_probe, ide_control=ide_control
+        out,
+        ide=prep["ide"],
+        src=prep["src"],
+        desktop_probe=prep["desktop_probe"],
+        ide_control=result["ide_control"],
     )
-    out["desktop_probe"] = desktop_probe
-    _autonomy_session.persist_autonomy_phase(session_dir, "observe", "prepare", out)
+    out["desktop_probe"] = prep["desktop_probe"]
+    _autonomy_session.persist_autonomy_phase(prep["session_dir"], "observe", "prepare", out)
     return out
+
+
+def prepare_photo_vql_for_drive(*, ide: str) -> dict[str, Any]:
+    """Observe (if needed) + pin sidecar before koru drive / send_chat."""
+    prep = _prepare_photo_vql_drive_prep(ide=ide)
+    if prep["aborted"] is not None:
+        return prep["aborted"]
+    result = _prepare_photo_vql_drive_attempts(prep=prep)
+    return _prepare_photo_vql_drive_out(prep=prep, result=result)
 
 
 def _normalize_photo_vql_drive_result(photo_res: dict[str, Any], *, ide: str, submit: bool) -> dict[str, Any]:
