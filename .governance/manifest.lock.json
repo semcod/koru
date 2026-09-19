@@ -96,7 +96,7 @@
     "project/readme.sh": "b41a9c88374e6de0439284a4561fb11b1b482039bc5ba1bcf6683fd59b1a3968",
     "scripts/install-agent-hosts.sh": "c242127001e362a5748e096807de1a001ec9e4cca1d8e79d173769bc0b3804e6",
     "scripts/runtime.sh": "27ec7c0ff9ba3e16be5438ce2fd938a0e1dd34cc3a3627bf97155a83f4304306",
-    "wellmanifest_governance.py": "ff7eff632d46213eed1eb136d8e95cc6e779b51fd256fcedcbcac4456d0d8937",
+    "wellmanifest_governance.py": "d6b71f091ffd88fb30c96f54162020d9aeb6e54555328834b68ccb21868ecc07",
     "worktree-guard.yaml": "bea3d3cda9bd764f9e79b975da8f5360df894fdc04fca0407def88ebd49111b7"
   },
   "schema": "new-project.lock/v1",
