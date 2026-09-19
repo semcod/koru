@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import base64  # noqa: F401
 import datetime
+import functools
 import json
 import logging
 import os
@@ -3463,176 +3464,240 @@ def _try_ocr_anchor_chat_target(*, ide: str, source: str) -> dict[str, Any] | No
         return None
 
 
-def get_vql_chat_target_from_photo(*, prefer_role: str | None = "panel", ide: str = "auto") -> dict:
-    """Na podstawie foto screen VQL zlokalizuj okno/panel chat (deleguje do imgl.targets)."""
-    els, src = _photo_vql_elements()
+def _vql_chat_canonical_ide(*, ide: str) -> str:
+    """Canonical IDE name with the KORU_DRIVE_IDE environment fallback."""
     canon = _canonical_ide(ide)
     if canon in {"", "auto"}:
         canon = _canonical_ide(os.environ.get("KORU_DRIVE_IDE", "auto"))
-    candidates = _photo_vql_chat_input_candidates(els, limit=8, ide=canon)
+    return canon
+
+
+def _vql_chat_source_name(*, canon: str) -> str:
+    """Explicit KORU_VDISPLAY_SOURCE override or the IDE-resolved vdisplay source."""
     explicit_source = os.environ.get("KORU_VDISPLAY_SOURCE", "").strip()
     if explicit_source:
-        src_name = explicit_source
-    else:
-        src_name, _ = _resolve_vdisplay_source_for_ide(canon)
+        return explicit_source
+    name, _ = _resolve_vdisplay_source_for_ide(canon)
+    return name
+
+
+def _vql_chat_selection_context(*, ide: str) -> dict[str, Any]:
+    """Collect VQL layers, canonical IDE, candidates, source and pollution context."""
+    els, src = _photo_vql_elements()
+    canon = _vql_chat_canonical_ide(ide=ide)
+    candidates = _photo_vql_chat_input_candidates(els, limit=8, ide=canon)
 
     # Detect terminal pollution in VQL (common on DP-2 when control terminal text is visible in screenshot).
     # If many candidates look like shell/env/command history (from the log's fake "PREFER LLM", "KORU_*", "po clear" etc.),  # noqa: E501
     # treat as polluted and force map for jetbrains (VQL is unreliable).
-    is_polluted = _vql_candidates_polluted(candidates) or _vql_layers_show_vdisplay_overlay(els)
+    return {
+        "ide": canon,
+        "source": _vql_chat_source_name(canon=canon),
+        "vql_file": src,
+        "elements": els,
+        "candidates": candidates,
+        "polluted": _vql_candidates_polluted(candidates) or _vql_layers_show_vdisplay_overlay(els),
+        "mismatch": _photo_vql_ide_capture_mismatch(ide=canon) if canon not in {"", "auto"} else None,
+        "empty_layers": not els,
+        "session": _autonomy_session.active_session_dir(),
+    }
 
+
+def _log_vql_chat_candidates(context: dict[str, Any]) -> None:
+    """Log the VQL chat-target candidates and persist the decide-phase snapshot."""
     logger.info(
         "VQL_CHAT_TARGET_CANDIDATES ide=%s source=%s vql_file=%s layer_count=%d candidates=%s polluted=%s",
-        canon,
-        src_name,
-        src,
-        len(els),
-        json.dumps(candidates, default=str)[:1200],
-        is_polluted,
+        context["ide"],
+        context["source"],
+        context["vql_file"],
+        len(context["elements"]),
+        json.dumps(context["candidates"], default=str)[:1200],
+        context["polluted"],
     )
-    session = _autonomy_session.active_session_dir()
+    session = context.get("session")
     if session is not None:
         _autonomy_session.persist_autonomy_phase(
             session,
             "decide",
             "vql_chat_candidates",
-            {"vql_source": src, "layer_count": len(els), "candidates": candidates, "ide": canon},
+            {
+                "vql_source": context["vql_file"],
+                "layer_count": len(context["elements"]),
+                "candidates": context["candidates"],
+                "ide": context["ide"],
+            },
         )
 
-    def _finalize(target: dict[str, Any], *, method: str) -> dict[str, Any]:
-        out = {
-            **target,
-            "vql_candidates": candidates,
-            "vql_layers_count": len(els),
-            "selection_method": method,
-        }
-        cc = out.get("click_center") or {}  # noqa: F841
-        vql_meta = load_vql_metadata(allow_stale=True)
-        eff_mismatch = mismatch
-        if method == "jetbrains_surface_bounds" and _surface_only_fallback_active():
-            eff_mismatch = None
-        validation = validate_vql_chat_target(
-            out,
-            ide=canon,
-            meta=vql_meta,
-            capture_mismatch=eff_mismatch,
-            selection_method=method,
+
+def _surface_trusted_validation_patch(validation: dict[str, Any]) -> dict[str, Any]:
+    """Patch validation for trusted surface-bounds targets: ok stays true unless hard errors exist."""
+    patched = dict(validation)
+    patched["surface_bounds_trusted"] = True
+    if not validation.get("validation_errors") and not validation.get("coord_warnings"):
+        patched["ok"] = bool(validation.get("vql_valid", True)) and bool(validation.get("app_match", True))
+    return patched
+
+
+def _finalize_vql_chat_target(
+    target: dict[str, Any],
+    *,
+    method: str,
+    context: dict[str, Any],
+) -> dict[str, Any]:
+    """Attach VQL candidates/validation metadata and persist the selected chat target."""
+    out = {
+        **target,
+        "vql_candidates": context["candidates"],
+        "vql_layers_count": len(context["elements"]),
+        "selection_method": method,
+    }
+    eff_mismatch = (
+        None if method == "jetbrains_surface_bounds" and _surface_only_fallback_active() else context["mismatch"]
+    )
+    validation = validate_vql_chat_target(
+        out,
+        ide=context["ide"],
+        meta=load_vql_metadata(allow_stale=True),
+        capture_mismatch=eff_mismatch,
+        selection_method=method,
+    )
+    if _surface_bounds_target_trusted(target=out, method=method):
+        validation = _surface_trusted_validation_patch(validation)
+    out["vql_validation"] = validation
+    session = context.get("session")
+    if session is not None:
+        _autonomy_session.persist_autonomy_phase(
+            session,
+            "decide",
+            "vql_chat_target_selected",
+            {
+                "selection_method": method,
+                "target": out,
+                "warnings": validation.get("coord_warnings") or [],
+                "vql_validation": validation,
+            },
         )
-        if _surface_bounds_target_trusted(target=out, method=method):
-            patched = dict(validation)
-            patched["surface_bounds_trusted"] = True
-            if not validation.get("validation_errors") and not validation.get("coord_warnings"):
-                patched["ok"] = bool(validation.get("vql_valid", True)) and bool(validation.get("app_match", True))
-            validation = patched
-        out["vql_validation"] = validation
-        if session is not None:
-            _autonomy_session.persist_autonomy_phase(
-                session,
-                "decide",
-                "vql_chat_target_selected",
-                {
-                    "selection_method": method,
-                    "target": out,
-                    "warnings": validation.get("coord_warnings") or [],
-                    "vql_validation": validation,
-                },
-            )
-            _autonomy_session.persist_autonomy_phase(session, "decide", "vql_validation", validation)
-        return out
+        _autonomy_session.persist_autonomy_phase(session, "decide", "vql_validation", validation)
+    return out
 
-    mismatch = _photo_vql_ide_capture_mismatch(ide=canon) if canon not in {"", "auto"} else None
-    empty_layers = len(els) == 0
 
-    def _try_llm_chat_detect(*, map_hint: dict[str, Any] | None = None) -> dict[str, Any] | None:
-        if not llm_vision_enabled():
-            return None
-        png = _resolve_photo_png_path_from_vql(source=src_name)
-        if not png:
-            return None
-        try:
-            from vdisplay.integrations.chat_target import resolve_chat_target_from_screenshot
-        except ImportError:
-            from koru.integrations.photo_vql_llm_detect import detect_chat_target_from_llm_vision
-
-            meta_for_title = load_vql_metadata(allow_stale=True)
-            capture_title = _capture_title_from_meta(meta_for_title)
-            return detect_chat_target_from_llm_vision(
-                ide=canon,
-                source=src_name,
-                image_path=png,
-                candidates=candidates,
-                map_hint=map_hint,
-                capture_title=capture_title,
-            )
+def _try_llm_vision_chat_detect(
+    *,
+    map_hint: dict[str, Any] | None = None,
+    context: dict[str, Any],
+) -> dict[str, Any] | None:
+    """LLM-vision chat-target detection over the current photo screenshot."""
+    if not llm_vision_enabled():
+        return None
+    png = _resolve_photo_png_path_from_vql(source=context["source"])
+    if not png:
+        return None
+    try:
+        from vdisplay.integrations.chat_target import resolve_chat_target_from_screenshot
+    except ImportError:
+        from koru.integrations.photo_vql_llm_detect import detect_chat_target_from_llm_vision
 
         meta_for_title = load_vql_metadata(allow_stale=True)
-        capture_validation = (meta_for_title.get("capture_validation") or {}) if isinstance(meta_for_title, dict) else {}  # noqa: E501
-        return resolve_chat_target_from_screenshot(
-            png,
-            ide=canon,
-            source=src_name,
-            layers=els,
-            capture_validation=capture_validation,
+        capture_title = _capture_title_from_meta(meta_for_title)
+        return detect_chat_target_from_llm_vision(
+            ide=context["ide"],
+            source=context["source"],
+            image_path=png,
+            candidates=context["candidates"],
             map_hint=map_hint,
-            polluted=is_polluted,
+            capture_title=capture_title,
         )
 
-    # Deterministic OCR placeholder anchor first: the input's placeholder text
-    # ("Plan and build autonomously", "Ask anything", …) has an exact tesseract
-    # bbox, so its center is a precise click point with no LLM pixel-precision
-    # risk. Only when the placeholder is absent/unreadable do we fall to the
-    # per-IDE heuristics + vision below.
-    anchor = _try_ocr_anchor_chat_target(ide=canon, source=src_name)
-    if anchor is not None:
-        return _finalize(anchor, method="ocr_anchor_chat_placeholder")
+    meta_for_title = load_vql_metadata(allow_stale=True)
+    capture_validation = (meta_for_title.get("capture_validation") or {}) if isinstance(meta_for_title, dict) else {}  # noqa: E501
+    return resolve_chat_target_from_screenshot(
+        png,
+        ide=context["ide"],
+        source=context["source"],
+        layers=context["elements"],
+        capture_validation=capture_validation,
+        map_hint=map_hint,
+        polluted=context["polluted"],
+    )
 
-    if canon in {"jetbrains", "pycharm", "idea"}:
-        jb_target = _photo_vql_jetbrains_chat_flow(
-            canon=canon,
-            src_name=src_name,
-            src=src,
-            els=els,
-            empty_layers=empty_layers,
-            mismatch=mismatch,
-            is_polluted=is_polluted,
-            finalize=_finalize,
-            try_llm=_try_llm_chat_detect,
-        )
-        if jb_target is not None:
-            return jb_target
-    if canon in VSCODE_FAMILY_TOP_CHAT_IDES:
-        vscode_target = _photo_vql_vscode_chat_flow(
-            canon=canon,
-            src_name=src_name,
-            src=src,
-            els=els,
-            empty_layers=empty_layers,
-            mismatch=mismatch,
-            is_polluted=is_polluted,
-            finalize=_finalize,
-            try_llm=_try_llm_chat_detect,
-        )
-        if vscode_target is not None:
-            return vscode_target
-    resolve_chat_target = _import_imgl_targets("resolve_chat_target")
-    if resolve_chat_target is not None:
-        resolved = resolve_chat_target(els, source=src)
-        return _finalize(resolved, method="imgl_resolve_chat_target")
-    llm_target = _try_llm_chat_detect()
-    if llm_target:
-        return _finalize(llm_target, method="llm_vision_detect")
-    fallback = {
+
+def _vql_chat_target_hardened_fallback() -> dict[str, Any]:
+    """imgl-absent fallback: DP-1 main editor/chat area center."""
+    return {
         "click_center": {"x": 1024, "y": 640, "note": "DP-1 main editor/chat area center (imgl not installed)"},
         "id": "dp1-chat-editor-center",
         "role": "editor-chat-area",
         "note": "hardened fallback — pip install imgl",
         "source": "vql-analysis-fallback",
     }
+
+
+def _vql_chat_target_generic_flow(
+    *,
+    finalize: Any,
+    try_llm: Any,
+    context: dict[str, Any],
+) -> dict[str, Any]:
+    """IDE-agnostic tail: imgl resolve, then LLM vision, then hardened fallback."""
+    resolve_chat_target = _import_imgl_targets("resolve_chat_target")
+    if resolve_chat_target is not None:
+        resolved = resolve_chat_target(context["elements"], source=context["vql_file"])
+        return finalize(resolved, method="imgl_resolve_chat_target")
+    llm_target = try_llm()
+    if llm_target:
+        return finalize(llm_target, method="llm_vision_detect")
     logger.warning(
         "VQL_CHAT_TARGET_FALLBACK ide=%s using hardcoded center (1024,640) — no live VQL match",
-        canon,
+        context["ide"],
     )
-    return _finalize(fallback, method="hardened_fallback")
+    return finalize(_vql_chat_target_hardened_fallback(), method="hardened_fallback")
+
+
+def get_vql_chat_target_from_photo(*, prefer_role: str | None = "panel", ide: str = "auto") -> dict:
+    """Na podstawie foto screen VQL zlokalizuj okno/panel chat (deleguje do imgl.targets)."""
+    context = _vql_chat_selection_context(ide=ide)
+    _log_vql_chat_candidates(context)
+
+    # Deterministic OCR placeholder anchor first: the input's placeholder text
+    # ("Plan and build autonomously", "Ask anything", …) has an exact tesseract
+    # bbox, so its center is a precise click point with no LLM pixel-precision
+    # risk. Only when the placeholder is absent/unreadable do we fall to the
+    # per-IDE heuristics + vision below.
+    anchor = _try_ocr_anchor_chat_target(ide=context["ide"], source=context["source"])
+    if anchor is not None:
+        return _finalize_vql_chat_target(anchor, method="ocr_anchor_chat_placeholder", context=context)
+
+    finalize = functools.partial(_finalize_vql_chat_target, context=context)
+    try_llm = functools.partial(_try_llm_vision_chat_detect, context=context)
+    if context["ide"] in {"jetbrains", "pycharm", "idea"}:
+        jb_target = _photo_vql_jetbrains_chat_flow(
+            canon=context["ide"],
+            src_name=context["source"],
+            src=context["vql_file"],
+            els=context["elements"],
+            empty_layers=context["empty_layers"],
+            mismatch=context["mismatch"],
+            is_polluted=context["polluted"],
+            finalize=finalize,
+            try_llm=try_llm,
+        )
+        if jb_target is not None:
+            return jb_target
+    if context["ide"] in VSCODE_FAMILY_TOP_CHAT_IDES:
+        vscode_target = _photo_vql_vscode_chat_flow(
+            canon=context["ide"],
+            src_name=context["source"],
+            src=context["vql_file"],
+            els=context["elements"],
+            empty_layers=context["empty_layers"],
+            mismatch=context["mismatch"],
+            is_polluted=context["polluted"],
+            finalize=finalize,
+            try_llm=try_llm,
+        )
+        if vscode_target is not None:
+            return vscode_target
+    return _vql_chat_target_generic_flow(finalize=finalize, try_llm=try_llm, context=context)
 
 
 def _photo_vql_needs_vision_or_map(
