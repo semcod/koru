@@ -1,0 +1,100 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-154",
+  "summary": "skip-governance-gate-collect-only",
+  "workstream": "integration",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-154/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".governance/manifest.json",
+    ".governance/manifest.lock.json",
+    "wellmanifest_governance.py",
+    "tests/test_wellmanifest_governance.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "96f8b7beed9f9c27ccc5f3050029eb5a4cb028b1",
+    "targetBranch": "main",
+    "outcome": "wellmanifest_governance.pytest_sessionstart returns before gate resolution when session.config.option.collectonly is set, so pytest --collect-only probes (koru scan, doctor, IDE discovery) finish in collection time and report real suite health; sessions that can execute tests keep the full governance gate unchanged. The manifest assigns the previously unowned bridge path and its regression test to the integration workstream.",
+    "nonGoals": [
+      "no changes to koru scan probe logic in src/koru/scan.py (application-owned; probe stays generic)",
+      "no weakening of gate enforcement for sessions that execute tests",
+      "no changes to project/governance-check.sh or the gate itself"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 35,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Early return in pytest_sessionstart on config.option.collectonly before gate existence check, recursion guard and base resolution; integration workstream ownedPaths gains wellmanifest_governance.py and tests/test_wellmanifest_governance.py",
+      "components": [
+        {
+          "name": "governance/pytest-bridge",
+          "paths": [
+            "wellmanifest_governance.py",
+            "tests/test_wellmanifest_governance.py",
+            ".governance/manifest.json",
+            ".governance/manifest.lock.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "timeout 30 python3 -m pytest --collect-only -q --no-header"
+        ],
+        "evidence": "collection completes with exit 0 well inside the 30s koru scan probe budget on a clean ticket checkout"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest tests/test_wellmanifest_governance.py -q"
+        ],
+        "evidence": "collect-only session start never executes the gate subprocess"
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python3 -m pytest tests/test_wellmanifest_governance.py -q"
+        ],
+        "evidence": "non-collect sessions still run the gate and still raise GovernanceGateError on gate failure"
+      },
+      {
+        "criterion": "AC-06",
+        "commands": [
+          "./project/governance-check.sh --base 96f8b7beed9f9c27ccc5f3050029eb5a4cb028b1"
+        ],
+        "evidence": "GOV-PASS for the ticket branch including the manifest ownedPaths extension and the GOV-SYNC-001 managed-file lock digest update"
+      }
+    ]
+  }
+}
