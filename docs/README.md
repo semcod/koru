@@ -40,6 +40,7 @@ changes are recorded in `CHANGELOG.md`.
 - **[`architecture/autonomy-determinism-refactor-plan.md`](./architecture/autonomy-determinism-refactor-plan.md)** — prioritized refactoring slices and acceptance criteria; corrected historical 18-unit roadmap.
 - **[`architecture/adr/`](./architecture/adr/README.md)** — ADR stubs AD-001…AD-006 (namespaces, SSOT, ExecutionPlan, grant/manifest, worktree, remote mTLS).
 - **[`architecture/documentation-conformance.toon.yaml`](./architecture/documentation-conformance.toon.yaml)** — reproducible `sumd`/`docval`/`code2docs` baseline and ordered documentation-refresh queue.
+- **[`analysis/simple-task-model-routing.md`](./analysis/simple-task-model-routing.md)** (PL) — routing prostych zadań na model Flash, pilotaż i historia użycia modeli; v5: audyt wyścigu exact-head przy scaleniu PR361 (STARTER-735) — CAS nieegzekwowany w operacji scalenia.
 
 - **[`koru-fleet.md`](./koru-fleet.md)** — `koru fleet bootstrap` / `up` / `ls`:
   multi-project workspace init + one supervisor for every koru-managed project
