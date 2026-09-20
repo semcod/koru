@@ -134,31 +134,27 @@ def _registry_write_lock() -> Iterator[None]:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
-def get_agent_availability(agent_id: str, *, now: float | None = None) -> AgentAvailability:
-    """Return effective availability, including environment overrides and expiry."""
-    normalized = normalize_agent_id(agent_id)
-    if not normalized:
-        return AgentAvailability(agent_id="", reason="empty_agent_id")
-    if normalized in _env_ids("KORU_AGENT_AVAILABLE"):
-        return AgentAvailability(
-            agent_id=normalized,
-            status="available",
-            reason="environment override",
-            source="env:KORU_AGENT_AVAILABLE",
-        )
-    if normalized in _env_ids("KORU_AGENT_UNAVAILABLE"):
-        return AgentAvailability(
-            agent_id=normalized,
-            status="unavailable",
-            reason="environment override",
-            source="env:KORU_AGENT_UNAVAILABLE",
-        )
+def _environment_override(normalized: str) -> AgentAvailability | None:
+    for env_name, status in (
+        ("KORU_AGENT_AVAILABLE", "available"),
+        ("KORU_AGENT_UNAVAILABLE", "unavailable"),
+    ):
+        if normalized in _env_ids(env_name):
+            return AgentAvailability(
+                agent_id=normalized,
+                status=status,
+                reason="environment override",
+                source=f"env:{env_name}",
+            )
+    return None
 
-    raw = _read_registry().get(normalized)
-    if raw is None:
-        return AgentAvailability(agent_id=normalized)
+
+def _availability_from_registry_entry(
+    normalized: str,
+    raw: Mapping[str, Any],
+) -> AgentAvailability:
     try:
-        availability = AgentAvailability(
+        return AgentAvailability(
             agent_id=normalized,
             status=str(raw.get("status") or "unknown"),
             reason=str(raw.get("reason") or ""),
@@ -172,16 +168,41 @@ def get_agent_availability(agent_id: str, *, now: float | None = None) -> AgentA
         )
     except (TypeError, ValueError):
         return AgentAvailability(agent_id=normalized, reason="invalid_registry_entry")
-    current = time.time() if now is None else now
+
+
+def _with_expired_block_reset(
+    availability: AgentAvailability,
+    *,
+    current: float,
+) -> AgentAvailability:
     if availability.blocked and availability.retry_after is not None:
         if availability.retry_after <= current:
             return AgentAvailability(
-                agent_id=normalized,
+                agent_id=availability.agent_id,
                 reason="temporary block expired",
                 source=availability.source,
                 observed_at=availability.observed_at,
             )
     return availability
+
+
+def get_agent_availability(agent_id: str, *, now: float | None = None) -> AgentAvailability:
+    """Return effective availability, including environment overrides and expiry."""
+    normalized = normalize_agent_id(agent_id)
+    if not normalized:
+        return AgentAvailability(agent_id="", reason="empty_agent_id")
+    override = _environment_override(normalized)
+    if override is not None:
+        return override
+
+    raw = _read_registry().get(normalized)
+    if raw is None:
+        return AgentAvailability(agent_id=normalized)
+    availability = _availability_from_registry_entry(normalized, raw)
+    return _with_expired_block_reset(
+        availability,
+        current=time.time() if now is None else now,
+    )
 
 
 def set_agent_availability(
