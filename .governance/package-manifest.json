@@ -2,6 +2,12 @@
   "schema": "new-project.package-manifest/v1",
   "files": [
     {
+      "source": "scripts/ticket_recovery.py",
+      "target": ".governance/ticket_recovery.py",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
       "source": "scripts/work_start_check.py",
       "target": ".governance/work_start_check.py",
       "strategy": "managed",

@@ -305,7 +305,7 @@ def publication_observation(root, entries, target):
 
 
 def inspect(root, workstream, requested_paths=(), ticket=None, storage=None,
-            observe_publication=False, expected_dirty_digest=None):
+            observe_publication=False, expected_dirty_digest=None, recovery_intent=None):
     root = Path(git(root, "rev-parse", "--show-toplevel").strip()).resolve()
     manifest = manifest_at(root)
     coordination = manifest["coordination"]
@@ -353,7 +353,9 @@ def inspect(root, workstream, requested_paths=(), ticket=None, storage=None,
         match = TICKET.fullmatch(branch.removeprefix("refs/heads/"))
         ticket_id = "ticket-" + match[1] if match else None
         intent, active, status, activity_authority = None, False, None, "unresolved"
-        pending = bool(all_dirty or ahead or ticket_id in records)
+        recovering = (recovery_intent is not None and ticket_id == ticket
+                      and path.resolve() == root and mode == "files")
+        pending = bool(all_dirty or ahead or ticket_id in records or recovering)
         if ticket_id and pending:
             ticket_dir = path / "project" / ticket_id
             if ticket_dir.is_symlink():
@@ -368,6 +370,11 @@ def inspect(root, workstream, requested_paths=(), ticket=None, storage=None,
                 if status_match is None:
                     raise ObservationError("SQLite ticket status unknown")
                 status_override = status_match[1]
+            elif recovering:
+                if ticket_dir.exists():
+                    raise ObservationError("Recovery cannot replace an existing ticket")
+                intent = recovery_intent
+                status_override = "IN_PROGRESS"
             else:
                 intent = read_json(ticket_dir / "intent.json")
                 status_override = None

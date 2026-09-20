@@ -6,14 +6,14 @@
   "adoptions": [
     {
       "id": "wellmanifest/new-project",
-      "version": "0.20.33",
-      "revision": "a8245857259d8d42115108f191c586b76cb1e2bd",
+      "version": "0.20.38",
+      "revision": "e2fd653ff801fb228fca818e1d874ee685a4da62",
       "model": "protected-conformance",
       "level": "S4",
       "artifacts": [
         {
           "target": ".governance/standard-pack-evidence/new-project.json",
-          "sha256": "fd927320cf98c127e0ce9985bad0f3812d76f315168c4638f97c73e4fcad8435"
+          "sha256": "5efc0c0bc5b586fad3dcdab9a7597307094c92702ba975bc402f8597fdd048b2"
         },
         {
           "target": ".governance/standard-packs.json",
@@ -27,23 +27,23 @@
       "evidence": [
         {
           "level": "S0",
-          "uri": "https://github.com/wellmanifest/new-project/blob/a8245857259d8d42115108f191c586b76cb1e2bd/governance/standard-packs.json",
+          "uri": "https://github.com/wellmanifest/new-project/blob/e2fd653ff801fb228fca818e1d874ee685a4da62/governance/standard-packs.json",
           "sha256": "9126f71189dd6ee5c80a53f4d8021718d455501c977ce81da81b437dd0216272"
         },
         {
           "level": "S1",
-          "uri": "https://github.com/wellmanifest/new-project/blob/a8245857259d8d42115108f191c586b76cb1e2bd/scripts/standard_pack_check.py",
+          "uri": "https://github.com/wellmanifest/new-project/blob/e2fd653ff801fb228fca818e1d874ee685a4da62/scripts/standard_pack_check.py",
           "sha256": "412316ef0b35fe1c5f389bc067193693b13c389b7ce9126d78630ebb927c8527"
         },
         {
           "level": "S2",
-          "uri": "urn:sha256:fd927320cf98c127e0ce9985bad0f3812d76f315168c4638f97c73e4fcad8435",
-          "sha256": "fd927320cf98c127e0ce9985bad0f3812d76f315168c4638f97c73e4fcad8435"
+          "uri": "urn:sha256:5efc0c0bc5b586fad3dcdab9a7597307094c92702ba975bc402f8597fdd048b2",
+          "sha256": "5efc0c0bc5b586fad3dcdab9a7597307094c92702ba975bc402f8597fdd048b2"
         },
         {
           "level": "S3",
-          "uri": "urn:sha256:699e24cccc858c8b5794a6b657a5192816a592d21298bf5fcd13353558cb0392",
-          "sha256": "699e24cccc858c8b5794a6b657a5192816a592d21298bf5fcd13353558cb0392"
+          "uri": "urn:sha256:bd923ee1802acbb69038468ce5e69336a10aac28983fc82e2a288695c2132ed5",
+          "sha256": "bd923ee1802acbb69038468ce5e69336a10aac28983fc82e2a288695c2132ed5"
         },
         {
           "level": "S4",

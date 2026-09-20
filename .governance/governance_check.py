@@ -3783,7 +3783,11 @@ def load_standard_adoption_evidence(
     head_hashes = adoption_lock(head_lock_path.read_bytes(), adoption["toRevision"])
     base_managed = {path for path, strategy in base_strategies.items() if strategy == "managed"}
     head_managed = {path for path, strategy in head_strategies.items() if strategy == "managed"}
-    if frozenset(base_hashes) not in {frozenset(base_strategies), frozenset(base_managed)}:
+    legacy_base = set(base_hashes) <= set(base_strategies)
+    if (
+        frozenset(base_hashes) not in {frozenset(base_strategies), frozenset(base_managed)}
+        and not legacy_base
+    ):
         raise ValueError("base package targets and lock targets differ")
     if set(head_hashes) != head_managed:
         raise ValueError("package targets and lock targets differ")
@@ -3813,8 +3817,8 @@ def load_standard_adoption_evidence(
 
 def verify_managed_base(raw_path, base_content, base_strategies, base_hashes, initial,
                         takeovers, restorations, consumed_takeovers, consumed_restorations) -> bool:
-    if raw_path in base_strategies:
-        if base_strategies[raw_path] != "managed":
+    if raw_path in base_hashes:
+        if base_strategies.get(raw_path) != "managed" and raw_path != ".governance/manifest.json":
             raise ValueError(f"managed strategy continuity differs: {raw_path}")
         if base_content is None:
             if restorations.get(raw_path) != base_hashes[raw_path]:
