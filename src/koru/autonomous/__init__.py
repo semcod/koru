@@ -10,12 +10,20 @@ include scan, then ``koru --queue --loop``, then optional idle diagnostics
 when the queue is idle, a WUP health read if the watcher is running, then
 autopilot. ``--no-serve`` is a compatibility no-op (``koru serve`` is not
 started here).
+
+This package is the historical ``koru.autonomous`` facade: the monkeypatch
+shims and loop wiring live in ``__init__.py`` so every existing
+``koru.autonomous`` attribute stays a working patch target, while the two
+cohesive non-patch-point responsibilities are extracted into submodules:
+environment reporting in ``koru.autonomous.reporting`` (doctor/status/
+self-heal payloads, text formatting and actions) and argv configuration in
+``koru.autonomous.argv_config`` (normalization, auto-mode options and the
+``--web`` token). Both are re-exported here unchanged.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import subprocess
 import sys
 import threading
@@ -31,11 +39,30 @@ from koruide.daemon import AutopilotDaemon
 from koruide.drive_policy import DrivePolicy as DriveOrchestrator
 
 from koru import autonomous_cycle as _autonomous_cycle_module
+from koru.autonomous.argv_config import (
+    _apply_auto_pipeline_flags,
+    _apply_replace_existing_flags,
+    _configure_auto_mode_args,
+    _consume_web_flag,
+    _normalize_autonomous_argv,
+)
+from koru.autonomous.reporting import (
+    _action_doctor,
+    _action_self_heal,
+    _action_status,
+    _autonomous_report_payload,  # noqa: F401
+    _format_autonomous_report_text,  # noqa: F401
+    _ide_presence_payload,  # noqa: F401
+    _print_autonomous_report,  # noqa: F401
+    _repair_payload,  # noqa: F401
+    _resolve_autonomous_report_socket,  # noqa: F401
+    _socket_payload,  # noqa: F401
+)
 from koru.autonomous_auto_pipeline import (
     AutoPipelineProfile,
     AutoPipelineState,
-    _collect_argv_options,
-    _expand_auto_up_defaults,
+    _collect_argv_options,  # noqa: F401
+    _expand_auto_up_defaults,  # noqa: F401
     _select_auto_pipeline_profile,
     _update_auto_pipeline_state,
 )
@@ -213,11 +240,7 @@ def _try_nlp2uri_ide_control(
 
 
 def _try_os_injector_fallback(prompt: str, *, submit: bool) -> dict[str, Any] | None:
-    load_profile_fn = (
-        _os_injector_module.load_profile
-        if load_profile is _ORIGINAL_LOAD_PROFILE
-        else load_profile
-    )
+    load_profile_fn = _os_injector_module.load_profile if load_profile is _ORIGINAL_LOAD_PROFILE else load_profile
     inject_with_profile_fn = (
         _os_injector_module.inject_with_profile
         if inject_with_profile is _ORIGINAL_INJECT_WITH_PROFILE
@@ -629,6 +652,7 @@ def _run_operator_pipeline(
     correlation_id: str,
 ) -> None:
     """Run operator pipeline if enabled."""
+
     def format_runtime_hints(
         probe: Any,
         *,
@@ -894,9 +918,7 @@ def _run_autonomous_pre_checks(
     """Run pre-checks before autonomous loop: MCP provision and plugin setup."""
     mcp_provision_ran = _run_mcp_provision(project, args.emit_events, autopilot_ide)
     plugin_connected = _setup_autopilot_plugin(args, autopilot_ide, socket_path, client)
-    _run_operator_pipeline(
-        args, project, startup_probe, plugin_connected, mcp_provision_ran, correlation_id
-    )
+    _run_operator_pipeline(args, project, startup_probe, plugin_connected, mcp_provision_ran, correlation_id)
     _unblock_queue_if_needed(project, args.emit_events)
     return mcp_provision_ran, plugin_connected
 
@@ -1003,200 +1025,6 @@ def _action_up(args: argparse.Namespace) -> int:
         run_up_loop=_run_autonomous_up_loop,
         stdio_info=_stdio_info,
     )
-
-
-def _socket_payload(socket: Any) -> dict[str, Any] | None:
-    if socket is None:
-        return None
-    return {
-        "path": str(socket.path),
-        "exists": socket.exists,
-        "listening": socket.listening,
-        "stale": socket.stale,
-        "healthy": socket.healthy,
-    }
-
-
-def _ide_presence_payload(ide: Any) -> dict[str, Any]:
-    return {
-        "ide": ide.ide,
-        "installed": ide.installed,
-        "binary_path": ide.binary_path,
-        "mcp_config_path": str(ide.mcp_config_path) if ide.mcp_config_path else None,
-        "mcp_has_koru": ide.mcp_has_koru,
-    }
-
-
-def _autonomous_report_payload(project: Path, report: Any, *, action: str) -> dict[str, Any]:
-    return {
-        "action": action,
-        "project": str(project),
-        "headless": report.headless,
-        "installed_ides": report.installed_ides,
-        "mcp_enabled_ides": report.mcp_enabled_ides,
-        "ides": [_ide_presence_payload(ide) for ide in report.ides],
-        "autopilot_socket": _socket_payload(report.autopilot_socket),
-        "can_use_plugin_socket": report.can_use_plugin_socket,
-        "can_use_mcp": report.can_use_mcp,
-        "fixable_issues": list(report.fixable_issues),
-        "notes": list(report.notes),
-        "ready": bool(report.can_use_plugin_socket or report.can_use_mcp),
-    }
-
-
-def _format_autonomous_report_text(
-    report: Any,
-    *,
-    action: str = "doctor",
-) -> list[str]:
-    installed = ", ".join(report.installed_ides) or "none"
-    mcp_enabled = ", ".join(report.mcp_enabled_ides) or "none"
-    socket = report.autopilot_socket
-    if socket is None:
-        socket_line = "autopilot socket: not configured"
-    else:
-        socket_line = (
-            f"autopilot socket: {socket.path} "
-            f"exists={socket.exists} listening={socket.listening} stale={socket.stale}"
-        )
-
-    lines = [
-        f"koru autonomous {action}",
-        f"headless: {report.headless}",
-        f"installed IDEs: {installed}",
-        f"MCP enabled IDEs: {mcp_enabled}",
-        socket_line,
-        f"plugin socket usable: {report.can_use_plugin_socket}",
-        f"MCP usable: {report.can_use_mcp}",
-        f"ready: {bool(report.can_use_plugin_socket or report.can_use_mcp)}",
-    ]
-    for issue in report.fixable_issues:
-        lines.append(f"fixable: {issue}")
-    for note in report.notes:
-        lines.append(f"note: {note}")
-    return lines
-
-
-def _resolve_autonomous_report_socket(explicit: Path | None, project: Path) -> Path:
-    """Resolve autopilot socket for doctor/status/self-heal probes."""
-    if explicit is not None:
-        return explicit.expanduser().resolve()
-    from koru.autopilot.lane_context import resolve_client_socket_path
-
-    return resolve_client_socket_path(
-        argparse.Namespace(socket=None, ide="auto", project=project),
-        project=project,
-    )
-
-
-def _print_autonomous_report(args: argparse.Namespace, *, action: str) -> int:
-    from koru.autonomy.environment import probe_environment
-
-    project = args.project.resolve()
-    socket_path = _resolve_autonomous_report_socket(args.socket, project)
-    report = probe_environment(project, autopilot_socket=socket_path)
-    if args.format == "json":
-        print(json.dumps(_autonomous_report_payload(project, report, action=action)))
-        return 0
-    for line in _format_autonomous_report_text(report, action=action):
-        print(line)
-    return 0
-
-
-def _action_doctor(args: argparse.Namespace) -> int:
-    return _print_autonomous_report(args, action="doctor")
-
-
-def _action_status(args: argparse.Namespace) -> int:
-    return _print_autonomous_report(args, action="status")
-
-
-def _repair_payload(results: list[Any]) -> list[dict[str, str]]:
-    return [
-        {
-            "action": result.action,
-            "status": result.status,
-            "detail": result.detail,
-        }
-        for result in results
-    ]
-
-
-def _action_self_heal(args: argparse.Namespace) -> int:
-    from koru.autonomy.environment import probe_environment
-    from koru.autonomy.heal import heal_environment, summarise
-
-    project = args.project.resolve()
-    socket_path = _resolve_autonomous_report_socket(args.socket, project)
-    report = probe_environment(project, autopilot_socket=socket_path)
-    results = heal_environment(report, dry_run=args.dry_run)
-    failed = any(result.status == "failed" for result in results)
-    if args.format == "json":
-        print(
-            json.dumps(
-                {
-                    "action": "self-heal",
-                    "project": str(project),
-                    "dry_run": args.dry_run,
-                    "summary": summarise(results),
-                    "results": _repair_payload(results),
-                    "ok": not failed,
-                },
-            ),
-        )
-        return 1 if failed else 0
-    print(summarise(results))
-    for result in results:
-        detail = f": {result.detail}" if result.detail else ""
-        print(f"{result.action}: {result.status}{detail}")
-    return 1 if failed else 0
-
-
-def _normalize_autonomous_argv(argv: list[str]) -> list[str]:
-    """Normalize command line arguments for autonomous mode."""
-    return _autonomous_cli_config.normalize_autonomous_argv(argv)
-
-
-def _configure_auto_mode_args(
-    argv: list[str],
-    args: Any,
-    invoked_as_auto: bool,
-) -> tuple[set[str], list[str]]:
-    """Configure arguments for auto mode and return user options and normalized argv."""
-    return _autonomous_cli_config.configure_auto_mode_args(
-        argv,
-        invoked_as_auto,
-        collect_argv_options=_collect_argv_options,
-        expand_auto_up_defaults=_expand_auto_up_defaults,
-    )
-
-
-def _apply_auto_pipeline_flags(args: Any, invoked_as_auto: bool) -> None:
-    """Apply auto-pipeline specific flags to args."""
-    _autonomous_cli_config.apply_auto_pipeline_flags(args, invoked_as_auto)
-
-
-def _apply_replace_existing_flags(args: Any, invoked_as_auto: bool) -> None:
-    """Apply replace-existing flags for auto mode."""
-    _autonomous_cli_config.apply_replace_existing_flags(args, invoked_as_auto)
-
-
-def _consume_web_flag(argv: list[str]) -> tuple[list[str], bool]:
-    """Strip ``--web``/``--no-web`` tokens before argparse.
-
-    The flag lives outside ``operator_parser.py`` so concurrent tickets can
-    extend the ``up`` parser without write conflicts.
-    """
-    web = False
-    cleaned: list[str] = []
-    for token in argv:
-        if token == "--web":
-            web = True
-        elif token == "--no-web":
-            web = False
-        else:
-            cleaned.append(token)
-    return cleaned, web
 
 
 def _parse_autonomous_args(argv: list[str], *, invoked_as_auto: bool) -> argparse.Namespace:
