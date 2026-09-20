@@ -1,19 +1,19 @@
 {
   "schema": "semcod.standard-pack-projection/v1",
   "packId": "wellmanifest/new-project",
-  "version": "0.20.32",
+  "version": "0.20.33",
   "claimedLevel": "S4",
   "source": {
     "repository": "wellmanifest/new-project",
-    "revision": "b6ba9c21a65a6a5648ecf904b64c3b75295e136f",
+    "revision": "a8245857259d8d42115108f191c586b76cb1e2bd",
     "contract": {
       "path": "governance/standard-packs.json",
-      "uri": "https://github.com/wellmanifest/new-project/blob/b6ba9c21a65a6a5648ecf904b64c3b75295e136f/governance/standard-packs.json",
-      "sha256": "107f9fcc6231c108b216055c63ba43e8bd5ec152ea7a2a5906642c3484fceed9"
+      "uri": "https://github.com/wellmanifest/new-project/blob/a8245857259d8d42115108f191c586b76cb1e2bd/governance/standard-packs.json",
+      "sha256": "9126f71189dd6ee5c80a53f4d8021718d455501c977ce81da81b437dd0216272"
     },
     "conformance": {
       "path": "scripts/standard_pack_check.py",
-      "uri": "https://github.com/wellmanifest/new-project/blob/b6ba9c21a65a6a5648ecf904b64c3b75295e136f/scripts/standard_pack_check.py",
+      "uri": "https://github.com/wellmanifest/new-project/blob/a8245857259d8d42115108f191c586b76cb1e2bd/scripts/standard_pack_check.py",
       "sha256": "412316ef0b35fe1c5f389bc067193693b13c389b7ce9126d78630ebb927c8527"
     }
   },
@@ -21,7 +21,7 @@
     {
       "target": ".governance/standard-packs.json",
       "sourceRole": "contract",
-      "sha256": "107f9fcc6231c108b216055c63ba43e8bd5ec152ea7a2a5906642c3484fceed9"
+      "sha256": "9126f71189dd6ee5c80a53f4d8021718d455501c977ce81da81b437dd0216272"
     },
     {
       "target": ".governance/standard_pack_check.py",
@@ -30,21 +30,21 @@
     }
   ],
   "ciReceipt": {
-    "sha256": "bf867050b7430ee6fd39373c60b2fd37b51089fffa256a5bd8d4b92a943ee1d1",
+    "sha256": "699e24cccc858c8b5794a6b657a5192816a592d21298bf5fcd13353558cb0392",
     "snapshot": {
       "schema": "semcod.ci-check-receipt/v1",
       "repository": "wellmanifest/new-project",
-      "subjectSha": "b6ba9c21a65a6a5648ecf904b64c3b75295e136f",
+      "subjectSha": "a8245857259d8d42115108f191c586b76cb1e2bd",
       "workflowPath": ".github/workflows/ci.yml",
-      "workflowSha256": "944b6d6276b095b721f11ee6809eb74c30de431aac1cb09a0a0f66ce4789a3c8",
-      "runId": 34967695852,
+      "workflowSha256": "93659dfdbfcd7c372d2af90751f12bd043f945d450ea1a4f8213bcd5c51f952b",
+      "runId": 35451961370,
       "runAttempt": 1,
       "event": "push",
-      "jobId": 104376005745,
+      "jobId": 105920563369,
       "checkName": "test",
       "conclusion": "success",
-      "completedAt": "2026-09-15T12:16:13Z",
-      "sourceUri": "https://api.github.com/repos/wellmanifest/new-project/actions/jobs/104376005745"
+      "completedAt": "2026-09-19T15:31:14Z",
+      "sourceUri": "https://api.github.com/repos/wellmanifest/new-project/actions/jobs/105920563369"
     }
   },
   "protectionReceipt": {

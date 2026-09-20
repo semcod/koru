@@ -28,7 +28,7 @@
       ],
       "workstream": "integration"
     },
-    "maxActiveTicketsPerWorkstream": 4,
+    "maxActiveTicketsPerWorkstream": 3,
     "mode": "workstreams",
     "rejectActiveScopeOverlap": true,
     "workstreams": {
@@ -84,6 +84,7 @@
       },
       "integration": {
         "ownedPaths": [
+          ".gitattributes",
           ".governance/manifest.json",
           "wellmanifest_governance.py",
           "tests/test_wellmanifest_governance.py",
@@ -149,7 +150,14 @@
       "pyproject.toml",
       "go.mod",
       "Cargo.toml",
-      "pom.xml"
+      "pom.xml",
+      "package-lock.json",
+      "pnpm-lock.yaml",
+      "yarn.lock",
+      "uv.lock",
+      "poetry.lock",
+      "go.sum",
+      "Cargo.lock"
     ],
     "maxActiveMinutes": 120,
     "maxAffectedComponents": 5,
@@ -239,7 +247,7 @@
   ],
   "standard": {
     "id": "wellmanifest/new-project",
-    "version": "0.20.32"
+    "version": "0.20.33"
   },
   "ticket": {
     "activeStatuses": [

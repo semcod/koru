@@ -15,7 +15,7 @@
     "integration": {
       "workstream": "integration"
     },
-    "maxActiveTicketsPerWorkstream": 4,
+    "maxActiveTicketsPerWorkstream": 3,
     "mode": "workstreams",
     "rejectActiveScopeOverlap": true
   },
@@ -29,9 +29,16 @@
     "checkpointMinutes": 30,
     "dependencyManifestPaths": [
       "package.json",
+      "package-lock.json",
+      "pnpm-lock.yaml",
+      "yarn.lock",
       "pyproject.toml",
+      "uv.lock",
+      "poetry.lock",
       "go.mod",
+      "go.sum",
       "Cargo.toml",
+      "Cargo.lock",
       "pom.xml"
     ],
     "maxActiveMinutes": 120,
@@ -110,7 +117,7 @@
   "stacks": [],
   "standard": {
     "id": "wellmanifest/new-project",
-    "version": "0.20.32"
+    "version": "0.20.33"
   },
   "ticket": {
     "activeStatuses": [
