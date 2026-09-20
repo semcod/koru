@@ -11,6 +11,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import traceback
 
 sys.dont_write_bytecode = True
 from ticket_activity import ActivityError, delivery_landed, resolve as resolve_activity
@@ -25,6 +26,34 @@ TRACKING = ("project/ticket-*/**", "project/TICKETS.md", "TODO.md")
 
 class ObservationError(ValueError):
     pass
+
+
+def _record_observation_failure(root, error):
+    """Write the real exception locally so RECONCILE is self-diagnosable.
+
+    The GOV-WORK-START-001 payload printed to stdout stays deliberately
+    generic (remote URLs or secret-bearing input never leak into shared
+    CI/agent transcripts). But collapsing every failure — including plain
+    bugs like a missing tracked file — into that one sentence made a
+    one-line root cause take a full investigation to find. This writes the
+    real traceback to a local, gitignored file only; stdout is unchanged.
+    """
+    try:
+        log_path = Path(root) / ".governance" / ".observation-failures.log"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        entry = (
+            f"{datetime.now(timezone.utc).isoformat()} "
+            f"{type(error).__name__}: {error}\n"
+            f"{traceback.format_exc()}\n"
+        )
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(entry)
+        # Keep the file bounded; this is a debugging aid, not an audit log.
+        lines = log_path.read_text(encoding="utf-8").splitlines(keepends=True)
+        if len(lines) > 2000:
+            log_path.write_text("".join(lines[-2000:]), encoding="utf-8")
+    except OSError:
+        pass
 
 
 def digest(value):
@@ -530,11 +559,18 @@ def main(argv=None):
     try:
         payload = inspect(args.root, args.workstream, args.path, args.ticket, args.storage,
                           args.observe_publication, args.expect_dirty_digest)
-    except (ObservationError, ActivityError, KeyError, TypeError, ValueError, OSError, StopIteration):
-        # No exception content: remote URLs or secret-bearing input never leak.
+    except (ObservationError, ActivityError, KeyError, TypeError, ValueError, OSError, StopIteration) as error:
+        # Stdout stays generic — no exception content: remote URLs or
+        # secret-bearing input never leak there. The real cause is written
+        # to a local-only log instead of being discarded (see
+        # _record_observation_failure).
+        _record_observation_failure(args.root, error)
+
         print(json.dumps({"schema": SCHEMA, "readOnly": True, "grantsAuthority": False,
                           "createsWorktree": False, "route": "RECONCILE", "diagnostic": CODE,
-                          "reason": "Observation incomplete or inconsistent; preserve work and reconcile."}))
+                          "reason": "Observation incomplete or inconsistent; preserve work and reconcile. "
+                                    "Real cause logged locally in .governance/.observation-failures.log "
+                                    "(gitignored) — read it before opening a new ticket."}))
         return 3
     if args.allocation_check and payload["route"] != "NEW_TICKET_CANDIDATE":
         payload["diagnostic"] = CODE

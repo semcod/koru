@@ -20,8 +20,8 @@
     "package:all": "npm run sync-shared && npm run package --workspaces --if-present"
   },
   "wellmanifest": {
-    "standard": "0.20.32",
-    "revision": "b6ba9c21a65a6a5648ecf904b64c3b75295e136f",
+    "standard": "0.20.33",
+    "revision": "a8245857259d8d42115108f191c586b76cb1e2bd",
     "gate": "project/governance-check.sh"
   },
   "author": {

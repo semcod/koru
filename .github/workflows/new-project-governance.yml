@@ -66,11 +66,17 @@ jobs:
         shell: bash
         env:
           BRANCH_LIFECYCLE_SNAPSHOT: ${{ runner.temp }}/new-project-branch-lifecycle.json
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          python3 .governance/branch_lifecycle_check.py \
-            --snapshot "$BRANCH_LIFECYCLE_SNAPSHOT" \
-            --expected-repository "$GITHUB_REPOSITORY" \
+          arguments=(
+            --snapshot "$BRANCH_LIFECYCLE_SNAPSHOT"
+            --expected-repository "$GITHUB_REPOSITORY"
             --format text
+          )
+          if [[ -n "${HEAD_REF:-}" ]]; then
+            arguments+=(--focus-branch "$HEAD_REF")
+          fi
+          python3 .governance/branch_lifecycle_check.py "${arguments[@]}"
 
   enforce:
     name: governance / enforce
@@ -110,7 +116,5 @@ jobs:
           # has no range, so it validates the repository as it stands.
           if [[ -n "${BASE_SHA:-}" && -n "${HEAD_SHA:-}" ]]; then
             arguments+=(--base "$BASE_SHA" --head "$HEAD_SHA")
-          else
-            arguments+=(--changed-file project/TICKETS.md)
           fi
           python3 .governance/governance_check.py "${arguments[@]}"
