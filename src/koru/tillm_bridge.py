@@ -179,6 +179,23 @@ def launch_shell_agent(
     )
 
 
+def _normalize_tillm_model(model: str | None) -> str | None:
+    """Keep the model family stable when Tillm tries another provider.
+
+    Koru policy receipts use provider-qualified ids (for example,
+    ``zai/glm-5.3-flash``).  Tillm resolves the provider for each attempt and
+    treats a foreign qualified id as a request for that provider's default.
+    Passing the bare model lets every fallback attempt keep ``glm-5.3-flash``
+    while Koru retains the original qualified id in its routing receipt.
+    """
+    value = (model or "").strip()
+    for prefix in ("zai/", "z.ai/"):
+        if value.lower().startswith(prefix):
+            bare = value[len(prefix) :].strip()
+            return bare or None
+    return value or None
+
+
 def drive_shell_chat(
     *,
     client_id: str,
@@ -205,7 +222,7 @@ def drive_shell_chat(
         project=project,
         prompt=prompt,
         execute=execute,
-        model=model,
+        model=_normalize_tillm_model(model),
         execute_profile=execute_profile,
         **kwargs,
     )
