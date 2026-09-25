@@ -1007,19 +1007,154 @@ def _find_instance(project: Path, instance_id: str) -> dict[str, Any] | None:
     return None
 
 
-def terminal_prompt(project: Path, body: dict[str, Any]) -> dict[str, Any]:
+def _resolve_terminal_target(
+    project: Path, body: dict[str, Any]
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
     instance_id = str(body.get("iid") or "").strip()
     text = str(body.get("text") or "").strip()
     if not instance_id or not text:
-        return {"error": "iid and text are required"}
+        return None, {"error": "iid and text are required"}
     entry = _find_instance(project, instance_id)
     if entry is None:
-        return {"error": f"unknown instance {instance_id!r}"}
-    url = str(entry["url"])
+        return None, {"error": f"unknown instance {instance_id!r}"}
+    return entry, None
+
+
+def _retry_session_failover(
+    url: str,
+    project: Path,
+    title: str,
+    agent: str | None,
+    active_model: dict[str, Any],
+    exc: Exception,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None, dict[str, Any] | None]:
+    is_ex, ttl, reason = parse_exhaustion_from_error(str(exc))
+    if not is_ex:
+        return None, None, None
+    mark_provider_exhausted(active_model["providerID"], ttl_seconds=ttl, reason=reason)
+    retry_model, _ = resolve_active_terminal_model(url)
+    if not retry_model or retry_model.get("providerID") == active_model.get("providerID"):
+        return None, None, None
+    meta = {
+        "from": active_model["providerID"],
+        "to": retry_model["providerID"],
+        "model": retry_model["modelID"],
+    }
+    try:
+        sess = create_session(
+            url,
+            title=title,
+            agent=agent,
+            model=retry_model,
+            directory=str(project),
+        )
+        return sess, retry_model, meta
+    except Exception:
+        return None, None, None
+
+
+def _create_session_with_failover(
+    url: str,
+    project: Path,
+    title: str,
+    agent: str | None,
+    active_model: dict[str, Any] | None,
+    failover_meta: dict[str, Any] | None,
+) -> tuple[str | None, dict[str, Any] | None, dict[str, Any] | None, dict[str, Any] | None]:
+    sess = None
+    try:
+        sess = create_session(
+            url,
+            title=title,
+            agent=agent,
+            model=active_model,
+            directory=str(project),
+        )
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        if active_model:
+            retry_sess, new_model, new_meta = _retry_session_failover(
+                url, project, title, agent, active_model, exc
+            )
+            if retry_sess and retry_sess.get("id"):
+                sess, active_model, failover_meta = retry_sess, new_model, new_meta
+        if not sess or not sess.get("id"):
+            return None, None, None, {"error": f"failed to create session: {exc}"}
+    if not sess or not sess.get("id"):
+        return None, None, None, {"error": "failed to create session"}
+    return str(sess["id"]), active_model, failover_meta, None
+
+
+def _retry_prompt_failover(
+    url: str,
+    session_id: str,
+    text: str,
+    agent: str | None,
+    active_model: dict[str, Any],
+    exc: Exception,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None, dict[str, Any] | None]:
+    is_ex, ttl, reason = parse_exhaustion_from_error(str(exc))
+    if not is_ex:
+        return None, None, {"error": str(exc)}
+    mark_provider_exhausted(active_model["providerID"], ttl_seconds=ttl, reason=reason)
+    retry_model, _ = resolve_active_terminal_model(url)
+    if not retry_model or retry_model.get("providerID") == active_model.get("providerID"):
+        return None, None, {"error": str(exc)}
+    try:
+        result = send_prompt(url, session_id, text, model=retry_model, agent=agent)
+        meta = {
+            "from": active_model["providerID"],
+            "to": retry_model["providerID"],
+            "model": retry_model["modelID"],
+        }
+        return result, meta, None
+    except Exception as retry_exc:
+        return None, None, {"error": f"prompt failed after failover retry: {retry_exc}"}
+
+
+def _send_prompt_with_failover(
+    url: str,
+    session_id: str,
+    text: str,
+    agent: str | None,
+    active_model: dict[str, Any] | None,
+    failover_meta: dict[str, Any] | None,
+) -> dict[str, Any]:
+    try:
+        result = send_prompt(url, session_id, text, model=active_model, agent=agent)
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        if active_model:
+            result, retry_meta, err = _retry_prompt_failover(
+                url, session_id, text, agent, active_model, exc
+            )
+            if err:
+                return err
+            failover_meta = retry_meta
+        else:
+            return {"error": str(exc)}
+    out: dict[str, Any] = {"ok": True, "session_id": session_id, "result": result}
+    if failover_meta:
+        out["failover"] = failover_meta
+    return out
+
+
+def _parse_prompt_request(
+    body: dict[str, Any]
+) -> tuple[str, str, dict[str, Any] | None, str | None]:
+    text = str(body.get("text") or "").strip()
     session_id = str(body.get("session_id") or "").strip()
     model = body.get("model")
     model = model if isinstance(model, dict) else None
     agent = str(body.get("agent") or "").strip() or None
+    return text, session_id, model, agent
+
+
+def terminal_prompt(project: Path, body: dict[str, Any]) -> dict[str, Any]:
+    entry, err = _resolve_terminal_target(project, body)
+    if err:
+        return err
+    assert entry is not None
+    url = str(entry["url"])
+    text, session_id, model, agent = _parse_prompt_request(body)
 
     # Refresh provider exhaustion from recent log
     scan_opencode_log_for_exhaustion()
@@ -1028,70 +1163,16 @@ def terminal_prompt(project: Path, body: dict[str, Any]) -> dict[str, Any]:
     active_model, failover_meta = resolve_active_terminal_model(url, requested_model=model)
 
     if not session_id:
-        sess = None
-        try:
-            sess = create_session(
-                url,
-                title=text[:60],
-                agent=agent,
-                model=active_model,
-                directory=str(project),
-            )
-        except (urllib.error.URLError, OSError, ValueError) as exc:
-            is_ex, ttl, reason = parse_exhaustion_from_error(str(exc))
-            if is_ex and active_model:
-                mark_provider_exhausted(active_model["providerID"], ttl_seconds=ttl, reason=reason)
-                retry_model, _ = resolve_active_terminal_model(url)
-                if retry_model and retry_model.get("providerID") != active_model.get("providerID"):
-                    failover_meta = {
-                        "from": active_model["providerID"],
-                        "to": retry_model["providerID"],
-                        "model": retry_model["modelID"],
-                    }
-                    active_model = retry_model
-                    try:
-                        sess = create_session(
-                            url,
-                            title=text[:60],
-                            agent=agent,
-                            model=active_model,
-                            directory=str(project),
-                        )
-                    except Exception:
-                        sess = None
-            if not sess or not sess.get("id"):
-                return {"error": f"failed to create session: {exc}"}
-        if not sess or not sess.get("id"):
-            return {"error": "failed to create session"}
-        session_id = str(sess["id"])
+        session_id, active_model, failover_meta, err = _create_session_with_failover(
+            url, project, text[:60], agent, active_model, failover_meta
+        )
+        if err:
+            return err
+        assert session_id is not None
 
-    try:
-        result = send_prompt(url, session_id, text, model=active_model, agent=agent)
-    except (urllib.error.URLError, OSError, ValueError) as exc:
-        is_ex, ttl, reason = parse_exhaustion_from_error(str(exc))
-        if is_ex and active_model:
-            mark_provider_exhausted(active_model["providerID"], ttl_seconds=ttl, reason=reason)
-            retry_model, _ = resolve_active_terminal_model(url)
-            if retry_model and retry_model.get("providerID") != active_model.get("providerID"):
-                try:
-                    result = send_prompt(url, session_id, text, model=retry_model, agent=agent)
-                    failover_meta = {
-                        "from": active_model["providerID"],
-                        "to": retry_model["providerID"],
-                        "model": retry_model["modelID"],
-                    }
-                    out = {"ok": True, "session_id": session_id, "result": result}
-                    if failover_meta:
-                        out["failover"] = failover_meta
-                    return out
-                except Exception as retry_exc:
-                    return {"error": f"prompt failed after failover retry: {retry_exc}"}
-        return {"error": str(exc)}
-
-    out = {"ok": True, "session_id": session_id, "result": result}
-    if failover_meta:
-        out["failover"] = failover_meta
-    return out
+    return _send_prompt_with_failover(
+        url, session_id, text, agent, active_model, failover_meta
+    )
 
 
 def terminal_reply(project: Path, body: dict[str, Any]) -> dict[str, Any]:
