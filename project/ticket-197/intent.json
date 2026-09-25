@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-197",
+  "summary": "Reduce cyclomatic complexity in supervise_once",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-197/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_supervisor.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b24f2d56765e0c63e639f5d6d8c5a8095eb2ffe4",
+    "targetBranch": "main",
+    "outcome": "Decompose supervise_once into focused helper functions to reduce cyclomatic complexity from CC=37 to CC=4 (limit 15) while preserving identical supervisor behavior.",
+    "nonGoals": [
+      "Changing supervisor polling interval or API endpoints",
+      "Altering error handling or log message formats"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _prune_steered_sessions, _resolve_instance_target, _steer_session_to_fallback, _handle_instance_failovers, _handle_pending_permissions, _handle_pending_questions, and _supervise_instance from supervise_once.",
+      "components": [
+        {
+          "name": "opencode-supervisor",
+          "paths": [
+            "src/koruapi/opencode_supervisor.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore inline supervise_once."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m radon cc src/koruapi/opencode_supervisor.py -s"
+        ],
+        "evidence": "Cyclomatic complexity of supervise_once is 4 (limit 15), all helpers <= 13."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=. pytest -q tests/test_opencode_serve_scan.py tests/test_dashboard_terminals.py"
+        ],
+        "evidence": "Existing supervisor unit and dashboard terminal tests pass."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}

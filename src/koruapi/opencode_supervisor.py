@@ -170,6 +170,142 @@ def _question_answers_via_llm(project: Path, request: dict[str, Any], log: LogFn
     return _normalize_answer_set(parsed, spec, log)
 
 
+def _prune_steered_sessions(now: float) -> None:
+    if len(_steered_sessions) > 500:
+        cutoff = now - 3600.0
+        for sid, t in list(_steered_sessions.items()):
+            if t < cutoff:
+                del _steered_sessions[sid]
+
+
+def _resolve_instance_target(entry: dict[str, Any]) -> str | None:
+    if not entry.get("auto_answer"):
+        return None
+    url = str(entry.get("url") or "")
+    if not url or not entry.get("healthy"):
+        return None
+    return url
+
+
+def _steer_session_to_fallback(
+    url: str,
+    sid: str,
+    failing_pid: str,
+    fallback_model: dict[str, Any],
+    now: float,
+    stats: dict[str, int],
+    log: LogFn,
+) -> None:
+    try:
+        steer_text = (
+            f"Supervisor failover: provider '{failing_pid}' exhausted. "
+            "Continuing autonomous execution with "
+            f"{fallback_model['providerID']}/{fallback_model['modelID']}."
+        )
+        send_prompt(url, sid, steer_text, model=fallback_model)
+        _steered_sessions[sid] = now
+        stats["failovers"] += 1
+        log(
+            f"{url}: session {sid} auto-steered to fallback "
+            f"{fallback_model['providerID']}/{fallback_model['modelID']}"
+        )
+    except Exception as exc:
+        stats["errors"] += 1
+        log(f"{url}: failover steering failed for {sid}: {exc}")
+
+
+def _handle_instance_failovers(
+    url: str,
+    log_events: list[dict[str, Any]],
+    now: float,
+    stats: dict[str, int],
+    log: LogFn,
+) -> None:
+    if not log_events:
+        return
+    try:
+        active_sessions = {
+            str(s.get("id")): s for s in list_sessions(url) if isinstance(s, dict) and s.get("id")
+        }
+    except Exception:
+        active_sessions = {}
+
+    for ev in log_events:
+        sid = ev.get("sessionID")
+        failing_pid = ev.get("providerID")
+        if not sid or not failing_pid or sid not in active_sessions:
+            continue
+        last_steered = _steered_sessions.get(sid, 0.0)
+        if now - last_steered < 120.0:
+            continue
+        fallback_model, _ = resolve_active_terminal_model(url)
+        if fallback_model and fallback_model.get("providerID") != failing_pid:
+            _steer_session_to_fallback(url, sid, failing_pid, fallback_model, now, stats, log)
+
+
+def _handle_pending_permissions(
+    url: str,
+    permissions: list[dict[str, Any]],
+    stats: dict[str, int],
+    log: LogFn,
+) -> None:
+    for req in permissions:
+        session_id = str(req.get("sessionID") or "")
+        request_id = str(req.get("id") or "")
+        if not session_id or not request_id:
+            continue
+        try:
+            reply_permission(url, session_id, request_id, "once")
+            stats["permissions"] += 1
+            log(f"{url}: permission {request_id} ({req.get('action', '?')}) -> once")
+        except Exception as exc:
+            stats["errors"] += 1
+            log(f"{url}: permission {request_id} reply failed: {exc}")
+
+
+def _handle_pending_questions(
+    project: Path,
+    url: str,
+    questions: list[dict[str, Any]],
+    stats: dict[str, int],
+    log: LogFn,
+) -> None:
+    for req in questions:
+        session_id = str(req.get("sessionID") or "")
+        request_id = str(req.get("id") or "")
+        if not session_id or not request_id:
+            continue
+        answers = _question_answers_via_llm(project, req, log)
+        if answers is None:
+            continue
+        try:
+            reply_question(url, session_id, request_id, answers)
+            stats["questions"] += 1
+            log(f"{url}: question {request_id} answered {answers}")
+        except Exception as exc:
+            stats["errors"] += 1
+            log(f"{url}: question {request_id} reply failed: {exc}")
+
+
+def _supervise_instance(
+    project: Path,
+    url: str,
+    log_events: list[dict[str, Any]],
+    now: float,
+    stats: dict[str, int],
+    log: LogFn,
+) -> None:
+    _handle_instance_failovers(url, log_events, now, stats, log)
+    try:
+        pending = pending_requests(url)
+    except Exception as exc:
+        stats["errors"] += 1
+        log(f"{url}: pending poll failed: {exc}")
+        return
+    _handle_pending_permissions(url, pending.get("permissions") or [], stats, log)
+    _handle_pending_questions(project, url, pending.get("questions") or [], stats, log)
+
+
 def supervise_once(project: Path, *, log: LogFn = _default_log) -> dict[str, int]:
     """One supervisor pass over every auto-answer instance. Returns counts."""
     stats = {
@@ -184,88 +320,15 @@ def supervise_once(project: Path, *, log: LogFn = _default_log) -> dict[str, int
         log(f"provider {ev['providerID']} exhausted: {ev['error'][:80]}")
 
     now = time.time()
-    if len(_steered_sessions) > 500:
-        cutoff = now - 3600.0
-        for sid, t in list(_steered_sessions.items()):
-            if t < cutoff:
-                del _steered_sessions[sid]
+    _prune_steered_sessions(now)
 
     for entry in discover_instances(project):
-        if not entry.get("auto_answer"):
-            continue
-        url = str(entry.get("url") or "")
-        if not url or not entry.get("healthy"):
+        url = _resolve_instance_target(entry)
+        if url is None:
             continue
         stats["instances"] += 1
+        _supervise_instance(project, url, log_events, now, stats, log)
 
-        if log_events:
-            try:
-                active_sessions = {
-                    str(s.get("id")): s for s in list_sessions(url) if isinstance(s, dict) and s.get("id")
-                }
-            except Exception:
-                active_sessions = {}
-
-            for ev in log_events:
-                sid = ev.get("sessionID")
-                failing_pid = ev.get("providerID")
-                if not sid or not failing_pid or sid not in active_sessions:
-                    continue
-                last_steered = _steered_sessions.get(sid, 0.0)
-                if now - last_steered < 120.0:
-                    continue
-                fallback_model, _ = resolve_active_terminal_model(url)
-                if fallback_model and fallback_model.get("providerID") != failing_pid:
-                    try:
-                        steer_text = (
-                            f"Supervisor failover: provider '{failing_pid}' exhausted. "
-                            "Continuing autonomous execution with "
-                            f"{fallback_model['providerID']}/{fallback_model['modelID']}."
-                        )
-                        send_prompt(url, sid, steer_text, model=fallback_model)
-                        _steered_sessions[sid] = now
-                        stats["failovers"] += 1
-                        log(
-                            f"{url}: session {sid} auto-steered to fallback "
-                            f"{fallback_model['providerID']}/{fallback_model['modelID']}"
-                        )
-                    except Exception as exc:
-                        stats["errors"] += 1
-                        log(f"{url}: failover steering failed for {sid}: {exc}")
-
-        try:
-            pending = pending_requests(url)
-        except Exception as exc:
-            stats["errors"] += 1
-            log(f"{url}: pending poll failed: {exc}")
-            continue
-        for req in pending["permissions"]:
-            session_id = str(req.get("sessionID") or "")
-            request_id = str(req.get("id") or "")
-            if not session_id or not request_id:
-                continue
-            try:
-                reply_permission(url, session_id, request_id, "once")
-                stats["permissions"] += 1
-                log(f"{url}: permission {request_id} ({req.get('action', '?')}) -> once")
-            except Exception as exc:
-                stats["errors"] += 1
-                log(f"{url}: permission {request_id} reply failed: {exc}")
-        for req in pending["questions"]:
-            session_id = str(req.get("sessionID") or "")
-            request_id = str(req.get("id") or "")
-            if not session_id or not request_id:
-                continue
-            answers = _question_answers_via_llm(project, req, log)
-            if answers is None:
-                continue
-            try:
-                reply_question(url, session_id, request_id, answers)
-                stats["questions"] += 1
-                log(f"{url}: question {request_id} answered {answers}")
-            except Exception as exc:
-                stats["errors"] += 1
-                log(f"{url}: question {request_id} reply failed: {exc}")
     return stats
 
 
