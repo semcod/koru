@@ -567,6 +567,75 @@ def session_messages(url: str, session_id: str, *, limit: int = 60) -> list[dict
     return items[-limit:]
 
 
+def _tool_part_chunk(part: dict[str, Any]) -> str:
+    name = part.get("tool") or part.get("name") or "?"
+    state = part.get("state")
+    title = state.get("title") if isinstance(state, dict) else None
+    return f"[tool: {name}]" + (f" {title}" if title else "")
+
+
+def _file_part_chunk(part: dict[str, Any]) -> str:
+    target = part.get("filename") or part.get("url") or ""
+    return f"[file: {target}]"
+
+
+def _part_to_chunk(part: dict[str, Any]) -> str | None:
+    ptype = part.get("type")
+    text = part.get("text")
+    if ptype == "text":
+        return str(text) if text else None
+    if ptype == "reasoning":
+        return f"[reasoning]\n{text}" if text else None
+    if ptype == "tool":
+        return _tool_part_chunk(part)
+    if ptype == "file":
+        return _file_part_chunk(part)
+    if ptype in ("step-start", "step-finish", "snapshot", "patch"):
+        return None
+    return str(text) if text else None
+
+
+def _parts_to_chunks(parts: list[Any]) -> list[str]:
+    chunks: list[str] = []
+    for part in parts:
+        if isinstance(part, dict):
+            chunk = _part_to_chunk(part)
+            if chunk:
+                chunks.append(chunk)
+    return chunks
+
+
+def _legacy_chunks(msg: dict[str, Any]) -> list[str]:
+    text = msg.get("text")
+    if isinstance(text, str):
+        return [text]
+    content = msg.get("content")
+    if isinstance(content, list):
+        chunks: list[str] = []
+        for c in content:
+            if isinstance(c, dict):
+                if c.get("text"):
+                    chunks.append(str(c["text"]))
+                elif c.get("name"):
+                    chunks.append(f"[tool: {c['name']}]")
+        return chunks
+    if msg.get("command"):
+        out = msg.get("output")
+        return ["$ " + str(msg["command"]) + (f"\n{out}" if out else "")]
+    return []
+
+
+def _message_metadata(info: dict[str, Any]) -> dict[str, Any]:
+    model = info.get("model") if isinstance(info.get("model"), dict) else {}
+    ts = info.get("time") if isinstance(info.get("time"), dict) else {}
+    return {
+        "agent": info.get("agent"),
+        "model": info.get("modelID") or model.get("modelID") or model.get("id"),
+        "provider": info.get("providerID") or model.get("providerID"),
+        "created": ts.get("created"),
+    }
+
+
 def normalize_message(msg: dict[str, Any]) -> dict[str, Any]:
     """Flatten an opencode ``{info, parts}`` message for the dashboard.
 
@@ -580,51 +649,15 @@ def normalize_message(msg: dict[str, Any]) -> dict[str, Any]:
         return {"role": "?", "text": str(msg)}
     info = msg.get("info") if isinstance(msg.get("info"), dict) else msg
     role = info.get("role") or msg.get("type") or "?"
-    chunks: list[str] = []
     parts = msg.get("parts")
-    if isinstance(parts, list):
-        for part in parts:
-            if not isinstance(part, dict):
-                continue
-            ptype = part.get("type")
-            text = part.get("text")
-            if ptype == "text" and text:
-                chunks.append(str(text))
-            elif ptype == "reasoning" and text:
-                chunks.append("[reasoning]\n" + str(text))
-            elif ptype == "tool":
-                name = part.get("tool") or part.get("name") or "?"
-                state = part.get("state")
-                title = state.get("title") if isinstance(state, dict) else None
-                chunks.append(f"[tool: {name}]" + (f" {title}" if title else ""))
-            elif ptype == "file":
-                chunks.append(f"[file: {part.get('filename') or part.get('url') or ''}]")
-            elif ptype in ("step-start", "step-finish", "snapshot", "patch"):
-                continue
-            elif text:
-                chunks.append(str(text))
+    chunks = _parts_to_chunks(parts) if isinstance(parts, list) else []
     if not chunks:
-        if isinstance(msg.get("text"), str):
-            chunks.append(msg["text"])
-        elif isinstance(msg.get("content"), list):
-            for c in msg["content"]:
-                if isinstance(c, dict):
-                    if c.get("text"):
-                        chunks.append(str(c["text"]))
-                    elif c.get("name"):
-                        chunks.append(f"[tool: {c['name']}]")
-        elif msg.get("command"):
-            out = msg.get("output")
-            chunks.append("$ " + str(msg["command"]) + (f"\n{out}" if out else ""))
-    model = info.get("model") if isinstance(info.get("model"), dict) else {}
-    ts = info.get("time") if isinstance(info.get("time"), dict) else {}
+        chunks = _legacy_chunks(msg)
+    meta = _message_metadata(info)
     return {
         "role": role,
         "text": "\n".join(c for c in chunks if c).strip(),
-        "agent": info.get("agent"),
-        "model": info.get("modelID") or model.get("modelID") or model.get("id"),
-        "provider": info.get("providerID") or model.get("providerID"),
-        "created": ts.get("created"),
+        **meta,
     }
 
 

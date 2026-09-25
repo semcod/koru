@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-206",
+  "summary": "Reduce cyclomatic complexity in normalize_message",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-206/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_terminals.py",
+    "tests/test_dashboard_terminals.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "872925ebe24c0e12f01bf941f69ee1d95d5a3c70",
+    "targetBranch": "main",
+    "outcome": "Decompose normalize_message in src/koruapi/opencode_terminals.py into focused helper functions (_part_to_chunk, _parts_to_chunks, _legacy_chunks, _message_metadata) to reduce cyclomatic complexity from CC=38 to <= 9 while preserving identical message normalization and fallback semantics.",
+    "nonGoals": [
+      "Changing normalized message dict schema or keys",
+      "Altering legacy format detection or command output formatting",
+      "Modifying terminal_prompt (CC=29) or instance_status (CC=22) in this ticket"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract part-chunk conversion, legacy chunks fallback, and message metadata resolution into private helper functions with CC <= 7.",
+      "components": [
+        {
+          "name": "opencode-terminals",
+          "paths": [
+            "src/koruapi/opencode_terminals.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the inline normalize_message implementation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m radon cc src/koruapi/opencode_terminals.py -s -n C"
+        ],
+        "evidence": "Cyclomatic complexity of normalize_message and all new helpers is <= 9."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q tests/test_dashboard_terminals.py tests/test_opencode_serve_scan.py"
+        ],
+        "evidence": "All existing opencode terminal tests pass unchanged."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
