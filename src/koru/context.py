@@ -28,7 +28,7 @@ import sys
 from collections.abc import Callable, Sequence
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from koru.agents import detect_agent_environment
 from koru.autonomy.telemetry_snapshot import build_autonomy_loop_brief
@@ -86,7 +86,7 @@ from koru.context_render import (
 )
 from koru.dotenv_loader import load_dotenv as _load_dotenv_impl
 from koru.git_attribution import KORU_AGENT_COAUTHOR_TRAILER
-from koru.planfile_compat import merge_missing_ticket_records
+from koru.planfile_compat import PlanfileCompatibilityReport, merge_missing_ticket_records
 from koru.policy import Policy, load_policy
 from koru.project_pipeline import build_project_pipeline_brief
 from koru.runtime import planfile_dir
@@ -428,6 +428,15 @@ def _parse_ticket_response(
     return ticket_data, ticket_error, open_tickets, ticket_history
 
 
+class _TicketFetch(NamedTuple):
+    """Raw planfile ticket query result."""
+
+    data: dict[str, Any] | None
+    error: str | None
+    open_tickets: list[dict[str, Any]]
+    history: list[dict[str, Any]]
+
+
 def _fetch_ticket_data(
     project: Path,
     ticket_id: str | None,
@@ -435,28 +444,131 @@ def _fetch_ticket_data(
     planfile_present: bool,
     planfile_runner: Callable | None,
     include_fixtures: bool | None,
-) -> tuple[dict[str, Any] | None, str | None, list[dict[str, Any]], list[dict[str, Any]]]:
+) -> _TicketFetch:
     """Fetch ticket data from planfile.
 
     Returns:
-        Tuple of (ticket_data, ticket_error, open_tickets, ticket_history)
+        A ``_TicketFetch`` NamedTuple; its field order mirrors the
+        ``(ticket_data, ticket_error, open_tickets, ticket_history)``
+        tuple produced by ``_parse_ticket_response``.
     """
     if not planfile_present:
-        return None, "project not initialised", [], []
+        return _TicketFetch(None, "project not initialised", [], [])
 
     ticket_proc = _execute_ticket_query(project, ticket_id, queue_name, planfile_runner)
 
     if ticket_proc.returncode == 0:
-        return _parse_ticket_response(
-            ticket_proc,
-            ticket_id,
-            include_fixtures,
-            project,
-            planfile_runner,
+        return _TicketFetch(
+            *_parse_ticket_response(
+                ticket_proc,
+                ticket_id,
+                include_fixtures,
+                project,
+                planfile_runner,
+            )
         )
     else:
         ticket_error = _extract_error_from_stderr(ticket_proc.stderr or "planfile error")
-        return None, ticket_error, [], []
+        return _TicketFetch(None, ticket_error, [], [])
+
+
+def _planfile_is_initialised(project: Path) -> bool:
+    """Pre-flight: a project is "initialised" only when BOTH the planfile
+    config and at least one sprint YAML exist.
+
+    Calling planfile when the project is not initialised is harmful —
+    planfile auto-creates a half-state config.yaml and the user ends up in
+    an ambiguous state where `--init` then refuses with "already exists".
+    """
+    pf = planfile_dir(project)
+    sprints_dir = pf / "sprints"
+    return (pf / "config.yaml").exists() and sprints_dir.is_dir() and any(sprints_dir.glob("*.yaml"))
+
+
+class _TicketState(NamedTuple):
+    """Ticket section of the brief after compatibility repair and filtering."""
+
+    data: dict[str, Any] | None
+    error: str | None
+    open_tickets: list[dict[str, Any]]
+    history: list[dict[str, Any]]
+    compatibility: PlanfileCompatibilityReport
+
+
+def _collect_ticket_state(
+    project: Path,
+    ticket_id: str | None,
+    queue_name: str | None,
+    planfile_present: bool,
+    planfile_runner: Callable | None,
+    include_fixtures: bool | None,
+) -> _TicketState:
+    """Fetch tickets and shape them for the brief.
+
+    Older Planfile readers can return success while dropping records whose
+    persisted status is no longer in the TicketStatus enum (notably
+    ``skipped``). Recover those raw records for the historical/dashboard
+    view and expose explicit counts so an operator can run the migration.
+    """
+    fetch = _fetch_ticket_data(
+        project,
+        ticket_id,
+        queue_name,
+        planfile_present,
+        planfile_runner,
+        include_fixtures,
+    )
+    history, compatibility = merge_missing_ticket_records(fetch.history, project)
+    if not _resolve_include_fixtures(include_fixtures):
+        history = [ticket for ticket in history if not _is_fixture_ticket(ticket)]
+    return _TicketState(
+        data=fetch.data,
+        error=fetch.error,
+        open_tickets=fetch.open_tickets,
+        history=history,
+        compatibility=compatibility,
+    )
+
+
+def _assemble_context(
+    *,
+    project: Path,
+    tickets: _TicketState,
+    policy: Policy,
+    queue_name: str | None,
+    planfile_present: bool,
+    git_state: dict[str, Any],
+    detected_environment: dict[str, Any],
+) -> dict[str, Any]:
+    """Assemble the final brief dictionary from the collected state."""
+    return {
+        "schema_version": "1",
+        "project": str(project),
+        "ticket": tickets.data,
+        "ticket_error": tickets.error,
+        "open_tickets": tickets.open_tickets,
+        "all_tickets": tickets.history,
+        "ticket_compatibility": tickets.compatibility.to_dict(),
+        "policy": policy.to_dict(),
+        "environment": {
+            "git": git_state,
+            "planfile_initialised": planfile_present,
+            "queue_name": queue_name,
+            **detected_environment,
+        },
+        "instructions": _build_instructions(
+            policy,
+            tickets.data,
+            planfile_initialised=planfile_present,
+        ),
+        "self_service": _build_self_service(
+            policy,
+            tickets.data,
+            planfile_initialised=planfile_present,
+        ),
+        "project_pipeline": build_project_pipeline_brief(project),
+        "autonomy_loop": build_autonomy_loop_brief(project),
+    }
 
 
 def build_context(
@@ -486,18 +598,8 @@ def build_context(
     _load_project_dotenv(project)
     resolved_policy = policy if policy is not None else load_policy(project)
 
-    # Pre-flight: a project is "initialised" only when BOTH the planfile
-    # config and at least one sprint YAML exist. Calling planfile when
-    # the project is not initialised is harmful — planfile auto-creates
-    # a half-state config.yaml and the user ends up in an ambiguous
-    # state where `--init` then refuses with "already exists".
-    pf = planfile_dir(project)
-    sprints_dir = pf / "sprints"
-    planfile_present = (
-        (pf / "config.yaml").exists() and sprints_dir.is_dir() and any(sprints_dir.glob("*.yaml"))
-    )
-
-    ticket_data, ticket_error, open_tickets, ticket_history = _fetch_ticket_data(
+    planfile_present = _planfile_is_initialised(project)
+    tickets = _collect_ticket_state(
         project,
         ticket_id,
         queue_name,
@@ -506,57 +608,21 @@ def build_context(
         include_fixtures,
     )
 
-    # Older Planfile readers can return success while dropping records whose
-    # persisted status is no longer in the TicketStatus enum (notably
-    # ``skipped``). Recover those raw records for the historical/dashboard
-    # view and expose explicit counts so an operator can run the migration.
-    ticket_history, compatibility_report = merge_missing_ticket_records(
-        ticket_history,
-        project,
-    )
-    if not _resolve_include_fixtures(include_fixtures):
-        ticket_history = [
-            ticket for ticket in ticket_history if not _is_fixture_ticket(ticket)
-        ]
-
     # Auto-promote blocking tickets to critical priority
     _auto_promote_blocking_tickets(project, runner=planfile_runner)
 
     git_state = (git_probe or _git_probe)(project)
     detected_environment = (environment_probe or detect_agent_environment)(project)
 
-    instructions = _build_instructions(
-        resolved_policy,
-        ticket_data,
-        planfile_initialised=planfile_present,
+    return _assemble_context(
+        project=project,
+        tickets=tickets,
+        policy=resolved_policy,
+        queue_name=queue_name,
+        planfile_present=planfile_present,
+        git_state=git_state,
+        detected_environment=detected_environment,
     )
-    self_service = _build_self_service(
-        resolved_policy,
-        ticket_data,
-        planfile_initialised=planfile_present,
-    )
-    project_pipeline = build_project_pipeline_brief(project)
-
-    return {
-        "schema_version": "1",
-        "project": str(project),
-        "ticket": ticket_data,
-        "ticket_error": ticket_error,
-        "open_tickets": open_tickets,
-        "all_tickets": ticket_history,
-        "ticket_compatibility": compatibility_report.to_dict(),
-        "policy": resolved_policy.to_dict(),
-        "environment": {
-            "git": git_state,
-            "planfile_initialised": planfile_present,
-            "queue_name": queue_name,
-            **detected_environment,
-        },
-        "instructions": instructions,
-        "self_service": self_service,
-        "project_pipeline": project_pipeline,
-        "autonomy_loop": build_autonomy_loop_brief(project),
-    }
 
 
 # ---------------------------------------------------------------------------
