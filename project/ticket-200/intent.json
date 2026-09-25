@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-200",
+  "summary": "Reduce cyclomatic complexity in scan admission",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-200/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/fleet_admission.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f449e939d8de0ec062c2d434b3bf4f8d1d18412e",
+    "targetBranch": "main",
+    "outcome": "Decompose scan_admission in src/koru/fleet_admission.py into focused helper functions (_load_config, _validate_repo_ref, _validate_policy, _run_gate, _parse_decision) to reduce cyclomatic complexity from CC=29 to <= 9 while maintaining identical admission behavior.",
+    "nonGoals": [
+      "Changing fleet admission criteria, environment variables, or CLI execution",
+      "Altering error handling, timeouts, or denial fallback semantics"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _load_config, _validate_repo_ref, _validate_policy, _run_gate, and _parse_decision from scan_admission.",
+      "components": [
+        {
+          "name": "fleet-admission",
+          "paths": [
+            "src/koru/fleet_admission.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore inline scan_admission function."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m radon cc src/koru/fleet_admission.py -s"
+        ],
+        "evidence": "Cyclomatic complexity of scan_admission and all helpers is <= 9 (Rank A)."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q tests/test_fleet_admission.py"
+        ],
+        "evidence": "All existing fleet admission tests pass unchanged."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
