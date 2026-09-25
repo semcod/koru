@@ -5,7 +5,9 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from koru.autonomy.execution_plan import (
     compile_execution_plan,
@@ -126,6 +128,65 @@ def _action_finish(args: argparse.Namespace) -> int:
     return code
 
 
+_ArgSpec = tuple[str, dict[str, Any]]
+_WorkAction = Callable[[argparse.Namespace], int]
+
+_START_ARGS: tuple[_ArgSpec, ...] = (
+    ("--title", {"required": True}),
+    ("--description", {"default": None}),
+    ("--ticket", {"default": None, "help": "Reuse existing ticket id."}),
+    ("--base", {"default": "main"}),
+    ("--no-push", {"action": "store_true"}),
+    ("--remote", {"default": "origin"}),
+)
+
+_FINISH_ARGS: tuple[_ArgSpec, ...] = (
+    ("--ticket", {"required": True}),
+    ("--base", {"default": "main"}),
+    ("--skip-ci", {"action": "store_true"}),
+    (
+        "--open-pr",
+        {"action": "store_true", "help": "Create GitHub PR if missing (merge still via validator-agent)."},
+    ),
+    ("--pr", {"type": int, "default": None, "help": "Existing PR number for publish."}),
+    ("--merge", {"action": "store_true", "help": "Pass --merge to validator dispatch."}),
+    ("--no-publish", {"action": "store_true", "help": "Skip validator-agent dispatch."}),
+    ("--dry-run", {"action": "store_true"}),
+)
+
+_NEXT_ARGS: tuple[_ArgSpec, ...] = (
+    ("--run-gates", {"action": "store_true", "help": "Run auto steps from decide plan."}),
+    ("--start-branch", {"action": "store_true", "help": "koru work start on selected ticket."}),
+    ("--base", {"default": "main"}),
+    ("--no-push", {"action": "store_true"}),
+    ("--remote", {"default": "origin"}),
+)
+
+_SUBCOMMANDS: tuple[tuple[str, str, tuple[_ArgSpec, ...], _WorkAction], ...] = (
+    ("start", "Create ticket, branch, commit planfile, push.", _START_ARGS, _action_start),
+    ("finish", "Run CI and dispatch validator-agent.", _FINISH_ARGS, _action_finish),
+    (
+        "next",
+        "Decide the next refactor ticket and optionally start a work branch.",
+        _NEXT_ARGS,
+        _action_next,
+    ),
+)
+
+
+def _add_subcommand(
+    sub: argparse._SubParsersAction,
+    name: str,
+    help_text: str,
+    args: tuple[_ArgSpec, ...],
+    func: _WorkAction,
+) -> None:
+    cmd = sub.add_parser(name, help=help_text)
+    for flags, kwargs in args:
+        cmd.add_argument(flags, **kwargs)
+    cmd.set_defaults(func=func)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru work",
@@ -137,42 +198,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--project", type=Path, default=Path.cwd())
     parser.add_argument("--format", choices=("text", "json"), default="text")
     sub = parser.add_subparsers(dest="subcommand", required=True)
-
-    start = sub.add_parser("start", help="Create ticket, branch, commit planfile, push.")
-    start.add_argument("--title", required=True)
-    start.add_argument("--description", default=None)
-    start.add_argument("--ticket", default=None, help="Reuse existing ticket id.")
-    start.add_argument("--base", default="main")
-    start.add_argument("--no-push", action="store_true")
-    start.add_argument("--remote", default="origin")
-    start.set_defaults(func=_action_start)
-
-    finish = sub.add_parser("finish", help="Run CI and dispatch validator-agent.")
-    finish.add_argument("--ticket", required=True)
-    finish.add_argument("--base", default="main")
-    finish.add_argument("--skip-ci", action="store_true")
-    finish.add_argument(
-        "--open-pr",
-        action="store_true",
-        help="Create GitHub PR if missing (merge still via validator-agent).",
-    )
-    finish.add_argument("--pr", type=int, default=None, help="Existing PR number for publish.")
-    finish.add_argument("--merge", action="store_true", help="Pass --merge to validator dispatch.")
-    finish.add_argument("--no-publish", action="store_true", help="Skip validator-agent dispatch.")
-    finish.add_argument("--dry-run", action="store_true")
-    finish.set_defaults(func=_action_finish)
-
-    next_cmd = sub.add_parser(
-        "next",
-        help="Decide the next refactor ticket and optionally start a work branch.",
-    )
-    next_cmd.add_argument("--run-gates", action="store_true", help="Run auto steps from decide plan.")
-    next_cmd.add_argument("--start-branch", action="store_true", help="koru work start on selected ticket.")
-    next_cmd.add_argument("--base", default="main")
-    next_cmd.add_argument("--no-push", action="store_true")
-    next_cmd.add_argument("--remote", default="origin")
-    next_cmd.set_defaults(func=_action_next)
-
+    for name, help_text, args, func in _SUBCOMMANDS:
+        _add_subcommand(sub, name, help_text, args, func)
     return parser
 
 
