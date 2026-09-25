@@ -68,6 +68,85 @@ def ticket_matches_queue(ticket: dict[str, Any], queue_name: str | None) -> bool
     return ticket_queue_name(ticket) == queue_name
 
 
+def _load_ticket_payload(stdout: str) -> dict | list | None:
+    stripped = stdout.strip()
+    if not stripped or "No runnable ticket found" in stripped:
+        return None
+    try:
+        return json.loads(stripped)
+    except json.JSONDecodeError:
+        return json.loads(stripped, strict=False)
+
+
+def _match_single_ticket(
+    payload: dict,
+    *,
+    queue_name: str | None = None,
+    ticket_id: str | None = None,
+) -> dict | None:
+    matches_target = ticket_id is None or str(payload.get("id") or "") == ticket_id
+    return payload if matches_target and ticket_matches_queue(payload, queue_name) else None
+
+
+def _filter_runnable_tickets(
+    payload: list,
+    *,
+    queue_name: str | None = None,
+    ticket_id: str | None = None,
+) -> list[dict]:
+    runnable_states = {None, "open", "ready", "todo"}
+    return [
+        entry
+        for entry in payload
+        if isinstance(entry, dict)
+        and entry.get("status") in runnable_states
+        and (ticket_id is None or str(entry.get("id") or "") == ticket_id)
+        and ticket_matches_queue(entry, queue_name)
+    ]
+
+
+def _sort_tickets_by_priority(tickets: list[dict]) -> None:
+    priority_order = {"critical": 0, "high": 1, "normal": 2, "low": 3}
+    tickets.sort(
+        key=lambda t: (
+            priority_order.get(t.get("priority", "normal"), 2),
+            t.get("created_at", ""),
+        ),
+    )
+
+
+def _select_from_eligible(eligible: list[dict], *, interactive: bool) -> dict | None:
+    if not eligible:
+        return None
+    if interactive:
+        return eligible[0]
+    # A human ticket is a terminal ``waiting_input`` for the drain loop,
+    # so picking it while machine-runnable tickets remain stalls the
+    # whole queue behind work only a person can finish. Defer human
+    # tickets until they are the only runnable ones left.
+    non_human = [entry for entry in eligible if not _is_human_executor(entry)]
+    return non_human[0] if non_human else eligible[0]
+
+
+def _pick_from_ticket_list(
+    payload: list,
+    *,
+    queue_name: str | None = None,
+    ticket_id: str | None = None,
+    interactive: bool = False,
+) -> dict | None:
+    runnable = _filter_runnable_tickets(payload, queue_name=queue_name, ticket_id=ticket_id)
+    if not runnable:
+        return None
+    _sort_tickets_by_priority(runnable)
+    eligible = [
+        entry
+        for entry in runnable
+        if interactive or not _should_skip_deferred_human(entry)
+    ]
+    return _select_from_eligible(eligible, interactive=interactive)
+
+
 def parse_next_ticket(
     stdout: str,
     *,
@@ -81,58 +160,13 @@ def parse_next_ticket(
     an array (``ticket list --format json``). Returns ``None`` when the
     queue is idle.
     """
-    stripped = stdout.strip()
-    if not stripped or "No runnable ticket found" in stripped:
-        return None
-    try:
-        payload = json.loads(stripped)
-    except json.JSONDecodeError:
-        payload = json.loads(stripped, strict=False)
+    payload = _load_ticket_payload(stdout)
     if isinstance(payload, dict):
-        matches_target = ticket_id is None or str(payload.get("id") or "") == ticket_id
-        return payload if matches_target and ticket_matches_queue(payload, queue_name) else None
+        return _match_single_ticket(payload, queue_name=queue_name, ticket_id=ticket_id)
     if isinstance(payload, list):
-        # planfile ticket list returns oldest-first; sort by priority
-        # then treat the first entry whose status is open / ready / todo as runnable.
-        runnable_states = {None, "open", "ready", "todo"}
-        priority_order = {"critical": 0, "high": 1, "normal": 2, "low": 3}
-
-        # Filter runnable tickets first
-        runnable_tickets = [
-            entry
-            for entry in payload
-            if isinstance(entry, dict)
-            and entry.get("status") in runnable_states
-            and (ticket_id is None or str(entry.get("id") or "") == ticket_id)
-            and ticket_matches_queue(entry, queue_name)
-        ]
-
-        if not runnable_tickets:
-            return None
-
-        # Sort by priority (critical first), then by creation date as tiebreaker
-        runnable_tickets.sort(
-            key=lambda t: (
-                priority_order.get(t.get("priority", "normal"), 2),
-                t.get("created_at", ""),
-            ),
+        return _pick_from_ticket_list(
+            payload, queue_name=queue_name, ticket_id=ticket_id, interactive=interactive
         )
-
-        eligible = [
-            entry
-            for entry in runnable_tickets
-            if interactive or not _should_skip_deferred_human(entry)
-        ]
-        if not eligible:
-            return None
-        if interactive:
-            return eligible[0]
-        # A human ticket is a terminal ``waiting_input`` for the drain loop,
-        # so picking it while machine-runnable tickets remain stalls the
-        # whole queue behind work only a person can finish. Defer human
-        # tickets until they are the only runnable ones left.
-        non_human = [entry for entry in eligible if not _is_human_executor(entry)]
-        return non_human[0] if non_human else eligible[0]
     return None
 
 

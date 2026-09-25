@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-198",
+  "summary": "Reduce cyclomatic complexity in parse_next_ticket",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-198/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/ticket.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a55ac0804c3bb25c8bd79fed4e088b23b86005b5",
+    "targetBranch": "main",
+    "outcome": "Decompose parse_next_ticket into focused helper functions to reduce cyclomatic complexity from CC=26 to CC=3 (limit 15) while preserving identical ticket selection and sorting behavior.",
+    "nonGoals": [
+      "Changing priority ordering or queue matching semantics",
+      "Altering deferred human ticket filtering"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _load_ticket_payload, _match_single_ticket, _filter_runnable_tickets, _sort_tickets_by_priority, _select_from_eligible, and _pick_from_ticket_list from parse_next_ticket.",
+      "components": [
+        {
+          "name": "queue-ticket",
+          "paths": [
+            "src/koru/queue/ticket.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore inline parse_next_ticket."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m radon cc src/koru/queue/ticket.py -s"
+        ],
+        "evidence": "Cyclomatic complexity of parse_next_ticket is 3 (limit 15), all helpers <= 8."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=. pytest -q tests/test_queue_ticket_selection.py tests/test_planfile_queue.py"
+        ],
+        "evidence": "Existing ticket queue selection and planfile queue tests pass."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
