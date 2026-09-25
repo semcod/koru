@@ -23,10 +23,10 @@
     "https://github.com/semcod/koru/pull/361",
     "https://github.com/semcod/koru/pull/362",
     "https://github.com/subactor/subllm/pull/83",
-    "planfile:STARTER-735 (koru-model-routing-audit)",
-    "github-ruleset:semcod/koru/22026679 protected exact-head delivery",
-    "validator-receipt:digest=7dc49cf3901f0ea6e925070d32f57a2622e69ae0eb7412a5960d879fd2d1aee1 correlation_id=local-semcod-koru-pr-361-ticket-179 registry_digest=4b36dd612732400ebe365e4fb6b1ce3f8e3e947d0cdbe1e9faab0eeec9d91ec0",
-    "validator-release:673f4a387f3227a96b7040c76f82fc80e7697b2f-usage-9c40e04f4777 (src/validator_agent/github.py, src/validator_agent/direct_validation.py)"
+    "knowledge://planfile/STARTER-735/koru-model-routing-audit",
+    "https://github.com/semcod/koru/settings/rules/22026679",
+    "receipt:digest=7dc49cf3901f0ea6e925070d32f57a2622e69ae0eb7412a5960d879fd2d1aee1 correlation_id=local-semcod-koru-pr-361-ticket-179 registry_digest=4b36dd612732400ebe365e4fb6b1ce3f8e3e947d0cdbe1e9faab0eeec9d91ec0",
+    "https://github.com/subactor/validator-agent/tree/673f4a387f3227a96b7040c76f82fc80e7697b2f/src/validator_agent/github.py"
   ]
 }
 ---
