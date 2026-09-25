@@ -379,38 +379,100 @@ def jetbrains_chat_corner_target_from_layers(
     )
 
 
-def _surface_window_rect(surface: dict[str, Any], source: str) -> tuple[int, int, int, int] | None:
-    """Validated window rect from a correlated IDE surface (None when unusable)."""
+@dataclass(frozen=True)
+class _SurfaceWindow:
+    """IDE window rect in global display coordinates."""
+
+    x: int
+    y: int
+    w: int
+    h: int
+
+    def as_rect(self) -> tuple[int, int, int, int]:
+        return (self.x, self.y, self.w, self.h)
+
+    @property
+    def composer_anchor(self) -> tuple[int, int]:
+        """AI assistant panel sits on the right; composer near the bottom of the IDE frame."""
+        gx = self.x + self.w - max(48, int(self.w * 0.10))
+        gy = self.y + self.h - max(40, int(self.h * 0.05))
+        return gx, gy
+
+
+@dataclass(frozen=True)
+class _CapturePoint:
+    """Composer anchor mapped into capture-local coordinates."""
+
+    lx: int
+    ly: int
+    local_rect: tuple[int, int, int, int] | None
+
+
+def _surface_from_source(surface: dict[str, Any], source: str) -> bool:
+    """True when the surface belongs to this capture source and is not Toolbox."""
     monitor_name = str(surface.get("monitor_name") or "").strip()
     if monitor_name and monitor_name != source:
-        return None
+        return False
     name = str(surface.get("display_name") or "").lower()
-    if "toolbox" in name:
+    return "toolbox" not in name
+
+
+def _surface_window_from_bounds(bounds: dict[str, Any]) -> _SurfaceWindow:
+    return _SurfaceWindow(
+        x=int(bounds.get("x") or 0),
+        y=int(bounds.get("y") or 0),
+        w=int(bounds.get("width") or 0),
+        h=int(bounds.get("height") or 0),
+    )
+
+
+def _surface_window_rect(surface: dict[str, Any], source: str) -> _SurfaceWindow | None:
+    """Validated window rect from a correlated IDE surface (None when unusable)."""
+    if not _surface_from_source(surface, source):
         return None
     bounds = surface.get("bounds")
     if not isinstance(bounds, dict):
         return None
-    x = int(bounds.get("x") or 0)
-    y = int(bounds.get("y") or 0)
-    w = int(bounds.get("width") or 0)
-    h = int(bounds.get("height") or 0)
-    if w < 240 or h < 320:
+    window = _surface_window_from_bounds(bounds)
+    if window.w < 240 or window.h < 320:
         return None
-    return x, y, w, h
+    return window
+
+
+def _surface_coordinate_map(capture_meta: dict[str, Any], source: str) -> Any | None:
+    """Compiled capture coordinate map for this source (None when unavailable)."""
+    try:
+        from vdisplay.capture import compile_capture_coordinate_map
+
+        return compile_capture_coordinate_map(
+            capture_meta,
+            source=source,
+            default_size=(2048, 1280),
+        )
+    except Exception:
+        return None
+
+
+def _clamped_surface_window(coordinate_map: Any, window: _SurfaceWindow) -> _SurfaceWindow | None:
+    """Window clamped into the capture plane (None when it cannot fit)."""
+    clamped = coordinate_map.clamp_global_rect(
+        window.as_rect(),
+        min_width=240,
+        min_height=320,
+    )
+    if clamped is None:
+        return None
+    return _SurfaceWindow(x=clamped[0], y=clamped[1], w=clamped[2], h=clamped[3])
 
 
 def _composer_capture_point(
-    *,
-    win_x: int,
-    win_y: int,
-    win_w: int,
-    win_h: int,
-    gx: int,
-    gy: int,
+    window: _SurfaceWindow,
     coordinate_map: Any,
-) -> tuple[int, int, tuple[int, int, int, int] | None] | None:
+) -> _CapturePoint | None:
+    """Map the composer anchor into capture-local coordinates (None when unmappable)."""
+    gx, gy = window.composer_anchor
     local_rect = coordinate_map.global_rect_to_local(
-        (win_x, win_y, win_w, win_h),
+        window.as_rect(),
         min_width=120,
         min_height=160,
     )
@@ -418,27 +480,29 @@ def _composer_capture_point(
         local = coordinate_map.global_to_local(gx, gy)
         if local is None:
             return None
-        lx_i, ly_i = local
-    else:
-        tlx, tly, rect_w, rect_h = local_rect
-        lx_i = tlx + int(rect_w * 0.82)
-        ly_i = tly + rect_h - max(32, int(rect_h * 0.05))
-    return lx_i, ly_i, local_rect
+        return _CapturePoint(lx=local[0], ly=local[1], local_rect=None)
+    return _CapturePoint(
+        lx=local_rect[0] + int(local_rect[2] * 0.82),
+        ly=local_rect[1] + local_rect[3] - max(32, int(local_rect[3] * 0.05)),
+        local_rect=local_rect,
+    )
+
+
+def _point_inside_capture(coordinate_map: Any, point: _CapturePoint) -> bool:
+    return 0 <= point.lx < coordinate_map.capture_width and 0 <= point.ly < coordinate_map.capture_height
 
 
 def _surface_target_payload(
     *,
     surface: dict[str, Any],
     source: str,
-    lx_i: int,
-    ly_i: int,
-    gx: int,
-    gy: int,
-    local_rect: tuple[int, int, int, int] | None,
+    window: _SurfaceWindow,
+    point: _CapturePoint,
 ) -> dict[str, Any]:
     monitor_name = str(surface.get("monitor_name") or "").strip()
+    anchor = window.composer_anchor
     out: dict[str, Any] = {
-        "click_center": {"x": lx_i, "y": ly_i},
+        "click_center": {"x": point.lx, "y": point.ly},
         "id": "surface:jetbrains-chat",
         "role": "input",
         "note": (
@@ -446,15 +510,14 @@ def _surface_target_payload(
             f"({surface.get('display_name') or 'PyCharm'} on {monitor_name or source})"
         ),
         "source": f"surface:{surface.get('pid') or 'jetbrains'}",
-        "map_global": {"x": gx, "y": gy},
+        "map_global": {"x": anchor[0], "y": anchor[1]},
     }
-    if local_rect is not None:
-        tlx, tly, rect_w, rect_h = local_rect
+    if point.local_rect is not None:
         out["surface_window_capture_local"] = {
-            "x": tlx,
-            "y": tly,
-            "w": rect_w,
-            "h": rect_h,
+            "x": point.local_rect[0],
+            "y": point.local_rect[1],
+            "w": point.local_rect[2],
+            "h": point.local_rect[3],
         }
     return out
 
@@ -468,58 +531,23 @@ def jetbrains_chat_target_from_surface(
     """Estimate JetBrains AI chat composer from correlated IDE surface bounds (Wayland/native)."""
     if not isinstance(surface, dict):
         return None
-    rect = _surface_window_rect(surface, source)
-    if rect is None:
+    window = _surface_window_rect(surface, source)
+    if window is None:
         return None
-    x, y, w, h = rect
-
-    try:
-        from vdisplay.capture import compile_capture_coordinate_map
-
-        coordinate_map = compile_capture_coordinate_map(
-            capture_meta,
-            source=source,
-            default_size=(2048, 1280),
-        )
-    except Exception:
+    coordinate_map = _surface_coordinate_map(capture_meta, source)
+    if coordinate_map is None:
         return None
-    clamped = coordinate_map.clamp_global_rect(
-        (x, y, w, h),
-        min_width=240,
-        min_height=320,
-    )
+    clamped = _clamped_surface_window(coordinate_map, window)
     if clamped is None:
         return None
-    win_x, win_y, win_w, win_h = clamped
-
-    # AI assistant panel sits on the right; composer is near the bottom of the IDE frame.
-    gx = win_x + win_w - max(48, int(win_w * 0.10))
-    gy = win_y + win_h - max(40, int(win_h * 0.05))
-    point = _composer_capture_point(
-        win_x=win_x,
-        win_y=win_y,
-        win_w=win_w,
-        win_h=win_h,
-        gx=gx,
-        gy=gy,
-        coordinate_map=coordinate_map,
-    )
-    if point is None:
-        return None
-    lx_i, ly_i, local_rect = point
-
-    png_w = coordinate_map.capture_width
-    png_h = coordinate_map.capture_height
-    if lx_i < 0 or ly_i < 0 or lx_i >= png_w or ly_i >= png_h:
+    point = _composer_capture_point(clamped, coordinate_map)
+    if point is None or not _point_inside_capture(coordinate_map, point):
         return None
     return _surface_target_payload(
         surface=surface,
         source=source,
-        lx_i=lx_i,
-        ly_i=ly_i,
-        gx=gx,
-        gy=gy,
-        local_rect=local_rect,
+        window=clamped,
+        point=point,
     )
 
 
