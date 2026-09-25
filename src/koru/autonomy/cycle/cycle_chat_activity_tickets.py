@@ -124,12 +124,12 @@ def _upsert_chat_intake_operator_ticket(
     title = "[OPERATOR] intake from IDE chat"
     prompt = (
         f"{title}\n\n"
-        + "A new external chat message was sent in IDE while the queue "
-        + "is blocked in waiting_input.\n"
-        + "Create/update a dedicated operator task from this intake "
-        + "instead of re-driving the old prompt.\n\n"
-        + f"Origin waiting ticket: {waiting_ticket}\n"
-        + f"Incoming intake:\n{intake_text}\n"
+        "A new external chat message was sent in IDE while the queue "
+        "is blocked in waiting_input.\n"
+        "Create/update a dedicated operator task from this intake "
+        "instead of re-driving the old prompt.\n\n"
+        f"Origin waiting ticket: {waiting_ticket}\n"
+        f"Incoming intake:\n{intake_text}\n"
     )
     scaffold: dict[str, Any] = {
         "title": title,
@@ -201,17 +201,18 @@ def _llm_needs_input_operator_payload(
     question: str,
 ) -> tuple[str, str, dict[str, Any]]:
     title = f"[OPERATOR] {waiting_ticket}: provide missing IDE input"
+    question_line = f"Detected question: {question}\n" if question else ""
     prompt = (
         f"{title}\n\n"
-        + "IDE-side LLM asked for more context while this task is blocked in waiting_input.\n\n"
-        + f"Blocked ticket: {waiting_ticket}\n"
-        + f"Queue message: {str(getattr(queue_result, 'last_message', '') or '-').strip()}\n"
-        + (f"Detected question: {question}\n" if question else "")
-        + f"Reflection summary: {summary}\n\n"
-        + "Action:\n"
-        + "1. Open the related IDE chat thread.\n"
-        + "2. Answer the missing question/context from this summary.\n"
-        + "3. Let the LLM continue and close this operator ticket when unblocked."
+        "IDE-side LLM asked for more context while this task is blocked in waiting_input.\n\n"
+        f"Blocked ticket: {waiting_ticket}\n"
+        f"Queue message: {str(getattr(queue_result, 'last_message', '') or '-').strip()}\n"
+        f"{question_line}"
+        f"Reflection summary: {summary}\n\n"
+        "Action:\n"
+        "1. Open the related IDE chat thread.\n"
+        "2. Answer the missing question/context from this summary.\n"
+        "3. Let the LLM continue and close this operator ticket when unblocked."
     )
     scaffold: dict[str, Any] = {
         "title": title,
@@ -254,11 +255,12 @@ def _note_reused_llm_needs_input_operator_ticket(
                 check=False,
             )
 
+        question_line = f"question={question}\n" if question else ""
         note = (
             "[AUTOPILOT] llx reflection still needs operator input.\n"
-            + f"blocked_ticket={waiting_ticket}\n"
-            + (f"question={question}\n" if question else "")
-            + f"summary={summary}"
+            f"blocked_ticket={waiting_ticket}\n"
+            f"{question_line}"
+            f"summary={summary}"
         )
         result, kind = append_shell_evidence_note(
             project,

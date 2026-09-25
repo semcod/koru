@@ -159,7 +159,7 @@ def _warn_absorbed_foreign_changes(
     absorbed = absorbed_foreign_paths(project, _snapshot_before_drive(state))
     if not absorbed:
         return
-    preview = ", ".join(absorbed[:5]) + (" …" if len(absorbed) > 5 else "")
+    preview = f"{', '.join(absorbed[:5])}{' …' if len(absorbed) > 5 else ''}"
     hp(
         "  [!] drive commit absorbed pre-existing local changes "
         f"({len(absorbed)} paths): {preview} — review the commit; the agent "

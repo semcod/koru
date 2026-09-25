@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-175",
+  "summary": "decompose CC/fan-out/mutation overloaded get_vql_chat_target_from_photo",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-175/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay_client.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "684463445c60d5701b67de47a942924d1b114f67",
+    "targetBranch": "main",
+    "outcome": "get_vql_chat_target_from_photo (CC=13, fan-out=37, mutations=24) becomes a thin orchestrator (CC=6, fan-out=8, mutations=6) over extracted module helpers: _vql_chat_selection_context, _log_vql_chat_candidates, _finalize_vql_chat_target, _try_llm_vision_chat_detect, _vql_chat_target_hardened_fallback, _vql_chat_target_generic_flow.",
+    "nonGoals": [
+      "Change behavior, log messages or public API.",
+      "Refactor unrelated functions in the module.",
+      "Add runtime dependencies beyond stdlib functools already available."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract the two nested closures (_finalize, _try_llm_chat_detect) to module level with an explicit context dict, collect the prologue (elements, IDE, candidates, source, pollution, mismatch, session) in _vql_chat_selection_context plus _log_vql_chat_candidates, and move the imgl/LLM/hardened-fallback tail into _vql_chat_target_generic_flow. Selection order, log records and session persistence are preserved.",
+      "components": [
+        {
+          "name": "vdisplay-client",
+          "paths": [
+            "src/koru/integrations/vdisplay_client.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; helpers inline back into get_vql_chat_target_from_photo."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"from code2llm.api import analyze_file; ...\" (god-function smell for get_vql_chat_target_from_photo absent)"
+        ],
+        "evidence": "code2llm smell detector reports no god_function for get_vql_chat_target_from_photo; orchestrator metrics CC<=12, fan-out<=10, mutations<=6."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_photo_vql_drive.py tests/test_photo_vql_orchestrator.py tests/test_vdisplay_control_fallback.py -q"
+        ],
+        "evidence": "All existing tests pass unchanged."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m ruff check src/koru/integrations/vdisplay_client.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Ruff clean; governance gate passes."
+      }
+    ]
+  }
+}

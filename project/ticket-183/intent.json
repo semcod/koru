@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-183",
+  "summary": "Decompose god function build_parser in cli_ci (STARTER-601)",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-183/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli_ci.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "fb488da0c6138341140564a49648d6bd3ec15d6f",
+    "targetBranch": "main",
+    "outcome": "src/koru/cli_ci.py build_parser is a small orchestrator; the run/gates/publish subparser definitions live in module-level builder functions with identical CLI behavior, removing the code2llm God Function finding for STARTER-601.",
+    "nonGoals": [
+      "Behavior, help text or public API changes",
+      "New subcommands or options",
+      "Regenerating project/analysis.toon.yaml"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract the nested _add_project_to_sub closure and each subparser body into module-level helpers (_add_project_option, _build_run_subparser, _build_gates_subparser, _build_publish_subparser); build_parser constructs the root parser and applies the three builders in a loop.",
+      "components": [
+        {
+          "name": "koru-ci-cli",
+          "paths": [
+            "src/koru/cli_ci.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket-183 commit; it is a pure same-file structure rewrite."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_ci_pipeline.py tests/test_cli.py -q"
+        ],
+        "evidence": "Existing koru ci CLI tests pass unchanged."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m ruff check src/koru/cli_ci.py",
+          "git diff --check"
+        ],
+        "evidence": "Lint and whitespace checks pass for the rewritten module."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -c \"from koru.cli_ci import build_parser; build_parser().parse_args(['run'])\""
+        ],
+        "evidence": "Parser parity was verified against origin/main for all three subcommands (identical Namespaces and --help output)."
+      }
+    ]
+  }
+}

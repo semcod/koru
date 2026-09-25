@@ -207,6 +207,7 @@ def configure_loop_state(
         llm_model = (getattr(args, "llm_model", None) or "").strip()
         if llm_model:
             os.environ["KORU_TILLM_MODEL"] = llm_model
+            os.environ["KORU_TILLM_FORCE_MODEL"] = llm_model
         # Autonomous drive needs the client to apply edits and run checks;
         # the conservative default profile would leave it read-only — but only
         # for clients that actually support an ``automation`` profile (aider does not).

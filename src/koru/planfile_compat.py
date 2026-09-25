@@ -103,6 +103,91 @@ def _raw_ticket_records(project: Path) -> tuple[list[dict[str, Any]], tuple[str,
     return records, tuple(errors)
 
 
+def _ticket_identifier(record: dict[str, Any]) -> str:
+    """Return the normalized id used to pair raw and reported records."""
+    return str(record.get("id") or record.get("ticket_id") or "").strip()
+
+
+def _normalized_status(record: dict[str, Any]) -> str:
+    return str(record.get("status") or "").strip().lower()
+
+
+def _reported_ticket_ids(reported_records: list[dict[str, Any]]) -> set[str]:
+    ids: set[str] = set()
+    for item in reported_records:
+        ticket_id = _ticket_identifier(item)
+        if ticket_id:
+            ids.add(ticket_id)
+    return ids
+
+
+def _already_covered(ticket_id: str, reported_ids: set[str], seen_raw: set[str]) -> bool:
+    return not ticket_id or ticket_id in reported_ids or ticket_id in seen_raw
+
+
+def _decorated_recovery(record: dict[str, Any], status: str) -> dict[str, Any]:
+    """Copy a raw record and attach the operator-facing status diagnostic."""
+    recovered_record = dict(record)
+    recovered_record.pop("_compat_sprint", None)
+    if status == LEGACY_STATUS:
+        recovered_record["legacy_status"] = LEGACY_STATUS
+        recovered_record["status_diagnostic"] = {
+            "kind": LEGACY_STATUS_DIAGNOSTIC,
+            "status": LEGACY_STATUS,
+            "action": "run koru queue migrate-legacy-skipped --apply",
+        }
+    elif status not in SUPPORTED_TICKET_STATUSES:
+        recovered_record["legacy_status"] = status or None
+        recovered_record["status_diagnostic"] = {
+            "kind": "unknown-status",
+            "status": status or None,
+            "action": "inspect and migrate explicitly; no automatic mutation",
+        }
+    return recovered_record
+
+
+def _recover_missing_records(
+    raw_records: list[dict[str, Any]],
+    reported_ids: set[str],
+) -> tuple[list[dict[str, Any]], Counter[str]]:
+    """Build decorated records for raw tickets the validated payload omitted."""
+    recovered_records: list[dict[str, Any]] = []
+    status_counts: Counter[str] = Counter()
+    seen_raw: set[str] = set()
+
+    for raw in raw_records:
+        ticket_id = _ticket_identifier(raw)
+        if _already_covered(ticket_id, reported_ids, seen_raw):
+            continue
+        seen_raw.add(ticket_id)
+        status = _normalized_status(raw)
+        if status == LEGACY_STATUS or status not in SUPPORTED_TICKET_STATUSES:
+            status_counts[status or "<missing>"] += 1
+        recovered_records.append(_decorated_recovery(raw, status))
+
+    return recovered_records, status_counts
+
+
+def _compatibility_report(
+    *,
+    raw_count: int,
+    reported_count: int,
+    recovered_count: int,
+    status_counts: Counter[str],
+    read_errors: tuple[str, ...],
+) -> PlanfileCompatibilityReport:
+    return PlanfileCompatibilityReport(
+        raw_ticket_count=raw_count,
+        reported_ticket_count=reported_count,
+        recovered_ticket_count=recovered_count,
+        legacy_status_counts=dict(sorted(status_counts.items())),
+        unknown_status_count=sum(
+            count for status, count in status_counts.items() if status != LEGACY_STATUS
+        ),
+        read_errors=read_errors,
+    )
+
+
 def merge_missing_ticket_records(
     reported: list[dict[str, Any]],
     project: Path,
@@ -117,54 +202,14 @@ def merge_missing_ticket_records(
     """
     raw_records, read_errors = _raw_ticket_records(project.resolve())
     reported_records = [item for item in reported if isinstance(item, dict)]
-    reported_ids = {
-        str(item.get("id") or item.get("ticket_id") or "").strip()
-        for item in reported_records
-        if str(item.get("id") or item.get("ticket_id") or "").strip()
-    }
-    merged = list(reported_records)
-    recovered = 0
-    status_counts: Counter[str] = Counter()
-    seen_raw: set[str] = set()
-
-    for raw in raw_records:
-        ticket_id = str(raw.get("id") or raw.get("ticket_id") or "").strip()
-        if not ticket_id or ticket_id in reported_ids or ticket_id in seen_raw:
-            continue
-        seen_raw.add(ticket_id)
-        status = str(raw.get("status") or "").strip().lower()
-        if status == LEGACY_STATUS or status not in SUPPORTED_TICKET_STATUSES:
-            status_counts[status or "<missing>"] += 1
-        recovered_record = dict(raw)
-        recovered_record.pop("_compat_sprint", None)
-        if status == LEGACY_STATUS:
-            recovered_record["legacy_status"] = LEGACY_STATUS
-            recovered_record["status_diagnostic"] = {
-                "kind": LEGACY_STATUS_DIAGNOSTIC,
-                "status": LEGACY_STATUS,
-                "action": "run koru queue migrate-legacy-skipped --apply",
-            }
-        elif status not in SUPPORTED_TICKET_STATUSES:
-            recovered_record["legacy_status"] = status or None
-            recovered_record["status_diagnostic"] = {
-                "kind": "unknown-status",
-                "status": status or None,
-                "action": "inspect and migrate explicitly; no automatic mutation",
-            }
-        merged.append(recovered_record)
-        recovered += 1
-
-    report = PlanfileCompatibilityReport(
-        raw_ticket_count=len(raw_records),
-        reported_ticket_count=len(reported_records),
-        recovered_ticket_count=recovered,
-        legacy_status_counts=dict(sorted(status_counts.items())),
-        unknown_status_count=sum(
-            count for status, count in status_counts.items() if status != LEGACY_STATUS
-        ),
+    recovered_records, status_counts = _recover_missing_records(raw_records, _reported_ticket_ids(reported_records))
+    return list(reported_records) + recovered_records, _compatibility_report(
+        raw_count=len(raw_records),
+        reported_count=len(reported_records),
+        recovered_count=len(recovered_records),
+        status_counts=status_counts,
         read_errors=read_errors,
     )
-    return merged, report
 
 
 __all__ = [

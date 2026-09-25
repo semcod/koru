@@ -1,0 +1,110 @@
+{
+ "schema": "new-project.intent/v3",
+ "ticket": "ticket-185",
+ "summary": "Split large module: koru.autonomous into cohesive submodules",
+ "workstream": "application",
+ "classification": {
+  "kind": "SERVICE",
+  "priority": "P2",
+  "origin": "health"
+ },
+ "allowedPaths": [
+  "project/ticket-185/**",
+  "TODO.md",
+  "project/TICKETS.md",
+  "src/koru/autonomous.py",
+  "src/koru/autonomous/**",
+  "tests/test_autonomous_reporting.py",
+  "tests/test_autonomous_argv_config.py"
+ ],
+ "forbiddenPaths": [
+  "project/ticket-*/user-*.md"
+ ],
+ "stacks": [
+  "python"
+ ],
+ "dependsOn": [],
+ "conflictsWith": [],
+ "integrationTicket": null,
+ "delivery": {
+  "acceptedBaseSha": "5ad452d048fb8cde144dd0e199d4aadbf4b78e7a",
+  "targetBranch": "main",
+  "outcome": "src/koru/autonomous.py (1240 lines, 77 methods) becomes the koru.autonomous package: __init__.py keeps every historical monkeypatch-compatible facade wrapper, reporting.py owns the doctor/status/self-heal environment reporting, and argv_config.py owns argv normalization plus auto-mode flag configuration. Behavior is unchanged: all names in the former module __all__, _consume_web_flag and every test monkeypatch target stay importable from koru.autonomous, and focused regression tests cover the two extracted submodules.",
+  "nonGoals": [
+   "Changing any facade wrapper behavior or dependency-forwarding semantics",
+   "Altering the CLI surface in src/koru/cli_auto.py or src/koru/cli.py",
+   "Renaming or removing any public or test-referenced name",
+   "Regenerating project/analysis.toon.yaml (integration-owned artifact)"
+  ],
+  "complexity": "M",
+  "estimatedMinutes": 90,
+  "budgets": {
+   "maxImplementationFiles": 5,
+   "maxAffectedComponents": 1,
+   "maxPublicInterfaceChanges": 0,
+   "maxRuntimeDependencies": 0
+  },
+  "architecture": {
+   "status": "accepted",
+   "decision": "Convert the module to a package whose __init__.py keeps the monkeypatch facade (wrappers read facade globals at call time) while reporting.py and argv_config.py own the two cohesive responsibilities that tests never monkeypatch, re-exported through the facade for backwards compatibility.",
+   "components": [
+    {
+     "name": "autonomous-cli-facade",
+     "paths": [
+      "src/koru/autonomous.py",
+      "src/koru/autonomous/**",
+      "tests/test_autonomous_reporting.py",
+      "tests/test_autonomous_argv_config.py"
+     ]
+   }
+   ],
+   "responsibilityChanges": false,
+   "interfaceChanges": [],
+   "dataChanges": [],
+   "ui": {
+    "impact": "none",
+    "states": [],
+    "evidence": []
+   },
+   "rollback": "Revert the commit; the previous single-module facade is restored verbatim."
+  },
+  "runtimeDependencies": [],
+  "validation": [
+   {
+    "criterion": "AC-01",
+    "commands": [
+      "PYTHONPATH=src .venv/bin/python -c \"import koru.autonomous as m; assert all(hasattr(m, n) for n in m.__all__); assert hasattr(m, '_consume_web_flag')\""
+    ],
+    "evidence": "Every former public and test-referenced name resolves through the package facade."
+   },
+   {
+    "criterion": "AC-02",
+    "commands": [
+      "PYTHONPATH=src .venv/bin/python -m pytest tests/test_autonomous.py tests/test_dashboard_logs.py -q"
+    ],
+    "evidence": "Facade monkeypatch compatibility suites pass unmodified."
+   },
+   {
+    "criterion": "AC-03",
+    "commands": [
+      "PYTHONPATH=src .venv/bin/python -m pytest tests/test_autonomous_reporting.py tests/test_autonomous_argv_config.py -q"
+    ],
+    "evidence": "Focused regression tests cover the extracted submodules."
+   },
+   {
+    "criterion": "AC-04",
+    "commands": [
+      "ruff check src/koru/autonomous && ruff format --check src/koru/autonomous"
+    ],
+    "evidence": "Lint and format pass on the new package."
+   },
+   {
+    "criterion": "AC-05",
+    "commands": [
+      "bash project/governance-check.sh --base origin/main"
+    ],
+    "evidence": "Governance gate passes with zero errors."
+   }
+  ]
+ }
+}

@@ -116,6 +116,108 @@ def test_validator_receives_exact_bindings_and_merge_must_be_observed(tmp_path, 
     ]
 
 
+def test_missing_pull_request_is_created_then_bound(tmp_path, monkeypatch):
+    import koru.ticket_command.publication as module
+
+    head = "b" * 40
+    calls = []
+    listings = []
+    monkeypatch.setattr(module, "git", lambda root, *args: "ticket/002-cc" if args[0] == "branch" else head)
+
+    def run(root, args, **kwargs):
+        calls.append(args)
+        if args[:3] == ["gh", "pr", "list"]:
+            listings.append(args)
+            if len(listings) > 1:
+                return json.dumps(
+                    [{"number": 7, "headRefOid": head, "state": "MERGED", "url": "https://github.com/a/b/pull/7"}]
+                )
+            return json.dumps([])
+        if args[:3] == ["gh", "pr", "create"]:
+            return "https://github.com/a/b/pull/7\n"
+        if args[:3] == ["gh", "pr", "view"]:
+            return json.dumps(
+                {
+                    "state": "MERGED",
+                    "headRefOid": head,
+                    "url": "https://github.com/a/b/pull/7",
+                    "mergeCommit": {"oid": "c" * 40},
+                }
+            )
+        return ""
+
+    monkeypatch.setattr(module, "command", run)
+    profile = {
+        "delivery": "validator",
+        "primary": tmp_path,
+        "repository": "a/b",
+        "number": 5,
+        "url": "https://github.com/a/b/issues/5",
+    }
+    result = publish(profile, {"workspace": str(tmp_path), "head": head, "ticket": "ticket-002"}, tmp_path)
+    assert result == {
+        "state": "published",
+        "publication": "validator",
+        "head": head,
+        "pull_request": "https://github.com/a/b/pull/7",
+        "merge_commit": "c" * 40,
+    }
+    assert calls[1] == [
+        "gh",
+        "pr",
+        "create",
+        "--repo",
+        "a/b",
+        "--base",
+        "main",
+        "--head",
+        "ticket/002-cc",
+        "--title",
+        "fix: resolve issue 5",
+        "--body-file",
+        str(tmp_path / "pull-request.md"),
+    ]
+    assert listings[0] == listings[1]
+    assert (tmp_path / "pull-request.md").read_text() == (
+        "Resolve https://github.com/a/b/issues/5 under ticket-002.\n\n"
+        "Local verification passed. Independent OneDev/Validator checks are required before merge.\n"
+    )
+
+
+def test_created_pull_request_binding_uses_the_raw_listing(tmp_path, monkeypatch):
+    import koru.ticket_command.publication as module
+
+    head = "b" * 40
+    other = "d" * 40
+    listings = 0
+    monkeypatch.setattr(module, "git", lambda root, *args: "ticket/002-cc" if args[0] == "branch" else head)
+
+    def run(root, args, **kwargs):
+        nonlocal listings
+        if args[:3] == ["gh", "pr", "list"]:
+            listings += 1
+            if listings > 1:
+                return json.dumps(
+                    [
+                        {"number": 7, "headRefOid": head, "state": "OPEN", "url": "https://github.com/a/b/pull/7"},
+                        {"number": 3, "headRefOid": other, "state": "CLOSED", "url": "https://github.com/a/b/pull/3"},
+                    ]
+                )
+            return json.dumps([])
+        return ""
+
+    monkeypatch.setattr(module, "command", run)
+    profile = {
+        "delivery": "validator",
+        "primary": tmp_path,
+        "repository": "a/b",
+        "number": 5,
+        "url": "https://github.com/a/b/issues/5",
+    }
+    with pytest.raises(ValueError, match="does not bind the verified head"):
+        publish(profile, {"workspace": str(tmp_path), "head": head, "ticket": "ticket-002"}, tmp_path)
+
+
 def test_canonical_worktree_uses_real_git_relative_pointers(tmp_path, monkeypatch):
     import koru.ticket_command.workspace as module
 

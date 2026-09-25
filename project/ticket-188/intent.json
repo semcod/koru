@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-188",
+  "summary": "Split god module: src/koru/poa/planning.py",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-188/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/poa/**",
+    "tests/test_poa_registry.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "24d901bf519d107fee78b2691224d2dfee9c2c95",
+    "targetBranch": "main",
+    "outcome": "src/koru/poa/planning.py (511 lines, 4 classes, 15 functions) splits by responsibility into focused koru.poa submodules: errors.py (planning failure hierarchy), validation.py (shared primitive validators), snapshots.py (source-registry snapshot build/validate), policy_decisions.py (policy-boundary input hash and decision validation), plan_compile.py (inert plan compilation, binding selection, process-graph and result verification). planning.py remains a compatibility facade re-exporting the exact previous __all__ surface, so koru.poa.planning, koru.poa and koru.poa.logs imports are unchanged and the poa test suites pass unmodified. Pure code movement: identical messages, decision order and hashes.",
+    "nonGoals": [
+      "Changing any validation rule, error message, decision order, schema or hash output",
+      "Regenerating project/analysis.toon.yaml or project/planfile-tickets.yaml (integration-owned artifacts)",
+      "Removing or renaming any public name in koru.poa.planning.__all__",
+      "Editing koru.poa.contracts.py or koru.poa.logs.py"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 6,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Decompose the god module along its four responsibilities (failure hierarchy, primitive validation, source-registry snapshots, policy-boundary decisions, inert plan compilation) with a one-way dependency order errors -> validation -> snapshots -> policy_decisions -> plan_compile and no cycles; planning.py keeps only the compatibility facade re-exporting the previous __all__ so every existing import site is byte-compatible.",
+      "components": [
+        {
+          "name": "poa-planning",
+          "paths": [
+            "src/koru/poa/**",
+            "tests/test_poa_registry.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; the original single planning.py module is restored verbatim."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "PYTHONPATH=src python -m pytest tests/test_poa_registry.py tests/test_poa_contracts.py tests/test_poa_logs.py -q"
+        ],
+        "evidence": "Existing poa suites pass unmodified on this branch."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=src python -c \"import koru.poa.planning as p; assert sorted(p.__all__) == ['AmbiguousBinding', 'BindingNotFound', 'PlanningError', 'PolicyDenied', 'build_source_snapshot', 'canonical_json', 'compile_inert_plan', 'policy_input_hash', 'validate_policy_decision', 'validate_source_registry_snapshot', 'verify_planning_result']\""
+        ],
+        "evidence": "Facade parity: every former public name importable from koru.poa.planning."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koru/poa/ && ruff format --check src/koru/poa/"
+        ],
+        "evidence": "Lint and format pass on the refactored package."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "Governance gate passes with zero errors."
+      }
+    ]
+  }
+}

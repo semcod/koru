@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-190",
+  "summary": "Reduce cyclomatic complexity: _scan_serve_processes (CC=22)",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-190/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_terminals.py",
+    "tests/test_opencode_serve_scan.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "bea8ab25386bf852de7abdb9d0516471dd39e7ac",
+    "targetBranch": "main",
+    "outcome": "_scan_serve_processes in src/koruapi/opencode_terminals.py drops from cyclomatic complexity 22 to below the code2llm limit 15 by extracting behavior-preserving module-level helpers (_read_cmdline, _is_opencode_serve, _parse_serve_listen_args, _to_int) that keep the exact original guard order, argv matching and --port/--hostname parsing semantics. New tests/test_opencode_serve_scan.py pins the extracted helpers and the end-to-end /proc scan behavior; no public API, registry semantics, or discovery result shape changes.",
+    "nonGoals": [
+      "Changing any observable discovery result, id/url/label format, or default host 127.0.0.1",
+      "Reducing the other reported hotspots in the module or elsewhere — separate tickets",
+      "Regenerating project/analysis.toon.yaml or project/planfile-tickets.yaml (integration-owned artifacts)",
+      "Renaming or removing any public name"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Split the monolithic _scan_serve_processes into single-responsibility private module functions (cmdline reading with NUL filtering, opencode-serve argv matching, listen-argument parsing, int coercion); the original function keeps only /proc iteration and result assembly so behavior is equivalent.",
+      "components": [
+        {
+          "name": "opencode-terminals",
+          "paths": [
+            "src/koruapi/opencode_terminals.py",
+            "tests/test_opencode_serve_scan.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; the original single _scan_serve_processes body is restored verbatim."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -c (radon-equivalent AST CC recount over src/koruapi/opencode_terminals.py)"
+        ],
+        "evidence": "Independent AST recount reports CC < 15 for _scan_serve_processes and every extracted helper."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=src python -m pytest tests/test_opencode_serve_scan.py tests/test_dashboard_terminals.py -q"
+        ],
+        "evidence": "New behavior-pinning suite passes; existing terminals suite passes unmodified."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koruapi/opencode_terminals.py && ruff format --check src/koruapi/opencode_terminals.py"
+        ],
+        "evidence": "Lint and format pass on the refactored module."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "Governance gate passes with zero errors."
+      }
+    ]
+  }
+}

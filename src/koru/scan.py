@@ -46,6 +46,7 @@ from typing import Any
 
 import yaml
 
+from koru.fleet_admission import scan_admission
 from koru.scan_collection import collect_suggestions as _collect_suggestions_impl
 from koru.scan_dedupe_policy import (
     SCAN_DEDUP_SKIP_STATUSES as _SCAN_DEDUP_SKIP_STATUSES_IMPL,
@@ -2203,4 +2204,18 @@ def run_scan(
     if not apply:
         return ScanResult(suggestions=suggestions)
 
-    return _apply_scan_suggestions(project, suggestions, source=source, runner=runner)
+    admission = scan_admission(project)
+    if admission is not None and not admission["admit_new"]:
+        return ScanResult(suggestions=suggestions,
+                          skipped=[s.title for s in suggestions],
+                          fleet_admission=admission)
+    # A single observation cannot authorize a batch of newly queued tickets.
+    selected = suggestions[:1] if admission is not None else suggestions
+    result = _apply_scan_suggestions(project, selected, source=source, runner=runner)
+    if admission is None:
+        return result
+    from dataclasses import replace
+
+    return replace(result, suggestions=suggestions,
+                   skipped=[*result.skipped, *(s.title for s in suggestions[1:])],
+                   fleet_admission=admission)

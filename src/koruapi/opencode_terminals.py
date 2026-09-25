@@ -17,7 +17,6 @@ import json
 import os
 import re
 import subprocess
-import sys
 import threading
 import time
 import urllib.error
@@ -51,13 +50,11 @@ _EXHAUSTION_ERROR_PATTERNS = [
     re.compile(r"AI_APICallError", re.IGNORECASE),
     re.compile(r"\b429\b"),
 ]
-_RESET_TIME_RE = re.compile(
-    r"reset at\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})", re.IGNORECASE
-)
+_RESET_TIME_RE = re.compile(r"reset at\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})", re.IGNORECASE)
 _LOG_STREAM_ERROR_RE = re.compile(
     r'level=ERROR\s+run=(\w+)\s+message="stream error"\s+'
-    r'providerID=([a-zA-Z0-9_-]+)\s+modelID=([a-zA-Z0-9_.-]+)\s+'
-    r'(?:session\.id=([^\s]+)\s+)?'
+    r"providerID=([a-zA-Z0-9_-]+)\s+modelID=([a-zA-Z0-9_.-]+)\s+"
+    r"(?:session\.id=([^\s]+)\s+)?"
     r'.*?error\.error="([^"]+)"'
 )
 
@@ -103,8 +100,7 @@ def register_instance(
     for entry in entries:
         if entry.get("url") == url:
             entry.update(
-                {"label": label or entry.get("label", ""), "pid": pid,
-                 "managed": managed, "auto_answer": auto_answer}
+                {"label": label or entry.get("label", ""), "pid": pid, "managed": managed, "auto_answer": auto_answer}
             )
             save_registry(project, entries)
             return entry
@@ -162,6 +158,45 @@ def _pid_alive(pid: int | None) -> bool:
     return True
 
 
+def _read_cmdline(pid_dir: Path) -> list[str] | None:
+    """Return the argv of a ``/proc`` entry, or ``None`` when unreadable."""
+    try:
+        raw = (pid_dir / "cmdline").read_bytes()
+    except OSError:
+        return None
+    return [a.decode("utf-8", "ignore") for a in raw.split(b"\0") if a]
+
+
+def _to_int(value: str) -> int | None:
+    try:
+        return int(value)
+    except ValueError:
+        return None
+
+
+def _is_opencode_serve(names: list[str]) -> bool:
+    """Match ``opencode ... serve`` argv shapes the dashboard adopts."""
+    if len(names) < 2 or not any("opencode" in n for n in names[:2]):
+        return False
+    return "serve" in names[1:4]
+
+
+def _parse_serve_listen_args(names: list[str]) -> tuple[int | None, str]:
+    """Extract ``--port``/``--hostname`` (space or ``=`` forms, last wins)."""
+    port: int | None = None
+    host = "127.0.0.1"
+    for i, name in enumerate(names):
+        if name == "--port" and i + 1 < len(names):
+            port = _to_int(names[i + 1])
+        elif name.startswith("--port="):
+            port = _to_int(name.split("=", 1)[1])
+        elif name == "--hostname" and i + 1 < len(names):
+            host = names[i + 1]
+        elif name.startswith("--hostname="):
+            host = name.split("=", 1)[1]
+    return port, host
+
+
 def _scan_serve_processes() -> list[dict[str, Any]]:
     """Find ``opencode serve --port N`` processes the user started manually."""
     found: list[dict[str, Any]] = []
@@ -171,40 +206,21 @@ def _scan_serve_processes() -> list[dict[str, Any]]:
     for entry in proc.iterdir():
         if not entry.name.isdigit():
             continue
-        try:
-            raw = (entry / "cmdline").read_bytes()
-        except OSError:
+        names = _read_cmdline(entry)
+        if names is None or not _is_opencode_serve(names):
             continue
-        argv = [a for a in raw.split(b"\0") if a]
-        names = [a.decode("utf-8", "ignore") for a in argv]
-        if len(names) < 2 or not any("opencode" in n for n in names[:2]):
-            continue
-        if "serve" not in names[1:4]:
-            continue
-        port = None
-        host = "127.0.0.1"
-        for i, name in enumerate(names):
-            if name == "--port" and i + 1 < len(names):
-                try:
-                    port = int(names[i + 1])
-                except ValueError:
-                    port = None
-            elif name.startswith("--port="):
-                try:
-                    port = int(name.split("=", 1)[1])
-                except ValueError:
-                    port = None
-            elif name == "--hostname" and i + 1 < len(names):
-                host = names[i + 1]
-            elif name.startswith("--hostname="):
-                host = name.split("=", 1)[1]
+        port, host = _parse_serve_listen_args(names)
         if not port:
             continue
         found.append(
-            {"id": f"proc-{port}", "url": f"http://{host}:{port}",
-             "pid": int(entry.name),
-             "label": f"opencode serve :{port}", "managed": False,
-             "auto_answer": False}
+            {
+                "id": f"proc-{port}",
+                "url": f"http://{host}:{port}",
+                "pid": int(entry.name),
+                "label": f"opencode serve :{port}",
+                "managed": False,
+                "auto_answer": False,
+            }
         )
     return found
 
@@ -222,9 +238,7 @@ def _api_request(
     if body is not None:
         data = json.dumps(body).encode("utf-8")
         headers["Content-Type"] = "application/json"
-    req = urllib.request.Request(
-        url.rstrip("/") + path, data=data, headers=headers, method=method
-    )
+    req = urllib.request.Request(url.rstrip("/") + path, data=data, headers=headers, method=method)
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         raw = resp.read()
     if not raw:
@@ -297,10 +311,8 @@ def parse_exhaustion_from_error(
     if match:
         raw_ts = match.group(1)
         try:
-            dt = datetime.datetime.strptime(raw_ts, "%Y-%m-%d %H:%M:%S").replace(
-                tzinfo=datetime.timezone.utc
-            )
-            now_dt = datetime.datetime.now(datetime.timezone.utc)
+            dt = datetime.datetime.strptime(raw_ts, "%Y-%m-%d %H:%M:%S").replace(tzinfo=datetime.UTC)
+            now_dt = datetime.datetime.now(datetime.UTC)
             delta = (dt - now_dt).total_seconds()
             if delta > 0:
                 ttl = delta
@@ -411,14 +423,16 @@ def scan_opencode_log_for_exhaustion(
         is_ex, ttl, _ = parse_exhaustion_from_error(error_msg)
         if is_ex:
             record = mark_provider_exhausted(provider_id, ttl_seconds=ttl, reason=error_msg)
-            detected.append({
-                "run": run_id,
-                "providerID": provider_id,
-                "modelID": model_id,
-                "sessionID": session_id or "",
-                "error": error_msg,
-                "reset_at": record.get("reset_at"),
-            })
+            detected.append(
+                {
+                    "run": run_id,
+                    "providerID": provider_id,
+                    "modelID": model_id,
+                    "sessionID": session_id or "",
+                    "error": error_msg,
+                    "reset_at": record.get("reset_at"),
+                }
+            )
     return detected
 
 
@@ -497,16 +511,12 @@ def resolve_active_terminal_model(
         return chosen, failover
 
     fallback = (
-        _normalize_model(requested_model, style="prompt")
-        if requested_model
-        else (available[0] if available else None)
+        _normalize_model(requested_model, style="prompt") if requested_model else (available[0] if available else None)
     )
     return fallback, None
 
 
-def _normalize_model(
-    model: dict[str, str] | None, *, style: str = "create"
-) -> dict[str, str] | None:
+def _normalize_model(model: dict[str, str] | None, *, style: str = "create") -> dict[str, str] | None:
     """Normalize a caller model dict to the route-specific server schema.
 
     The opencode API is inconsistent: session create wants
@@ -588,9 +598,7 @@ def normalize_message(msg: dict[str, Any]) -> dict[str, Any]:
                 title = state.get("title") if isinstance(state, dict) else None
                 chunks.append(f"[tool: {name}]" + (f" {title}" if title else ""))
             elif ptype == "file":
-                chunks.append(
-                    f"[file: {part.get('filename') or part.get('url') or ''}]"
-                )
+                chunks.append(f"[file: {part.get('filename') or part.get('url') or ''}]")
             elif ptype in ("step-start", "step-finish", "snapshot", "patch"):
                 continue
             elif text:
@@ -668,9 +676,7 @@ def pending_requests(url: str) -> dict[str, list[dict[str, Any]]]:
     return out
 
 
-def reply_permission(
-    url: str, session_id: str, request_id: str, reply: str
-) -> dict[str, Any]:
+def reply_permission(url: str, session_id: str, request_id: str, reply: str) -> dict[str, Any]:
     if reply not in {"once", "always", "reject"}:
         raise ValueError("reply must be once|always|reject")
     return _api_request(
@@ -681,9 +687,7 @@ def reply_permission(
     )
 
 
-def reply_question(
-    url: str, session_id: str, request_id: str, answers: list[list[str]]
-) -> dict[str, Any]:
+def reply_question(url: str, session_id: str, request_id: str, answers: list[list[str]]) -> dict[str, Any]:
     return _api_request(
         url,
         f"/api/session/{session_id}/question/{request_id}/reply",
@@ -719,10 +723,7 @@ def discover_instances(project: Path, *, probe: bool = True) -> list[dict[str, A
 def _prune_dead_managed(project: Path, instances: list[dict[str, Any]]) -> None:
     live_urls = {e.get("url") for e in instances}
     registry = load_registry(project)
-    kept = [
-        e for e in registry
-        if not e.get("managed") or e.get("url") in live_urls
-    ]
+    kept = [e for e in registry if not e.get("managed") or e.get("url") in live_urls]
     if len(kept) != len(registry):
         save_registry(project, kept)
 
@@ -764,9 +765,7 @@ def spawn_instance(
             proc.terminate()
     if url is None:
         code = proc.poll()
-        raise RuntimeError(
-            f"opencode serve did not report a listening URL (exit={code})"
-        )
+        raise RuntimeError(f"opencode serve did not report a listening URL (exit={code})")
     return register_instance(
         project,
         url=url,
@@ -899,9 +898,7 @@ def instance_status(entry: dict[str, Any]) -> dict[str, Any]:
         row["sessions"].append(srow)
         if sess.get("id"):
             srow_by_id[str(sess["id"])] = srow
-    recent = sorted(sessions, key=_session_updated_ms, reverse=True)[
-        :_TICKET_SCAN_SESSIONS
-    ]
+    recent = sorted(sessions, key=_session_updated_ms, reverse=True)[:_TICKET_SCAN_SESSIONS]
     for sess in recent:
         srow = srow_by_id.get(str(sess.get("id") or ""))
         if srow is None:
@@ -909,9 +906,7 @@ def instance_status(entry: dict[str, Any]) -> dict[str, Any]:
         srow["ticket"] = _session_ticket(url, sess)
         if row["active_ticket"] is None and srow["ticket"]:
             row["active_ticket"] = srow["ticket"]
-    row["project_dirs"] = sorted(
-        {s["directory"] for s in row["sessions"] if s.get("directory")}
-    )
+    row["project_dirs"] = sorted({s["directory"] for s in row["sessions"] if s.get("directory")})
     row["models"] = sorted(
         {
             f"{s['provider']}/{s['model']}" if s.get("provider") else s["model"]
@@ -958,9 +953,7 @@ def terminal_detail(project: Path, instance_id: str) -> dict[str, Any]:
     return detail
 
 
-def terminal_messages(
-    project: Path, instance_id: str, session_id: str, *, limit: int = 60
-) -> dict[str, Any]:
+def terminal_messages(project: Path, instance_id: str, session_id: str, *, limit: int = 60) -> dict[str, Any]:
     entry = _find_instance(project, instance_id)
     if entry is None:
         return {"error": f"unknown instance {instance_id!r}"}
@@ -1081,9 +1074,7 @@ def terminal_reply(project: Path, body: dict[str, Any]) -> dict[str, Any]:
     url = str(entry["url"])
     try:
         if kind == "permission":
-            result = reply_permission(
-                url, session_id, request_id, str(body.get("reply") or "once")
-            )
+            result = reply_permission(url, session_id, request_id, str(body.get("reply") or "once"))
         elif kind == "question":
             answers = body.get("answers")
             if not isinstance(answers, list):

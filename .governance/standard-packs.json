@@ -88,6 +88,8 @@
     {"id": "wellmanifest/logs", "owns": ["structured log contract", "diagnostic event vocabulary"]},
     {"id": "wellmanifest/poa", "owns": ["plan of action contract"]},
     {"id": "wellmanifest/dsl", "owns": ["DSL interoperability contract"]},
+    {"id": "wellmanifest/code-dsl", "owns": ["code-level semantic query contract", "AST diagnostics model"]},
+    {"id": "wellmanifest/nl-dsl-llm", "owns": ["tripartite natural-language, canonical DSL, and adaptive LLM contract", "universal MCP/CLI parity"]},
     {"id": "wellmanifest/repair-lifecycle", "owns": ["repair and remediation lifecycle"]},
     {"id": "wellmanifest/deployment", "owns": ["deployment contract", "deployment verification"]}
   ]
