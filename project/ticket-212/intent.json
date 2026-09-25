@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-212",
+  "summary": "Reduce god-function metrics in apply_patch_with_retry",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-212/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/patch_retry.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "4ffd3fac673dc9be14084f15ef2b10cec5ee71f0",
+    "targetBranch": "main",
+    "outcome": "Carry the retry loop's mutable run state in a dedicated object with named policy steps so apply_patch_with_retry clears the god-function thresholds (fan-out, mutations) while preserving identical patch transaction, retry, drift-abort and evidence generation semantics.",
+    "nonGoals": [
+      "Changing patch transaction execution or verification flow",
+      "Altering evidence bundle schema or fields",
+      "Touching other flagged functions in the module (_finish_run has its own signal)"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Introduce a small mutable run-state carrier (budget, remaining, manifest, attempts, authorize) with named steps for attempt recording and per-iteration advance; apply_patch_with_retry becomes the thin loop over them.",
+      "components": [
+        {
+          "name": "queue-patch-retry",
+          "paths": [
+            "src/koru/queue/patch_retry.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the previous inline retry loop."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "grep -c SESSION_EXECUTION_AUTHORIZATION project/ticket-212/README.md"
+        ],
+        "evidence": "Scope authorization recorded from the planfile PLF-030 handoff."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -c \"from code2llm.core.config import Config; from code2llm.core.analyzer import ProjectAnalyzer; from code2llm.analysis.smells import SmellDetector; from pathlib import Path; r=ProjectAnalyzer(Config(), Path('.')).analyze_project('.'); s=[x for x in SmellDetector(r).detect() if 'patch_retry' in (x.file or '')]; assert not any('apply_patch_with_retry' in x.name for x in s), s\""
+        ],
+        "evidence": "SmellDetector reports no god_function for apply_patch_with_retry; fan-out <= 10, mutations <= 6, CC <= 12."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "PYTHONPATH=src .venv/bin/python -m pytest -q tests/test_queue_contracts.py tests/test_queue_evidence.py tests/test_queue_journal.py tests/test_queue_recovery.py tests/test_planfile_queue.py",
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Existing queue contracts, evidence, journal, recovery and planfile queue tests pass, and the governance gate passes with 0 errors."
+      }
+    ]
+  }
+}

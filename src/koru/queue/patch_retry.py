@@ -16,8 +16,9 @@ from __future__ import annotations
 import hashlib
 import os
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 from uuid import uuid4
 
 from koru.queue.evidence import (
@@ -127,6 +128,87 @@ def _perform_retry_call(
     return wrap_reply_in_proposal_envelope(res, str(retry_action.get("prompt") or ""))
 
 
+class _AttemptDecision(NamedTuple):
+    """What one judged attempt says to do next.
+
+    ``done`` marks the run's final answer — ``result`` and ``outcome`` are what
+    the caller receives. Otherwise ``result`` is the re-asked reply the next
+    iteration will judge.
+    """
+
+    result: CommandResult
+    outcome: PatchOutcome | None
+    done: bool
+
+
+@dataclass
+class _PatchRun:
+    """The state one ask-again run threads between attempts.
+
+    The retry loop used to rebind a dozen locals every iteration — the budget
+    left, the pinned base, the growing attempt record — which is precisely
+    what made it a god function. Binding them here leaves the loop a straight
+    line: judge, record, advance.
+    """
+
+    project: Path
+    ticket: dict
+    action: dict[str, Any]
+    result: CommandResult
+    llm_runner: Callable[[dict[str, Any], Path], CommandResult]
+    enrich: Callable[[dict[str, Any], Path], dict[str, Any]] | None
+    actor: str | None
+    authorize: Any
+    budget: int
+    manifest: dict | None = None
+    attempts: list[dict] = field(default_factory=list)
+    base_prompt: str = ""
+    remaining: int = 0
+
+    def __post_init__(self) -> None:
+        self.base_prompt = str(self.action.get("prompt") or "")
+        self.remaining = self.budget
+        # Producer side of the envelope contract: the bare diff the agent wrote
+        # becomes a hash-bound ProposalEnvelope before the transaction judges it.
+        self.result = wrap_reply_in_proposal_envelope(self.result, self.base_prompt)
+
+    def record_attempt(self, transaction: PatchTransactionResult) -> None:
+        """Fold one judged attempt into the run's permanent record."""
+        self.attempts.append(_attempt_record(len(self.attempts) + 1, transaction))
+
+    def advance(self, transaction: PatchTransactionResult) -> _AttemptDecision:
+        """Decide the run's next move after one judged attempt.
+
+        Landing, a substantive failure, or an exhausted budget ends the run; a
+        mechanical failure first pins the base (aborting on drift), then spends
+        one budget unit re-asking the agent with the exact rejection attached.
+        """
+        outcome = transaction.outcome
+        if outcome is None or not outcome.retryable or self.remaining <= 0:
+            return _AttemptDecision(transaction.result, outcome, True)
+        # A structurally invalid model artifact gets one repair attempt. A
+        # ticket/env knob may shrink that budget, never expand it into a loop.
+        if outcome.code == NO_PATCH_EMITTED:
+            self.remaining = min(self.remaining, 1)
+        aborted = self._pin_or_abort(transaction)
+        if aborted is not None:
+            return _AttemptDecision(transaction.result, aborted, True)
+        self.remaining -= 1
+        result = _perform_retry_call(
+            self.llm_runner, self.action, self.base_prompt, self.project,
+            self.manifest, outcome, self.enrich,
+        )
+        return _AttemptDecision(result, outcome, result.returncode != 0)
+
+    def _pin_or_abort(self, transaction: PatchTransactionResult) -> PatchOutcome | None:
+        """Pin the base on the first failure, or abort if it has since drifted."""
+        self.manifest, aborted = _pin_or_detect_drift(
+            self.project, self.ticket, transaction.result, self.budget,
+            self.manifest, transaction, self.attempts,
+        )
+        return aborted
+
+
 def apply_patch_with_retry(
     project: Path,
     result: CommandResult,
@@ -155,48 +237,31 @@ def apply_patch_with_retry(
     from koru.queue.authorization import build_authorizer
     from koru.queue.transaction.service import execute_patch_transaction
 
-    base_prompt = str(action.get("prompt") or "")
-    budget = _contract_capped_budget(project, ticket)
-    remaining = budget
-    manifest: dict | None = None
-    attempts: list[dict] = []
-    authorize = build_authorizer(project, ticket, actor or "koru-shell")
-    # Producer side of the envelope contract: the bare diff the agent wrote
-    # becomes a hash-bound ProposalEnvelope before the transaction judges it.
-    result = wrap_reply_in_proposal_envelope(result, base_prompt)
+    run = _PatchRun(
+        project=project,
+        ticket=ticket,
+        action=action,
+        result=result,
+        llm_runner=llm_runner,
+        enrich=enrich,
+        actor=actor,
+        authorize=build_authorizer(project, ticket, actor or "koru-shell"),
+        budget=_contract_capped_budget(project, ticket),
+    )
 
     while True:
         transaction = execute_patch_transaction(
-            project, result, ticket, shell_runner, manifest, authorize=authorize,
+            project, run.result, ticket, shell_runner, run.manifest,
+            authorize=run.authorize,
         )
-        result, outcome = transaction.result, transaction.outcome
-        attempts.append(_attempt_record(len(attempts) + 1, transaction))
-        if outcome is None or not outcome.retryable or remaining <= 0:
-            return result, outcome, _finish_patch_run(
-                project, ticket, transaction, manifest, attempts, actor, authorize
+        run.record_attempt(transaction)
+        decision = run.advance(transaction)
+        if decision.done:
+            return decision.result, decision.outcome, _finish_patch_run(
+                project, ticket, transaction, run.manifest, run.attempts,
+                run.actor, run.authorize,
             )
-
-        # A structurally invalid model artifact gets one repair attempt. A
-        # ticket/env knob may shrink that budget, never expand it into a loop.
-        if outcome.code == NO_PATCH_EMITTED:
-            remaining = min(remaining, 1)
-
-        manifest, aborted = _pin_or_detect_drift(
-            project, ticket, result, budget, manifest, transaction, attempts,
-        )
-        if aborted is not None:
-            return result, aborted, _finish_patch_run(
-                project, ticket, transaction, manifest, attempts, actor, authorize
-            )
-
-        remaining -= 1
-        result = _perform_retry_call(
-            llm_runner, action, base_prompt, project, manifest, outcome, enrich
-        )
-        if result.returncode != 0:
-            return result, outcome, _finish_patch_run(
-                project, ticket, transaction, manifest, attempts, actor, authorize
-            )
+        run.result = decision.result
 
 
 def _pin_or_detect_drift(
