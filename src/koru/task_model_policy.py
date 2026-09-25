@@ -153,6 +153,13 @@ def select_task_model(
     explicit_model: str = "",
     environ: Mapping[str, str] | None = None,
 ) -> dict[str, str]:
+    """Resolve the CLI model for a task; never an execution permission.
+
+    Precedence: explicit request or ticket ``inputs.llm_model``, then the
+    operator pin ``KORU_TILLM_FORCE_MODEL``, then the simple model for a
+    bounded single-file lint fix (opencode only), then the default model.
+    The returned ``reason`` names the branch that produced the decision.
+    """
     env = os.environ if environ is None else environ
     view = _coerce_task(task)
     forced = _resolve_explicit_or_pinned_model(explicit_model, view.inputs, env)
