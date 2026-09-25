@@ -8,7 +8,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, NamedTuple, cast
 
 from koruide.ide import normalize_ide_id
 
@@ -277,10 +277,16 @@ def _write_sprint_file(path: Path, data: dict[str, Any]) -> None:
     )
 
 
-def _find_ticket_in_sprints(
-    project: Path,
-    ticket_id: str,
-) -> tuple[Path, dict[str, Any], dict[str, Any], dict[str, Any]]:
+class _SprintTicketHit(NamedTuple):
+    """A ticket located in one sprint file, with its containing documents."""
+
+    path: Path
+    data: dict[str, Any]
+    tickets: dict[str, Any]
+    ticket: dict[str, Any]
+
+
+def _find_ticket_in_sprints(project: Path, ticket_id: str) -> _SprintTicketHit:
     sprints_dir = project / ".planfile" / "sprints"
     for path in sorted(sprints_dir.glob("*.yaml")):
         data = _load_sprint_file(path)
@@ -290,7 +296,7 @@ def _find_ticket_in_sprints(
         tickets = tickets_raw if isinstance(tickets_raw, dict) else {}
         ticket = tickets.get(ticket_id)
         if isinstance(ticket, dict):
-            return path, data, tickets, ticket
+            return _SprintTicketHit(path, data, tickets, ticket)
     raise ValueError(f"ticket not found: {ticket_id}")
 
 
@@ -308,12 +314,12 @@ def _append_dashboard_history(ticket: dict[str, Any], action: str, message: str)
     ticket["updated_at"] = datetime.now(UTC).isoformat()
 
 
-def _mapping_slot(ticket: dict[str, Any], key: str) -> dict[str, Any]:
-    """Return ``ticket[key]`` as a dict, replacing a non-dict value in place."""
-    slot = ticket.setdefault(key, {})
+def _mapping_slot(target: dict[str, Any], key: str) -> dict[str, Any]:
+    """Return ``target[key]`` as a dict, replacing a non-dict value in place."""
+    slot = target.setdefault(key, {})
     if not isinstance(slot, dict):
         slot = {}
-        ticket[key] = slot
+        target[key] = slot
     return slot
 
 
@@ -376,80 +382,124 @@ def reorder_ticket_from_dashboard(
     return {"ok": True, "ticket_id": ticket_id, "changed": True, "position": new_index}
 
 
+def _field_update(target: dict[str, Any], key: str, value: str, label: str) -> list[str]:
+    """Set ``target[key]`` to ``value`` when it differs and report ``label=value``."""
+    if target.get(key) == value:
+        return []
+    target[key] = value
+    return [f"{label}={value}"]
+
+
+def _normalized_executor_value(value: str | None, default: str) -> str:
+    return (value or default).strip().lower()
+
+
 def _apply_executor_target(
     ticket: dict[str, Any],
-    target_kind: str,
-    target_mode: str,
-    changes: list[str],
-) -> dict[str, Any]:
+    executor_kind: str | None,
+    executor_mode: str | None,
+) -> list[str]:
     executor = _mapping_slot(ticket, "executor")
-    if executor.get("kind") != target_kind:
-        executor["kind"] = target_kind
-        changes.append(f"executor.kind={target_kind}")
-    if executor.get("mode") != target_mode:
-        executor["mode"] = target_mode
-        changes.append(f"executor.mode={target_mode}")
-    return executor
+    kind = _normalized_executor_value(executor_kind, "llm")
+    mode = _normalized_executor_value(executor_mode, "automatic")
+    return [
+        *_field_update(executor, "kind", kind, "executor.kind"),
+        *_field_update(executor, "mode", mode, "executor.mode"),
+    ]
 
 
-def _apply_delegation_defaults(ticket: dict[str, Any], changes: list[str]) -> dict[str, Any]:
-    if ticket.get("status") != "open":
-        ticket["status"] = "open"
-        changes.append("status=open")
+def _apply_delegation_defaults(ticket: dict[str, Any]) -> list[str]:
+    status_updates = _field_update(ticket, "status", "open", "status")
     execution = _mapping_slot(ticket, "execution")
-    if execution.get("state") != "ready":
-        execution["state"] = "ready"
-        changes.append("execution.state=ready")
+    state_updates = _field_update(execution, "state", "ready", "execution.state")
     execution["attempt"] = 0
-    return execution
+    return [*status_updates, *state_updates]
 
 
-def _apply_prompt_addition(ticket: dict[str, Any], prompt_addition: str | None, changes: list[str]) -> None:
+def _apply_prompt_addition(ticket: dict[str, Any], prompt_addition: str | None) -> list[str]:
     addition = (prompt_addition or "").strip()
     if not addition:
-        return
+        return []
     inputs = _mapping_slot(ticket, "inputs")
     existing_prompt = str(inputs.get("prompt") or ticket.get("description") or ticket.get("name") or "").strip()
     inputs["prompt"] = f"{existing_prompt}\n\n[Operator Guidance]:\n{addition}" if existing_prompt else addition
-    changes.append("prompt_updated")
+    return ["prompt_updated"]
 
 
-def _apply_operator_notes(ticket: dict[str, Any], notes: str | None, changes: list[str]) -> None:
+def _apply_operator_notes(ticket: dict[str, Any], notes: str | None) -> list[str]:
     text = (notes or "").strip()
     if not text:
-        return
+        return []
     outputs = _mapping_slot(ticket, "outputs")
     notes_list = outputs.setdefault("notes", [])
-    if isinstance(notes_list, list):
-        notes_list.append(f"Operator Delegation: {text}")
-        changes.append("notes_appended")
+    if not isinstance(notes_list, list):
+        return []
+    notes_list.append(f"Operator Delegation: {text}")
+    return ["notes_appended"]
 
 
-def _apply_delegation_priority(ticket: dict[str, Any], priority: str | None, changes: list[str]) -> None:
-    if priority is None:
-        return
-    normalized = _normalize_priority(priority)
-    if ticket.get("priority") != normalized:
-        ticket["priority"] = normalized
-        changes.append(f"priority={normalized}")
+def _apply_delegation_routing(
+    ticket: dict[str, Any],
+    priority: str | None,
+    queue_name: str | None,
+) -> list[str]:
+    if priority is None and queue_name is None:
+        return []
+    updates: list[str] = []
+    if priority is not None:
+        normalized = _normalize_priority(priority)
+        updates += _field_update(ticket, "priority", normalized, "priority")
+    if queue_name is not None:
+        queue = queue_name.strip() or "default"
+        execution = _mapping_slot(ticket, "execution")
+        updates += _field_update(execution, "queue", queue, "queue")
+    return updates
 
 
-def _apply_delegation_queue(execution: dict[str, Any], queue_name: str | None, changes: list[str]) -> None:
-    if queue_name is None:
-        return
-    queue = queue_name.strip() or "default"
-    if execution.get("queue") != queue:
-        execution["queue"] = queue
-        changes.append(f"queue={queue}")
+def _apply_llm_ready_label(record: dict[str, Any], executor_kind: str | None) -> list[str]:
+    kind = _normalized_executor_value(executor_kind, "llm")
+    if kind != "llm":
+        return []
+    labels = record.setdefault("labels", [])
+    if not isinstance(labels, list) or "llm-ready" in labels:
+        return []
+    labels.append("llm-ready")
+    return ["labels+=llm-ready"]
 
 
-def _apply_llm_ready_label(ticket: dict[str, Any], target_kind: str, changes: list[str]) -> None:
-    if target_kind != "llm":
-        return
-    labels = ticket.setdefault("labels", [])
-    if isinstance(labels, list) and "llm-ready" not in labels:
-        labels.append("llm-ready")
-        changes.append("labels+=llm-ready")
+def _delegation_change_sets(
+    ticket: dict[str, Any],
+    *,
+    executor_kind: str | None,
+    executor_mode: str | None,
+    prompt_addition: str | None,
+    notes: str | None,
+    priority: str | None,
+    queue_name: str | None,
+) -> list[list[str]]:
+    return [
+        _apply_executor_target(ticket, executor_kind, executor_mode),
+        _apply_delegation_defaults(ticket),
+        _apply_prompt_addition(ticket, prompt_addition),
+        _apply_operator_notes(ticket, notes),
+        _apply_delegation_routing(ticket, priority, queue_name),
+        _apply_llm_ready_label(ticket, executor_kind),
+    ]
+
+
+def _delegation_result(
+    ticket_id: str,
+    ticket: dict[str, Any],
+    changes: list[str],
+) -> dict[str, Any]:
+    return {
+        "ok": True,
+        "ticket_id": ticket_id,
+        "changed": bool(changes),
+        "changes": changes,
+        "executor": ticket["executor"],
+        "status": ticket.get("status"),
+    }
 
 
 def delegate_ticket_from_dashboard(
@@ -463,29 +513,18 @@ def delegate_ticket_from_dashboard(
     priority: str | None = None,
     queue_name: str | None = None,
 ) -> dict[str, Any]:
-    path, data, _tickets, ticket = _find_ticket_in_sprints(project, ticket_id)
-    changes: list[str] = []
-
-    target_kind = (executor_kind or "llm").strip().lower()
-    target_mode = (executor_mode or "automatic").strip().lower()
-
-    executor = _apply_executor_target(ticket, target_kind, target_mode, changes)
-    execution = _apply_delegation_defaults(ticket, changes)
-    _apply_prompt_addition(ticket, prompt_addition, changes)
-    _apply_operator_notes(ticket, notes, changes)
-    _apply_delegation_priority(ticket, priority, changes)
-    _apply_delegation_queue(execution, queue_name, changes)
-    _apply_llm_ready_label(ticket, target_kind, changes)
-
+    hit = _find_ticket_in_sprints(project, ticket_id)
+    change_sets = _delegation_change_sets(
+        hit.ticket,
+        executor_kind=executor_kind,
+        executor_mode=executor_mode,
+        prompt_addition=prompt_addition,
+        notes=notes,
+        priority=priority,
+        queue_name=queue_name,
+    )
+    changes = [item for chunk in change_sets for item in chunk]
     if changes:
-        _append_dashboard_history(ticket, "dashboard_delegate", ", ".join(changes))
-        _write_sprint_file(path, data)
-
-    return {
-        "ok": True,
-        "ticket_id": ticket_id,
-        "changed": bool(changes),
-        "changes": changes,
-        "executor": executor,
-        "status": ticket.get("status"),
-    }
+        _append_dashboard_history(hit.ticket, "dashboard_delegate", ", ".join(changes))
+        _write_sprint_file(hit.path, hit.data)
+    return _delegation_result(ticket_id, hit.ticket, changes)

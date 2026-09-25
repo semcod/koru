@@ -23,9 +23,9 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "a5d54edb32c8adf2c6dd529ed519e225496b60f6",
+    "acceptedBaseSha": "872925ebe24c0e12f01bf941f69ee1d95d5a3c70",
     "targetBranch": "main",
-    "outcome": "Decompose delegate_ticket_from_dashboard in src/koruapi/dashboard_tickets.py into focused helper functions (_mapping_slot, _apply_executor_target, _apply_delegation_defaults, _apply_prompt_addition, _apply_operator_notes, _apply_delegation_priority, _apply_delegation_queue, _apply_llm_ready_label) to reduce cyclomatic complexity from CC=30 to <= 9 while preserving identical sprint-file mutation and delegation semantics.",
+    "outcome": "Decompose delegate_ticket_from_dashboard in src/koruapi/dashboard_tickets.py (CC=30) into focused helpers so code2llm reports neither a complexity nor a god-function/shotgun finding for it: wave 1 (PR #415) cut CC to 4; wave 2 removes the reintroduced fan-out/mutation/shotgun signals via _field_update, _SprintTicketHit, _delegation_change_sets and _delegation_result.",
     "nonGoals": [
       "Changing delegation result payload shape or history entries",
       "Altering priority/queue validation semantics",
