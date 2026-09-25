@@ -30,15 +30,12 @@ dataclasses); pass ``apply=True`` to ``run_scan`` to persist them as
 planfile tickets through ``planfile ticket create``.
 """
 
-
-import fnmatch
 import hashlib
 import json
 import os
 import re
 import shutil
 import subprocess
-from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from importlib.util import find_spec
 from pathlib import Path
@@ -90,6 +87,12 @@ from koru.scan_ticket_emission import (
 )
 from koru.scan_ticket_emission import (
     normalize_create_detail as _normalize_create_detail_impl,
+)
+from koru.scan_todo import (
+    DEFAULT_SCAN_EXCLUDES as _DEFAULT_SCAN_EXCLUDES,
+)
+from koru.scan_todo import (
+    scan_todo_markers as scan_todo_markers,
 )
 from koru.scan_types import (
     CreateTicketResult,
@@ -151,8 +154,13 @@ def scan_pytest_collect(
     # collection probe inside a 30s budget, so the plugin stays off here.
     # ``-p no:`` is a no-op for projects that never loaded the plugin.
     cmd = get_python_cmd(project) + [
-        "-m", "pytest", "--collect-only", "-q", "--no-header",
-        "-p", "no:wellmanifest_governance",
+        "-m",
+        "pytest",
+        "--collect-only",
+        "-q",
+        "--no-header",
+        "-p",
+        "no:wellmanifest_governance",
     ]
     try:
         result = use_runner(cmd, project)
@@ -250,151 +258,6 @@ def scan_pytest_collect(
                 ),
             )
     return suggestions
-
-
-_MARKER_RE = re.compile(r"\b(TODO|FIXME|XXX|HACK)\b[: ]")
-
-
-def _count_todo_markers(text: str) -> int:
-    """Count TODO/FIXME/XXX/HACK markers that live in *comments* only.
-
-    A work-marker is a comment convention (``# TODO: ...``). Counting the bare
-    regex across the whole file also matches the words inside string literals
-    and report labels — e.g. redsl, whose domain vocabulary is literally
-    ``"TODO issues before/after"`` — producing false cleanup tickets on every
-    scan. Tokenizing and inspecting only COMMENT tokens removes that noise.
-    Files that fail to tokenize (syntax errors, py2, partial edits) fall back to
-    the whole-text regex so genuine markers are never silently dropped.
-    """
-    import io
-    import tokenize
-
-    try:
-        comments = [
-            tok.string
-            for tok in tokenize.generate_tokens(io.StringIO(text).readline)
-            if tok.type == tokenize.COMMENT
-        ]
-    except (tokenize.TokenError, IndentationError, SyntaxError, ValueError):
-        return len(_MARKER_RE.findall(text))
-    return sum(len(_MARKER_RE.findall(c)) for c in comments)
-_DEFAULT_SCAN_EXCLUDES: frozenset[str] = frozenset(
-    {
-        ".git",
-        "__pycache__",
-        ".venv",
-        ".venv-test",
-        "venv",
-        "node_modules",
-        "build",
-        "dist",
-        ".pytest_cache",
-        ".mypy_cache",
-        ".ruff_cache",
-        ".code2llm_cache",
-        ".playwright-browsers",
-    },
-)
-
-
-def _load_koruignore_patterns(project: Path) -> tuple[str, ...]:
-    """Load optional scan ignore patterns from ``.koruignore``.
-
-    The format is intentionally minimal: one glob pattern per line,
-    blank lines and ``#`` comments are ignored.
-    """
-    ignore_file = project / ".koruignore"
-    if not ignore_file.is_file():
-        return ()
-    try:
-        lines = ignore_file.read_text(encoding="utf-8", errors="ignore").splitlines()
-    except OSError:
-        return ()
-
-    patterns: list[str] = []
-    for raw in lines:
-        line = raw.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("./"):
-            line = line[2:]
-        elif line.startswith("/"):
-            line = line[1:]
-        patterns.append(line)
-    return tuple(patterns)
-
-
-def _is_koruignored(rel_path: Path, patterns: Sequence[str]) -> bool:
-    """Return ``True`` when ``rel_path`` matches a ``.koruignore`` pattern."""
-    if not patterns:
-        return False
-
-    rel = rel_path.as_posix()
-    basename = rel_path.name
-    for pattern in patterns:
-        if not pattern:
-            continue
-
-        if pattern.endswith("/"):
-            prefix = pattern.rstrip("/")
-            if rel == prefix or rel.startswith(f"{prefix}/"):
-                return True
-            continue
-
-        if fnmatch.fnmatch(rel, pattern):
-            return True
-        # Bare filename patterns should match in any directory.
-        if "/" not in pattern and fnmatch.fnmatch(basename, pattern):
-            return True
-
-    return False
-
-
-def scan_todo_markers(
-    project: Path,
-    *,
-    min_per_file: int = 3,
-    max_files_walked: int = 2_000,
-) -> list[Suggestion]:
-    """Count TODO/FIXME/XXX/HACK per Python file; suggest cleanup tickets.
-
-    ``min_per_file`` filters out trivial cases — most repos accumulate a
-    handful of historical TODOs that are not worth surfacing.
-    """
-    counts: Counter[str] = Counter()
-    koruignore_patterns = _load_koruignore_patterns(project)
-    walked = 0
-    for path in project.rglob("*.py"):
-        walked += 1
-        if walked > max_files_walked:
-            break
-        if any(part in _DEFAULT_SCAN_EXCLUDES for part in path.parts):
-            continue
-        rel_path = path.relative_to(project)
-        if _is_koruignored(rel_path, koruignore_patterns):
-            continue
-        try:
-            text = path.read_text(encoding="utf-8", errors="ignore")
-        except OSError:
-            continue
-        n = _count_todo_markers(text)
-        if n >= min_per_file:
-            counts[str(rel_path)] = n
-    return [
-        Suggestion(
-            signal="todo_markers",
-            title=f"Resolve {n} TODO/FIXME markers in {rel_path}",
-            description=(
-                f"Static scan found **{n}** TODO/FIXME/XXX/HACK markers "
-                f"in `{rel_path}`. Either address them or convert each into "
-                "an explicit planfile ticket so backlog stays honest."
-            ),
-            priority="low",
-            labels=("cleanup", "scan"),
-            files=(rel_path,),
-        )
-        for rel_path, n in counts.most_common(10)
-    ]
 
 
 _GATE_MARKERS: tuple[tuple[str, str, str], ...] = (
@@ -821,9 +684,7 @@ def _is_extern_mirror_file_group(files: Sequence[str]) -> bool:
         return False
     for host in other:
         host_l = host.lower()
-        if not any(
-            e.lower().endswith("/" + host_l) or e.lower().endswith(host_l) for e in extern
-        ):
+        if not any(e.lower().endswith("/" + host_l) or e.lower().endswith(host_l) for e in extern):
             return False
     return True
 
@@ -969,16 +830,17 @@ def _parse_dup_suggestions(
         suggestions.append(
             _with_source_context(
                 Suggestion(
-                signal="code2llm_dup",
-                title=f"Remove {count} duplicate class groups (code2llm analysis)",
-                description=(
-                    f"`{rel}` reports **{count}** duplicate class name groups "
-                    "(merged, not pairwise). "
-                    "Extract shared helpers/modules; re-run the source.context.evidence.regenerate_command to refresh."
-                ),
-                priority="high",
-                labels=("code2llm", "duplication", "refactor", "scan"),
-                files=(rel,),
+                    signal="code2llm_dup",
+                    title=f"Remove {count} duplicate class groups (code2llm analysis)",
+                    description=(
+                        f"`{rel}` reports **{count}** duplicate class name groups "
+                        "(merged, not pairwise). "
+                        "Extract shared helpers/modules; "
+                        "re-run the source.context.evidence.regenerate_command to refresh."
+                    ),
+                    priority="high",
+                    labels=("code2llm", "duplication", "refactor", "scan"),
+                    files=(rel,),
                 ),
                 source_context,
             ),
@@ -1002,16 +864,16 @@ def _parse_god_module_suggestions(
         suggestions.append(
             _with_source_context(
                 Suggestion(
-                signal="code2llm_god",
-                title=f"Split god module: {file_path}",
-                description=(
-                    f"`{rel}` flags `{file_path}` as a god module "
-                    f"({loc} lines, {classes} classes, {methods} methods). "
-                    "Split into focused submodules by responsibility."
-                ),
-                priority="high",
-                labels=("code2llm", "god-module", "refactor", "scan"),
-                files=(file_path, rel),
+                    signal="code2llm_god",
+                    title=f"Split god module: {file_path}",
+                    description=(
+                        f"`{rel}` flags `{file_path}` as a god module "
+                        f"({loc} lines, {classes} classes, {methods} methods). "
+                        "Split into focused submodules by responsibility."
+                    ),
+                    priority="high",
+                    labels=("code2llm", "god-module", "refactor", "scan"),
+                    files=(file_path, rel),
                 ),
                 source_context,
             ),
@@ -1084,17 +946,17 @@ def _parse_high_cc_suggestions(
         suggestions.append(
             _with_source_context(
                 Suggestion(
-                signal="code2llm_cc",
-                title=f"Reduce cyclomatic complexity: {func} (CC={cc}, limit={limit})",
-                description=(
-                    f"`{rel}` reports `{func}` with CC={cc} (limit={limit}), "
-                    f"defined in {where}. "
-                    "Extract sub-functions, simplify conditionals, or split into strategy pattern. "
-                    "Preserve behaviour — this is a pure refactor."
-                ),
-                priority="normal",
-                labels=("code2llm", "complexity", "refactor", "scan"),
-                files=files,
+                    signal="code2llm_cc",
+                    title=f"Reduce cyclomatic complexity: {func} (CC={cc}, limit={limit})",
+                    description=(
+                        f"`{rel}` reports `{func}` with CC={cc} (limit={limit}), "
+                        f"defined in {where}. "
+                        "Extract sub-functions, simplify conditionals, or split into strategy pattern. "
+                        "Preserve behaviour — this is a pure refactor."
+                    ),
+                    priority="normal",
+                    labels=("code2llm", "complexity", "refactor", "scan"),
+                    files=files,
                 ),
                 source_context,
             ),
@@ -1130,15 +992,15 @@ def _parse_refactor_suggestions(
         suggestions.append(
             _with_source_context(
                 Suggestion(
-                signal="code2llm_refactor",
-                title=f"code2llm refactor: {desc}",
-                description=(
-                    f"REFACTOR item from `{rel}`: **{desc}** ({note}). "
-                    "Execute this refactor step; re-run the source.context.evidence.regenerate_command to verify."
-                ),
-                priority="normal",
-                labels=("code2llm", "refactor", "scan"),
-                files=(rel,),
+                    signal="code2llm_refactor",
+                    title=f"code2llm refactor: {desc}",
+                    description=(
+                        f"REFACTOR item from `{rel}`: **{desc}** ({note}). "
+                        "Execute this refactor step; re-run the source.context.evidence.regenerate_command to verify."
+                    ),
+                    priority="normal",
+                    labels=("code2llm", "refactor", "scan"),
+                    files=(rel,),
                 ),
                 source_context,
             ),
@@ -1204,17 +1066,17 @@ def _parse_layer_hotspot_suggestions(
         suggestions.append(
             _with_source_context(
                 Suggestion(
-                signal="code2llm_layer_hotspot",
-                title=f"Split large module: {module}",
-                description=(
-                    f"`{rel}` flags `{module}` in LAYERS as a large/hot module "
-                    f"({loc} lines, {classes} classes, {methods} methods, CC={cc:g}). "
-                    "Extract cohesive submodules around stable responsibilities and add "
-                    "focused regression tests before broad edits."
-                ),
-                priority=priority,
-                labels=("code2llm", "architecture", "large-module", "refactor", "scan"),
-                files=ticket_files or (rel,),
+                    signal="code2llm_layer_hotspot",
+                    title=f"Split large module: {module}",
+                    description=(
+                        f"`{rel}` flags `{module}` in LAYERS as a large/hot module "
+                        f"({loc} lines, {classes} classes, {methods} methods, CC={cc:g}). "
+                        "Extract cohesive submodules around stable responsibilities and add "
+                        "focused regression tests before broad edits."
+                    ),
+                    priority=priority,
+                    labels=("code2llm", "architecture", "large-module", "refactor", "scan"),
+                    files=ticket_files or (rel,),
                 ),
                 source_context,
             ),
@@ -1736,9 +1598,14 @@ def _scan_metrun_report(project: Path) -> list[Suggestion]:
 
 
 def _todo2code_plan_suggestion(
-    plan: dict[str, Any], *, project: Path, plans_rel: str,
-    is_useful_plan: Callable[..., bool], plan_useful_paths: Callable[..., list[str]],
-    priority_map: Mapping[str, str], source: str,
+    plan: dict[str, Any],
+    *,
+    project: Path,
+    plans_rel: str,
+    is_useful_plan: Callable[..., bool],
+    plan_useful_paths: Callable[..., list[str]],
+    priority_map: Mapping[str, str],
+    source: str,
     dedupe_key: Callable[[dict[str, Any]], str],
 ) -> Suggestion | None:
     """Convert one useful grounded plan into a scan suggestion."""
@@ -1754,19 +1621,24 @@ def _todo2code_plan_suggestion(
     if priority not in {"high", "normal", "low"}:
         priority = "normal"
     return Suggestion(
-        signal="todo2code_plan", title=f"[todo2code] {title}",
+        signal="todo2code_plan",
+        title=f"[todo2code] {title}",
         description=(
             f"{description}\n\nSource: `{plans_rel}` "
             f"(plan id {plan.get('id') or 'n/a'}). Implement only declared target paths."
         ),
-        priority=priority, labels=("todo2code", "code-change", "scan", "useful-code-change"),
+        priority=priority,
+        labels=("todo2code", "code-change", "scan", "useful-code-change"),
         files=tuple(paths[:12]),
         source_context=_todo2code_source_context(plan, dedupe_key=dedupe_key, source=source),
     )
 
 
 def _todo2code_source_context(
-    plan: dict[str, Any], *, dedupe_key: Callable[[dict[str, Any]], str], source: str,
+    plan: dict[str, Any],
+    *,
+    dedupe_key: Callable[[dict[str, Any]], str],
+    source: str,
 ) -> dict[str, Any]:
     evidence = plan.get("evidence") if isinstance(plan.get("evidence"), dict) else {}
     return {
@@ -1812,9 +1684,14 @@ def _scan_todo2code_plans(project: Path) -> list[Suggestion]:
     suggestions: list[Suggestion] = []
     for plan in plans:
         suggestion = _todo2code_plan_suggestion(
-            plan, project=project, plans_rel=plans_rel, is_useful_plan=is_useful_plan,
-            plan_useful_paths=plan_useful_paths, priority_map=_PRIORITY_MAP,
-            source=TODO2CODE_SOURCE, dedupe_key=_plan_dedupe_key,
+            plan,
+            project=project,
+            plans_rel=plans_rel,
+            is_useful_plan=is_useful_plan,
+            plan_useful_paths=plan_useful_paths,
+            priority_map=_PRIORITY_MAP,
+            source=TODO2CODE_SOURCE,
+            dedupe_key=_plan_dedupe_key,
         )
         if suggestion is not None:
             suggestions.append(suggestion)
@@ -1856,17 +1733,11 @@ def _matches_scan_filter(value: str, wanted: str) -> bool:
 
 
 def _suggestion_matches_paths(suggestion: Suggestion, paths: Sequence[str | Path]) -> bool:
-    wanted_paths = tuple(
-        path for path in (_normalize_scan_filter_path(item) for item in paths) if path
-    )
+    wanted_paths = tuple(path for path in (_normalize_scan_filter_path(item) for item in paths) if path)
     if not wanted_paths:
         return True
     haystack = [*suggestion.files, suggestion.title, suggestion.description]
-    return any(
-        _matches_scan_filter(str(value), wanted)
-        for value in haystack
-        for wanted in wanted_paths
-    )
+    return any(_matches_scan_filter(str(value), wanted) for value in haystack for wanted in wanted_paths)
 
 
 def _filter_suggestions_by_paths(
@@ -1916,11 +1787,7 @@ def apply_scan_path_environ(paths: Sequence[str | Path] | None) -> None:
     """Publish scoped scan paths for autonomous cycles via ``KORU_SCAN_PATHS``."""
     if not paths:
         return
-    normalized = [
-        item
-        for item in (_normalize_scan_filter_path(part) for part in paths)
-        if item
-    ]
+    normalized = [item for item in (_normalize_scan_filter_path(part) for part in paths) if item]
     if normalized:
         os.environ["KORU_SCAN_PATHS"] = ":".join(normalized)
 
@@ -2206,9 +2073,7 @@ def run_scan(
 
     admission = scan_admission(project)
     if admission is not None and not admission["admit_new"]:
-        return ScanResult(suggestions=suggestions,
-                          skipped=[s.title for s in suggestions],
-                          fleet_admission=admission)
+        return ScanResult(suggestions=suggestions, skipped=[s.title for s in suggestions], fleet_admission=admission)
     # A single observation cannot authorize a batch of newly queued tickets.
     selected = suggestions[:1] if admission is not None else suggestions
     result = _apply_scan_suggestions(project, selected, source=source, runner=runner)
@@ -2216,6 +2081,9 @@ def run_scan(
         return result
     from dataclasses import replace
 
-    return replace(result, suggestions=suggestions,
-                   skipped=[*result.skipped, *(s.title for s in suggestions[1:])],
-                   fleet_admission=admission)
+    return replace(
+        result,
+        suggestions=suggestions,
+        skipped=[*result.skipped, *(s.title for s in suggestions[1:])],
+        fleet_admission=admission,
+    )
