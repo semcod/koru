@@ -21,6 +21,76 @@ def safe_identifier(value: object) -> str:
     return value if isinstance(value, str) and _IDENTIFIER.fullmatch(value) else ""
 
 
+def _resolve_explicit_or_pinned_model(
+    explicit_model: str,
+    inputs: Mapping[str, Any],
+    env: Mapping[str, str],
+) -> tuple[str, str] | None:
+    model = explicit_model or str(inputs.get("llm_model") or "")
+    if model:
+        return model, "explicit_request"
+    pinned = env.get("KORU_TILLM_FORCE_MODEL", "").strip()
+    if pinned:
+        return pinned, "operator_pin"
+    return None
+
+
+def _resolve_routing_mapping(
+    task: Mapping[str, Any],
+    inputs: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    source = task.get("source")
+    context = source.get("context") if isinstance(source, Mapping) else None
+    routing = context.get("model_routing") if isinstance(context, Mapping) else None
+    return routing if isinstance(routing, Mapping) else inputs
+
+
+def _is_valid_file_target(file_path: object) -> bool:
+    if not isinstance(file_path, str):
+        return False
+    if "\\" in file_path or any(c in file_path for c in "*?[]"):
+        return False
+    path = PurePosixPath(file_path)
+    return (
+        not path.is_absolute()
+        and ".." not in path.parts
+        and path.suffix == ".py"
+        and bool(path.parts)
+        and path.parts[0] in {"src", "tests", "test"}
+    )
+
+
+def _is_valid_labels(raw_labels: object) -> tuple[bool, set[str]]:
+    if raw_labels is None:
+        return True, set()
+    if isinstance(raw_labels, list) and all(isinstance(x, str) for x in raw_labels):
+        return True, set(raw_labels)
+    return False, set()
+
+
+def _is_bounded_ruff_codes(codes: object) -> bool:
+    return (
+        isinstance(codes, list)
+        and 0 < len(codes) <= 10
+        and all(isinstance(code, str) and code in _LINT_CODES for code in codes)
+    )
+
+
+def _is_bounded_lint_fix(
+    task: Mapping[str, Any],
+    routing: Mapping[str, Any],
+) -> bool:
+    files = task.get("files")
+    if not (isinstance(files, list) and len(files) == 1):
+        return False
+    if not _is_valid_file_target(files[0]):
+        return False
+    valid_labels, labels = _is_valid_labels(task.get("labels"))
+    if not valid_labels or labels.intersection(_COMPLEX_LABELS):
+        return False
+    return _is_bounded_ruff_codes(routing.get("ruff_codes"))
+
+
 def select_task_model(
     task: Mapping[str, Any] | None,
     *,
@@ -30,50 +100,27 @@ def select_task_model(
     environ: Mapping[str, str] | None = None,
 ) -> dict[str, str]:
     env = os.environ if environ is None else environ
-    task = task if isinstance(task, Mapping) else {}
-    inputs = task.get("inputs")
-    inputs = inputs if isinstance(inputs, Mapping) else {}
-    model = explicit_model or str(inputs.get("llm_model") or "")
-    reason = "explicit_request"
-    if not model:
-        model = env.get("KORU_TILLM_FORCE_MODEL", "").strip()
-        reason = "operator_pin"
-    if model:
+    task_map = task if isinstance(task, Mapping) else {}
+    inputs = task_map.get("inputs")
+    inputs_map = inputs if isinstance(inputs, Mapping) else {}
+
+    forced = _resolve_explicit_or_pinned_model(explicit_model, inputs_map, env)
+    if forced is not None:
+        model, reason = forced
         return {"model": model, "reason": reason}
+
     default = default_model or env.get("KORU_TILLM_MODEL", "").strip()
     simple = env.get("KORU_TILLM_SIMPLE_MODEL", "").strip()
-    reason = "simple_model_disabled" if not simple else "unclassified_task"
-    files = task.get("files")
-    source = task.get("source")
-    context = source.get("context") if isinstance(source, Mapping) else None
-    routing = context.get("model_routing") if isinstance(context, Mapping) else None
-    # Planfile preserves source.context extensions but drops unknown TicketInputs.
-    routing = routing if isinstance(routing, Mapping) else inputs
-    codes = routing.get("ruff_codes")
-    labels = task.get("labels")
-    valid_labels = labels is None or (isinstance(labels, list) and all(isinstance(x, str) for x in labels))
-    labels = set(labels or []) if valid_labels else set()
-    # Smallness is a closed, structured contract, not a guess from prompt/title.
-    if simple and client_id == "opencode" and routing.get("llm_task_kind") == "lint_fix":
-        reason = "unbounded_lint_scope"
-        if isinstance(files, list) and len(files) == 1 and isinstance(files[0], str):
-            path = PurePosixPath(files[0])
-            bounded = (
-                not path.is_absolute()
-                and ".." not in path.parts
-                and "\\" not in files[0]
-                and not any(c in files[0] for c in "*?[]")
-                and path.suffix == ".py"
-                and path.parts[0] in {"src", "tests", "test"}
-                and valid_labels
-                and not labels.intersection(_COMPLEX_LABELS)
-                and isinstance(codes, list)
-                and 0 < len(codes) <= 10
-                and all(isinstance(code, str) and code in _LINT_CODES for code in codes)
-            )
-            if bounded:
-                return {"model": simple, "reason": "bounded_lint"}
-    return {"model": default, "reason": reason}
+    if not simple:
+        return {"model": default, "reason": "simple_model_disabled"}
+
+    routing = _resolve_routing_mapping(task_map, inputs_map)
+    if client_id == "opencode" and routing.get("llm_task_kind") == "lint_fix":
+        if _is_bounded_lint_fix(task_map, routing):
+            return {"model": simple, "reason": "bounded_lint"}
+        return {"model": default, "reason": "unbounded_lint_scope"}
+
+    return {"model": default, "reason": "unclassified_task"}
 
 
 def load_routing_task(project: Path, ticket_id: str) -> dict[str, Any]:

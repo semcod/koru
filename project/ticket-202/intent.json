@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-202",
+  "summary": "Reduce cyclomatic complexity in select task model",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-202/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/task_model_policy.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "652c6ed003e8345f45a64a0902e4cf67bb2f8e1d",
+    "targetBranch": "main",
+    "outcome": "Decompose select_task_model in src/koru/task_model_policy.py into focused helper functions (_resolve_explicit_or_pinned_model, _resolve_routing_mapping, _is_valid_file_target, _is_valid_labels, _is_bounded_ruff_codes, _is_bounded_lint_fix) to reduce cyclomatic complexity from CC=38 to <= 6 while maintaining exact model selection behavior and reason tracking.",
+    "nonGoals": [
+      "Changing model selection logic or fallback conditions",
+      "Altering allowed lint codes, complex labels, or target path constraints"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _resolve_explicit_or_pinned_model, _resolve_routing_mapping, _is_valid_file_target, _is_valid_labels, _is_bounded_ruff_codes, and _is_bounded_lint_fix from select_task_model.",
+      "components": [
+        {
+          "name": "task-model-policy",
+          "paths": [
+            "src/koru/task_model_policy.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore inline select_task_model implementation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m radon cc src/koru/task_model_policy.py -s"
+        ],
+        "evidence": "Cyclomatic complexity of select_task_model and all helpers is <= 6."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q tests/test_task_model_policy.py"
+        ],
+        "evidence": "All existing task model policy tests pass unchanged."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
