@@ -167,6 +167,11 @@ zatwierdził wypchnięcie i scalenie zaległych ticketów Koru. Ta późniejsza
 autoryzacja obejmuje publikację raportu zwykłą ścieżką chronionego
 Validatora; bypass rulesetu nie jest dozwolony.
 
+Kontrakt ticketu ogranicza tę publikację do raportu i jego indeksu. Kontrole
+governance, standard-pack, projekcji i dokładnego heada są warunkami dostawy;
+wyników walidacji tej publikacji nie należy dopisywać do rekonstrukcji zdarzenia
+PR361 ani traktować jako retrospektywnego zatwierdzenia tamtego merge'a.
+
 ## Aktualizacja v4: odczyt działającego dziennika SubLLM, 19:57 UTC
 
 API Koru zwróciło teraz SubLLM `status=ready` i pięć zapisów aplikacji

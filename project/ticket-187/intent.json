@@ -21,5 +21,70 @@
   "stacks": [],
   "dependsOn": [],
   "conflictsWith": [],
-  "integrationTicket": null
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2ab210daf67462620ddf70834e09de21491980de",
+    "targetBranch": "main",
+    "outcome": "Publish the versioned PR361 exact-head merge audit and index it. The report uses protected receipts by digest and separates observed facts from hypotheses and recommendations; no application code or governance behavior changes.",
+    "nonGoals": [
+      "Changing Koru merge, approval, or Validator behavior",
+      "Publishing protected receipt contents or inferring approval from historical checks",
+      "Using an actor bypass"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep this delivery documentation-only: append version 5 to the existing analysis and add its docs index entry. Preserve the v1-v4 history and cite protected evidence by digest so the report does not expose receipt contents or alter runtime policy.",
+      "components": [
+        {
+          "name": "pr361-merge-audit",
+          "paths": [
+            "docs/analysis/simple-task-model-routing.md",
+            "docs/README.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the documentation commit to remove the version 5 report section and its index entry."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python project/governance-check.sh"
+        ],
+        "evidence": "Governance gate reports zero errors and warnings."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python .governance/standard_pack_check.py --root . --format json",
+          "python .governance/standard_pack_projection_check.py"
+        ],
+        "evidence": "Managed standard pack and projection checks pass."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "git diff --check origin/main...HEAD"
+        ],
+        "evidence": "Published documentation diff has no whitespace errors."
+      }
+    ]
+  }
 }

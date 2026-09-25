@@ -43,6 +43,15 @@ path. Actor bypass is not authorized.
 This directory contains the minimal reviewed intent. Optional participant prose
 and raw command logs are not required delivery output.
 
+## Delivery contract
+
+This is a documentation-only S-sized integration delivery. It appends the
+version 5 audit to the existing analysis and indexes it in `docs/README.md`.
+The report preserves versions 1–4, cites protected evidence by digest, and
+does not change runtime, merge, approval, or Validator behavior. The contract
+in `intent.json` records the accepted base, architecture, rollback, and the
+governance, standard-pack, projection, and diff checks used for publication.
+
 ## Publication reconciliation (2026-09-25)
 
 The work-start preflight reported stale registered worktrees as pending. Their
