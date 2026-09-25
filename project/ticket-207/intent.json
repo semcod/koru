@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-207",
+  "summary": "Reduce cyclomatic complexity in terminal_prompt",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-207/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_terminals.py",
+    "tests/test_dashboard_terminals.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "151f3c8e0cba0a8ca31e9ddeb56e9702a574b080",
+    "targetBranch": "main",
+    "outcome": "Decompose terminal_prompt in src/koruapi/opencode_terminals.py into focused helper functions (_resolve_terminal_target, _create_session_with_failover, _retry_session_failover, _send_prompt_with_failover, _retry_prompt_failover) to reduce cyclomatic complexity from CC=29 to <= 6 while preserving identical session creation, provider exhaustion handling, failover metadata, and prompt execution semantics.",
+    "nonGoals": [
+      "Changing terminal_prompt request or response payload contracts",
+      "Altering parse_exhaustion_from_error or resolve_active_terminal_model behavior",
+      "Modifying terminal_reply or instance_status in this ticket"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract target resolution, session creation failover, and prompt retry failover into dedicated helper functions with CC <= 6.",
+      "components": [
+        {
+          "name": "opencode-terminals",
+          "paths": [
+            "src/koruapi/opencode_terminals.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the inline terminal_prompt implementation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m radon cc src/koruapi/opencode_terminals.py -s -n C"
+        ],
+        "evidence": "Cyclomatic complexity of terminal_prompt and all new helpers is <= 9."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q tests/test_dashboard_terminals.py tests/test_opencode_serve_scan.py"
+        ],
+        "evidence": "All existing opencode terminal tests pass unchanged."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
