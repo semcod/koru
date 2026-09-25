@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-211",
+  "summary": "Decompose god function context file sections",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-211/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/context.py",
+    "tests/test_llm_context.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "4d34e5cce9ad769fff9d0dbef5bf338a83c5d7cb",
+    "targetBranch": "main",
+    "outcome": "Decompose _context_file_sections in src/koru/queue/context.py: extract the oversized-file slicing block into _focused_file_slice returning a _FocusedSlice NamedTuple and convert _resolve_target_symbol_and_line, _extract_python_symbol_slice and _extract_line_slice to NamedTuple results (_TargetRef, _CodeSlice), dropping the function from CC=10 / fan-out=9 / mutations=28 to CC=4 / fan-out=3 / mutations=6 (god-function thresholds: fan-out > 10, mutations > 6, CC > 12) while preserving identical slicing decisions, header notes, section formatting and the public build_project_context contract.",
+    "nonGoals": [
+      "Reducing the pre-existing complexity of _resolve_target_symbol_and_line (radon CC 19, unchanged by this ticket)",
+      "Changing slicing thresholds, window sizes or symbol resolution heuristics",
+      "Refactoring other functions in src/koru/queue/context.py such as build_project_context"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract the per-file slicing decision into _focused_file_slice (CC 7) and return NamedTuples from the three slicing helpers so the decomposed loop body contains no tuple unpacking, which code2llm double-counts as mutations.",
+      "components": [
+        {
+          "name": "queue-context",
+          "paths": [
+            "src/koru/queue/context.py",
+            "tests/test_llm_context.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the inline slicing block and plain tuple returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m radon cc src/koru/queue/context.py -s -n C",
+          "python3 -c \"from code2llm import ProjectAnalyzer, Config; from pathlib import Path; from collections import Counter; r=ProjectAnalyzer(Config(), Path('/tmp/metric_probe')).analyze_project(Path('/tmp/metric_probe')); print(Counter(m.scope for m in r.mutations))\""
+        ],
+        "evidence": "Cyclomatic complexity of _context_file_sections is rank A (4) and its mutation count is 6, at or below every god-function threshold."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q tests/test_llm_context.py tests/test_cursor_llm.py"
+        ],
+        "evidence": "All existing context assembly tests pass unchanged and the new target_line fallback regression test passes."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}

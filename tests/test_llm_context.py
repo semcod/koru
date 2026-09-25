@@ -747,6 +747,29 @@ class TestLlmContextEndToEnd(unittest.TestCase):
             self.assertIn("focused AST slice for 'god_function_worker'", result.text)
             self.assertNotIn("def filler_120():", result.text)
 
+    def test_large_file_line_slice_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            filler = "\n".join(
+                f"# filler line {i} padded to push the file past the slice threshold"
+                for i in range(300)
+            )
+            big_text = filler + "\nTARGET MARKER LINE\n" + filler
+            self.assertGreater(len(big_text), 12_000)
+            (project / "notes.txt").write_text(big_text, encoding="utf-8")
+
+            request = {
+                "prompt": "analyse",
+                "context_files": ["notes.txt"],
+                "target_line": 300,
+            }
+            result = build_project_context(project, request)
+            self.assertIsNotNone(result)
+            assert result is not None
+            self.assertIn("focused slice around line 300", result.text)
+            self.assertIn("TARGET MARKER LINE", result.text)
+            self.assertNotIn("# filler line 0\n", result.text)
+
     def test_resolve_target_symbol_and_line_from_prompt(self):
         from koru.queue.context import _resolve_target_symbol_and_line
 
