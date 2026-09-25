@@ -3,14 +3,14 @@
   "schema": "wellmanifest.docs/document/v1",
   "id": "simple-task-model-routing",
   "kind": "analysis",
-  "version": 4,
+  "version": 5,
   "title": "Koru: model dla prostych zadan i pilotaz Flash",
   "status": "proposed",
   "owner": "semcod/koru",
   "scope": "repository",
   "created": "2026-09-19",
-  "updated": "2026-09-19",
-  "review_after": "2026-09-26",
+  "updated": "2026-09-25",
+  "review_after": "2026-10-02",
   "source_revision": "9ce405d00bb52e009774d88ead6993febc45858e",
   "affected_repositories": [
     "semcod/koru"
@@ -22,13 +22,155 @@
     "https://docs.astral.sh/ruff/linter/#fix-safety",
     "https://github.com/semcod/koru/pull/361",
     "https://github.com/semcod/koru/pull/362",
-    "https://github.com/subactor/subllm/pull/83"
+    "https://github.com/subactor/subllm/pull/83",
+    "knowledge://planfile/STARTER-735/koru-model-routing-audit",
+    "https://github.com/semcod/koru/settings/rules/22026679",
+    "receipt:digest=7dc49cf3901f0ea6e925070d32f57a2622e69ae0eb7412a5960d879fd2d1aee1 correlation_id=local-semcod-koru-pr-361-ticket-179 registry_digest=4b36dd612732400ebe365e4fb6b1ce3f8e3e947d0cdbe1e9faab0eeec9d91ec0",
+    "https://github.com/subactor/validator-agent/tree/673f4a387f3227a96b7040c76f82fc80e7697b2f/src/validator_agent/github.py"
   ]
 }
 ---
-
 # Koru: wybór modelu dla prostych zadań
 
+## Aktualizacja v5: audyt wyścigu exact-head przy scaleniu PR361 (STARTER-735), 2026-09-20
+
+Rozstrzygnięcie pytania z sekcji „Luka w dowodach publikacji" (v3):
+czy przy scaleniu PR361 egzekwowano CAS na dokładnym headzie.
+
+**Wniosek: nie. Operacja scalenia nie była związana z headem po stronie
+serwera. Zgodność heada egzekwowano wyłącznie odczytami klienta przed
+scaleniem oraz detekcją po fakcie; scalona zawartość nie miała nigdy
+obowiązującej aprobaty ani wymaganego statusu `onedev/local-verify`.**
+
+### Fakty
+
+Oś czasu (UTC, 2026-09-19; odczyty GitHub i git read-only 2026-09-20):
+
+| Czas | Zdarzenie |
+|---|---|
+| 19:38:39 | commit `acf71f47` na gałęzi ticketu (recenzowany zakres `d1a2e231..acf71f47`, 10 plików, +764/−4, `diff_sha256 df02b2a5…`) |
+| 19:44:04 | lokalnie utworzony commit `60510a80` (4 pliki, +28/−3; m.in. `src/koru/task_model_policy.py`, `src/koru/queue/ticket.py`) |
+| 19:44:19 | aprobara `5257358794` `ifuri-validator-agent[bot]` na `acf71f47` |
+| ~19:44:19–39 | konwergencja po aprobacie: 2 stabilne odczyty head=`acf71f47` (interwał 10 s) i zaliczona pre-merge walidacja heada |
+| 19:44:40 | push `60510a80` → GitHub zdyskwalifikował aprobate (`dismiss_stale_reviews_on_push`; aktor zdarzenia: pusher) |
+| 19:44:46–47 | start check-runów Actions na nowym headzie |
+| 19:44:49–50 | REST merge → merge commit `9ce405d0` z drugim rodzicem `60510a80`; stan MERGED |
+| 19:44:51 | bot usunął gałąź head (`VALIDATOR_DELETE_BRANCH_AFTER_MERGE`) |
+| po 19:44:50 | odczyt po scaleniu: head `60510a80` ≠ oczekiwane `acf71f47` → `STALE_HEAD_CHANGED`; receipt status=`blocked` (`merged=true`) |
+
+Obserwacje GitHub (read-only):
+
+- Review `5257358794`: `state=DISMISSED`, `commit_id=acf71f47`,
+  `submitted_at=19:44:19Z`.
+- PR361: `MERGED`, `mergedAt=19:44:50Z`, `mergeCommit=9ce405d0`,
+  finalny `headRefOid=60510a80`.
+- Statusy commitów: `acf71f47` → `onedev/local-verify` success
+  (`total_count=1`); `60510a80` → `total_count=0` — zapytanie o statusy
+  nowego heada nie zwróciło żadnych; `onedev/local-verify` nigdy nie
+  raportował na scalonej rewizji.
+- Check-runs na `60510a80`: 7 (Actions: `smoke`, `governance / enforce`,
+  `governance / remote lifecycle`, `standard packs / conformance`;
+  zielone/skipped, 19:44:46–55) — nie zawierają `onedev/local-verify`.
+- Ruleset 22026679 „protected exact-head delivery" (active,
+  `refs/heads/main`): wymagane konteksty `onedev/local-verify` i
+  `standard packs / conformance` (`strict`), `dismiss_stale_reviews_on_push=true`,
+  `required_approving_review_count=0`; `bypass_actors`:
+  RepositoryRole(id 5, always) oraz Integration(id 4344831, always).
+  Ponieważ `onedev/local-verify` nie istnieje na `60510a80`, scalenie
+  przeszło wyłącznie dzięki bypassowi Integracji; liczba wymaganych
+  aprobat równa zero oznacza, że dyskwalifikacja sama w sobie niczego
+  nie blokowała.
+
+Analiza chronionego adaptera (źródło `subactor/validator-agent` oraz
+wdrożone wydanie `673f4a38…`, identyczne w zakresie scalania):
+
+- `_rest_merge_pull_request` (`src/validator_agent/github.py`): `PUT
+  /repos/{owner}/{repo}/pulls/{n}/merge` z wyłącznie `merge_method` —
+  bez parametru `sha`, więc GitHub scala aktualny head. To ścieżka
+  główna; brak CAS po stronie serwera.
+- `_graphql_merge_pull_request`: mutacja `mergePullRequest` z
+  `expectedHeadOid` (prawdziwy CAS na headzie) — używana wyłącznie jako
+  fallback po wąsko rozpoznanej niezgodności polityki HTTP 405 („Merge
+  commits are not allowed"). W receipcie PR361 nie ma operacji fallback,
+  więc scalono ścieżką REST.
+- Zgodność heada sprawdzana jest tylko odczytami klienta: konwergencja
+  po aprobacie (minimum 2 stabilne odczyty), `_validate_pull_request`
+  przed scaleniem (`direct_validation.py`, błąd `STALE_HEAD_CHANGED`) oraz
+  `_validate_merged_pull_request` po scaleniu. Okno wyścigu (TOCTOU)
+  między ostatnim odczytem klienta a scaleniem serwera wyniosło około
+  9–10 s (push ≈19:44:40, scalenie 19:44:49–50; interwał stabilnych
+  odczytów 10 s).
+
+Scalona rewizja `60510a80` nie posiadała więc żadnego z trzech
+niezależnych warunków publikacji: (a) obowiązującej aprobaty w GitHub,
+(b) wymaganego statusu `onedev/local-verify`, (c) pokrycia recenzji —
+`diff_sha256` recenzji LLM i ocena semantyczna obejmują wyłącznie
+`d1a2e231..acf71f47`. Zielone checki z `acf71f47` oraz zielone runy
+Actions na `60510a80` nie są autoryzacją (zgodnie z warunkami zadania
+nie wnioskowano autoryzacji ze starszych zielonych checków).
+
+Chronione receipty zachowane bez zmian: receipt direct-pr
+`semcod/koru#361` (digest katalogu `7dc49cf3901f0ea6e925070d32f57a2622e69ae0eb7412a5960d879fd2d1aee1`,
+`correlation_id=local-semcod-koru-pr-361-ticket-179`, `registry_digest
+4b36dd61…` zgodny z oczekiwanym digestem rejestru). Receipt
+`subactor/onedev-agent#361` (ticket-351, 2026-09-15) dotyczy innego
+repozytorium i nie jest dowodem w tej sprawie. W ramach audytu nie
+wykonano żadnego scalenia, pushu ani bypassu; wszystkie zapytania były
+odczytami (limit API konta 5669657 uniemożliwił potwierdzenie
+tożsamości Integracji przez `/apps/{slug}`).
+
+### Hipotezy (niepotwierdzone)
+
+- Integration id 4344831 to aplikacja ifuri-validator-agent — bardzo
+  prawdopodobne (bot jest autorem merge i jedynym nieadminowym aktorem
+  mogącym ominąć wymagane statusy), ale potwierdzenie zablokował limit API.
+- Moment pushu wywnioskowano ze zdarzenia dismissal (19:44:40Z) i startu
+  check-runów (19:44:46Z); timeline REST nie nosi bezpośredniego
+  znacznika czasu pushu.
+- Commit `60510a80` powstał lokalnie przed aprobata (author date
+  19:44:04Z), a push opóźniono — zgodne z metadanymi, nieobserwowane
+  bezpośrednio.
+
+### Zalecenia
+
+1. W `_rest_merge_pull_request` przekazywać `sha=pr.head_sha` (GitHub
+   odrzuca scalenie kodem 409 przy przesuniętym headzie) — zastępuje
+   odczyt klienta atomowym CAS po stronie serwera. Alternatywnie uczynić
+   mutację GraphQL z `expectedHeadOid` ścieżką główną.
+2. `STALE_HEAD_CHANGED` wykryty po scaleniu traktować jako incydent
+   publikacji wymagający decyzji właściciela runtime (revert lub pełna
+   ponowna walidacja exact-head), a nie wyłącznie status `blocked`
+   w receipcie.
+3. Przeglądnąć `bypass_mode` Integracji w ruleset 22026679 („always" →
+   tryb ograniczony) — poza zakresem tego ticketu; zmiana polityki
+   wymaga własnej chronionej ścieżki.
+4. Nie uznawać `9ce405d0` za zwalidowany exact-head; każde dalsze
+   publikacje na tej bazie powinny wiązać się z własną pełną walidacją.
+   Poświadczenie potomne (OneDev: 133 testy i 4 subtesty dla PR362 head
+   `1380262f` z bazą `9ce405d0`, sekcja v3) to pokrycie testowe
+   potomnego heada, nie autoryzacja scalenia `60510a80`.
+
+### Wersjonowanie
+
+Ticket STARTER-735 (utworzony 2026-09-19T19:53:54Z) prosił o raport
+„v3"; dokument awansował w międzyczasie do v4 (commit `4baa31ae`), więc
+zgodnie z regułą append-only niniejsza aktualizacja jest v5, a sekcje
+v1–v4 pozostają bez zmian.
+
+
+
+### Granica publikacji
+
+Zakres STARTER-735 był początkowo read-only i nie upoważniał do
+bezpośredniego merge ani bypassu. 25 września 2026 r. użytkownik jawnie
+zatwierdził wypchnięcie i scalenie zaległych ticketów Koru. Ta późniejsza
+autoryzacja obejmuje publikację raportu zwykłą ścieżką chronionego
+Validatora; bypass rulesetu nie jest dozwolony.
+
+Kontrakt ticketu ogranicza tę publikację do raportu i jego indeksu. Kontrole
+governance, standard-pack, projekcji i dokładnego heada są warunkami dostawy;
+wyników walidacji tej publikacji nie należy dopisywać do rekonstrukcji zdarzenia
+PR361 ani traktować jako retrospektywnego zatwierdzenia tamtego merge'a.
 
 ## Aktualizacja v4: odczyt działającego dziennika SubLLM, 19:57 UTC
 
