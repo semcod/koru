@@ -22,7 +22,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "652c6ed003e8345f45a64a0902e4cf67bb2f8e1d",
+    "acceptedBaseSha": "8703af5d66913cda1fa1bba54f7ccd50ab92ae4f",
     "targetBranch": "main",
     "outcome": "Decompose select_task_model in src/koru/task_model_policy.py into focused helper functions (_resolve_explicit_or_pinned_model, _resolve_routing_mapping, _is_valid_file_target, _is_valid_labels, _is_bounded_ruff_codes, _is_bounded_lint_fix) to reduce cyclomatic complexity from CC=38 to <= 6 while maintaining exact model selection behavior and reason tracking.",
     "nonGoals": [

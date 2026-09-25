@@ -10,7 +10,7 @@ import time
 import uuid
 from collections.abc import Callable, Mapping
 from pathlib import Path, PurePosixPath
-from typing import Any
+from typing import Any, NamedTuple
 
 _LINT_CODES = frozenset({"F401", "F541", "I001", "UP017", "UP035"})
 _COMPLEX_LABELS = frozenset({"refactor", "code2llm", "security", "governance", "dependencies"})
@@ -21,17 +21,38 @@ def safe_identifier(value: object) -> str:
     return value if isinstance(value, str) and _IDENTIFIER.fullmatch(value) else ""
 
 
+class _ForcedModel(NamedTuple):
+    model: str
+    reason: str
+
+
+class _TaskView(NamedTuple):
+    task: Mapping[str, Any]
+    inputs: Mapping[str, Any]
+
+
+class _LabelsCheck(NamedTuple):
+    valid: bool
+    labels: set[str]
+
+
+def _coerce_task(task: object) -> _TaskView:
+    task_map = task if isinstance(task, Mapping) else {}
+    inputs = task_map.get("inputs")
+    return _TaskView(task_map, inputs if isinstance(inputs, Mapping) else {})
+
+
 def _resolve_explicit_or_pinned_model(
     explicit_model: str,
     inputs: Mapping[str, Any],
     env: Mapping[str, str],
-) -> tuple[str, str] | None:
+) -> _ForcedModel | None:
     model = explicit_model or str(inputs.get("llm_model") or "")
     if model:
-        return model, "explicit_request"
+        return _ForcedModel(model, "explicit_request")
     pinned = env.get("KORU_TILLM_FORCE_MODEL", "").strip()
     if pinned:
-        return pinned, "operator_pin"
+        return _ForcedModel(pinned, "operator_pin")
     return None
 
 
@@ -45,12 +66,11 @@ def _resolve_routing_mapping(
     return routing if isinstance(routing, Mapping) else inputs
 
 
-def _is_valid_file_target(file_path: object) -> bool:
-    if not isinstance(file_path, str):
-        return False
-    if "\\" in file_path or any(c in file_path for c in "*?[]"):
-        return False
-    path = PurePosixPath(file_path)
+def _is_plain_python_path(file_path: str) -> bool:
+    return "\\" not in file_path and not any(c in file_path for c in "*?[]")
+
+
+def _is_safe_relative_py_path(path: PurePosixPath) -> bool:
     return (
         not path.is_absolute()
         and ".." not in path.parts
@@ -60,12 +80,18 @@ def _is_valid_file_target(file_path: object) -> bool:
     )
 
 
-def _is_valid_labels(raw_labels: object) -> tuple[bool, set[str]]:
+def _is_valid_file_target(file_path: object) -> bool:
+    if not isinstance(file_path, str) or not _is_plain_python_path(file_path):
+        return False
+    return _is_safe_relative_py_path(PurePosixPath(file_path))
+
+
+def _is_valid_labels(raw_labels: object) -> _LabelsCheck:
     if raw_labels is None:
-        return True, set()
+        return _LabelsCheck(True, set())
     if isinstance(raw_labels, list) and all(isinstance(x, str) for x in raw_labels):
-        return True, set(raw_labels)
-    return False, set()
+        return _LabelsCheck(True, set(raw_labels))
+    return _LabelsCheck(False, set())
 
 
 def _is_bounded_ruff_codes(codes: object) -> bool:
@@ -85,10 +111,38 @@ def _is_bounded_lint_fix(
         return False
     if not _is_valid_file_target(files[0]):
         return False
-    valid_labels, labels = _is_valid_labels(task.get("labels"))
-    if not valid_labels or labels.intersection(_COMPLEX_LABELS):
+    labels = _is_valid_labels(task.get("labels"))
+    if not labels.valid or labels.labels.intersection(_COMPLEX_LABELS):
         return False
     return _is_bounded_ruff_codes(routing.get("ruff_codes"))
+
+
+def _is_lint_fix_request(client_id: str, routing: Mapping[str, Any]) -> bool:
+    return client_id == "opencode" and routing.get("llm_task_kind") == "lint_fix"
+
+
+def _fallback_reason(simple: str, client_id: str, routing: Mapping[str, Any]) -> str:
+    if not simple:
+        return "simple_model_disabled"
+    if _is_lint_fix_request(client_id, routing):
+        return "unbounded_lint_scope"
+    return "unclassified_task"
+
+
+def _select_fallback_model(
+    view: _TaskView,
+    *,
+    client_id: str,
+    default_model: str,
+    env: Mapping[str, str],
+) -> dict[str, str]:
+    default = default_model or env.get("KORU_TILLM_MODEL", "").strip()
+    simple = env.get("KORU_TILLM_SIMPLE_MODEL", "").strip()
+    routing = _resolve_routing_mapping(view.task, view.inputs)
+    # Smallness is a closed, structured contract, not a guess from prompt/title.
+    if simple and _is_lint_fix_request(client_id, routing) and _is_bounded_lint_fix(view.task, routing):
+        return {"model": simple, "reason": "bounded_lint"}
+    return {"model": default, "reason": _fallback_reason(simple, client_id, routing)}
 
 
 def select_task_model(
@@ -99,28 +153,19 @@ def select_task_model(
     explicit_model: str = "",
     environ: Mapping[str, str] | None = None,
 ) -> dict[str, str]:
+    """Resolve the CLI model for a task; never an execution permission.
+
+    Precedence: explicit request or ticket ``inputs.llm_model``, then the
+    operator pin ``KORU_TILLM_FORCE_MODEL``, then the simple model for a
+    bounded single-file lint fix (opencode only), then the default model.
+    The returned ``reason`` names the branch that produced the decision.
+    """
     env = os.environ if environ is None else environ
-    task_map = task if isinstance(task, Mapping) else {}
-    inputs = task_map.get("inputs")
-    inputs_map = inputs if isinstance(inputs, Mapping) else {}
-
-    forced = _resolve_explicit_or_pinned_model(explicit_model, inputs_map, env)
+    view = _coerce_task(task)
+    forced = _resolve_explicit_or_pinned_model(explicit_model, view.inputs, env)
     if forced is not None:
-        model, reason = forced
-        return {"model": model, "reason": reason}
-
-    default = default_model or env.get("KORU_TILLM_MODEL", "").strip()
-    simple = env.get("KORU_TILLM_SIMPLE_MODEL", "").strip()
-    if not simple:
-        return {"model": default, "reason": "simple_model_disabled"}
-
-    routing = _resolve_routing_mapping(task_map, inputs_map)
-    if client_id == "opencode" and routing.get("llm_task_kind") == "lint_fix":
-        if _is_bounded_lint_fix(task_map, routing):
-            return {"model": simple, "reason": "bounded_lint"}
-        return {"model": default, "reason": "unbounded_lint_scope"}
-
-    return {"model": default, "reason": "unclassified_task"}
+        return {"model": forced.model, "reason": forced.reason}
+    return _select_fallback_model(view, client_id=client_id, default_model=default_model, env=env)
 
 
 def load_routing_task(project: Path, ticket_id: str) -> dict[str, Any]:
