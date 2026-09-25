@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-199",
+  "summary": "Decompose god function apply_patch_with_retry",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-199/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/patch_retry.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2ab210daf67462620ddf70834e09de21491980de",
+    "targetBranch": "main",
+    "outcome": "Decompose apply_patch_with_retry and _finish_run into focused helper functions to eliminate god function code smell and drop cyclomatic complexity while preserving identical patch transaction and evidence generation semantics.",
+    "nonGoals": [
+      "Changing patch transaction execution or verification flow",
+      "Altering evidence bundle schema or fields"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _finish_patch_run, _perform_retry_call, _build_verify_record, and _build_promotion_record from apply_patch_with_retry and _finish_run.",
+      "components": [
+        {
+          "name": "queue-patch-retry",
+          "paths": [
+            "src/koru/queue/patch_retry.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore previous inline patch retry implementation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m radon cc src/koru/queue/patch_retry.py -s"
+        ],
+        "evidence": "Cyclomatic complexity of all functions in patch_retry.py is <= 11."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=. pytest -q tests/test_queue_contracts.py tests/test_queue_evidence.py tests/test_queue_journal.py tests/test_queue_recovery.py"
+        ],
+        "evidence": "Existing queue contracts, evidence, journal, and recovery tests pass."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
