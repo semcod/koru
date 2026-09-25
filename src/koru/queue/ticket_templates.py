@@ -265,16 +265,15 @@ def _todo2code_verify_command(project: Path, diagnostic_ids: list[str]) -> str |
     return shlex.join(command)
 
 
-def hydrate_todo2code_ticket(ticket: dict[str, Any], project: Path) -> dict[str, Any]:
-    """Hydrate todo2code defaults without manufacturing execution authority."""
-    labels = [str(label) for label in (ticket.get("labels") or [])]
+def _is_todo2code_ticket(labels: list[str], source: dict[str, Any]) -> bool:
+    """Match tickets tagged todo2code or emitted by a todo2code discovery tool."""
     lowered = {label.lower() for label in labels}
-    source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
     source_tool = str(source.get("tool") or "").lower()
-    if "todo2code" not in lowered and "todo2code" not in source_tool:
-        return ticket
+    return "todo2code" in lowered or "todo2code" in source_tool
 
-    out = dict(ticket)
+
+def _todo2code_inputs(ticket: dict[str, Any]) -> dict[str, Any]:
+    """Apply todo2code execution defaults and drop legacy model/token caps."""
     inputs = dict(ticket.get("inputs") or {})
     inputs.pop("llm_model", None)
     inputs.pop("llm_max_tokens", None)
@@ -287,37 +286,76 @@ def hydrate_todo2code_ticket(ticket: dict[str, Any], project: Path) -> dict[str,
     inputs.setdefault("worktree", True)
     inputs.setdefault("max_patch_attempts", 3)
     inputs.setdefault("risk_class", "R1")
-    contract = str(
+    return inputs
+
+
+def _todo2code_contract(inputs: dict[str, Any], project: Path) -> str:
+    """Resolve the target-owned capability contract, ticket input first."""
+    return str(
         inputs.get("contract")
         or config_value("KORU_TODO2CODE_CONTRACT", project)
         or ""
     ).strip()
-    if contract:
-        inputs["contract"] = contract
 
+
+def _enforce_todo2code_executor_authority(
+    out: dict[str, Any], inputs: dict[str, Any], contract: str
+) -> None:
+    """Demote legacy llm executors that lack a capability contract."""
     executor = out.get("executor") if isinstance(out.get("executor"), dict) else {}
-    if str(executor.get("kind") or "human").lower() == "llm" and not contract:
-        # Older imported tickets may already say llm/automatic. Do not let a
-        # lossy Planfile round-trip turn that historical value into authority:
-        # autonomous todo2code patches require a target-owned capability contract.
-        out["executor"] = {"kind": "human", "mode": "interactive"}
-        inputs["governance_block_reason"] = (
-            "todo2code LLM execution requires KORU_TODO2CODE_CONTRACT"
-        )
+    if str(executor.get("kind") or "human").lower() != "llm" or contract:
+        return
+    # Older imported tickets may already say llm/automatic. Do not let a
+    # lossy Planfile round-trip turn that historical value into authority:
+    # autonomous todo2code patches require a target-owned capability contract.
+    out["executor"] = {"kind": "human", "mode": "interactive"}
+    inputs["governance_block_reason"] = (
+        "todo2code LLM execution requires KORU_TODO2CODE_CONTRACT"
+    )
 
+
+def _todo2code_diagnostic_ids(source: dict[str, Any]) -> list[str]:
+    """Keep only well-formed DIAG-* ids from the ticket source context."""
     context = source.get("context") if isinstance(source.get("context"), dict) else {}
-    diagnostic_ids = [
+    return [
         str(value) for value in (context.get("diagnostic_ids") or [])
         if re.fullmatch(r"DIAG-[a-f0-9]+", str(value))
     ]
-    if not str(inputs.get("verify_command") or "").strip():
-        verify_command = _todo2code_verify_command(project, diagnostic_ids)
-        if verify_command:
-            inputs["verify_command"] = verify_command
 
-    if "type:development-defect" not in lowered:
+
+def _ensure_todo2code_verify_command(
+    inputs: dict[str, Any], project: Path, diagnostic_ids: list[str]
+) -> None:
+    """Fill the Koru gate command unless the ticket already carries one."""
+    if str(inputs.get("verify_command") or "").strip():
+        return
+    verify_command = _todo2code_verify_command(project, diagnostic_ids)
+    if verify_command:
+        inputs["verify_command"] = verify_command
+
+
+def _todo2code_labels(labels: list[str]) -> list[str]:
+    """Tag the ticket as a development defect without duplicating labels."""
+    if "type:development-defect" not in {label.lower() for label in labels}:
         labels.append("type:development-defect")
-    out["labels"] = list(dict.fromkeys(labels))
+    return list(dict.fromkeys(labels))
+
+
+def hydrate_todo2code_ticket(ticket: dict[str, Any], project: Path) -> dict[str, Any]:
+    """Hydrate todo2code defaults without manufacturing execution authority."""
+    labels = [str(label) for label in (ticket.get("labels") or [])]
+    source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
+    if not _is_todo2code_ticket(labels, source):
+        return ticket
+
+    out = dict(ticket)
+    inputs = _todo2code_inputs(ticket)
+    contract = _todo2code_contract(inputs, project)
+    if contract:
+        inputs["contract"] = contract
+    _enforce_todo2code_executor_authority(out, inputs, contract)
+    _ensure_todo2code_verify_command(inputs, project, _todo2code_diagnostic_ids(source))
+    out["labels"] = _todo2code_labels(labels)
     out["inputs"] = inputs
     return out
 

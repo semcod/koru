@@ -1,0 +1,94 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-201",
+  "summary": "Reduce cyclomatic complexity in hydrate_todo2code_ticket",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-201/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/ticket_templates.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "818c2a2bd196088e169b04e7485c981a337b89c8",
+    "targetBranch": "main",
+    "outcome": "Decompose hydrate_todo2code_ticket in src/koru/queue/ticket_templates.py into focused helper functions (_is_todo2code_ticket, _todo2code_inputs, _todo2code_contract, _enforce_todo2code_executor_authority, _todo2code_diagnostic_ids, _ensure_todo2code_verify_command, _todo2code_labels) to reduce cyclomatic complexity from CC=25 to <= 8 while maintaining identical hydration behavior.",
+    "nonGoals": [
+      "Changing todo2code hydration defaults, contract resolution, or verify-command building",
+      "Altering the governance demotion of uncontracted legacy llm/automatic executors",
+      "Moving code between modules or changing public imports"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _is_todo2code_ticket, _todo2code_inputs, _todo2code_contract, _enforce_todo2code_executor_authority, _todo2code_diagnostic_ids, _ensure_todo2code_verify_command, and _todo2code_labels from hydrate_todo2code_ticket, keeping all functions in koru.queue.ticket_templates.",
+      "components": [
+        {
+          "name": "queue-ticket-templates",
+          "paths": [
+            "src/koru/queue/ticket_templates.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the inline hydrate_todo2code_ticket function."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m radon cc src/koru/queue/ticket_templates.py -s"
+        ],
+        "evidence": "Cyclomatic complexity of hydrate_todo2code_ticket and all helpers is <= 8."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q tests/test_todo2code_autonomous_gate.py tests/test_subactor_repair_ticket_template.py"
+        ],
+        "evidence": "All existing todo2code and ticket template tests pass unchanged."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "code2llm ./ -f yaml -o project/analysis.toon.yaml --no-png"
+        ],
+        "evidence": "code2llm HEALTH report no longer lists hydrate_todo2code_ticket above the CC limit."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
