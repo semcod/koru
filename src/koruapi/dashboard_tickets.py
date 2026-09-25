@@ -308,6 +308,22 @@ def _append_dashboard_history(ticket: dict[str, Any], action: str, message: str)
     ticket["updated_at"] = datetime.now(UTC).isoformat()
 
 
+def _mapping_slot(ticket: dict[str, Any], key: str) -> dict[str, Any]:
+    """Return ``ticket[key]`` as a dict, replacing a non-dict value in place."""
+    slot = ticket.setdefault(key, {})
+    if not isinstance(slot, dict):
+        slot = {}
+        ticket[key] = slot
+    return slot
+
+
+def _normalize_priority(priority: str) -> str:
+    normalized = priority.strip().lower()
+    if normalized not in {"critical", "high", "normal", "low"}:
+        raise ValueError("priority must be critical|high|normal|low")
+    return normalized
+
+
 def update_ticket_from_dashboard(
     project: Path,
     *,
@@ -318,18 +334,13 @@ def update_ticket_from_dashboard(
     path, data, _tickets, ticket = _find_ticket_in_sprints(project, ticket_id)
     changes: list[str] = []
     if priority is not None:
-        normalized = priority.strip().lower()
-        if normalized not in {"critical", "high", "normal", "low"}:
-            raise ValueError("priority must be critical|high|normal|low")
+        normalized = _normalize_priority(priority)
         if ticket.get("priority") != normalized:
             ticket["priority"] = normalized
             changes.append(f"priority={normalized}")
     if queue_name is not None:
         queue = queue_name.strip() or "default"
-        execution = ticket.setdefault("execution", {})
-        if not isinstance(execution, dict):
-            execution = {}
-            ticket["execution"] = execution
+        execution = _mapping_slot(ticket, "execution")
         if execution.get("queue") != queue:
             execution["queue"] = queue
             changes.append(f"queue={queue}")
@@ -365,6 +376,82 @@ def reorder_ticket_from_dashboard(
     return {"ok": True, "ticket_id": ticket_id, "changed": True, "position": new_index}
 
 
+def _apply_executor_target(
+    ticket: dict[str, Any],
+    target_kind: str,
+    target_mode: str,
+    changes: list[str],
+) -> dict[str, Any]:
+    executor = _mapping_slot(ticket, "executor")
+    if executor.get("kind") != target_kind:
+        executor["kind"] = target_kind
+        changes.append(f"executor.kind={target_kind}")
+    if executor.get("mode") != target_mode:
+        executor["mode"] = target_mode
+        changes.append(f"executor.mode={target_mode}")
+    return executor
+
+
+def _apply_delegation_defaults(ticket: dict[str, Any], changes: list[str]) -> dict[str, Any]:
+    if ticket.get("status") != "open":
+        ticket["status"] = "open"
+        changes.append("status=open")
+    execution = _mapping_slot(ticket, "execution")
+    if execution.get("state") != "ready":
+        execution["state"] = "ready"
+        changes.append("execution.state=ready")
+    execution["attempt"] = 0
+    return execution
+
+
+def _apply_prompt_addition(ticket: dict[str, Any], prompt_addition: str | None, changes: list[str]) -> None:
+    addition = (prompt_addition or "").strip()
+    if not addition:
+        return
+    inputs = _mapping_slot(ticket, "inputs")
+    existing_prompt = str(inputs.get("prompt") or ticket.get("description") or ticket.get("name") or "").strip()
+    inputs["prompt"] = f"{existing_prompt}\n\n[Operator Guidance]:\n{addition}" if existing_prompt else addition
+    changes.append("prompt_updated")
+
+
+def _apply_operator_notes(ticket: dict[str, Any], notes: str | None, changes: list[str]) -> None:
+    text = (notes or "").strip()
+    if not text:
+        return
+    outputs = _mapping_slot(ticket, "outputs")
+    notes_list = outputs.setdefault("notes", [])
+    if isinstance(notes_list, list):
+        notes_list.append(f"Operator Delegation: {text}")
+        changes.append("notes_appended")
+
+
+def _apply_delegation_priority(ticket: dict[str, Any], priority: str | None, changes: list[str]) -> None:
+    if priority is None:
+        return
+    normalized = _normalize_priority(priority)
+    if ticket.get("priority") != normalized:
+        ticket["priority"] = normalized
+        changes.append(f"priority={normalized}")
+
+
+def _apply_delegation_queue(execution: dict[str, Any], queue_name: str | None, changes: list[str]) -> None:
+    if queue_name is None:
+        return
+    queue = queue_name.strip() or "default"
+    if execution.get("queue") != queue:
+        execution["queue"] = queue
+        changes.append(f"queue={queue}")
+
+
+def _apply_llm_ready_label(ticket: dict[str, Any], target_kind: str, changes: list[str]) -> None:
+    if target_kind != "llm":
+        return
+    labels = ticket.setdefault("labels", [])
+    if isinstance(labels, list) and "llm-ready" not in labels:
+        labels.append("llm-ready")
+        changes.append("labels+=llm-ready")
+
+
 def delegate_ticket_from_dashboard(
     project: Path,
     *,
@@ -382,70 +469,13 @@ def delegate_ticket_from_dashboard(
     target_kind = (executor_kind or "llm").strip().lower()
     target_mode = (executor_mode or "automatic").strip().lower()
 
-    executor = ticket.setdefault("executor", {})
-    if not isinstance(executor, dict):
-        executor = {}
-        ticket["executor"] = executor
-    if executor.get("kind") != target_kind:
-        executor["kind"] = target_kind
-        changes.append(f"executor.kind={target_kind}")
-    if executor.get("mode") != target_mode:
-        executor["mode"] = target_mode
-        changes.append(f"executor.mode={target_mode}")
-
-    if ticket.get("status") != "open":
-        ticket["status"] = "open"
-        changes.append("status=open")
-
-    execution = ticket.setdefault("execution", {})
-    if not isinstance(execution, dict):
-        execution = {}
-        ticket["execution"] = execution
-    if execution.get("state") != "ready":
-        execution["state"] = "ready"
-        changes.append("execution.state=ready")
-    execution["attempt"] = 0
-
-    if prompt_addition and prompt_addition.strip():
-        inputs = ticket.setdefault("inputs", {})
-        if not isinstance(inputs, dict):
-            inputs = {}
-            ticket["inputs"] = inputs
-        existing_prompt = str(inputs.get("prompt") or ticket.get("description") or ticket.get("name") or "").strip()
-        addition = prompt_addition.strip()
-        new_prompt = f"{existing_prompt}\n\n[Operator Guidance]:\n{addition}" if existing_prompt else addition
-        inputs["prompt"] = new_prompt
-        changes.append("prompt_updated")
-
-    if notes and notes.strip():
-        outputs = ticket.setdefault("outputs", {})
-        if not isinstance(outputs, dict):
-            outputs = {}
-            ticket["outputs"] = outputs
-        notes_list = outputs.setdefault("notes", [])
-        if isinstance(notes_list, list):
-            notes_list.append(f"Operator Delegation: {notes.strip()}")
-            changes.append("notes_appended")
-
-    if priority is not None:
-        norm_p = priority.strip().lower()
-        if norm_p not in {"critical", "high", "normal", "low"}:
-            raise ValueError("priority must be critical|high|normal|low")
-        if ticket.get("priority") != norm_p:
-            ticket["priority"] = norm_p
-            changes.append(f"priority={norm_p}")
-
-    if queue_name is not None:
-        norm_q = queue_name.strip() or "default"
-        if execution.get("queue") != norm_q:
-            execution["queue"] = norm_q
-            changes.append(f"queue={norm_q}")
-
-    if target_kind == "llm":
-        labels = ticket.setdefault("labels", [])
-        if isinstance(labels, list) and "llm-ready" not in labels:
-            labels.append("llm-ready")
-            changes.append("labels+=llm-ready")
+    executor = _apply_executor_target(ticket, target_kind, target_mode, changes)
+    execution = _apply_delegation_defaults(ticket, changes)
+    _apply_prompt_addition(ticket, prompt_addition, changes)
+    _apply_operator_notes(ticket, notes, changes)
+    _apply_delegation_priority(ticket, priority, changes)
+    _apply_delegation_queue(execution, queue_name, changes)
+    _apply_llm_ready_label(ticket, target_kind, changes)
 
     if changes:
         _append_dashboard_history(ticket, "dashboard_delegate", ", ".join(changes))

@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-205",
+  "summary": "Reduce cyclomatic complexity in delegate_ticket_from_dashboard",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-205/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/dashboard_tickets.py",
+    "tests/test_dashboard_ticket_handlers.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a5d54edb32c8adf2c6dd529ed519e225496b60f6",
+    "targetBranch": "main",
+    "outcome": "Decompose delegate_ticket_from_dashboard in src/koruapi/dashboard_tickets.py into focused helper functions (_mapping_slot, _apply_executor_target, _apply_delegation_defaults, _apply_prompt_addition, _apply_operator_notes, _apply_delegation_priority, _apply_delegation_queue, _apply_llm_ready_label) to reduce cyclomatic complexity from CC=30 to <= 9 while preserving identical sprint-file mutation and delegation semantics.",
+    "nonGoals": [
+      "Changing delegation result payload shape or history entries",
+      "Altering priority/queue validation semantics",
+      "Reducing complexity of bulk_waiting_input_action (CC=12, below the limit)"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract per-field mutation helpers from delegate_ticket_from_dashboard; each helper owns one ticket-field concern and appends to the shared changes list.",
+      "components": [
+        {
+          "name": "dashboard-tickets",
+          "paths": [
+            "src/koruapi/dashboard_tickets.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the inline delegate_ticket_from_dashboard implementation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m radon cc src/koruapi/dashboard_tickets.py -s -n C"
+        ],
+        "evidence": "Cyclomatic complexity of delegate_ticket_from_dashboard and all new helpers is <= 9."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q tests/test_dashboard_ticket_handlers.py tests/test_serve.py"
+        ],
+        "evidence": "All existing dashboard ticket tests pass unchanged."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
