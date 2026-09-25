@@ -155,8 +155,8 @@ def _client_has_usable_plugin(
 def _folder_covers_project(folder: str, project_path: str) -> bool:
     return (
         folder == project_path
-        or project_path.startswith(folder + "/")
-        or folder.startswith(project_path + "/")
+        or project_path.startswith(f"{folder}/")
+        or folder.startswith(f"{project_path}/")
     )
 
 

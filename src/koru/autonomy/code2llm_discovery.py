@@ -741,7 +741,7 @@ def format_discovery_summary(outcome: DiscoveryOutcome) -> str:
     pieces.append(f"skipped={len(outcome.skipped_titles)}")
     if outcome.artifacts_dir:
         pieces.append(f"artifacts={outcome.artifacts_dir}")
-    return "code2llm discovery: " + " ".join(pieces)
+    return f"code2llm discovery: {' '.join(pieces)}"
 
 
 __all__ = [

@@ -1,0 +1,62 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-182",
+  "summary": "Convert autonomy string concatenations to f-strings",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-182/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/autopilot_status.py",
+    "src/koru/autonomy/checkpoint/checkpoint.py",
+    "src/koru/autonomy/code2llm_discovery.py",
+    "src/koru/autonomy/configuration/config_cli_config.py",
+    "src/koru/autonomy/cycle/cycle.py",
+    "src/koru/autonomy/cycle/cycle_chat_activity.py",
+    "src/koru/autonomy/cycle/cycle_chat_activity_tickets.py",
+    "src/koru/autonomy/cycle/cycle_drive_retry.py",
+    "src/koru/autonomy/cycle/cycle_post_drive.py",
+    "src/koru/autonomy/cycle/cycle_skip_conditions.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9ce405d00bb52e009774d88ead6993febc45858e",
+    "targetBranch": "main",
+    "outcome": "Autonomy modules build their prompt, path-prefix, preview and checkpoint strings with f-strings instead of '+' concatenation, clearing the TODO.md f-string findings.",
+    "nonGoals": ["Behavior or output changes", "Public API changes", "TODO.md regeneration"],
+    "complexity": "M",
+    "estimatedMinutes": 45,
+    "budgets": {"maxImplementationFiles": 7, "maxAffectedComponents": 3, "maxPublicInterfaceChanges": 0, "maxRuntimeDependencies": 0},
+    "architecture": {
+      "status": "accepted",
+      "decision": "Replace '+'-concatenated string expressions with equivalent f-strings, using adjacent literal parts for multi-line prompts and precomputed conditional lines where a conditional piece cannot join implicit concatenation.",
+      "components": [
+        {"name": "autonomy-cycle-prompts", "paths": ["src/koru/autonomy/cycle/cycle_chat_activity.py", "src/koru/autonomy/cycle/cycle_chat_activity_tickets.py", "src/koru/autonomy/cycle/cycle_drive_retry.py", "src/koru/autonomy/cycle/cycle_post_drive.py"]},
+        {"name": "autonomy-checkpoint-io", "paths": ["src/koru/autonomy/checkpoint/checkpoint.py"]},
+        {"name": "autonomy-discovery-summary", "paths": ["src/koru/autonomy/code2llm_discovery.py"]}
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the f-string commit; every converted expression is a pure string rewrite."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {"criterion": "AC-01", "commands": ["python3 -m compileall -q src/koru"], "evidence": "All koru sources, including the six converted modules, compile without syntax errors."},
+      {"criterion": "AC-02", "commands": ["python3 -m pytest tests/test_activity_log.py tests/test_autonomous*.py -q"], "evidence": "The ticket's acceptance test suite passes after conversion."},
+      {"criterion": "AC-03", "commands": ["python3 -m ruff check src/koru/autonomy", "git diff --check"], "evidence": "Lint and whitespace checks pass for the converted modules."}
+    ]
+  }
+}
