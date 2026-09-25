@@ -46,6 +46,7 @@ from koruapi.dashboard_state import dashboard_state
 from koruapi.dashboard_tickets import (
     bulk_waiting_input_action,
     create_ticket_from_dashboard,
+    delegate_ticket_from_dashboard,
     reorder_ticket_from_dashboard,
     update_ticket_from_dashboard,
 )
@@ -88,9 +89,7 @@ def _get_dashboard(handler: Any, config: ServeConfig) -> None:
 
 
 def _get_config(handler: Any, config: ServeConfig) -> None:
-    handler._safe_respond_json(
-        lambda: dashboard_config_payload(handler._selected_project(), _config_defaults(config))
-    )
+    handler._safe_respond_json(lambda: dashboard_config_payload(handler._selected_project(), _config_defaults(config)))
 
 
 def _get_env_config(handler: Any, _config: ServeConfig) -> None:
@@ -98,9 +97,7 @@ def _get_env_config(handler: Any, _config: ServeConfig) -> None:
 
 
 def _get_context(handler: Any, config: ServeConfig) -> None:
-    handler._safe_respond_json(
-        lambda: dashboard_context_payload(handler._selected_project(), config.queue_name)
-    )
+    handler._safe_respond_json(lambda: dashboard_context_payload(handler._selected_project(), config.queue_name))
 
 
 def _get_topology(handler: Any, _config: ServeConfig) -> None:
@@ -497,8 +494,8 @@ def _post_config(handler: Any, config: ServeConfig, body: dict[str, Any]) -> Non
 
 def _post_waiting_input_bulk(handler: Any, _config: ServeConfig, body: dict[str, Any]) -> None:
     action = str(body.get("action") or "").strip().lower()
-    if action not in {"approve", "reject"}:
-        handler._send_json({"error": "action must be approve|reject"}, status=400)
+    if action not in {"approve", "reject", "delegate"}:
+        handler._send_json({"error": "action must be approve|reject|delegate"}, status=400)
         return
     ticket_ids_raw = body.get("ticket_ids")
     if not isinstance(ticket_ids_raw, list):
@@ -620,6 +617,32 @@ def _post_ticket_reorder(handler: Any, _config: ServeConfig, body: dict[str, Any
     handler._send_json(result)
 
 
+def _post_ticket_delegate(handler: Any, _config: ServeConfig, body: dict[str, Any]) -> None:
+    ticket_id = str(body.get("ticket_id") or "").strip()
+    if not ticket_id:
+        handler._send_json({"error": "ticket_id is required"}, status=400)
+        return
+    try:
+        project = handler._selected_project(body)
+        result = delegate_ticket_from_dashboard(
+            project,
+            ticket_id=ticket_id,
+            executor_kind=str(body.get("executor_kind") or "llm").strip(),
+            executor_mode=str(body.get("executor_mode") or "automatic").strip(),
+            prompt_addition=str(body["prompt_addition"]).strip() if "prompt_addition" in body else None,
+            notes=str(body["notes"]).strip() if "notes" in body else None,
+            priority=str(body["priority"]).strip() if "priority" in body else None,
+            queue_name=str(body["queue_name"]).strip() if "queue_name" in body else None,
+        )
+    except ValueError as exc:
+        handler._send_json({"error": str(exc)}, status=400)
+        return
+    except Exception as exc:
+        handler._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+        return
+    handler._send_json(result)
+
+
 _GetHandler = Callable[[Any, ServeConfig], None]
 _PostHandler = Callable[[Any, ServeConfig, dict[str, Any]], None]
 
@@ -656,6 +679,7 @@ _POST_ROUTES: dict[str, _PostHandler] = {
     "/api/tickets/waiting-input/bulk": _post_waiting_input_bulk,
     "/api/tickets/create": _post_ticket_create,
     "/api/tickets/update": _post_ticket_update,
+    "/api/tickets/delegate": _post_ticket_delegate,
     "/api/tickets/reorder": _post_ticket_reorder,
     "/api/remote/drive": _post_remote_drive,
     "/api/terminals/spawn": _post_terminal_spawn,

@@ -340,6 +340,60 @@
     .kv { grid-template-columns: 1fr; gap: 2px 0; }
     th, td { padding: 7px 6px; }
   }
+
+  /* Modal Overlay and Dialog for Human Delegation */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10, 12, 17, 0.82);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 16px;
+  }
+  .modal-content {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 100%;
+    max-width: 620px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+    overflow: hidden;
+  }
+  .modal-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .modal-body {
+    padding: 16px 18px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .modal-footer {
+    padding: 12px 18px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    background: #12141c;
+    flex-wrap: wrap;
+  }
 </style>
 </head>
 <body>
@@ -759,31 +813,42 @@ function renderOpenTickets(openTickets, allTickets, activeId, ticketError) {
 }
 
 function renderWaitingInputActions(allTickets) {
-  const waiting = (allTickets || []).filter(t => (t.status || "") === "waiting_input");
+  const waiting = (allTickets || []).filter(t => (t.status || "") === "waiting_input" || (
+    (t.status || "") === "open" && (((t.executor) || {}).kind || "human").toLowerCase() === "human"
+  ));
   if (!waiting.length) return "";
-  const rows = waiting.map(t => `
+  const rows = waiting.map(t => {
+    const isHuman = (((t.executor) || {}).kind || "human").toLowerCase() === "human";
+    const statusLabel = isHuman && (t.status || "") === "open" ? "waiting: human" : esc(t.status || "");
+    return `
     <tr>
       <td><input type="checkbox" class="wi-ticket" value="${esc(t.id || "")}" checked></td>
       <td><code>${esc(t.id || "")}</code></td>
-      <td>${esc(t.name || "")}</td>
-      <td><code>${esc(((t.executor) || {}).kind || "?")}</code></td>
+      <td><strong>${esc(t.name || "")}</strong></td>
+      <td><span class="pill warn">${statusLabel}</span></td>
+      <td><code>${esc(((t.executor) || {}).kind || "human")}</code></td>
+      <td>
+        <button type="button" class="wi-open-modal primary" data-ticket-id="${esc(t.id || "")}">Review & Delegate</button>
+      </td>
     </tr>
-  `).join("");
+  `;}).join("");
   const body = `
     <div class="muted" style="margin-bottom:8px">
-      Queue is blocked on <code>waiting_input</code>. Select tickets and approve or reject in bulk.
+      Queue contains tickets requiring human attention / delegation. Review details, provide operator guidance or delegate directly to Koru.
     </div>
     <table><thead><tr>
-      <th>select</th><th>id</th><th>name</th><th>executor</th>
+      <th>select</th><th>id</th><th>name</th><th>status</th><th>executor</th><th>action</th>
     </tr></thead><tbody>${rows}</tbody></table>
     <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button id="wi-approve">Approve selected</button>
-      <button id="wi-reject">Reject selected</button>
-      <input id="wi-reason" class="wide-input" placeholder="Reject reason (optional)" />
+      <button type="button" id="wi-delegate" class="primary">Delegate selected to Koru (LLM)</button>
+      <button type="button" id="wi-approve">Approve selected (Done)</button>
+      <button type="button" id="wi-reject">Reject selected</button>
+      <input id="wi-reason" class="wide-input" placeholder="Notes / reason (optional)" />
+      <button type="button" id="wi-notify-perm" title="Enable browser notifications" style="margin-left:auto">🔔 Notifications</button>
     </div>
     <div id="wi-status" class="muted" style="margin-top:8px;min-height:1.2em"></div>
   `;
-  return panel("Waiting Input Actions", body, true);
+  return panel("Waiting Human Input & Delegation", body, true);
 }
 
 function renderSemcodTools(env) {
@@ -1055,6 +1120,7 @@ function renderViewContent(ctx, topo, runtime, configPayload, envConfigPayload) 
   const activeId = (ctx.ticket || {}).id || null;
   const views = {
     overview: [
+      renderWaitingInputActions(ctx.all_tickets),
       renderTicket(ctx.ticket, ctx.ticket_error),
       renderEnv(ctx.environment),
       renderAgents(ctx.environment),
@@ -1959,15 +2025,134 @@ function selectedWaitingTickets() {
     .filter(Boolean);
 }
 
-async function postWaitingInputAction(action) {
+let currentModalTicket = null;
+const dismissedTickets = new Set();
+const notifiedTickets = new Set();
+
+function requestNotificationPermission() {
+  if (!("Notification" in window)) {
+    window.alert("Twoja przeglądarka nie obsługuje Web Notifications.");
+    return;
+  }
+  Notification.requestPermission().then(permission => {
+    if (permission === "granted") {
+      new Notification("Koru Dashboard", {
+        body: "Powiadomienia w przeglądarce zostały włączone.",
+        icon: "/favicon.svg"
+      });
+    }
+  });
+}
+
+function openDelegationModal(ticket) {
+  if (!ticket) return;
+  currentModalTicket = ticket;
+  const modal = $("human-delegation-modal");
+  if (!modal) return;
+  $("hdm-ticket-id").textContent = ticket.id || "";
+  $("hdm-ticket-name").textContent = ticket.name || ticket.id || "";
+  const isHuman = (((ticket.executor) || {}).kind || "human").toLowerCase() === "human";
+  $("hdm-status-badge").textContent = isHuman && (ticket.status || "") === "open" ? "waiting: human" : (ticket.status || "waiting_input");
+  $("hdm-executor-badge").textContent = `executor: ${((ticket.executor) || {}).kind || "human"}`;
+  $("hdm-priority-badge").textContent = `priority: ${ticket.priority || "normal"}`;
+
+  const inputs = ticket.inputs || {};
+  const originalPrompt = inputs.prompt || ticket.description || ticket.name || "";
+  $("hdm-prompt-display").textContent = originalPrompt;
+  $("hdm-prompt-addition").value = "";
+  $("hdm-notes").value = "";
+  $("hdm-executor-kind").value = "llm";
+  const statusEl = $("hdm-modal-status");
+  if (statusEl) {
+    statusEl.textContent = "";
+    statusEl.className = "muted";
+  }
+  modal.style.display = "flex";
+}
+
+function closeDelegationModal(dismiss = false) {
+  const modal = $("human-delegation-modal");
+  if (modal) modal.style.display = "none";
+  if (dismiss && currentModalTicket && currentModalTicket.id) {
+    dismissedTickets.add(currentModalTicket.id);
+  }
+  currentModalTicket = null;
+}
+
+async function delegateCurrentModalTicket() {
+  if (!currentModalTicket || !currentModalTicket.id) return;
+  const statusEl = $("hdm-modal-status");
+  const ticket_id = currentModalTicket.id;
+  const executor_kind = $("hdm-executor-kind").value;
+  const prompt_addition = $("hdm-prompt-addition").value.trim();
+  const notes = $("hdm-notes").value.trim();
+  if (statusEl) {
+    statusEl.textContent = "Delegowanie do Koru...";
+    statusEl.className = "muted";
+  }
+  try {
+    const res = await fetch("/api/tickets/delegate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody({
+        ticket_id,
+        executor_kind,
+        prompt_addition: prompt_addition || undefined,
+        notes: notes || undefined,
+      })),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
+    if (statusEl) {
+      statusEl.textContent = "✓ Zdelegowano do Koru!";
+      statusEl.className = "muted ok";
+    }
+    dismissedTickets.add(ticket_id);
+    setTimeout(() => {
+      closeDelegationModal(false);
+      refresh();
+    }, 350);
+  } catch (err) {
+    if (statusEl) {
+      statusEl.textContent = "Błąd: " + err.message;
+      statusEl.className = "muted err";
+    }
+  }
+}
+
+function checkAndNotifyHumanTickets(allTickets) {
+  const waiting = (allTickets || []).filter(t => (t.status || "") === "waiting_input" || (
+    (t.status || "") === "open" && (((t.executor) || {}).kind || "human").toLowerCase() === "human"
+  ));
+  if (!waiting.length) return;
+  const unhandled = waiting.find(t => !dismissedTickets.has(t.id));
+  if (!unhandled) return;
+
+  if ("Notification" in window && Notification.permission === "granted") {
+    if (!notifiedTickets.has(unhandled.id)) {
+      notifiedTickets.add(unhandled.id);
+      new Notification(`Koru: Zadanie ${unhandled.id} czeka na decyzję`, {
+        body: `${unhandled.name || ""}\nKliknij, aby zatwierdzić delegację do Koru.`,
+        icon: "/favicon.svg",
+      });
+    }
+  }
+
+  const modal = $("human-delegation-modal");
+  if (modal && modal.style.display === "none" && !currentModalTicket) {
+    openDelegationModal(unhandled);
+  }
+}
+
+async function postWaitingInputAction(action, specificTicketIds = null, overrideReason = null) {
   const status = $("wi-status");
-  const ticket_ids = selectedWaitingTickets();
+  const ticket_ids = specificTicketIds || selectedWaitingTickets();
   if (!ticket_ids.length) {
     if (status) status.textContent = "select at least one ticket";
     return;
   }
   const reasonEl = $("wi-reason");
-  const reason = reasonEl ? reasonEl.value : "";
+  const reason = overrideReason !== null ? overrideReason : (reasonEl ? reasonEl.value : "");
   if (status) status.textContent = `${action} ${ticket_ids.length} ticket(s)…`;
   noteChange(`waiting-input:${action}`, ticket_ids.join(","));
   try {
@@ -1984,6 +2169,7 @@ async function postWaitingInputAction(action) {
       status.classList.remove("err");
       status.classList.add("ok");
     }
+    ticket_ids.forEach(tid => dismissedTickets.add(tid));
     setTimeout(refresh, 150);
   } catch (e) {
     if (status) {
@@ -2226,10 +2412,56 @@ document.addEventListener("click", (ev) => {
       .catch(e => window.alert(e.message));
     return;
   }
+  if (t.id === "wi-delegate") {
+    postWaitingInputAction("delegate");
+    return;
+  }
   if (t.id === "wi-approve") {
     postWaitingInputAction("approve");
-  } else if (t.id === "wi-reject") {
+    return;
+  }
+  if (t.id === "wi-reject") {
     postWaitingInputAction("reject");
+    return;
+  }
+  if (t.id === "wi-notify-perm") {
+    requestNotificationPermission();
+    return;
+  }
+  const modalOpenBtn = t.closest(".wi-open-modal");
+  if (modalOpenBtn) {
+    const tid = modalOpenBtn.getAttribute("data-ticket-id");
+    const all = (lastRenderPayload && lastRenderPayload.ctx && lastRenderPayload.ctx.all_tickets) || [];
+    const found = all.find(x => x.id === tid);
+    if (found) {
+      openDelegationModal(found);
+    }
+    return;
+  }
+  if (t.id === "hdm-close" || t.id === "hdm-btn-dismiss") {
+    closeDelegationModal(true);
+    return;
+  }
+  if (t.id === "hdm-btn-delegate") {
+    delegateCurrentModalTicket();
+    return;
+  }
+  if (t.id === "hdm-btn-approve") {
+    if (currentModalTicket && currentModalTicket.id) {
+      const tid = currentModalTicket.id;
+      closeDelegationModal(false);
+      postWaitingInputAction("approve", [tid]);
+    }
+    return;
+  }
+  if (t.id === "hdm-btn-reject") {
+    if (currentModalTicket && currentModalTicket.id) {
+      const tid = currentModalTicket.id;
+      const notes = $("hdm-notes") ? $("hdm-notes").value : "";
+      closeDelegationModal(false);
+      postWaitingInputAction("reject", [tid], notes);
+    }
+    return;
   }
 });
 
@@ -2272,6 +2504,7 @@ async function refresh() {
     $("ts").textContent = new Date().toLocaleTimeString();
     lastRenderPayload = { ctx, topo, runtime, configPayload, envConfigPayload };
     renderCurrentViewFromCache();
+    checkAndNotifyHumanTickets(ctx.all_tickets || []);
   } catch (e) {
     $("root").innerHTML = `<div class="panel full err">
       Failed to load brief: ${esc(e.message)}</div>`;
@@ -2347,5 +2580,53 @@ document.addEventListener("submit", async (ev) => {
   }
 });
 </script>
+
+<!-- Human Delegation Modal -->
+<div id="human-delegation-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="hdm-title">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="hdm-title">⚡ Deleguj zadanie do Koru: <span id="hdm-ticket-id"></span></h3>
+      <button type="button" class="icon" id="hdm-close" aria-label="Zamknij">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="hdm-ticket-name" style="font-size: 14px; font-weight: 600; color: var(--fg);"></div>
+      <div id="hdm-ticket-meta" style="display:flex; gap:8px; align-items:center;">
+        <span id="hdm-status-badge" class="pill warn"></span>
+        <span id="hdm-executor-badge" class="pill"></span>
+        <span id="hdm-priority-badge" class="pill"></span>
+      </div>
+      <div>
+        <label style="color: var(--muted); font-size: 11px; text-transform: uppercase;">Opis zadania / prompt oryginalny:</label>
+        <pre id="hdm-prompt-display" style="max-height: 140px; overflow-y: auto; white-space: pre-wrap; font-size: 12px; margin-top: 4px;"></pre>
+      </div>
+      <div class="form-stack">
+        <label>
+          <span>Cel wykonawcy (Target Executor):</span>
+          <select id="hdm-executor-kind">
+            <option value="llm" selected>Koru SubLLM (Gemini 3.8 Flash / queue-executor)</option>
+            <option value="agent">Autonomous Agent CLI (tillm / shell)</option>
+            <option value="human">Pozostaw dla człowieka (Human)</option>
+          </select>
+        </label>
+        <label>
+          <span>Wskazówki dla Koru / Uzupełnienie promptu (opcjonalnie):</span>
+          <textarea id="hdm-prompt-addition" rows="3" placeholder="Wpisz specyficzne wytyczne, instrukcje refaktoryzacji lub odpowiedź na pytania ticketu..."></textarea>
+        </label>
+        <label>
+          <span>Notatka delegacji (zapisywana w historii ticketu):</span>
+          <input type="text" id="hdm-notes" placeholder="np. Delegowano do Koru SubLLM przez operatora" />
+        </label>
+      </div>
+      <div id="hdm-modal-status" class="muted" style="min-height: 1.2em;"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" id="hdm-btn-dismiss">Pomiń na razie</button>
+      <button type="button" id="hdm-btn-reject">Odrzuć</button>
+      <button type="button" id="hdm-btn-approve">Zatwierdź jako gotowe (Done)</button>
+      <button type="button" class="primary" id="hdm-btn-delegate">⚡ Deleguj do Koru</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
