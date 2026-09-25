@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-210",
+  "summary": "Decompose god function apply_plan_tickets",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-210/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/todo2code_discovery.py",
+    "tests/test_todo2code_discovery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "bb38494b1a0aacf1729b99be419082c71d583cfa",
+    "targetBranch": "main",
+    "outcome": "Decompose _apply_plan_tickets in src/koru/autonomy/todo2code_discovery.py into focused helper functions (_relative_plans_path, _plan_identity, _resolve_plan_priority, _enrich_plan_scaffold, _dispatch_plan_task) to eliminate the god-function code smell and reduce CC from 14 to 5 while preserving identical deduplication, usefulness ranking, task creation, and error handling semantics.",
+    "nonGoals": [
+      "Changing plan usefulness scoring or ranking algorithms",
+      "Altering task priority mapping or labels",
+      "Refactoring other discovery functions like _ticket_scaffold or run_todo2code_discovery"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract plan path resolution, identity extraction, priority mapping, scaffold enrichment, and task dispatch into small single-responsibility helper functions with CC <= 4.",
+      "components": [
+        {
+          "name": "autonomy-todo2code",
+          "paths": [
+            "src/koru/autonomy/todo2code_discovery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the inline _apply_plan_tickets implementation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m radon cc src/koru/autonomy/todo2code_discovery.py -s -n C"
+        ],
+        "evidence": "Cyclomatic complexity of _apply_plan_tickets and all new helpers is <= 5."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q tests/test_todo2code_discovery.py tests/test_todo2code_dedupe.py"
+        ],
+        "evidence": "All existing todo2code discovery tests pass unchanged."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}

@@ -499,6 +499,63 @@ def _rank_useful_plans(
     return useful, filtered_out
 
 
+def _relative_plans_path(project: Path, plans_path: Path) -> str:
+    try:
+        return str(plans_path.relative_to(project))
+    except ValueError:
+        return str(plans_path)
+
+
+def _plan_identity(scaffold: dict[str, Any]) -> tuple[str, str, tuple[str, tuple[str, ...]]]:
+    title = str(scaffold["title"])
+    key = str(scaffold["source_context"]["dedupe_key"])
+    files = tuple(str(v) for v in (scaffold.get("files") or []) if str(v).strip())
+    return title, key, (title, files)
+
+
+def _resolve_plan_priority(plan: dict[str, Any]) -> str:
+    raw = str(plan.get("priority") or "")
+    priority = _PRIORITY_MAP.get(raw.upper(), "normal")
+    if priority not in {"high", "normal", "low"}:
+        priority = _PRIORITY_MAP.get(raw.lower(), "normal")
+    return priority
+
+
+def _enrich_plan_scaffold(scaffold: dict[str, Any], plan: dict[str, Any], project: Path) -> None:
+    score = plan_usefulness_score(plan, project=project)
+    scaffold["source_context"]["usefulness_score"] = round(score, 2)
+    scaffold["labels"] = list(
+        dict.fromkeys([*scaffold.get("labels", []), "useful-code-change"])
+    )
+
+
+def _dispatch_plan_task(
+    project: Path,
+    plan: dict[str, Any],
+    scaffold: dict[str, Any],
+    plans_rel: str,
+    sprint: str,
+) -> tuple[bool, str | None]:
+    """Create task via create_nl_task; returns (created_bool, error_message)."""
+    from koru.tasks import create_nl_task
+
+    priority = _resolve_plan_priority(plan)
+    _enrich_plan_scaffold(scaffold, plan, project)
+    try:
+        created = create_nl_task(
+            project,
+            _ticket_text(plan, plans_rel=plans_rel),
+            sprint=sprint,
+            priority=priority,
+            scaffold=scaffold,
+        )
+    except (OSError, ValueError) as exc:
+        return False, str(exc)
+    if getattr(created, "reused", False):
+        return False, None
+    return True, None
+
+
 def _apply_plan_tickets(
     project: Path,
     plan_set: dict[str, Any],
@@ -510,54 +567,28 @@ def _apply_plan_tickets(
     min_usefulness: float = DEFAULT_MIN_USEFULNESS,
 ) -> tuple[list[str], list[str], int, int]:
     """Return (created, skipped, useful_count, filtered_out_count)."""
-    from koru.tasks import create_nl_task
-
     useful, filtered_out = _rank_useful_plans(project, plan_set, min_usefulness)
 
     created_titles: list[str] = []
     skipped_titles: list[str] = []
     existing_keys, existing_title_files = _existing_todo2code_keys(project, sprint=sprint)
-    try:
-        plans_rel = str(plans_path.relative_to(project))
-    except ValueError:
-        plans_rel = str(plans_path)
+    plans_rel = _relative_plans_path(project, plans_path)
 
     for plan in useful:
         if len(created_titles) >= limit:
             break
         scaffold = _ticket_scaffold(plan, project=project, plans_path=plans_path, source=source)
-        title = str(scaffold["title"])
-        key = str(scaffold["source_context"]["dedupe_key"])
-        files = tuple(str(v) for v in (scaffold.get("files") or []) if str(v).strip())
-        title_key = (title, files)
+        title, key, title_key = _plan_identity(scaffold)
         if key in existing_keys or title_key in existing_title_files:
             skipped_titles.append(title)
             continue
-        priority = _PRIORITY_MAP.get(str(plan.get("priority") or "").upper(), "normal")
-        if priority not in {"high", "normal", "low"}:
-            priority = _PRIORITY_MAP.get(str(plan.get("priority") or "").lower(), "normal")
-        score = plan_usefulness_score(plan, project=project)
-        scaffold["source_context"]["usefulness_score"] = round(score, 2)
-        scaffold["labels"] = list(
-            dict.fromkeys([*scaffold.get("labels", []), "useful-code-change"])
-        )
-        try:
-            created = create_nl_task(
-                project,
-                _ticket_text(plan, plans_rel=plans_rel),
-                sprint=sprint,
-                priority=priority,
-                scaffold=scaffold,
-            )
-        except (OSError, ValueError) as exc:
-            skipped_titles.append(f"{title}: {exc}")
+        created, err = _dispatch_plan_task(project, plan, scaffold, plans_rel, sprint)
+        if not created:
+            skipped_titles.append(f"{title}: {err}" if err else title)
             continue
-        if getattr(created, "reused", False):
-            skipped_titles.append(title)
-        else:
-            created_titles.append(title)
-            existing_keys.add(key)
-            existing_title_files.add(title_key)
+        created_titles.append(title)
+        existing_keys.add(key)
+        existing_title_files.add(title_key)
     return created_titles, skipped_titles, len(useful), filtered_out
 
 
