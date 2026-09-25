@@ -1,0 +1,93 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-209",
+  "summary": "Atomize scan todo markers engine",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-209/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/scan.py",
+    "src/koru/scan_todo.py",
+    "tests/test_scan.py",
+    "tests/test_scan_todo.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "044337b61e51df11421fa28b45087a5a680612ff",
+    "targetBranch": "main",
+    "outcome": "Atomize scan_todo_markers from src/koru/scan.py into src/koru/scan_todo.py with clear Core vs Shell boundary, preserving identical behavior and backward compatibility.",
+    "nonGoals": [
+      "Rewriting scan.py entirely in this ticket",
+      "Changing Suggestion schema or CLI output format",
+      "Modifying other scan probes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract pure todo scanning and ignore-pattern logic into src/koru/scan_todo.py; keep scan.py as thin facade/orchestrator re-exporting scan_todo_markers.",
+      "components": [
+        {
+          "name": "koru-scan",
+          "paths": [
+            "src/koru/scan.py",
+            "src/koru/scan_todo.py",
+            "tests/test_scan.py",
+            "tests/test_scan_todo.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore inline scan_todo_markers in src/koru/scan.py."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -p no:wellmanifest_governance tests/test_scan.py -k TestScanTodoMarkers"
+        ],
+        "evidence": "Existing scan todo tests pass without regression."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -p no:wellmanifest_governance tests/test_scan_todo.py"
+        ],
+        "evidence": "New dedicated scan todo tests pass cleanly."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
