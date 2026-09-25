@@ -13,9 +13,12 @@ Publish the forensic report resolving STARTER-735: determine whether
 exact-head CAS was enforced when `ifuri-validator-agent` merged
 semcod/koru PR361 (merge commit `9ce405d0`, merged head `60510a80`)
 while the visible approval `5257358794` targeted `acf71f47` and was
-dismissed. Analysis is read-only: GitHub observations, protected
-validator receipts and validator-agent source/release review. No merge,
-push, branch deletion or actor bypass is authorized or performed.
+dismissed. The analysis uses GitHub observations, protected validator
+receipts and validator-agent source/release review. The initial Planfile
+scope prohibited publication; on 2026-09-25 the human user explicitly
+authorized pushing and merging overdue Koru tickets. This later instruction
+authorizes publication of this report through the normal protected Validator
+path. It does not authorize actor bypass or branch deletion.
 
 ## Deliverable
 
@@ -31,10 +34,20 @@ push, branch deletion or actor bypass is authorized or performed.
   live GitHub observations and the deployed validator release source.
 - [x] AC-03: Report published at the canonical docs path with versioned
   metadata and indexed in `docs/README.md`.
-- [x] AC-04: Protected receipts left untouched; no authorization
-  inferred from older green checks; no merge or bypass executed.
+- [x] AC-04: Protected receipts left untouched; no authorization inferred
+  from older green checks; publication uses a fresh exact-head Validator
+  approval and no bypass.
 
 ## Tracking boundary
 
 This directory contains the minimal reviewed intent. Optional participant prose
 and raw command logs are not required delivery output.
+
+## Publication reconciliation (2026-09-25)
+
+The work-start preflight reported stale registered worktrees as pending. Their
+corresponding PRs (#396, #397, #398, #376, #377 and #386) are merged, and each
+local ticket branch head is an ancestor of the observed `origin/main`. Their
+remaining dirty paths are Gradle cache files outside this ticket's documentation
+scope. The primary checkout's unrelated local changes were preserved. No
+overlapping documentation writer was found.

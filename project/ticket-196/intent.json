@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-196",
+  "summary": "Human delegation popup modal and controls for koru serve",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-196/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/dashboard_template.html",
+    "src/koruapi/dashboard_tickets.py",
+    "src/koruapi/dashboard_routes.py",
+    "tests/test_dashboard_ticket_handlers.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f3ae772bd163fccc947c878eeeb20492d2f23826",
+    "targetBranch": "main",
+    "outcome": "koru serve dashboard alerts operators via browser popup modal and Web Notifications when tickets require human input, enabling immediate one-click delegation to Koru SubLLM with optional operator guidance and bulk delegation support.",
+    "nonGoals": [
+      "Modifying core queue runner loop semantics outside dashboard API",
+      "Replacing existing approve/reject bulk endpoints"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Implement /api/tickets/delegate and enhance bulk waiting_input action to support delegate action. In the dashboard template, add a responsive modal overlay dialog and Web Notifications permission integration, polling detection for unhandled waiting/human tickets, and one-click delegation form.",
+      "components": [
+        {
+          "name": "dashboard-api",
+          "paths": [
+            "src/koruapi/dashboard_template.html",
+            "src/koruapi/dashboard_tickets.py",
+            "src/koruapi/dashboard_routes.py",
+            "tests/test_dashboard_ticket_handlers.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore previous dashboard template and ticket handlers."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_dashboard_ticket_handlers.py -q"
+        ],
+        "evidence": "Dashboard ticket handlers tests pass including waiting_input human queries, bulk delegation, and delegate_ticket_from_dashboard."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "Governance gate passes with zero errors."
+      }
+    ]
+  }
+}

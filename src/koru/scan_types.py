@@ -45,6 +45,7 @@ class ScanResult:
     skipped_as_duplicate: list[str] = field(default_factory=list)
     skipped_create_failed: list[str] = field(default_factory=list)
     skipped_create_failed_details: list[str] = field(default_factory=list)
+    fleet_admission: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -54,6 +55,8 @@ class ScanResult:
             "skipped_as_duplicate": list(self.skipped_as_duplicate),
             "skipped_create_failed": list(self.skipped_create_failed),
             "skipped_create_failed_details": list(self.skipped_create_failed_details),
+            **({"fleet_admission": dict(self.fleet_admission)}
+               if self.fleet_admission is not None else {}),
         }
 
 

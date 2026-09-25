@@ -1,0 +1,106 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-179",
+  "summary": "Route small lint tasks and show observed model history",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-179/**",
+    "src/koru/autonomy/cycle/cycle_config.py",
+    "src/koru/autonomy/cycle/cycle_drive_retry.py",
+    "src/koru/model_history.py",
+    "src/koru/queue/runners.py",
+    "src/koru/queue/ticket.py",
+    "src/koru/task_model_policy.py",
+    "tests/test_model_history.py",
+    "tests/test_task_model_policy.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f59c310018cf649b06006945a0ca5dd35771701c",
+    "targetBranch": "main",
+    "outcome": "Route bounded lint tasks and expose secret-free requested and observed model projections for a dependent dashboard slice.",
+    "nonGoals": [
+      "Change provider catalogs or SubLLM ticket082 owned files",
+      "Change execution or merge authority",
+      "Claim a requested model as observed",
+      "Classify refactors from title keywords",
+      "Log prompts or credentials"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 100,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Opt-in simple-model override for bounded lint metadata; preserve explicit pins and default for unknown scope. Read-only OpenCode session/message projections and optional installed SubLLM usage API supply actual history. Persist separate routing receipts without inferred joins.",
+      "components": [
+        {
+          "name": "task-model-policy",
+          "paths": [
+            "src/koru/task_model_policy.py",
+            "src/koru/queue/runners.py",
+            "src/koru/queue/ticket.py",
+            "src/koru/autonomy/cycle/cycle_drive_retry.py",
+            "src/koru/autonomy/cycle/cycle_config.py",
+            "tests/test_task_model_policy.py"
+          ]
+        },
+        {
+          "name": "model-history",
+          "paths": [
+            "src/koru/model_history.py",
+            "tests/test_model_history.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [
+        {
+          "kind": "component-local-state",
+          "component": "model-history",
+          "description": "Private requested-model journal owned by Koru; read-only external projections, no migration."
+        }
+      ],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket179 and remove the opt-in simple-model environment setting."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_task_model_policy.py tests/test_model_history.py -q"
+        ],
+        "evidence": "Bounded lint vs complex/unknown tasks, explicit pins, data isolation, read-only metadata and non-executing log parsing."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh",
+          "git diff --check"
+        ],
+        "evidence": "Scope and protected validation plus browser acceptance."
+      }
+    ]
+  }
+}

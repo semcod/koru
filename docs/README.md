@@ -42,11 +42,14 @@ changes are recorded in `CHANGELOG.md`.
 - **[`architecture/documentation-conformance.toon.yaml`](./architecture/documentation-conformance.toon.yaml)** — reproducible `sumd`/`docval`/`code2docs` baseline and ordered documentation-refresh queue.
 - **[`analysis/simple-task-model-routing.md`](./analysis/simple-task-model-routing.md)** (PL) — routing prostych zadań na model Flash, pilotaż i historia użycia modeli; v5: audyt wyścigu exact-head przy scaleniu PR361 (STARTER-735) — CAS nieegzekwowany w operacji scalenia.
 
-- **[`koru-fleet.md`](./koru-fleet.md)** — `koru fleet bootstrap` / `up` / `ls`:
+- **[`koru fleet`](information/koru-fleet.md)** (canonical `information/koru-fleet.md`;
+  legacy [`koru-fleet.md`](./koru-fleet.md) now redirects there) — `koru fleet
+  bootstrap` / `up` / `ls` / `standard-update` / `standard-inventory`:
   multi-project workspace init + one supervisor for every koru-managed project
   running a `koru autonomous up` child per koru-managed project on the
-  machine (mermaid + ASCII architecture diagrams, systemd deployment, and
-  the `--replace-existing` cross-project-kill bug it surfaced).
+  machine (mermaid + ASCII architecture diagrams, systemd deployment, the
+  `--replace-existing` cross-project-kill bug it surfaced, and the
+  organization-scoped Wellmanifest freshness scan).
 - **[`roadmap-competition.md`](./roadmap-competition.md)** (PL) — porównanie z Grit, Moderne/OpenRewrite, Gitar, Git AutoReview i kierunek roadmapy.
 - **[`recipes/README.md`](./recipes/README.md)** (PL) — szkic katalogu przepisów koru (propozycje, przykłady YAML).
 - **[`ci-github.md`](./ci-github.md)** (PL) — szablon thin CI na GitHub Actions (`koru-ci.yml`).
@@ -297,3 +300,5 @@ Complete index of documentation in this directory. Start with
 | [`plans/capture-providers-refactor.md`](./plans/capture-providers-refactor.md) | Capture provider refactor |
 | [`plans/observation-mesh-plan.md`](./plans/observation-mesh-plan.md) | Observation mesh plan |
 | [`plans/nlp2uri-koruide-integration-refactor-plan.md`](./plans/nlp2uri-koruide-integration-refactor-plan.md) | nlp2uri IDE control integration (PL) |
+
+- [Model dla prostych zadań](analysis/simple-task-model-routing.md) — audyt Koru na NVIDIA, wybór GLM-5.3 i kryteria pilotażu Flash.

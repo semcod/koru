@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-189",
+  "summary": "Reduce cyclomatic complexity: _question_answers_via_llm (CC=26)",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-189/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_supervisor.py",
+    "tests/test_dashboard_terminals.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0f60955f2e2a7c61ecd585c6567177e7aac83927",
+    "targetBranch": "main",
+    "outcome": "_question_answers_via_llm in src/koruapi/opencode_supervisor.py drops from cyclomatic complexity 26 to below the code2llm limit 15 by extracting behavior-preserving module-level helpers (_load_subllm, _question_spec, _subllm_answer_stdout, _parse_answer_payload, _normalize_answer_set) that keep the exact original guard order, log messages and answer normalization. No public API, prompt text, or supervisor semantics change; tests/test_dashboard_terminals.py passes unmodified.",
+    "nonGoals": [
+      "Changing any observable log message, answer fallback, or pending-question semantics",
+      "Reducing the other reported hotspots (supervise_once, sse_log_stream, etc.) — separate tickets",
+      "Regenerating project/analysis.toon.yaml or project/planfile-tickets.yaml (integration-owned artifacts)",
+      "Renaming or removing any public name"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Split the monolithic _question_answers_via_llm into single-responsibility private module functions (import resolution, spec building, subllm transport, JSON salvage parsing, answer normalization); the public function keeps only orchestration guards and returns explicit None on every original failure path so behavior is equivalent.",
+      "components": [
+        {
+          "name": "opencode-supervisor",
+          "paths": [
+            "src/koruapi/opencode_supervisor.py",
+            "tests/test_dashboard_terminals.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; the original single _question_answers_via_llm body is restored verbatim."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "code2llm <worktree> -f all -o /tmp/opencode/code2llm-ticket189 --no-chunk --exclude *.md --exclude plugins (complexity re-measured on _question_answers_via_llm)"
+        ],
+        "evidence": "Re-run code2llm reports CC < 15 for _question_answers_via_llm."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=src python -m pytest tests/test_dashboard_terminals.py -q"
+        ],
+        "evidence": "Existing supervisor/terminals suite passes unmodified."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koruapi/opencode_supervisor.py && ruff format --check src/koruapi/opencode_supervisor.py"
+        ],
+        "evidence": "Lint and format pass on the refactored module."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "Governance gate passes with zero errors."
+      }
+    ]
+  }
+}

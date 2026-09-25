@@ -33,7 +33,6 @@
 
 # Koru: wybór modelu dla prostych zadań
 
-
 ## Aktualizacja v5: audyt wyścigu exact-head przy scaleniu PR361 (STARTER-735), 2026-09-20
 
 Rozstrzygnięcie pytania z sekcji „Luka w dowodach publikacji" (v3):
@@ -158,6 +157,7 @@ Ticket STARTER-735 (utworzony 2026-09-19T19:53:54Z) prosił o raport
 „v3"; dokument awansował w międzyczasie do v4 (commit `4baa31ae`), więc
 zgodnie z regułą append-only niniejsza aktualizacja jest v5, a sekcje
 v1–v4 pozostają bez zmian.
+
 
 ## Aktualizacja v4: odczyt działającego dziennika SubLLM, 19:57 UTC
 

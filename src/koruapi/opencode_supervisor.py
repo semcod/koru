@@ -21,8 +21,9 @@ import os
 import sys
 import threading
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from koruapi.opencode_terminals import (
     discover_instances,
@@ -50,19 +51,19 @@ def supervisor_enabled() -> bool:
     return raw not in {"0", "false", "no", "off"}
 
 
-def _question_answers_via_llm(
-    project: Path, request: dict[str, Any], log: LogFn
-) -> list[list[str]] | None:
-    """Ask SubLLM to pick option labels for each pending question."""
-    questions = request.get("questions") or []
-    if not questions:
-        return None
+def _load_subllm(log: LogFn) -> tuple[bool, Callable[..., Any] | None]:
+    """Resolve the optional SubLLM runner; ``(False, None)`` (after logging) if absent."""
     try:
         from korullm import run_subllm
     except Exception:  # pragma: no cover — subllm optional
         log("subllm unavailable; question left pending")
-        return None
-    spec = []
+        return False, None
+    return True, run_subllm
+
+
+def _question_spec(questions: list[Any]) -> list[dict[str, Any]] | None:
+    """Build the SubLLM question spec; ``None`` when a question has no options."""
+    spec: list[dict[str, Any]] = []
     for index, q in enumerate(questions):
         options = q.get("options") or []
         labels = [str(o.get("label", "")) for o in options if isinstance(o, dict)]
@@ -77,12 +78,21 @@ def _question_answers_via_llm(
                 "multiple": bool(q.get("multiple")),
             }
         )
+    return spec
+
+
+def _subllm_answer_stdout(
+    run_subllm: Callable[..., Any] | None,
+    project: Path,
+    spec: list[dict[str, Any]],
+    log: LogFn,
+) -> tuple[bool, str | None]:
+    """Run SubLLM over the spec; ``(True, stdout)`` on success, ``(False, None)`` on failure."""
     prompt = (
         "An opencode agent in an autonomous koru run is asking for a decision. "
         "Pick the best option for each question, preferring the choice that "
         "keeps autonomous work unblocked. Reply with ONLY a JSON array of "
-        "arrays of chosen option labels, in question order.\n\n"
-        + json.dumps(spec, indent=2)
+        "arrays of chosen option labels, in question order.\n\n" + json.dumps(spec, indent=2)
     )
     try:
         result = run_subllm(
@@ -94,36 +104,39 @@ def _question_answers_via_llm(
         )
     except Exception as exc:  # pragma: no cover — transport failure
         log(f"subllm call failed: {exc}")
-        return None
+        return False, None
     if result.returncode != 0:
         log(f"subllm returned {result.returncode}: {result.stderr[:120]}")
-        return None
+        return False, None
+    return True, result.stdout
+
+
+def _parse_answer_payload(stdout: str | None, log: LogFn) -> tuple[bool, Any]:
+    """Parse the SubLLM reply; ``(False, None)`` when no JSON array can be salvaged."""
     try:
-        parsed = json.loads(result.stdout.strip())
+        return True, json.loads(stdout.strip())
     except json.JSONDecodeError:
         # Try to salvage a JSON array embedded in prose.
-        text = result.stdout
-        start, end = text.find("["), text.rfind("]")
-        if start == -1 or end <= start:
-            log("subllm answer not JSON; question left pending")
-            return None
-        try:
-            parsed = json.loads(text[start : end + 1])
-        except json.JSONDecodeError:
-            log("subllm answer not JSON; question left pending")
-            return None
-    if not isinstance(parsed, list) or len(parsed) != len(spec):
-        log("subllm answer shape mismatch; question left pending")
-        return None
+        start, end = stdout.find("["), stdout.rfind("]")
+        if start != -1 and end > start:
+            try:
+                return True, json.loads(stdout[start : end + 1])
+            except json.JSONDecodeError:
+                pass
+    log("subllm answer not JSON; question left pending")
+    return False, None
+
+
+def _normalize_answer_set(parsed: list[Any], spec: list[dict[str, Any]], log: LogFn) -> list[list[str]] | None:
+    """Map parsed picks onto real option labels; ``None`` on an invalid entry."""
     answers: list[list[str]] = []
-    valid = True
     for i, chosen in enumerate(parsed):
         allowed = set(spec[i]["options"])
         if isinstance(chosen, str):
             chosen = [chosen]
         if not isinstance(chosen, list) or not chosen:
-            valid = False
-            break
+            log("subllm answer invalid; question left pending")
+            return None
         picked = [str(c) for c in chosen if str(c) in allowed]
         if not picked:
             # LLM invented a label — fall back to the first real option.
@@ -131,10 +144,166 @@ def _question_answers_via_llm(
         if not spec[i]["multiple"]:
             picked = picked[:1]
         answers.append(picked)
-    if not valid:
-        log("subllm answer invalid; question left pending")
-        return None
     return answers
+
+
+def _question_answers_via_llm(project: Path, request: dict[str, Any], log: LogFn) -> list[list[str]] | None:
+    """Ask SubLLM to pick option labels for each pending question."""
+    questions = request.get("questions") or []
+    if not questions:
+        return None
+    subllm_ready, run_subllm = _load_subllm(log)
+    if not subllm_ready:
+        return None
+    spec = _question_spec(questions)
+    if spec is None:
+        return None
+    call_ok, stdout = _subllm_answer_stdout(run_subllm, project, spec, log)
+    if not call_ok:
+        return None
+    parse_ok, parsed = _parse_answer_payload(stdout, log)
+    if not parse_ok:
+        return None
+    if not isinstance(parsed, list) or len(parsed) != len(spec):
+        log("subllm answer shape mismatch; question left pending")
+        return None
+    return _normalize_answer_set(parsed, spec, log)
+
+
+def _prune_steered_sessions(now: float) -> None:
+    if len(_steered_sessions) > 500:
+        cutoff = now - 3600.0
+        for sid, t in list(_steered_sessions.items()):
+            if t < cutoff:
+                del _steered_sessions[sid]
+
+
+def _resolve_instance_target(entry: dict[str, Any]) -> str | None:
+    if not entry.get("auto_answer"):
+        return None
+    url = str(entry.get("url") or "")
+    if not url or not entry.get("healthy"):
+        return None
+    return url
+
+
+def _steer_session_to_fallback(
+    url: str,
+    sid: str,
+    failing_pid: str,
+    fallback_model: dict[str, Any],
+    now: float,
+    stats: dict[str, int],
+    log: LogFn,
+) -> None:
+    try:
+        steer_text = (
+            f"Supervisor failover: provider '{failing_pid}' exhausted. "
+            "Continuing autonomous execution with "
+            f"{fallback_model['providerID']}/{fallback_model['modelID']}."
+        )
+        send_prompt(url, sid, steer_text, model=fallback_model)
+        _steered_sessions[sid] = now
+        stats["failovers"] += 1
+        log(
+            f"{url}: session {sid} auto-steered to fallback "
+            f"{fallback_model['providerID']}/{fallback_model['modelID']}"
+        )
+    except Exception as exc:
+        stats["errors"] += 1
+        log(f"{url}: failover steering failed for {sid}: {exc}")
+
+
+def _handle_instance_failovers(
+    url: str,
+    log_events: list[dict[str, Any]],
+    now: float,
+    stats: dict[str, int],
+    log: LogFn,
+) -> None:
+    if not log_events:
+        return
+    try:
+        active_sessions = {
+            str(s.get("id")): s for s in list_sessions(url) if isinstance(s, dict) and s.get("id")
+        }
+    except Exception:
+        active_sessions = {}
+
+    for ev in log_events:
+        sid = ev.get("sessionID")
+        failing_pid = ev.get("providerID")
+        if not sid or not failing_pid or sid not in active_sessions:
+            continue
+        last_steered = _steered_sessions.get(sid, 0.0)
+        if now - last_steered < 120.0:
+            continue
+        fallback_model, _ = resolve_active_terminal_model(url)
+        if fallback_model and fallback_model.get("providerID") != failing_pid:
+            _steer_session_to_fallback(url, sid, failing_pid, fallback_model, now, stats, log)
+
+
+def _handle_pending_permissions(
+    url: str,
+    permissions: list[dict[str, Any]],
+    stats: dict[str, int],
+    log: LogFn,
+) -> None:
+    for req in permissions:
+        session_id = str(req.get("sessionID") or "")
+        request_id = str(req.get("id") or "")
+        if not session_id or not request_id:
+            continue
+        try:
+            reply_permission(url, session_id, request_id, "once")
+            stats["permissions"] += 1
+            log(f"{url}: permission {request_id} ({req.get('action', '?')}) -> once")
+        except Exception as exc:
+            stats["errors"] += 1
+            log(f"{url}: permission {request_id} reply failed: {exc}")
+
+
+def _handle_pending_questions(
+    project: Path,
+    url: str,
+    questions: list[dict[str, Any]],
+    stats: dict[str, int],
+    log: LogFn,
+) -> None:
+    for req in questions:
+        session_id = str(req.get("sessionID") or "")
+        request_id = str(req.get("id") or "")
+        if not session_id or not request_id:
+            continue
+        answers = _question_answers_via_llm(project, req, log)
+        if answers is None:
+            continue
+        try:
+            reply_question(url, session_id, request_id, answers)
+            stats["questions"] += 1
+            log(f"{url}: question {request_id} answered {answers}")
+        except Exception as exc:
+            stats["errors"] += 1
+            log(f"{url}: question {request_id} reply failed: {exc}")
+
+
+def _supervise_instance(
+    project: Path,
+    url: str,
+    log_events: list[dict[str, Any]],
+    now: float,
+    stats: dict[str, int],
+    log: LogFn,
+) -> None:
+    _handle_instance_failovers(url, log_events, now, stats, log)
+    try:
+        pending = pending_requests(url)
+    except Exception as exc:
+        stats["errors"] += 1
+        log(f"{url}: pending poll failed: {exc}")
+        return
+    _handle_pending_permissions(url, pending.get("permissions") or [], stats, log)
+    _handle_pending_questions(project, url, pending.get("questions") or [], stats, log)
 
 
 def supervise_once(project: Path, *, log: LogFn = _default_log) -> dict[str, int]:
@@ -151,101 +320,19 @@ def supervise_once(project: Path, *, log: LogFn = _default_log) -> dict[str, int
         log(f"provider {ev['providerID']} exhausted: {ev['error'][:80]}")
 
     now = time.time()
-    if len(_steered_sessions) > 500:
-        cutoff = now - 3600.0
-        for sid, t in list(_steered_sessions.items()):
-            if t < cutoff:
-                del _steered_sessions[sid]
+    _prune_steered_sessions(now)
 
     for entry in discover_instances(project):
-        if not entry.get("auto_answer"):
-            continue
-        url = str(entry.get("url") or "")
-        if not url or not entry.get("healthy"):
+        url = _resolve_instance_target(entry)
+        if url is None:
             continue
         stats["instances"] += 1
+        _supervise_instance(project, url, log_events, now, stats, log)
 
-        if log_events:
-            try:
-                active_sessions = {
-                    str(s.get("id")): s
-                    for s in list_sessions(url)
-                    if isinstance(s, dict) and s.get("id")
-                }
-            except Exception:
-                active_sessions = {}
-
-            for ev in log_events:
-                sid = ev.get("sessionID")
-                failing_pid = ev.get("providerID")
-                if not sid or not failing_pid or sid not in active_sessions:
-                    continue
-                last_steered = _steered_sessions.get(sid, 0.0)
-                if now - last_steered < 120.0:
-                    continue
-                fallback_model, _ = resolve_active_terminal_model(url)
-                if (
-                    fallback_model
-                    and fallback_model.get("providerID") != failing_pid
-                ):
-                    try:
-                        steer_text = (
-                            f"Supervisor failover: provider '{failing_pid}' exhausted. "
-                            f"Continuing autonomous execution with {fallback_model['providerID']}/{fallback_model['modelID']}."
-                        )
-                        send_prompt(url, sid, steer_text, model=fallback_model)
-                        _steered_sessions[sid] = now
-                        stats["failovers"] += 1
-                        log(
-                            f"{url}: session {sid} auto-steered to fallback "
-                            f"{fallback_model['providerID']}/{fallback_model['modelID']}"
-                        )
-                    except Exception as exc:
-                        stats["errors"] += 1
-                        log(f"{url}: failover steering failed for {sid}: {exc}")
-
-        try:
-            pending = pending_requests(url)
-        except Exception as exc:
-            stats["errors"] += 1
-            log(f"{url}: pending poll failed: {exc}")
-            continue
-        for req in pending["permissions"]:
-            session_id = str(req.get("sessionID") or "")
-            request_id = str(req.get("id") or "")
-            if not session_id or not request_id:
-                continue
-            try:
-                reply_permission(url, session_id, request_id, "once")
-                stats["permissions"] += 1
-                log(
-                    f"{url}: permission {request_id} "
-                    f"({req.get('action', '?')}) -> once"
-                )
-            except Exception as exc:
-                stats["errors"] += 1
-                log(f"{url}: permission {request_id} reply failed: {exc}")
-        for req in pending["questions"]:
-            session_id = str(req.get("sessionID") or "")
-            request_id = str(req.get("id") or "")
-            if not session_id or not request_id:
-                continue
-            answers = _question_answers_via_llm(project, req, log)
-            if answers is None:
-                continue
-            try:
-                reply_question(url, session_id, request_id, answers)
-                stats["questions"] += 1
-                log(f"{url}: question {request_id} answered {answers}")
-            except Exception as exc:
-                stats["errors"] += 1
-                log(f"{url}: question {request_id} reply failed: {exc}")
     return stats
 
 
-def _supervisor_loop(
-    project: Path, interval: float, stop: threading.Event, log: LogFn
-) -> None:
+def _supervisor_loop(project: Path, interval: float, stop: threading.Event, log: LogFn) -> None:
     while not stop.is_set():
         try:
             supervise_once(project, log=log)

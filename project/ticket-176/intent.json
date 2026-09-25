@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-176",
+  "summary": "decompose god function jetbrains_chat_target_from_surface",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-176/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/koruide/src/koruide/chat_target.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "684463445c60d5701b67de47a942924d1b114f67",
+    "targetBranch": "main",
+    "outcome": "jetbrains_chat_target_from_surface (CC=10, fan-out=8, mutations=30) becomes a thin orchestrator (CC=7, fan-out=7, mutations=4) over a decomposed pipeline: _SurfaceWindow/_CapturePoint value objects plus _surface_from_source, _surface_window_from_bounds, _surface_window_rect, _surface_coordinate_map, _clamped_surface_window, _composer_capture_point, _point_inside_capture and _surface_target_payload.",
+    "nonGoals": [
+      "Change behavior, payload keys or public API.",
+      "Refactor unrelated functions in the module (e.g. _jetbrains_size_score).",
+      "Add runtime dependencies."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Carry the window rect and mapped point as frozen dataclasses (_SurfaceWindow with as_rect/composer_anchor, _CapturePoint) so no stage unpacks a 4-tuple (each unpack counts 8 mutations in code2llm). Split the orchestrator into named stages: source/Toolbox gate (_surface_from_source), bounds parsing (_surface_window_from_bounds), validation (_surface_window_rect), coordinate-map compilation (_surface_coordinate_map), capture clamping (_clamped_surface_window), composer mapping (_composer_capture_point), in-capture bounds check (_point_inside_capture) and payload construction (_surface_target_payload). Validation order, thresholds, payload keys and the re-exported public API are unchanged.",
+      "components": [
+        {
+          "name": "koruide-chat-target",
+          "paths": [
+            "packages/koruide/src/koruide/chat_target.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; the pipeline inlines back into jetbrains_chat_target_from_surface."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 /tmp/opencode/measure_smell.py packages/koruide/src/koruide/chat_target.py (code2llm FileAnalyzer + SmellDetector)"
+        ],
+        "evidence": "code2llm smell detector reports no god_function for jetbrains_chat_target_from_surface; orchestrator metrics CC=7, fan-out=7, mutations=4; all extracted helpers under thresholds."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_jetbrains_surface_chat_target.py tests/test_photo_vql_orchestrator.py tests/test_photo_vql_drive.py tests/test_vdisplay_control_fallback.py -q"
+        ],
+        "evidence": "All existing tests pass unchanged."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m ruff check packages/koruide/src/koruide/chat_target.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Ruff clean; governance gate passes."
+      }
+    ]
+  }
+}

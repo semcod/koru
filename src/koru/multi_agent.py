@@ -133,9 +133,7 @@ def is_koru_project(path: Path) -> bool:
     if not path.is_dir() or path.name.startswith("."):
         return False
     return (
-        (path / ".planfile").exists()
-        or (path / "koru.yaml").exists()
-        or (path / "project" / "new-ticket.sh").exists()
+        (path / ".planfile").exists() or (path / "koru.yaml").exists() or (path / "project" / "new-ticket.sh").exists()
     )
 
 
@@ -301,6 +299,120 @@ class MultiAgentOrchestrator:
         env["KORU_STDIO_FORMAT"] = env.get("KORU_STDIO_FORMAT", "human")
         return env
 
+    def _sync_github_issues(self, projects: list[Path]) -> None:
+        """Synchronize GitHub issues with Planfile when ``--sync`` was requested."""
+        if not self.config.sync_github:
+            return
+        if self.config.dry_run:
+            print("koru auto: [dry-run] would synchronize GitHub issues with Planfile for configured projects.")
+            return
+        from concurrent.futures import ThreadPoolExecutor
+
+        sync_targets = [p for p in projects if has_github_sync_config(p)]
+        if sync_targets:
+            print(f"koru auto: synchronizing GitHub issues across {len(sync_targets)} project(s)...")
+            with ThreadPoolExecutor(max_workers=min(len(sync_targets), 8)) as pool:
+                list(pool.map(sync_github_planfile, sync_targets))
+
+    def _collect_pending_tasks(self, projects: list[Path]) -> list[TaskItem]:
+        """Gather actionable tickets from every discovered project."""
+        pending_queue: list[TaskItem] = []
+        for proj in projects:
+            pending_queue.extend(get_pending_tasks_for_project(proj))
+        return pending_queue
+
+    def _print_dry_run_plan(self, pending_queue: list[TaskItem]) -> None:
+        """Preview queued tasks and their worker assignments without executing."""
+        print("\n[Dry Run Plan]")
+        for i, task in enumerate(pending_queue[: self.config.max_tickets], start=1):
+            client_desc = f" (client: {self.config.client})" if self.config.client else ""
+            print(f"  {i}. [{task.project.name}] {task.ticket_id}: {task.title}{client_desc}")
+
+    def _reap_finished_workers(self) -> tuple[int, int]:
+        """Poll active workers; enforce timeouts and count completions.
+
+        Updates ``self.active_workers`` to the survivors and returns the
+        ``(completed, failed)`` deltas observed during this pass.
+        """
+        completed = 0
+        failed = 0
+        still_active: list[ActiveWorker] = []
+        for worker in self.active_workers:
+            code = worker.process.poll()
+            if code is None:
+                if time.time() - worker.start_time > self.config.timeout_per_ticket:
+                    print(
+                        f"koru auto: worker [{worker.task.project.name} / {worker.task.ticket_id}] "
+                        "timed out, terminating...",
+                        file=sys.stderr,
+                    )
+                    worker.process.terminate()
+                    failed += 1
+                else:
+                    still_active.append(worker)
+            else:
+                duration = time.time() - worker.start_time
+                if code == 0:
+                    print(
+                        f"✓ [{worker.task.project.name}] {worker.task.ticket_id} "
+                        f"completed successfully in {duration:.1f}s"
+                    )
+                    completed += 1
+                else:
+                    print(
+                        f"✗ [{worker.task.project.name}] {worker.task.ticket_id} "
+                        f"exited with error code {code} ({duration:.1f}s)",
+                        file=sys.stderr,
+                    )
+                    failed += 1
+        self.active_workers = still_active
+        return completed, failed
+
+    def _promote_backlog_task(self, task: TaskItem) -> None:
+        """Move a backlog ticket into the current sprint before dispatching it."""
+        if task.sprint == "backlog" and not self.config.dry_run and not self.config.worker_dry_run:
+            py = os.environ.get("PY") or sys.executable
+            subprocess.run(
+                [py, "-m", "planfile.cli", "ticket", "move", task.ticket_id, "current"],
+                cwd=str(task.project),
+                capture_output=True,
+            )
+            task.sprint = "current"
+
+    def _try_spawn_next_worker(self, queue: list[TaskItem]) -> tuple[bool, int]:
+        """Spawn the next eligible queued task when capacity allows.
+
+        Keeps the safety invariant of at most one worker per project at a
+        time. Returns ``(spawn_attempted, failed_delta)``; a spawn attempt
+        always ends the current scheduling pass, mirroring the original loop.
+        """
+        if self._interrupted or len(self.active_workers) >= self.config.workers:
+            return False, 0
+
+        active_project_paths = {w.task.project for w in self.active_workers}
+        task = next((t for t in queue if t.project not in active_project_paths), None)
+        if task is None:
+            return False, 0
+
+        queue.remove(task)
+        self._promote_backlog_task(task)
+        cmd = self.build_worker_command(task)
+        env = self.build_worker_env()
+        print(
+            f"▶ Spawning agent [{len(self.active_workers) + 1}/{self.config.workers}] "
+            f"for [{task.project.name}] {task.ticket_id}: {' '.join(cmd)}"
+        )
+        try:
+            proc = subprocess.Popen(cmd, cwd=str(task.project), env=env)
+            self.active_workers.append(ActiveWorker(task=task, process=proc, start_time=time.time()))
+        except Exception as exc:
+            print(
+                f"koru auto: failed to start worker for [{task.project.name}] {task.ticket_id}: {exc}",
+                file=sys.stderr,
+            )
+            return True, 1
+        return True, 0
+
     def run(self) -> int:
         self.setup_signals()
         projects = discover_workspace_projects(self.config.workspace)
@@ -314,24 +426,10 @@ class MultiAgentOrchestrator:
         )
 
         # 1. Sync GitHub if requested
-        if self.config.sync_github:
-            if self.config.dry_run:
-                print("koru auto: [dry-run] would synchronize GitHub issues with Planfile for configured projects.")
-            else:
-                from concurrent.futures import ThreadPoolExecutor
-
-                sync_targets = [p for p in projects if has_github_sync_config(p)]
-                if sync_targets:
-                    print(f"koru auto: synchronizing GitHub issues across {len(sync_targets)} project(s)...")
-                    with ThreadPoolExecutor(max_workers=min(len(sync_targets), 8)) as pool:
-                        list(pool.map(sync_github_planfile, sync_targets))
+        self._sync_github_issues(projects)
 
         # 2. Collect pending tasks
-        pending_queue: list[TaskItem] = []
-        for proj in projects:
-            tasks = get_pending_tasks_for_project(proj)
-            pending_queue.extend(tasks)
-
+        pending_queue = self._collect_pending_tasks(projects)
         if not pending_queue:
             print("koru auto: no open Planfile tickets found across discovered projects.")
             return 0
@@ -339,10 +437,7 @@ class MultiAgentOrchestrator:
         print(f"koru auto: {len(pending_queue)} actionable ticket(s) queued.")
 
         if self.config.dry_run:
-            print("\n[Dry Run Plan]")
-            for i, task in enumerate(pending_queue[: self.config.max_tickets], start=1):
-                client_desc = f" (client: {self.config.client})" if self.config.client else ""
-                print(f"  {i}. [{task.project.name}] {task.ticket_id}: {task.title}{client_desc}")
+            self._print_dry_run_plan(pending_queue)
             return 0
 
         completed_count = 0
@@ -350,83 +445,20 @@ class MultiAgentOrchestrator:
         queue = pending_queue[: self.config.max_tickets]
 
         while (queue or self.active_workers) and not self._interrupted:
-            # Poll existing workers
-            still_active: list[ActiveWorker] = []
-            for worker in self.active_workers:
-                code = worker.process.poll()
-                if code is None:
-                    # Check timeout
-                    if time.time() - worker.start_time > self.config.timeout_per_ticket:
-                        print(
-                            f"koru auto: worker [{worker.task.project.name} / {worker.task.ticket_id}] "
-                            "timed out, terminating...",
-                            file=sys.stderr,
-                        )
-                        worker.process.terminate()
-                        failed_count += 1
-                    else:
-                        still_active.append(worker)
-                else:
-                    duration = time.time() - worker.start_time
-                    if code == 0:
-                        print(
-                            f"✓ [{worker.task.project.name}] {worker.task.ticket_id} "
-                            f"completed successfully in {duration:.1f}s"
-                        )
-                        completed_count += 1
-                    else:
-                        print(
-                            f"✗ [{worker.task.project.name}] {worker.task.ticket_id} "
-                            f"exited with error code {code} ({duration:.1f}s)",
-                            file=sys.stderr,
-                        )
-                        failed_count += 1
-            self.active_workers = still_active
+            completed, failed = self._reap_finished_workers()
+            completed_count += completed
+            failed_count += failed
 
-            # Spawn new workers up to capacity
-            # Keep safety invariant: at most one worker per project simultaneously
-            active_project_paths = {w.task.project for w in self.active_workers}
-
-            eligible_idx = None
-            for idx, task in enumerate(queue):
-                if task.project not in active_project_paths:
-                    eligible_idx = idx
-                    break
-
-            if eligible_idx is not None and len(self.active_workers) < self.config.workers and not self._interrupted:
-                task = queue.pop(eligible_idx)
-                if task.sprint == "backlog" and not self.config.dry_run and not self.config.worker_dry_run:
-                    py = os.environ.get("PY") or sys.executable
-                    subprocess.run(
-                        [py, "-m", "planfile.cli", "ticket", "move", task.ticket_id, "current"],
-                        cwd=str(task.project),
-                        capture_output=True,
-                    )
-                    task.sprint = "current"
-                cmd = self.build_worker_command(task)
-                env = self.build_worker_env()
-                print(
-                    f"▶ Spawning agent [{len(self.active_workers) + 1}/{self.config.workers}] "
-                    f"for [{task.project.name}] {task.ticket_id}: {' '.join(cmd)}"
-                )
-                try:
-                    proc = subprocess.Popen(cmd, cwd=str(task.project), env=env)
-                    self.active_workers.append(
-                        ActiveWorker(task=task, process=proc, start_time=time.time())
-                    )
-                except Exception as exc:
-                    print(
-                        f"koru auto: failed to start worker for [{task.project.name}] {task.ticket_id}: {exc}",
-                        file=sys.stderr,
-                    )
-                    failed_count += 1
+            # 3. Spawn new workers up to capacity
+            spawn_attempted, spawn_failed = self._try_spawn_next_worker(queue)
+            failed_count += spawn_failed
+            if spawn_attempted:
                 continue
 
             time.sleep(0.5)
 
         print(
-            f"\nkoru auto: run finished. Completed: {completed_count}, "
-            f"Failed: {failed_count}, Remaining: {len(queue)}"
+            f"\nkoru auto: run finished. Completed: {completed_count}, Failed: {failed_count}, Remaining: {len(queue)}"
         )
         return 0 if failed_count == 0 else 1
 

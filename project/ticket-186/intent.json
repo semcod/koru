@@ -1,0 +1,96 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-186",
+  "summary": "Reduce cyclomatic complexity: MultiAgentOrchestrator.run (CC=31)",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-186/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/multi_agent.py",
+    "tests/test_multi_agent.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "52c5a3a2f8158553770ea98c0b2e9b5fb7972cd7",
+    "targetBranch": "main",
+    "outcome": "MultiAgentOrchestrator.run drops from cyclomatic complexity 31 to below the code2llm limit 15 by extracting behavior-preserving private helpers (_sync_github_issues, _collect_pending_tasks, _print_dry_run_plan, _reap_finished_workers, _promote_backlog_task, _try_spawn_next_worker). No public API, CLI, output, or scheduling semantics change; tests/test_multi_agent.py passes unmodified.",
+    "nonGoals": [
+      "Changing any observable output, exit code, worker scheduling, or timeout semantics",
+      "Regenerating project/analysis.toon.yaml or project/planfile-tickets.yaml (integration-owned artifacts)",
+      "Renaming or removing any public name"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Decompose the monolithic run() loop into single-responsibility private methods on MultiAgentOrchestrator; the loop keeps only orchestration and accounting, each helper owns one stage and returns explicit deltas so behavior is byte-for-byte equivalent.",
+      "components": [
+        {
+          "name": "multi-agent-orchestrator",
+          "paths": [
+            "src/koru/multi_agent.py",
+            "tests/test_multi_agent.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; the original single run() method is restored verbatim."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "code2llm <worktree> -f all -o /tmp/opencode/code2llm-ticket186 --no-chunk --exclude *.md --exclude plugins (complexity re-measured on MultiAgentOrchestrator.run)"
+        ],
+        "evidence": "Re-run code2llm reports CC < 15 for MultiAgentOrchestrator.run."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=src .venv/bin/python -m pytest tests/test_multi_agent.py -q"
+        ],
+        "evidence": "Existing multi-agent suite passes unmodified."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koru/multi_agent.py && ruff format --check src/koru/multi_agent.py"
+        ],
+        "evidence": "Lint and format pass on the refactored module."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "Governance gate passes with zero errors."
+      }
+    ]
+  }
+}

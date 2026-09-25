@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-194",
+  "summary": "Preserve Flash model identity across Tillm fallback",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-194/**",
+    "src/koru/tillm_bridge.py",
+    "tests/test_tillm_bridge.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0f61e0e51b359bb4cd5d4794c302fb9a96af1977",
+    "targetBranch": "main",
+    "outcome": "Provider-qualified simple-task model ids retain their model family through the Koru to Tillm adapter and the pilot reports effective routing evidence.",
+    "nonGoals": [
+      "Change Tillm provider resolution semantics",
+      "Change model policy qualification rules",
+      "Publish prompts, responses or credentials"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Normalize only the provider prefix at the Koru adapter boundary; retain the original requested model in Koru routing receipts and let Tillm apply its existing provider fallback to the same model family.",
+      "components": [
+        {
+          "name": "tillm bridge",
+          "paths": ["src/koru/tillm_bridge.py", "tests/test_tillm_bridge.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Remove the adapter normalization and the pilot drop-in; the pre-change Tillm delegation remains available."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "PYTHONPATH=src pytest -q tests/test_tillm_bridge.py tests/test_task_model_policy.py"
+        ],
+        "evidence": "The adapter passes the bare Flash model family to Tillm while Koru policy retains the provider-qualified receipt."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=src pytest -q tests/test_tillm_bridge.py tests/test_task_model_policy.py tests/test_model_history.py tests/test_dashboard_logs.py"
+        ],
+        "evidence": "Focused bridge, routing, history and dashboard regressions pass."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "sanitized pilot routing readback"
+        ],
+        "evidence": "The deployed process exposes the Flash selector and an effective model or sanitized provider rejection reason."
+      }
+    ]
+  }
+}

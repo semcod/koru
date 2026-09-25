@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-177",
+  "summary": "Gate fleet scan ticket creation with pinned Autonom admission",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "src/koru/fleet_admission.py",
+    "src/koru/scan.py",
+    "src/koru/scan_types.py",
+    "tests/test_fleet_admission.py",
+    "project/ticket-177/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "684463445c60d5701b67de47a942924d1b114f67",
+    "targetBranch": "main",
+    "outcome": "Opt-in fleet scans cannot create tickets without fresh pinned Autonom admission; each admitted scan emits at most one suggestion.",
+    "nonGoals": [
+      "No ownership or merge authority",
+      "No existing queue execution changes",
+      "No universal opt-in or fleet-wide deployment claim"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 2,
+      "maxRuntimeDependencies": 1
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Explicit opt-in and digest-pinned project-to-repository configuration call verified Autonom bytes in isolated Python immediately before scan ticket emission; standalone and read-only scan paths preserved.",
+      "components": [
+        {
+          "name": "koru-scan",
+          "paths": [
+            "src/koru/fleet_admission.py",
+            "src/koru/scan.py",
+            "src/koru/scan_types.py",
+            "tests/test_fleet_admission.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Operator KORU_FLEET_ADMISSION_ENABLED, CONFIG and CONFIG_DIGEST inputs",
+        "Optional fleet_admission observation on ScanResult"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore previous Koru runtime and operator environment; preserve existing queue and observations."
+    },
+    "runtimeDependencies": [
+      "Autonom fleet_admission.py at94080c91a628b97d2416b4114f1dec1f11cf2880, sha256:07d7410be09ddd7b24f73171a5ddd2980bcd4dbffb85a49007ae762dab0450d6"
+    ],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_fleet_admission.py tests/test_scan.py tests/test_scan_split.py tests/test_scan_phase.py -q",
+          "./project/governance-check.sh --actor agent --base origin/main"
+        ],
+        "evidence": "129 tests passed with governance enabled; five native subprocess contract cases passed. No ownership or external execution effects."
+      }
+    ]
+  }
+}

@@ -46,6 +46,7 @@ from koruapi.dashboard_state import dashboard_state
 from koruapi.dashboard_tickets import (
     bulk_waiting_input_action,
     create_ticket_from_dashboard,
+    delegate_ticket_from_dashboard,
     reorder_ticket_from_dashboard,
     update_ticket_from_dashboard,
 )
@@ -88,9 +89,7 @@ def _get_dashboard(handler: Any, config: ServeConfig) -> None:
 
 
 def _get_config(handler: Any, config: ServeConfig) -> None:
-    handler._safe_respond_json(
-        lambda: dashboard_config_payload(handler._selected_project(), _config_defaults(config))
-    )
+    handler._safe_respond_json(lambda: dashboard_config_payload(handler._selected_project(), _config_defaults(config)))
 
 
 def _get_env_config(handler: Any, _config: ServeConfig) -> None:
@@ -98,9 +97,7 @@ def _get_env_config(handler: Any, _config: ServeConfig) -> None:
 
 
 def _get_context(handler: Any, config: ServeConfig) -> None:
-    handler._safe_respond_json(
-        lambda: dashboard_context_payload(handler._selected_project(), config.queue_name)
-    )
+    handler._safe_respond_json(lambda: dashboard_context_payload(handler._selected_project(), config.queue_name))
 
 
 def _get_topology(handler: Any, _config: ServeConfig) -> None:
@@ -253,6 +250,18 @@ def _get_handoff(handler: Any, config: ServeConfig) -> None:
 
 def _get_plugin_logs(handler: Any, _config: ServeConfig) -> None:
     handler._safe_respond_json(dashboard_plugin_logs_payload)
+
+
+def _get_model_history(handler: Any, _config: ServeConfig) -> None:
+    from koru.model_history import model_history_payload
+
+    query = parse_qs(urlparse(handler.path).query)
+    try:
+        limit = int(query.get("limit", ["100"])[0])
+    except ValueError:
+        handler._send_json({"error": "Invalid limit"}, status=400)
+        return
+    handler._safe_respond_json(lambda: model_history_payload(handler._selected_project(), limit=limit))
 
 
 def _get_logs_json(handler: Any, _config: ServeConfig) -> None:
@@ -485,8 +494,8 @@ def _post_config(handler: Any, config: ServeConfig, body: dict[str, Any]) -> Non
 
 def _post_waiting_input_bulk(handler: Any, _config: ServeConfig, body: dict[str, Any]) -> None:
     action = str(body.get("action") or "").strip().lower()
-    if action not in {"approve", "reject"}:
-        handler._send_json({"error": "action must be approve|reject"}, status=400)
+    if action not in {"approve", "reject", "delegate"}:
+        handler._send_json({"error": "action must be approve|reject|delegate"}, status=400)
         return
     ticket_ids_raw = body.get("ticket_ids")
     if not isinstance(ticket_ids_raw, list):
@@ -608,6 +617,32 @@ def _post_ticket_reorder(handler: Any, _config: ServeConfig, body: dict[str, Any
     handler._send_json(result)
 
 
+def _post_ticket_delegate(handler: Any, _config: ServeConfig, body: dict[str, Any]) -> None:
+    ticket_id = str(body.get("ticket_id") or "").strip()
+    if not ticket_id:
+        handler._send_json({"error": "ticket_id is required"}, status=400)
+        return
+    try:
+        project = handler._selected_project(body)
+        result = delegate_ticket_from_dashboard(
+            project,
+            ticket_id=ticket_id,
+            executor_kind=str(body.get("executor_kind") or "llm").strip(),
+            executor_mode=str(body.get("executor_mode") or "automatic").strip(),
+            prompt_addition=str(body["prompt_addition"]).strip() if "prompt_addition" in body else None,
+            notes=str(body["notes"]).strip() if "notes" in body else None,
+            priority=str(body["priority"]).strip() if "priority" in body else None,
+            queue_name=str(body["queue_name"]).strip() if "queue_name" in body else None,
+        )
+    except ValueError as exc:
+        handler._send_json({"error": str(exc)}, status=400)
+        return
+    except Exception as exc:
+        handler._send_json({"error": str(exc), "type": type(exc).__name__}, status=500)
+        return
+    handler._send_json(result)
+
+
 _GetHandler = Callable[[Any, ServeConfig], None]
 _PostHandler = Callable[[Any, ServeConfig, dict[str, Any]], None]
 
@@ -628,6 +663,7 @@ _GET_ROUTES: dict[str, _GetHandler] = {
     "/api/interfaces": _get_interfaces,
     "/api/environment": _get_environment,
     "/api/logs": _get_logs_json,
+    "/api/model-history": _get_model_history,
     "/api/terminals": _get_terminals,
     "/api/terminals/detail": _get_terminal_detail,
     "/api/terminals/messages": _get_terminal_messages,
@@ -643,6 +679,7 @@ _POST_ROUTES: dict[str, _PostHandler] = {
     "/api/tickets/waiting-input/bulk": _post_waiting_input_bulk,
     "/api/tickets/create": _post_ticket_create,
     "/api/tickets/update": _post_ticket_update,
+    "/api/tickets/delegate": _post_ticket_delegate,
     "/api/tickets/reorder": _post_ticket_reorder,
     "/api/remote/drive": _post_remote_drive,
     "/api/terminals/spawn": _post_terminal_spawn,
@@ -657,6 +694,16 @@ def _handle_dashboard_get(handler: Any, config: ServeConfig) -> None:
     path = urlparse(handler.path).path
     if path in ("/", "/index.html"):
         handler._send(200, _load_dashboard_html().encode("utf-8"), "text/html; charset=utf-8")
+        return
+    if path in ("/favicon.svg", "/favicon.ico"):
+        handler._send(
+            200,
+            b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+            b'<rect width="48" height="48" rx="11" fill="#161922"/>'
+            b'<path d="M16 12v24m2-11 14-13M18 25l14 11" fill="none" '
+            b'stroke="#6ee7b7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            "image/svg+xml",
+        )
         return
     if path == "/health":
         handler._send_json({"ok": True})
