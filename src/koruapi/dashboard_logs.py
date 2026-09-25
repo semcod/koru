@@ -14,6 +14,7 @@ from __future__ import annotations
 import ast
 import json
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -115,6 +116,37 @@ def read_recent_logs(project: Path, *, limit: int = 100) -> list[dict[str, Any]]
     return entries[-limit:]
 
 
+def _initial_offset(path: Path) -> int:
+    return path.stat().st_size if path.exists() else 0
+
+
+def _read_new_log_entries(
+    log_path: Path,
+    offset: int,
+    parse_line: Callable[[str], dict[str, Any] | None],
+    levels: set[str],
+) -> tuple[int, list[dict[str, Any]]]:
+    """Read newly appended lines from log_path starting at offset."""
+    if not log_path.exists():
+        return offset, []
+    entries: list[dict[str, Any]] = []
+    try:
+        current_size = log_path.stat().st_size
+        if current_size < offset:
+            offset = 0  # file was truncated/rotated
+        if current_size > offset:
+            with log_path.open("r", encoding="utf-8", errors="ignore") as f:
+                f.seek(offset)
+                for line in f:
+                    entry = parse_line(line)
+                    if entry and entry["level"] in levels:
+                        entries.append(entry)
+                offset = f.tell()
+    except OSError:
+        pass
+    return offset, entries
+
+
 def sse_log_stream(
     project: Path,
     *,
@@ -125,7 +157,7 @@ def sse_log_stream(
 ) -> str:
     """Yield SSE-formatted log events by tailing log files.
 
-    This is a generator that yields ``data: <json>\\n\\n`` strings.
+    This is a generator that yields ``data: <json>\n\n`` strings.
     The caller should write them to the HTTP response.
     """
     if levels is None:
@@ -133,8 +165,14 @@ def sse_log_stream(
 
     nfo_path = _nfo_log_path(project)
     auto_path = _autonomous_log_path(project)
-    nfo_offset = nfo_path.stat().st_size if nfo_path.exists() else 0
-    auto_offset = auto_path.stat().st_size if auto_path.exists() else 0
+    offsets = {
+        nfo_path: _initial_offset(nfo_path),
+        auto_path: _initial_offset(auto_path),
+    }
+    targets = (
+        (nfo_path, _parse_nfo_line),
+        (auto_path, _parse_autonomous_log_line),
+    )
     events_sent = 0
 
     # Send recent history first
@@ -148,40 +186,15 @@ def sse_log_stream(
             break
         if stop_event is not None and stop_event.is_set():
             break
-        # Check nfo log for new lines
-        if nfo_path.exists():
-            try:
-                current_size = nfo_path.stat().st_size
-                if current_size < nfo_offset:
-                    nfo_offset = 0  # file was truncated/rotated
-                if current_size > nfo_offset:
-                    with nfo_path.open("r", encoding="utf-8", errors="ignore") as f:
-                        f.seek(nfo_offset)
-                        for line in f:
-                            entry = _parse_nfo_line(line)
-                            if entry and entry["level"] in levels:
-                                yield f"data: {json.dumps(entry)}\n\n"
-                                events_sent += 1
-                        nfo_offset = f.tell()
-            except OSError:
-                pass
-        # Check autonomous log for new lines
-        if auto_path.exists():
-            try:
-                current_size = auto_path.stat().st_size
-                if current_size < auto_offset:
-                    auto_offset = 0
-                if current_size > auto_offset:
-                    with auto_path.open("r", encoding="utf-8", errors="ignore") as f:
-                        f.seek(auto_offset)
-                        for line in f:
-                            entry = _parse_autonomous_log_line(line)
-                            if entry and entry["level"] in levels:
-                                yield f"data: {json.dumps(entry)}\n\n"
-                                events_sent += 1
-                        auto_offset = f.tell()
-            except OSError:
-                pass
+
+        for log_path, parser in targets:
+            offsets[log_path], new_entries = _read_new_log_entries(
+                log_path, offsets[log_path], parser, levels
+            )
+            for entry in new_entries:
+                yield f"data: {json.dumps(entry)}\n\n"
+                events_sent += 1
+
         yield ": keepalive\n\n"
         time.sleep(poll_interval)
 
