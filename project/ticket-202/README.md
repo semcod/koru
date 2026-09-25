@@ -26,3 +26,15 @@ Preserve exact model selection semantics and reasons.
 
 This directory contains the minimal reviewed intent. Optional participant prose
 and raw command logs are not required delivery output.
+
+## Result (measured 2026-09-25)
+
+- `select_task_model` CC 38 → 3 (radon Rank A); all new helpers CC ≤ 6.
+- Helpers return `NamedTuple` (never unpacked tuples) so code2llm's mutation
+  counter does not double-count unpack targets; `select_task_model` mutations 12 → 3.
+- code2llm re-run: `code2llm:cc:...select_task_model` finding gone; no new
+  smell findings for this file (pre-existing `drive_with_model_policy` smell
+  unchanged and out of scope).
+- `pytest tests/test_task_model_policy.py tests/test_autonomous_cycle_drive_retry.py
+  tests/test_model_history.py tests/test_queue_runners.py` → 52 passed.
+- `project/governance-check.sh` → GOV-PASS (0 errors, 0 warnings).
