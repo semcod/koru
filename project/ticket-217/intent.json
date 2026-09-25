@@ -1,0 +1,87 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-217",
+  "summary": "Decompose god function configure_loop_state",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-217/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/cycle/cycle_config.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b26bdffb2bfc0eb4abc54976aa962e5d85a84fd1",
+    "targetBranch": "main",
+    "outcome": "Decompose configure_loop_state in src/koru/autonomy/cycle/cycle_config.py: extract the queue-flag fold into _resolve_queue_selection (returning a _QueueSelection NamedTuple), the shell-client cascade into _resolve_shell_client, its env exports into _export_shell_client_env, the target selection into _resolve_selected_ide and the checkpoint restoration into _restore_loop_checkpoint (returning a _LoopCheckpoint NamedTuple), dropping the function from CC=12 / fan-out=15 / mutations=22 to CC=1 / fan-out=5 / mutations=5 (god-function thresholds: fan-out > 10, mutations > 6, CC > 12) while preserving the public signature, return tuple, stderr messages, env side effects and the SystemExit misrouting guard.",
+    "nonGoals": [
+      "Changing the shell-client resolution order or any stderr message",
+      "Changing the public configure_loop_state signature or return shape",
+      "Refactoring other functions in src/koru/autonomy/cycle/cycle_config.py"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract each cohesive stage of configure_loop_state into a module-private helper and return NamedTuples (_QueueSelection, _LoopCheckpoint) so the decomposed function uses attribute access instead of tuple unpacking, which code2llm double-counts as mutations.",
+      "components": [
+        {
+          "name": "autonomy-cycle-config",
+          "paths": [
+            "src/koru/autonomy/cycle/cycle_config.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the monolithic configure_loop_state."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 - <<'EOF'\nfrom collections import defaultdict\nfrom code2llm.core.config import Config\nfrom code2llm.core.file_analyzer import FileAnalyzer\nres = FileAnalyzer(Config()).analyze_file('src/koru/autonomy/cycle/cycle_config.py', 'koru.autonomy.cycle.cycle_config')\nby_scope = defaultdict(list)\nfor m in res['mutations']:\n    by_scope[getattr(m, 'scope', None)].append(m)\nfor name, fi in res['functions'].items():\n    cc = fi.complexity.get('cyclomatic_complexity', 1)\n    fan = len(set(fi.calls))\n    mc = len(by_scope.get(name, []))\n    assert not (fan > 10 or mc > 6 or cc > 12), (name, cc, fan, mc)\nEOF"
+        ],
+        "evidence": "No function in the changed file exceeds a god-function threshold (configure_loop_state CC=1, fan-out=5, mutations=5)."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q tests/test_autonomous_cycle_config.py tests/test_shell_client_auto_routing.py"
+        ],
+        "evidence": "All existing loop-configuration and shell-client routing tests pass unchanged."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
