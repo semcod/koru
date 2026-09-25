@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-213",
+  "summary": "Decompose god function build context",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-213/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/context.py",
+    "tests/test_context.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "4ffd3fac673dc9be14084f15ef2b10cec5ee71f0",
+    "targetBranch": "main",
+    "outcome": "Decompose build_context in src/koru/context.py: extract the planfile pre-flight into _planfile_is_initialised, the fetch/compatibility-repair/fixture-filter chain into _collect_ticket_state returning a _TicketState NamedTuple, and the final brief assembly into _assemble_context; make _fetch_ticket_data return a _TicketFetch NamedTuple (star-adapting _parse_ticket_response's unchanged tuple) so the decomposed body has no tuple unpacking, dropping build_context from CC=9 / fan-out=20 / mutations=23 to CC=2 / fan-out=7 / mutations=6 (god-function thresholds: fan-out > 10, mutations > 6, CC > 12) while preserving the public keyword-only build_context signature, output shape and side-effect order.",
+    "nonGoals": [
+      "Reducing the pre-existing complexity of _parse_ticket_response, _process_list_payload, _load_sprint_data, _promote_bug_priority or _build_policy_rules (already over threshold before this ticket, unchanged by it)",
+      "Changing merge_missing_ticket_records' tuple contract (it has other callers)",
+      "Refactoring other functions in src/koru/context.py"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract three cohesive phases (presence pre-flight, ticket collection, brief assembly) and return NamedTuples (_TicketFetch, _TicketState) from the fetch path so build_context and the new helpers contain no tuple unpacking, which code2llm double-counts as mutations.",
+      "components": [
+        {
+          "name": "koru-context",
+          "paths": [
+            "src/koru/context.py",
+            "tests/test_context.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the inline build_context body and the plain tuple return of _fetch_ticket_data."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python - <<'EOF'\nfrom pathlib import Path\nfrom code2llm.core.file_analyzer import FileAnalyzer, Config\nres = FileAnalyzer(Config()).analyze_file(Path('src/koru/context.py'), 'koru.context')\nprint(res['functions']['koru.context.build_context']['complexity'])\nEOF"
+        ],
+        "evidence": "build_context metrics fall under every god-function threshold and no new function crosses one."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q tests/test_context.py tests/test_koruapi.py tests/test_serve.py"
+        ],
+        "evidence": "All existing context assembly tests pass unchanged."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
