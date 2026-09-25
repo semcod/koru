@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-214",
+  "summary": "Decompose god function build_parser in cli_work",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-214/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli_work.py",
+    "tests/test_work_lifecycle.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5ee328b85f9cc5ba885d6d144e02657cad6391cc",
+    "targetBranch": "main",
+    "outcome": "Decompose god function build_parser in src/koru/cli_work.py: move the per-subcommand add_argument blocks into module-level spec tuples (_START_ARGS, _FINISH_ARGS, _NEXT_ARGS) applied through a single _add_subcommand helper, dropping build_parser from fan-out=11 / mutations=33 to fan-out=5 / mutations=5 and keeping _add_subcommand at fan-out=3 / mutations=4 (god-function thresholds: fan-out > 10, mutations > 6, CC > 12) while preserving the identical CLI surface: flags, defaults, help strings, prog/description and set_defaults(func=...) dispatch consumed by work_main.",
+    "nonGoals": [
+      "Adding, renaming or changing the behavior of any koru work CLI flag",
+      "Refactoring the _action_start/_action_next/_action_finish handlers",
+      "Sharing the start/next --base/--no-push/--remote flags through a common spec (kept per-subcommand for byte-identical help output)"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Table-driven argparse construction: each subcommand's arguments are declared as module-level (flags, kwargs) tuples and one _add_subcommand(sub, name, help, args, func) helper performs the add_parser/add_argument/set_defaults calls. A plain per-subcommand helper split would keep 9-11 builder calls per function, still above the code2llm mutation threshold (>6) that counts every add_*/set_* builder call.",
+      "components": [
+        {
+          "name": "cli-work",
+          "paths": [
+            "src/koru/cli_work.py",
+            "tests/test_work_lifecycle.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the inline add_argument blocks in build_parser."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -c \"from code2llm import ProjectAnalyzer, Config; from pathlib import Path; r=ProjectAnalyzer(Config(), Path('/tmp/metric-probe-214')).analyze_project(Path('/tmp/metric-probe-214')); print({f: (m['fan_out'], len([x for x in r.mutations if x.scope==f])) for f,m in r.metrics.items() if 'cli_work' in str(r.metrics) or True})\""
+        ],
+        "evidence": "build_parser and _add_subcommand are at or below fan-out 10 and mutations 6 in code2llm analysis of the changed file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q tests/test_work_lifecycle.py"
+        ],
+        "evidence": "Existing koru work lifecycle tests pass unchanged and the new subcommand parser regression test passes."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}

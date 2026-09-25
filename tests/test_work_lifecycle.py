@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from koru.cli_work import work_main
+from koru.cli_work import _action_finish, _action_next, _action_start, build_parser, work_main
 from koru.task_models import CreatedTask
 from koru.work.lifecycle import finish_work, start_work
 
@@ -51,6 +53,52 @@ class TestWorkCli(unittest.TestCase):
         ):
             code = work_main(["--project", "/tmp", "start", "--title", "x"])
         self.assertEqual(code, 0)
+
+
+class TestWorkParser(unittest.TestCase):
+    """Table-driven build_parser keeps flags, defaults and dispatch identical."""
+
+    def test_start_flags_and_dispatch(self) -> None:
+        args = build_parser().parse_args(["start", "--title", "demo"])
+        self.assertIs(args.func, _action_start)
+        self.assertEqual(args.base, "main")
+        self.assertFalse(args.no_push)
+        self.assertEqual(args.remote, "origin")
+
+    def test_finish_flags_and_dispatch(self) -> None:
+        args = build_parser().parse_args(["finish", "--ticket", "t1", "--pr", "7", "--merge", "--dry-run"])
+        self.assertIs(args.func, _action_finish)
+        self.assertEqual(args.pr, 7)
+        self.assertTrue(args.merge)
+        self.assertTrue(args.dry_run)
+        self.assertFalse(args.skip_ci)
+
+    def test_next_flags_and_dispatch(self) -> None:
+        args = build_parser().parse_args(["next", "--run-gates"])
+        self.assertIs(args.func, _action_next)
+        self.assertTrue(args.run_gates)
+        self.assertFalse(args.start_branch)
+
+    def test_global_defaults(self) -> None:
+        args = build_parser().parse_args(["next"])
+        self.assertEqual(args.format, "text")
+        self.assertEqual(args.project, Path.cwd())
+
+    def test_title_required(self) -> None:
+        with self.assertRaises(SystemExit):
+            build_parser().parse_args(["start"])
+
+    def test_subcommand_help_texts_preserved(self) -> None:
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer), self.assertRaises(SystemExit):
+            build_parser().parse_args(["-h"])
+        rendered = " ".join(buffer.getvalue().split())
+        for text in (
+            "Create ticket, branch, commit planfile, push.",
+            "Run CI and dispatch validator-agent.",
+            "Decide the next refactor ticket and optionally start a work branch.",
+        ):
+            self.assertIn(text, rendered)
 
 
 if __name__ == "__main__":
