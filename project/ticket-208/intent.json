@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-208",
+  "summary": "Decompose god function _build_parser in cli_fleet",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-208/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli_fleet.py",
+    "tests/test_cli_fleet.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e897629e33151a200262bb09441fd08cfe875038",
+    "targetBranch": "main",
+    "outcome": "Decompose _build_parser in src/koru/cli_fleet.py into per-subcommand subparser builders (_add_up_subparser, _add_ls_subparser, _add_bootstrap_subparser with _add_bootstrap_scope_arguments/_add_bootstrap_init_arguments, _add_standard_update_subparser, _add_standard_inventory_subparser) so every function stays at or below the code2llm god-function thresholds (fan-out <= 10, mutations <= 6, CC <= 12) while preserving the identical CLI surface: same subcommands, aliases, flags, defaults, types and help strings.",
+    "nonGoals": [
+      "Changing any CLI flag, default, alias, help text or dispatch behaviour",
+      "Fixing the pre-existing god functions _add_standard_scope_arguments, _run_fleet_up and _run_fleet_standard_update (separate findings)",
+      "Extracting cli_fleet into a new module"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep _build_parser as the single composition point that creates the ArgumentParser and subparsers action, and move each subcommand's add_parser/add_argument block into a dedicated module-level helper next to the existing _add_standard_scope_arguments helper.",
+      "components": [
+        {
+          "name": "cli-fleet",
+          "paths": [
+            "src/koru/cli_fleet.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the inline _build_parser implementation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q tests/test_cli_fleet.py tests/test_standard_fleet.py tests/test_fleet_bootstrap.py tests/test_fleet_admission.py"
+        ],
+        "evidence": "All existing fleet CLI tests pass unchanged."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "cp src/koru/cli_fleet.py /tmp/plf028-after/cli_fleet.py && python -c \"from code2llm.core.analyzer import ProjectAnalyzer; from code2llm.core.config import Config; from code2llm.analysis.smells import SmellDetector; r = ProjectAnalyzer(Config()).analyze_project('/tmp/plf028-after'); print([s.name for s in SmellDetector(r).detect()])\""
+        ],
+        "evidence": "code2llm smell detection reports no god_function for _build_parser and introduces no new god functions in src/koru/cli_fleet.py."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
