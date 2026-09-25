@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-215",
+  "summary": "Decompose god function compile_execution_plan",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-215/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/execution_plan.py",
+    "tests/test_execution_plan.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9ea111ee30c6d7a733fcc249f178de133a96f2f0",
+    "targetBranch": "main",
+    "outcome": "Decompose god function compile_execution_plan in src/koru/autonomy/execution_plan.py (PLF-033): extract signal collection (_collect_plan_signals returning the signal payload plus the open tickets it was built from), pipeline order parsing (_pipeline_order), phase selection (_select_plan_work/_discovery_selection/_discovery_steps) and summary rendering (_plan_summary) into module-level helpers that communicate through the _PlanSignals/_PlanSelection NamedTuples, dropping compile_execution_plan from CC=13 / fan-out=18 / mutations=20 to CC=3 / fan-out=8 / mutations=4 (god-function thresholds: fan-out > 10, mutations > 6, CC > 12) while producing an identical ExecutionPlan: same signal key order (planfile, open_refactor_tickets, skipped_likely_complete, heuristics, llm), same phase/selection precedence (first open refactor ticket wins, else first discovery phase in pipeline order, else idle), same summary strings and same function-local resolve_work_llm_context import so module-level monkeypatching in tests keeps working.",
+    "nonGoals": [
+      "Refactoring the separately ticketed _queued_ticket_steps, _ticket_matches_profile and _workflow_steps smells in the same module",
+      "Changing the ExecutionPlan/ExecutionStep dataclass schema or the module's public API",
+      "Altering profile selection, ticket filtering or sorting behavior"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Single-level helper extraction with NamedTuple results: compile_execution_plan keeps only load/collect/select/render orchestration. The code2llm mutation heuristic counts every assignment and tuple-unpack target inside a function body, so the removed assignments (strategy_id, pipeline, order, heuristics, signals keys, steps/selected/phase mutation, summary concat) must move out of the function rather than merely be reorganized; the helpers each stay at or below fan-out 8 / mutations 4 / CC 3. The try/except function-local import of resolve_work_llm_context is preserved verbatim inside _collect_plan_signals because tests monkeypatch it on the koru.work.llm_provenance module.",
+      "components": [
+        {
+          "name": "autonomy-execution-plan",
+          "paths": [
+            "src/koru/autonomy/execution_plan.py",
+            "tests/test_execution_plan.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the single inline compile_execution_plan body."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python /tmp/probe_metrics.py <worktree>/src/koru/autonomy/execution_plan.py '' (code2llm ProjectAnalyzer/SmellDetector probe)"
+        ],
+        "evidence": "compile_execution_plan and every new helper are below the god-function thresholds in code2llm analysis of the changed file; no pre-existing function's metrics changed."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest tests/test_execution_plan.py tests/test_execution_profile_matching.py tests/test_queued_execution_steps.py -q"
+        ],
+        "evidence": "Existing execution-plan suites pass unchanged plus new discovery/idle branch regression tests."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
