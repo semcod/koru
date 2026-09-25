@@ -18,7 +18,7 @@ receipts and validator-agent source/release review. The initial Planfile
 scope prohibited publication; on 2026-09-25 the human user explicitly
 authorized pushing and merging overdue Koru tickets. This later instruction
 authorizes publication of this report through the normal protected Validator
-path. It does not authorize actor bypass or branch deletion.
+path. Actor bypass is not authorized.
 
 ## Deliverable
 

@@ -9,8 +9,8 @@
   "owner": "semcod/koru",
   "scope": "repository",
   "created": "2026-09-19",
-  "updated": "2026-09-20",
-  "review_after": "2026-09-27",
+  "updated": "2026-09-25",
+  "review_after": "2026-10-02",
   "source_revision": "9ce405d00bb52e009774d88ead6993febc45858e",
   "affected_repositories": [
     "semcod/koru"
@@ -29,8 +29,6 @@
     "validator-release:673f4a387f3227a96b7040c76f82fc80e7697b2f-usage-9c40e04f4777 (src/validator_agent/github.py, src/validator_agent/direct_validation.py)"
   ]
 }
----
-
 # Koru: wybór modelu dla prostych zadań
 
 ## Aktualizacja v5: audyt wyścigu exact-head przy scaleniu PR361 (STARTER-735), 2026-09-20
@@ -158,6 +156,15 @@ Ticket STARTER-735 (utworzony 2026-09-19T19:53:54Z) prosił o raport
 zgodnie z regułą append-only niniejsza aktualizacja jest v5, a sekcje
 v1–v4 pozostają bez zmian.
 
+
+
+### Granica publikacji
+
+Zakres STARTER-735 był początkowo read-only i nie upoważniał do
+bezpośredniego merge ani bypassu. 25 września 2026 r. użytkownik jawnie
+zatwierdził wypchnięcie i scalenie zaległych ticketów Koru. Ta późniejsza
+autoryzacja obejmuje publikację raportu zwykłą ścieżką chronionego
+Validatora; bypass rulesetu nie jest dozwolony.
 
 ## Aktualizacja v4: odczyt działającego dziennika SubLLM, 19:57 UTC
 
