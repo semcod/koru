@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-204",
+  "summary": "Reduce cyclomatic complexity in sse log stream",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-204/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/dashboard_logs.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f248f4e5331e75c242ef33f170447acf2a7f550d",
+    "targetBranch": "main",
+    "outcome": "Decompose sse_log_stream in src/koruapi/dashboard_logs.py into focused helper functions (_read_new_log_entries, _initial_offset) to reduce cyclomatic complexity from CC=25 to <= 9 while preserving identical SSE log streaming and tailing behavior.",
+    "nonGoals": [
+      "Changing SSE formatting or keepalive frequency",
+      "Altering log line parsing or level filtering semantics"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _read_new_log_entries and _initial_offset from sse_log_stream.",
+      "components": [
+        {
+          "name": "dashboard-logs",
+          "paths": [
+            "src/koruapi/dashboard_logs.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore inline sse_log_stream loop implementation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m radon cc src/koruapi/dashboard_logs.py -s"
+        ],
+        "evidence": "Cyclomatic complexity of sse_log_stream and all helpers is <= 9."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q tests/test_dashboard_logs.py"
+        ],
+        "evidence": "All existing dashboard log streaming tests pass unchanged."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
