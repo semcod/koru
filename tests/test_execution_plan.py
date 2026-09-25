@@ -144,3 +144,35 @@ def test_task_profiles_verify_runs_full_ci() -> None:
         assert "koru ci gates" not in verify["command"]
         baseline = next(step for step in profile["workflow"] if step["id"] in {"inspect", "baseline"})
         assert "koru ci run --skip-gates" in baseline["command"]
+
+
+def _write_idle_project(tmp_path: Path, order: list[str]) -> None:
+    (tmp_path / "koru.yaml").write_text(
+        "schema: '1.0'\nautonomy:\n  strategy:\n    id: test\n"
+        f"    default_pipeline:\n      order: [{', '.join(order)}]\n",
+        encoding="utf-8",
+    )
+    _write_sprint(tmp_path, {})
+
+
+def test_compile_plan_runs_discovery_phase_without_open_tickets(tmp_path: Path) -> None:
+    _write_idle_project(tmp_path, ["planfile_queue", "whole_project_discovery"])
+
+    plan = compile_execution_plan(tmp_path)
+
+    assert plan.phase == "whole_project_discovery"
+    assert plan.selected_ticket is None
+    assert plan.summary == "phase=whole_project_discovery"
+    assert plan.steps and plan.steps[0].profile_id == "whole_project_discovery"
+    assert plan.signals["open_refactor_tickets"] == 0
+
+
+def test_compile_plan_stays_idle_without_discovery_phase(tmp_path: Path) -> None:
+    _write_idle_project(tmp_path, ["planfile_queue"])
+
+    plan = compile_execution_plan(tmp_path)
+
+    assert plan.phase == "idle"
+    assert plan.selected_ticket is None
+    assert plan.summary == "phase=idle"
+    assert plan.steps == []
