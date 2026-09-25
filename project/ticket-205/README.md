@@ -24,6 +24,16 @@ mutation, changes reporting, history entries, and result payload.
 - [x] AC-04: `code2llm` re-run reports no complexity finding for `delegate_ticket_from_dashboard`.
 - [x] AC-05: `bash project/governance-check.sh` passes with 0 errors.
 
+## Delivery note
+
+Wave 1 (PR #415, merged as 872925eb) cut CC 30 -> 4 but kept a 9-helper
+accumulator layout that reintroduces code2llm god-function (fan-out=15,
+mutations=12) and shotgun-surgery ('changes' spans 8) findings. Wave 2 replaces
+it with `_field_update`-based helpers returning change lists, a
+`_SprintTicketHit` NamedTuple and extracted `_delegation_change_sets` /
+`_delegation_result`, leaving only the five pre-existing dashboard_tickets
+smells in code2llm output. AC-04 was verified against wave 2 only.
+
 ## Tracking boundary
 
 This directory contains the minimal reviewed intent. Optional participant prose
