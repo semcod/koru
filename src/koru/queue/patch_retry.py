@@ -93,6 +93,40 @@ def _contract_capped_budget(project: Path, ticket: dict) -> int:
     return budget
 
 
+def _finish_patch_run(
+    project: Path,
+    ticket: dict,
+    transaction: PatchTransactionResult,
+    manifest: dict | None,
+    attempts: list[dict],
+    actor: str | None,
+    authorize: Any,
+) -> dict:
+    return _finish_run(
+        project,
+        ticket,
+        transaction,
+        manifest,
+        attempts,
+        actor,
+        _authorization_record(authorize),
+    )
+
+
+def _perform_retry_call(
+    llm_runner: Callable[[dict[str, Any], Path], CommandResult],
+    action: dict[str, Any],
+    base_prompt: str,
+    project: Path,
+    manifest: dict | None,
+    outcome: PatchOutcome,
+    enrich: Callable[[dict[str, Any], Path], dict[str, Any]] | None,
+) -> CommandResult:
+    retry_action = _build_retry_action(action, base_prompt, project, manifest, outcome, enrich)
+    res = llm_runner(retry_action, project)
+    return wrap_reply_in_proposal_envelope(res, str(retry_action.get("prompt") or ""))
+
+
 def apply_patch_with_retry(
     project: Path,
     result: CommandResult,
@@ -138,8 +172,8 @@ def apply_patch_with_retry(
         result, outcome = transaction.result, transaction.outcome
         attempts.append(_attempt_record(len(attempts) + 1, transaction))
         if outcome is None or not outcome.retryable or remaining <= 0:
-            return result, outcome, _finish_run(
-                project, ticket, transaction, manifest, attempts, actor, _authorization_record(authorize)
+            return result, outcome, _finish_patch_run(
+                project, ticket, transaction, manifest, attempts, actor, authorize
             )
 
         # A structurally invalid model artifact gets one repair attempt. A
@@ -151,20 +185,17 @@ def apply_patch_with_retry(
             project, ticket, result, budget, manifest, transaction, attempts,
         )
         if aborted is not None:
-            return result, aborted, _finish_run(
-                project, ticket, transaction, manifest, attempts, actor, _authorization_record(authorize)
+            return result, aborted, _finish_patch_run(
+                project, ticket, transaction, manifest, attempts, actor, authorize
             )
 
         remaining -= 1
-        retry_action = _build_retry_action(action, base_prompt, project, manifest, outcome, enrich)
-        result = llm_runner(retry_action, project)
-        # The retry's envelope binds to the retry prompt it actually answered.
-        result = wrap_reply_in_proposal_envelope(
-            result, str(retry_action.get("prompt") or "")
+        result = _perform_retry_call(
+            llm_runner, action, base_prompt, project, manifest, outcome, enrich
         )
         if result.returncode != 0:
-            return result, outcome, _finish_run(
-                project, ticket, transaction, manifest, attempts, actor, _authorization_record(authorize)
+            return result, outcome, _finish_patch_run(
+                project, ticket, transaction, manifest, attempts, actor, authorize
             )
 
 
@@ -269,6 +300,29 @@ def _authorization_record(authorize) -> dict | None:
     return dict(record) if record else None
 
 
+def _build_verify_record(plan: Any, ticket: dict, outcome: PatchOutcome | None) -> dict:
+    if not plan:
+        return {}
+    return {
+        "command": plan.verify_command,
+        "source": plan.verify_source,
+        "profile": str((ticket.get("inputs") or {}).get("verify_profile") or "") or None,
+        "status": _verify_status(plan, outcome),
+    }
+
+
+def _build_promotion_record(project: Path, plan: Any, run_id: str, outcome: PatchOutcome | None) -> dict:
+    if not plan:
+        return {}
+    promotion: dict = {"mode": plan.mode, "isolated": plan.isolated}
+    if plan.mode == PROMOTION_BRANCH and outcome is None:
+        branch = f"koru/run-{run_id}"
+        promotion["branch"] = branch
+        # The ref can be moved later; the recorded SHA cannot.
+        promotion["commit_sha"] = branch_head(project, branch) or None
+    return promotion
+
+
 def _finish_run(
     project: Path,
     ticket: dict,
@@ -292,20 +346,8 @@ def _finish_run(
         or uuid4().hex[:12],
     )
     outcome = transaction.outcome
-    verify: dict = {}
-    if plan:
-        verify = {
-            "command": plan.verify_command,
-            "source": plan.verify_source,
-            "profile": str((ticket.get("inputs") or {}).get("verify_profile") or "") or None,
-            "status": _verify_status(plan, outcome),
-        }
-    promotion: dict = {"mode": plan.mode, "isolated": plan.isolated} if plan else {}
-    if plan and plan.mode == PROMOTION_BRANCH and outcome is None:
-        branch = f"koru/run-{run_id}"
-        promotion["branch"] = branch
-        # The ref can be moved later; the recorded SHA cannot.
-        promotion["commit_sha"] = branch_head(project, branch) or None
+    verify = _build_verify_record(plan, ticket, outcome)
+    promotion = _build_promotion_record(project, plan, run_id, outcome)
 
     bundle = build_evidence_bundle(
         run_id=run_id,
