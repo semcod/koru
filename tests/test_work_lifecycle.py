@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -85,6 +87,18 @@ class TestWorkParser(unittest.TestCase):
     def test_title_required(self) -> None:
         with self.assertRaises(SystemExit):
             build_parser().parse_args(["start"])
+
+    def test_subcommand_help_texts_preserved(self) -> None:
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer), self.assertRaises(SystemExit):
+            build_parser().parse_args(["-h"])
+        rendered = " ".join(buffer.getvalue().split())
+        for text in (
+            "Create ticket, branch, commit planfile, push.",
+            "Run CI and dispatch validator-agent.",
+            "Decide the next refactor ticket and optionally start a work branch.",
+        ):
+            self.assertIn(text, rendered)
 
 
 if __name__ == "__main__":
