@@ -116,6 +116,134 @@ def _report_blocked(state: dict, folder: Path, backend) -> str:
     return sync_comment(store, backend, event)["url"]
 
 
+def _init_state_folder(profile: dict) -> tuple[Path, Path, Path]:
+    folder = profile["primary"] / f".subactor/cache/koru-tickets/issue-{profile['number']}"
+    no_symlinks(folder)
+    folder.mkdir(parents=True, exist_ok=True, mode=0o700)
+    path = folder / "state.json"
+    no_symlinks(path)
+    lock = folder / "run.lock"
+    no_symlinks(lock)
+    return folder, path, lock
+
+
+def _check_prior_state(
+    state: dict, profile: dict, profiles: Path, folder: Path, path: Path, backend
+) -> dict | None:
+    if state["profile_sha256"] != profile["profile_sha256"]:
+        raise ValueError("local execution profile changed; reconcile the existing run first")
+    if state["state"] == "reported":
+        return {k: v for k, v in state.items() if k not in {"issue", "baseline", "applied_snapshot"}}
+    if state["state"] == "blocked":
+        if not state.get("failure_comment") and state.get("planfile_ticket"):
+            _effect_guard(profile, profiles)
+            state["failure_comment"] = _report_blocked(state, folder, backend or github_backend(profile))
+            _save(path, state)
+        return {
+            "state": "blocked",
+            "message": "execution needs reconciliation; automatic replay is disabled",
+            "comment": state.get("failure_comment"),
+        }
+    if state["state"] in {"preparing", "executing", "committing"}:
+        raise RuntimeError("previous execution needs reconciliation; automatic replay is disabled")
+    return None
+
+
+def _prepare_ticket_state(profile: dict, state: dict, path: Path, folder: Path, backend) -> None:
+    if state["state"] != "new":
+        return
+    preflight_workspace(profile)
+    # Fail before allocating/executing if native scoped reporting is unavailable.
+    try:
+        from planfile.sync.ticket_comments import queue_comment  # noqa: F401
+    except ImportError as exc:
+        raise RuntimeError("install Planfile with native scoped ticket-comment support first") from exc
+
+    planfile_ticket, issue = _intake(profile, folder, backend)
+    state.update(state="preparing")
+    _save(path, state)
+    workspace, ticket, base = prepare_workspace(profile)
+    state.update(
+        state="prepared",
+        workspace=str(workspace),
+        ticket=ticket,
+        base=base,
+        planfile_ticket=planfile_ticket,
+        issue=issue,
+        baseline=snapshot(workspace),
+    )
+    _save(path, state)
+
+
+def _execute_ticket_step(
+    profile: dict, profiles: Path, state: dict, path: Path, folder: Path, workspace: Path, backend, runner
+) -> None:
+    if state["state"] != "prepared":
+        return
+    _effect_guard(profile, profiles)
+    if snapshot(workspace) != state["baseline"]:
+        raise RuntimeError("workspace changed since preparation")
+    verify(profile, workspace)
+    state["state"] = "executing"
+    _save(path, state)
+    try:
+        paths = propose_and_apply(profile, workspace, state["issue"], runner)
+        state.update(state="applied", paths=paths, applied_snapshot=snapshot(workspace))
+        _save(path, state)
+    except Exception:
+        state["state"] = "blocked"
+        _save(path, state)
+        try:
+            _effect_guard(profile, profiles)
+            state["failure_comment"] = _report_blocked(state, folder, backend)
+            _save(path, state)
+        except Exception:
+            pass  # Reporting remains pending; it cannot restart execution.
+        raise
+
+
+def _commit_ticket_step(
+    profile: dict, profiles: Path, state: dict, path: Path, workspace: Path
+) -> None:
+    if state["state"] != "applied":
+        return
+    _effect_guard(profile, profiles)
+    if snapshot(workspace) != state["applied_snapshot"]:
+        raise RuntimeError("workspace changed after the patch; preserve it for reconciliation")
+    verify(profile, workspace)
+    if snapshot(workspace) != state["applied_snapshot"]:
+        raise RuntimeError("verification modified tracked work; publication stopped")
+    state["state"] = "committing"
+    _save(path, state)
+    paths = list(state["paths"])
+    if profile["delivery"] == "validator":
+        paths.append(f"project/{state['ticket']}")
+    if git(workspace, "diff", "--cached", "--name-only"):
+        raise RuntimeError("index contains other work; commit stopped")
+    if git(workspace, "rev-parse", "HEAD") != state["base"]:
+        raise RuntimeError("HEAD changed during execution; commit stopped")
+    git(workspace, "add", "--", *paths)
+    if snapshot(workspace) != state["applied_snapshot"]:
+        raise RuntimeError("files changed while staging; preserve the index for reconciliation")
+    git(workspace, "diff", "--cached", "--check")
+    git(workspace, "commit", "-m", f"fix: address GitHub issue {profile['number']} ({state['ticket']})")
+    state.update(state="committed", head=git(workspace, "rev-parse", "HEAD"))
+    _save(path, state)
+
+
+def _publish_and_report_steps(
+    profile: dict, profiles: Path, state: dict, path: Path, folder: Path, backend
+) -> None:
+    if state["state"] == "committed":
+        _effect_guard(profile, profiles)
+        state.update(publish(profile, state, folder))
+        _save(path, state)
+    if state["state"] == "published":
+        _effect_guard(profile, profiles)
+        state.update(_report(profile, state, folder, backend))
+        _save(path, state)
+
+
 def run_ticket(
     url: str, profiles: Path, *, dry_run=False, backend=None, runner=None, expected_profile_sha256=None
 ) -> dict:
@@ -136,13 +264,7 @@ def run_ticket(
 
     if is_globally_disabled():
         raise ValueError("Koru is globally disabled")
-    folder = profile["primary"] / f".subactor/cache/koru-tickets/issue-{profile['number']}"
-    no_symlinks(folder)
-    folder.mkdir(parents=True, exist_ok=True, mode=0o700)
-    path = folder / "state.json"
-    no_symlinks(path)
-    lock = folder / "run.lock"
-    no_symlinks(lock)
+    folder, path, lock = _init_state_folder(profile)
     with execution_lock(profile, "repository.lock"), lock.open("a") as stream:
         try:
             fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -153,98 +275,14 @@ def run_ticket(
             if path.exists()
             else {"state": "new", "profile_sha256": profile["profile_sha256"]}
         )
-        if state["profile_sha256"] != profile["profile_sha256"]:
-            raise ValueError("local execution profile changed; reconcile the existing run first")
-        if state["state"] == "reported":
-            return {k: v for k, v in state.items() if k not in {"issue", "baseline", "applied_snapshot"}}
-        if state["state"] == "blocked":
-            if not state.get("failure_comment") and state.get("planfile_ticket"):
-                _effect_guard(profile, profiles)
-                state["failure_comment"] = _report_blocked(state, folder, backend or github_backend(profile))
-                _save(path, state)
-            return {
-                "state": "blocked",
-                "message": "execution needs reconciliation; automatic replay is disabled",
-                "comment": state.get("failure_comment"),
-            }
-        if state["state"] in {"preparing", "executing", "committing"}:
-            raise RuntimeError("previous execution needs reconciliation; automatic replay is disabled")
-        if state["state"] == "new":
-            preflight_workspace(profile)
+        early_result = _check_prior_state(state, profile, profiles, folder, path, backend)
+        if early_result is not None:
+            return early_result
         backend = backend or github_backend(profile)
-        if state["state"] == "new":
-            # Fail before allocating/executing if native scoped reporting is unavailable.
-            try:
-                from planfile.sync.ticket_comments import queue_comment  # noqa: F401
-            except ImportError as exc:
-                raise RuntimeError("install Planfile with native scoped ticket-comment support first") from exc
-
-            planfile_ticket, issue = _intake(profile, folder, backend)
-            state.update(state="preparing")
-            _save(path, state)
-            workspace, ticket, base = prepare_workspace(profile)
-            state.update(
-                state="prepared",
-                workspace=str(workspace),
-                ticket=ticket,
-                base=base,
-                planfile_ticket=planfile_ticket,
-                issue=issue,
-                baseline=snapshot(workspace),
-            )
-            _save(path, state)
+        _prepare_ticket_state(profile, state, path, folder, backend)
         workspace = Path(state["workspace"])
         no_symlinks(workspace)
-        if state["state"] == "prepared":
-            _effect_guard(profile, profiles)
-            if snapshot(workspace) != state["baseline"]:
-                raise RuntimeError("workspace changed since preparation")
-            verify(profile, workspace)
-            state["state"] = "executing"
-            _save(path, state)
-            try:
-                paths = propose_and_apply(profile, workspace, state["issue"], runner)
-                state.update(state="applied", paths=paths, applied_snapshot=snapshot(workspace))
-                _save(path, state)
-            except Exception:
-                state["state"] = "blocked"
-                _save(path, state)
-                try:
-                    _effect_guard(profile, profiles)
-                    state["failure_comment"] = _report_blocked(state, folder, backend)
-                    _save(path, state)
-                except Exception:
-                    pass  # Reporting remains pending; it cannot restart execution.
-                raise
-        if state["state"] == "applied":
-            _effect_guard(profile, profiles)
-            if snapshot(workspace) != state["applied_snapshot"]:
-                raise RuntimeError("workspace changed after the patch; preserve it for reconciliation")
-            verify(profile, workspace)
-            if snapshot(workspace) != state["applied_snapshot"]:
-                raise RuntimeError("verification modified tracked work; publication stopped")
-            state["state"] = "committing"
-            _save(path, state)
-            paths = list(state["paths"])
-            if profile["delivery"] == "validator":
-                paths.append(f"project/{state['ticket']}")
-            if git(workspace, "diff", "--cached", "--name-only"):
-                raise RuntimeError("index contains other work; commit stopped")
-            if git(workspace, "rev-parse", "HEAD") != state["base"]:
-                raise RuntimeError("HEAD changed during execution; commit stopped")
-            git(workspace, "add", "--", *paths)
-            if snapshot(workspace) != state["applied_snapshot"]:
-                raise RuntimeError("files changed while staging; preserve the index for reconciliation")
-            git(workspace, "diff", "--cached", "--check")
-            git(workspace, "commit", "-m", f"fix: address GitHub issue {profile['number']} ({state['ticket']})")
-            state.update(state="committed", head=git(workspace, "rev-parse", "HEAD"))
-            _save(path, state)
-        if state["state"] == "committed":
-            _effect_guard(profile, profiles)
-            state.update(publish(profile, state, folder))
-            _save(path, state)
-        if state["state"] == "published":
-            _effect_guard(profile, profiles)
-            state.update(_report(profile, state, folder, backend))
-            _save(path, state)
+        _execute_ticket_step(profile, profiles, state, path, folder, workspace, backend, runner)
+        _commit_ticket_step(profile, profiles, state, path, workspace)
+        _publish_and_report_steps(profile, profiles, state, path, folder, backend)
         return {k: v for k, v in state.items() if k not in {"issue", "baseline", "applied_snapshot"}}
