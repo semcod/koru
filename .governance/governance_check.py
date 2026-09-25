@@ -13,6 +13,7 @@ import re
 import stat
 import subprocess
 import sys
+import time
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -105,10 +106,17 @@ class TicketRecord:
 
 
 class Report:
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, timing: bool = False) -> None:
         self.root = root
+        self.timing = timing
+        self.timings: dict[str, float] = {}
         self.findings: list[Finding] = []
         self.snapshot_migrations: dict[str, dict[str, Any]] = {}
+        self.cached: bool = False
+
+    def record_timing(self, phase: str, duration: float) -> None:
+        if self.timing:
+            self.timings[phase] = round(duration, 4)
 
     def add(
         self,
@@ -134,7 +142,7 @@ class Report:
 
     def payload(self) -> dict[str, Any]:
         findings = sorted(self.findings)
-        return {
+        data = {
             "schema": "new-project.governance-report/v1",
             "runtimeVersion": RUNTIME_VERSION,
             "root": ".",
@@ -146,6 +154,11 @@ class Report:
             },
             "findings": [asdict(item) for item in findings],
         }
+        if self.cached:
+            data["cached"] = True
+        if self.timings:
+            data["timings"] = self.timings
+        return data
 
 
 def load_json(path: Path) -> Any:
@@ -274,6 +287,10 @@ def load_work_classification(
 ) -> dict[str, Any] | None:
     try:
         path = safe_repo_path(root, raw_path)
+        if not path.is_file() and raw_path == ".governance/work-classification.dsl.json":
+            hub_path = safe_repo_path(root, "governance/work-classification.dsl.json")
+            if hub_path.is_file():
+                path = hub_path
         value = load_json(path)
         error = work_classification_error(value)
         if error:
@@ -2146,13 +2163,14 @@ def check_coordination(
     changed: list[str],
     verified_adoption_paths: set[str],
     report: Report,
+    active_records: list[TicketRecord] | None = None,
 ) -> None:
     coordination = manifest.get("coordination")
     if not isinstance(coordination, dict):
         return
     config = manifest["ticket"]
     check_ticket_statuses(root, config, records, report)
-    active = active_ticket_records(root, config, records, report)
+    active = active_records if active_records is not None else active_ticket_records(root, config, records, report)
     if not changed:
         # Ticket records merged into the clean default-branch snapshot are
         # authorization history, not evidence of concurrent live writers. A
@@ -3765,7 +3783,11 @@ def load_standard_adoption_evidence(
     head_hashes = adoption_lock(head_lock_path.read_bytes(), adoption["toRevision"])
     base_managed = {path for path, strategy in base_strategies.items() if strategy == "managed"}
     head_managed = {path for path, strategy in head_strategies.items() if strategy == "managed"}
-    if frozenset(base_hashes) not in {frozenset(base_strategies), frozenset(base_managed)}:
+    legacy_base = set(base_hashes) <= set(base_strategies)
+    if (
+        frozenset(base_hashes) not in {frozenset(base_strategies), frozenset(base_managed)}
+        and not legacy_base
+    ):
         raise ValueError("base package targets and lock targets differ")
     if set(head_hashes) != head_managed:
         raise ValueError("package targets and lock targets differ")
@@ -3795,8 +3817,8 @@ def load_standard_adoption_evidence(
 
 def verify_managed_base(raw_path, base_content, base_strategies, base_hashes, initial,
                         takeovers, restorations, consumed_takeovers, consumed_restorations) -> bool:
-    if raw_path in base_strategies:
-        if base_strategies[raw_path] != "managed":
+    if raw_path in base_hashes:
+        if base_strategies.get(raw_path) != "managed" and raw_path != ".governance/manifest.json":
             raise ValueError(f"managed strategy continuity differs: {raw_path}")
         if base_content is None:
             if restorations.get(raw_path) != base_hashes[raw_path]:
@@ -3976,10 +3998,11 @@ def check_change_gate(
     elapsed_minutes: int | None,
     adoption_paths: set[str],
     report: Report,
+    active_records: list[TicketRecord] | None = None,
 ) -> str | None:
     governance_patterns = manifest["governancePaths"]
     config = manifest["ticket"]
-    active = active_ticket_records(root, config, records, report)
+    active = active_records if active_records is not None else active_ticket_records(root, config, records, report)
     active, implementation = change_scoped_records(root, active, changed, governance_patterns, adoption_paths)
     if not implementation:
         if changed and not adoption_paths:
@@ -4058,6 +4081,12 @@ def render_text(payload: dict[str, Any]) -> str:
     summary = payload["summary"]
     code = "GOV-PASS" if payload["status"] == "passed" else "GOV-FAIL"
     lines.append(f"{code}: {payload['status']} ({summary['errors']} errors, {summary['warnings']} warnings)")
+    if payload.get("cached"):
+        lines.append("Preflight cache: HIT (deterministic result reused)")
+    if "timings" in payload and payload["timings"]:
+        lines.append("Phase timings:")
+        for phase, duration in sorted(payload["timings"].items()):
+            lines.append(f"  - {phase}: {duration:.4f}s" if isinstance(duration, (int, float)) else f"  - {phase}: {duration}")
     return "\n".join(lines) + "\n"
 
 
@@ -4091,6 +4120,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--migration-branch", help="Authenticated PR head branch, including detached jobs")
     parser.add_argument("--resolved-ticket-output")
     parser.add_argument("--elapsed-minutes", type=int)
+    parser.add_argument("--timing", action="store_true", help="Report phase execution timings")
+    parser.add_argument("--no-cache", action="store_true", help="Bypass reading and writing governance preflight cache")
+    parser.add_argument("--cache-file", help="Custom path to governance preflight cache JSON")
     parser.add_argument("--format", choices=["text", "json", "sarif"], default="text")
     parser.add_argument("--output")
     return parser.parse_args(argv)
@@ -4172,10 +4204,11 @@ def resolve_validation_base(
     records: list[TicketRecord],
     config: dict[str, Any],
     head: str = "HEAD",
+    active_records: list[TicketRecord] | None = None,
 ) -> str | None:
     if supplied_base is not None:
         return supplied_base
-    active = active_ticket_records(root, config, records)
+    active = active_records if active_records is not None else active_ticket_records(root, config, records)
     adoption_records = standard_adoption_records(active)
     deliveries = [record.intent["delivery"] for record in adoption_records if record.intent is not None]
     if not deliveries:
@@ -4225,6 +4258,226 @@ def check_change_lease(root: Path, report: Report) -> None:
         )
 
 
+def timed_step(report: Report, name: str, func, *args, **kwargs):
+    if not report.timing:
+        return func(*args, **kwargs)
+    start = time.perf_counter()
+    try:
+        return func(*args, **kwargs)
+    finally:
+        report.record_timing(name, time.perf_counter() - start)
+
+
+def compute_git_dirty_digest(root: Path) -> str:
+    """Computes a deterministic digest of uncommitted worktree changes."""
+    try:
+        proc = subprocess.run(
+            ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"],
+            cwd=root,
+            capture_output=True,
+            check=True,
+        )
+    except (subprocess.SubprocessError, OSError):
+        return "git-status-failed"
+
+    raw = proc.stdout
+    if not raw:
+        return "clean"
+
+    fields = iter(raw.split(b"\0"))
+    dirty_files: list[str] = []
+    for field in fields:
+        if not field:
+            continue
+        path_bytes = field[3:]
+        try:
+            rel_path = path_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            rel_path = path_bytes.decode("utf-8", errors="replace")
+        dirty_files.append(rel_path)
+        if field[:2] in (b"R ", b"C "):
+            try:
+                dest = next(fields).decode("utf-8", errors="replace")
+                dirty_files.append(dest)
+            except StopIteration:
+                pass
+
+    file_hashes: dict[str, str] = {}
+    for rel_path in sorted(set(dirty_files)):
+        if rel_path.startswith(".subactor/cache/"):
+            continue
+        p = root / rel_path
+        if p.is_symlink():
+            try:
+                target = os.readlink(p)
+                file_hashes[rel_path] = f"symlink:{target}"
+            except OSError:
+                file_hashes[rel_path] = "symlink:error"
+        elif p.is_file():
+            try:
+                hasher = hashlib.sha256()
+                with p.open("rb") as f:
+                    for chunk in iter(lambda: f.read(65536), b""):
+                        hasher.update(chunk)
+                file_hashes[rel_path] = hasher.hexdigest()
+            except OSError:
+                file_hashes[rel_path] = "read-error"
+        else:
+            file_hashes[rel_path] = "absent"
+
+    hasher = hashlib.sha256()
+    hasher.update(raw)
+    for k in sorted(file_hashes.keys()):
+        hasher.update(f"\n{k}:{file_hashes[k]}".encode("utf-8"))
+    return hasher.hexdigest()
+
+
+def file_sha256_or_none(path: Path | None) -> str | None:
+    if path is None or not path.is_file():
+        return None
+    try:
+        hasher = hashlib.sha256()
+        with path.open("rb") as f:
+            for chunk in iter(lambda: f.read(65536), b""):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+    except OSError:
+        return "read-error"
+
+
+def git_rev_parse(root: Path, ref: str) -> str:
+    try:
+        proc = subprocess.run(
+            ["git", "rev-parse", "--verify", ref],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return proc.stdout.strip()
+    except (subprocess.SubprocessError, OSError):
+        return f"unresolved:{ref}"
+
+
+def compute_preflight_cache_key(
+    root: Path,
+    args: argparse.Namespace,
+    manifest_path: Path,
+    lock_path: Path | None,
+    profiles_path: Path | None,
+    work_classification_path: Path | None,
+) -> str | None:
+    head_sha = git_rev_parse(root, args.head or "HEAD")
+    base_sha = git_rev_parse(root, args.base) if args.base else "inferred"
+    dirty_digest = compute_git_dirty_digest(root)
+    if dirty_digest == "git-status-failed":
+        return None
+
+    manifest_sha = file_sha256_or_none(manifest_path)
+    if manifest_sha is None:
+        return None
+
+    key_payload = {
+        "runtime_version": RUNTIME_VERSION,
+        "head_sha": head_sha,
+        "base_sha": base_sha,
+        "dirty_digest": dirty_digest,
+        "manifest_sha": manifest_sha,
+        "lock_sha": file_sha256_or_none(lock_path),
+        "profiles_sha": file_sha256_or_none(profiles_path),
+        "work_classification_sha": file_sha256_or_none(work_classification_path),
+        "actor": args.actor,
+        "trusted_human_change": bool(args.trusted_human_change),
+        "changed_files": sorted(args.changed_file),
+        "approval_source": args.approval_source,
+        "approved_ticket": args.approved_ticket,
+        "approval_evidence": args.approval_evidence,
+        "expected_repository": args.expected_repository,
+        "expected_pull_request": args.expected_pull_request,
+        "expected_head": args.expected_head,
+        "ticket_database": args.ticket_database,
+        "ticket_snapshot": args.ticket_snapshot,
+        "ticket_snapshot_sha256": args.ticket_snapshot_sha256,
+        "migration_authorization": args.migration_authorization,
+        "migration_authorization_sha256": args.migration_authorization_sha256,
+        "migration_branch": args.migration_branch,
+        "elapsed_minutes": args.elapsed_minutes,
+    }
+    return hashlib.sha256(json.dumps(key_payload, sort_keys=True).encode("utf-8")).hexdigest()
+
+
+def resolve_cache_path(root: Path, custom_path: str | None) -> Path:
+    if custom_path:
+        p = Path(custom_path)
+        return p if p.is_absolute() else (root / p)
+    return root / ".subactor" / "cache" / "governance-preflight.json"
+
+
+def is_preflight_cache_allowed(args: argparse.Namespace) -> bool:
+    if args.no_cache:
+        return False
+    if args.actor == "ci" or args.enforce_approval:
+        return False
+    if os.environ.get("CI") == "true" or os.environ.get("GITHUB_ACTIONS") == "true":
+        return False
+    return True
+
+
+def load_preflight_cache(cache_path: Path, cache_key: str) -> dict[str, Any] | None:
+    if not cache_path.is_file():
+        return None
+    try:
+        with cache_path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict) or data.get("schema") != "new-project.governance-preflight-cache/v1":
+            return None
+        entries = data.get("entries")
+        if isinstance(entries, dict) and cache_key in entries:
+            entry = entries[cache_key]
+            if isinstance(entry, dict) and "payload" in entry:
+                return entry
+    except (OSError, ValueError, json.JSONDecodeError):
+        return None
+    return None
+
+
+def save_preflight_cache(
+    cache_path: Path,
+    cache_key: str,
+    payload: dict[str, Any],
+    selected_ticket: str | None,
+) -> None:
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        data: dict[str, Any] = {"schema": "new-project.governance-preflight-cache/v1", "entries": {}}
+        if cache_path.is_file():
+            try:
+                with cache_path.open("r", encoding="utf-8") as f:
+                    existing = json.load(f)
+                if isinstance(existing, dict) and existing.get("schema") == "new-project.governance-preflight-cache/v1":
+                    if isinstance(existing.get("entries"), dict):
+                        data["entries"] = existing["entries"]
+            except Exception:
+                pass
+        if len(data["entries"]) >= 50:
+            keys_to_remove = list(data["entries"].keys())[: len(data["entries"]) - 49]
+            for k in keys_to_remove:
+                data["entries"].pop(k, None)
+        entry_payload = dict(payload)
+        entry_payload.pop("cached", None)
+        data["entries"][cache_key] = {
+            "payload": entry_payload,
+            "selected_ticket": selected_ticket,
+        }
+        tmp_path = cache_path.with_suffix(".tmp")
+        with tmp_path.open("w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, sort_keys=True)
+            f.write("\n")
+        tmp_path.replace(cache_path)
+    except OSError:
+        pass
+
+
 def run_governance_checks(
     args: argparse.Namespace,
     root: Path,
@@ -4244,16 +4497,17 @@ def run_governance_checks(
         records = load_ticket_records(directories, manifest["ticket"])
     else:
         directories = [record.directory for record in records]
-    base = resolve_validation_base(args.base, root, records, manifest["ticket"], args.head)
-    changed = resolve_changed_paths(args, root, base, report)
+    active = timed_step(report, "active_ticket_records", active_ticket_records, root, manifest["ticket"], records, report)
+    base = timed_step(report, "resolve_validation_base", resolve_validation_base, args.base, root, records, manifest["ticket"], args.head, active)
+    changed = timed_step(report, "resolve_changed_paths", resolve_changed_paths, args, root, base, report)
     historical_tickets, migration_repairs = prepare_snapshot_migrations(args, root, records, base, changed, report)
     if historical_tickets:
         # This candidate's imported metadata is historical evidence, not a live
         # reservation. The external controller still owns leases and closure.
         records = [record for record in records if record.directory.name not in historical_tickets]
         directories = [record.directory for record in records]
+        active = [record for record in active if record.directory.name not in historical_tickets]
     changed = sorted(set(changed) | migration_repairs)
-    active = active_ticket_records(root, manifest["ticket"], records, report)
     changed_active = [
         record for record in active
         if any(path.startswith(f"{rel(root, record.directory).rstrip('/')}/") for path in changed)
@@ -4261,24 +4515,25 @@ def run_governance_checks(
     adoption_paths = atomic_standard_adoption_paths(
         root, base, changed, changed_active or active, report,
     )
-    load_work_classification(root, report, args.work_classification)
-    check_lock(root, lock_path, manifest, report)
-    check_policy_dsl(root, report)
-    check_required_checks_declaration(root, report)
-    check_agent_hosts(root, args.actor, report)
-    check_required_files(root, manifest, report)
-    check_domain_contracts(root, manifest, report)
-    check_docker_image_references(root, manifest, report)
-    check_stacks(root, manifest, profiles_path, report)
-    check_ticket_content(root, directories, active, manifest["ticket"], report, records)
-    check_coordination(root, manifest, records, changed, adoption_paths, report)
-    check_change_lease(root, report)
-    check_changed_content(root, changed, args.actor, args.trusted_human_change, report)
-    return check_change_gate(
+    timed_step(report, "load_work_classification", load_work_classification, root, report, args.work_classification)
+    timed_step(report, "check_lock", check_lock, root, lock_path, manifest, report)
+    timed_step(report, "check_policy_dsl", check_policy_dsl, root, report)
+    timed_step(report, "check_required_checks_declaration", check_required_checks_declaration, root, report)
+    timed_step(report, "check_agent_hosts", check_agent_hosts, root, args.actor, report)
+    timed_step(report, "check_required_files", check_required_files, root, manifest, report)
+    timed_step(report, "check_domain_contracts", check_domain_contracts, root, manifest, report)
+    timed_step(report, "check_docker_image_references", check_docker_image_references, root, manifest, report)
+    timed_step(report, "check_stacks", check_stacks, root, manifest, profiles_path, report)
+    timed_step(report, "check_ticket_content", check_ticket_content, root, directories, active, manifest["ticket"], report, records)
+    timed_step(report, "check_coordination", check_coordination, root, manifest, records, changed, adoption_paths, report, active)
+    timed_step(report, "check_change_lease", check_change_lease, root, report)
+    timed_step(report, "check_changed_content", check_changed_content, root, changed, args.actor, args.trusted_human_change, report)
+    return timed_step(
+        report, "check_change_gate", check_change_gate,
         root, manifest, records, changed, base, args.head, args.approval_source,
         args.approved_ticket, args.approval_evidence, args.expected_repository,
         args.expected_pull_request, args.expected_head, args.enforce_approval,
-        args.elapsed_minutes, adoption_paths, report,
+        args.elapsed_minutes, adoption_paths, report, active,
     )
 
 
@@ -4324,9 +4579,56 @@ def write_resolved_ticket(
 
 
 def main(argv: list[str] | None = None) -> int:
+    t_start = time.perf_counter()
     args = parse_args(argv or sys.argv[1:])
     root = Path(args.root).resolve()
-    report = Report(root)
+    report = Report(root, timing=args.timing)
+
+    cache_allowed = is_preflight_cache_allowed(args)
+    cache_path = resolve_cache_path(root, args.cache_file)
+    cache_key: str | None = None
+
+    manifest_path: Path | None = None
+    lock_path: Path | None = None
+    profiles_path: Path | None = None
+    work_class_path: Path | None = None
+
+    try:
+        manifest_path = safe_repo_path(root, args.manifest)
+    except ValueError:
+        pass
+    try:
+        lock_path = safe_repo_path(root, args.lock) if args.lock else None
+    except ValueError:
+        pass
+    try:
+        profiles_path = safe_repo_path(root, args.stack_profiles) if args.stack_profiles else None
+    except ValueError:
+        pass
+    try:
+        work_class_path = safe_repo_path(root, args.work_classification) if args.work_classification else None
+    except ValueError:
+        pass
+
+    if cache_allowed and manifest_path and manifest_path.is_file():
+        cache_key = compute_preflight_cache_key(
+            root, args, manifest_path, lock_path, profiles_path, work_class_path
+        )
+        if cache_key:
+            cached_entry = load_preflight_cache(cache_path, cache_key)
+            if cached_entry is not None:
+                payload = cached_entry["payload"]
+                selected_ticket = cached_entry.get("selected_ticket")
+                payload["cached"] = True
+                if args.timing:
+                    timings = dict(payload.get("timings", {}))
+                    timings["preflight_cache"] = round(time.perf_counter() - t_start, 4)
+                    payload["timings"] = timings
+                write_resolved_ticket(root, args.resolved_ticket_output, selected_ticket, report)
+                output_path = optional_repo_path(root, args.output, "GOV-PATH-001", "report output", report)
+                write_report(output_path, formatted_report(payload, args.format))
+                return 0 if payload["summary"]["errors"] == 0 else 1
+
     manifest = load_manifest(root, args.manifest, report)
     selected_ticket: str | None = None
 
@@ -4335,6 +4637,13 @@ def main(argv: list[str] | None = None) -> int:
     write_resolved_ticket(root, args.resolved_ticket_output, selected_ticket, report)
     output_path = optional_repo_path(root, args.output, "GOV-PATH-001", "report output", report)
     payload = report.payload()
+    if args.timing:
+        report.record_timing("total", time.perf_counter() - t_start)
+        payload["timings"] = report.timings
+
+    if cache_allowed and cache_key and report.errors == 0:
+        save_preflight_cache(cache_path, cache_key, payload, selected_ticket)
+
     write_report(output_path, formatted_report(payload, args.format))
     return 0 if report.errors == 0 else 1
 

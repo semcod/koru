@@ -177,4 +177,19 @@ project analysis or human-owned ticket inputs.
 | **ticket-172** | [`README.md`](./ticket-172/README.md) | - | - | - | - | - |
 | **ticket-173** | [`README.md`](./ticket-173/README.md) | - | - | - | - | - |
 | **ticket-174** | [`README.md`](./ticket-174/README.md) | - | - | - | - | - |
+| **ticket-177** | [`README.md`](./ticket-177/README.md) | - | - | - | - | - |
+| **ticket-178** | [`README.md`](./ticket-178/README.md) | - | - | - | - | - |
+| **ticket-179** | [`README.md`](./ticket-179/README.md) | - | - | - | - | - |
+| **ticket-180** | [`README.md`](./ticket-180/README.md) | - | - | - | - | - |
+| **ticket-181** | [`README.md`](./ticket-181/README.md) | - | - | - | - | - |
+| **ticket-183** | [`README.md`](./ticket-183/README.md) | - | - | - | - | - |
+| **ticket-184** | [`README.md`](./ticket-184/README.md) | - | - | - | - | - |
+| **ticket-185** | [`README.md`](./ticket-185/README.md) | - | - | - | - | - |
+| **ticket-186** | [`README.md`](./ticket-186/README.md) | - | - | - | - | - |
+| **ticket-188** | [`README.md`](./ticket-188/README.md) | - | - | - | - | - |
+| **ticket-189** | [`README.md`](./ticket-189/README.md) | - | - | - | - | - |
+| **ticket-190** | [`README.md`](./ticket-190/README.md) | - | - | - | - | - |
+| **ticket-191** | [`README.md`](./ticket-191/README.md) | - | - | - | - | - |
+| **ticket-193** | [`README.md`](./ticket-193/README.md) | - | - | - | - | - |
+| **ticket-195** | [`README.md`](./ticket-195/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->

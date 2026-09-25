@@ -46,13 +46,13 @@ described above.
 
 ## Acceptance criteria
 
-- [ ] AC-01: `.governance/manifest.lock.json` target set equals the package manifest managed strategies and every digest matches the working tree (repair slice).
-- [ ] AC-02: `wellmanifest_governance.py` byte-equals the pinned 0.20.32 managed projection; the updater drift check against `b6ba9c21…` reports up-to-date (repair slice).
+- [x] AC-01: `.governance/manifest.lock.json` target set equals the package manifest managed strategies and every digest matches the working tree (repair slice).
+- [x] AC-02: `wellmanifest_governance.py` byte-equals the pinned 0.20.32 managed projection; the updater drift check against `b6ba9c21…` reports up-to-date (repair slice).
 - [ ] AC-03: `.governance/manifest.json`, `.governance/manifest.base.json` and `.governance/manifest.lock.json` bind published `wellmanifest/new-project` 0.20.33 at `a8245857259d8d42115108f191c586b76cb1e2bd` (adoption slice).
 - [ ] AC-04: Standard-managed files match the 0.20.33 projection, including the new branch-hygiene workflow and the upstream collect-only skip; updater drift check reports up-to-date (adoption slice).
 - [ ] AC-05: `.governance/standard-adoption.json` and `.governance/standard-pack-evidence/new-project.json` carry valid S0-S4 evidence with upstream CI run 35451961370 and ruleset 20451097 receipts (adoption slice).
 - [ ] AC-06: `package.json` and `pyproject.toml` `[tool.wellmanifest]` reference 0.20.33 and the new revision (adoption slice).
-- [ ] AC-07: `standard_pack_check.py`, `standard_pack_projection_check.py`, `governance-check.sh` and `git diff --check` pass on both slices.
+- [ ] AC-07: `standard_pack_check.py`, `standard_pack_projection_check.py`, `governance-check.sh` and `git diff --check` pass on both slices. Exception: `git diff --check` reports exactly one upstream-authored finding for the adoption slice — `AGENTS.md:308: new blank line at EOF` — whose bytes are digest-pinned by the 0.20.33 lock (`template/files/AGENTS.template.md` at `a8245857…` ends `-->\n\n`); upstream trimmed it in 0.20.34 (ticket-250, `3d4cd49`), so the next adoption clears it.
 
 ## Tracking boundary
 

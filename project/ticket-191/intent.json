@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-191",
+  "summary": "Reduce cyclomatic complexity: get_agent_availability (CC=15)",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-191/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/agent_availability.py",
+    "tests/test_agent_availability.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f171fe09a90cd59315de70a8b02b87db1158ff89",
+    "targetBranch": "main",
+    "outcome": "get_agent_availability drops from cyclomatic complexity 15 to below the code2llm limit 15 by extracting behavior-preserving module-level helpers (_environment_override, _availability_from_registry_entry, _with_expired_block_reset). Env-override precedence (KORU_AGENT_AVAILABLE before KORU_AGENT_UNAVAILABLE), registry parsing, invalid-entry fallback, and temporary-block expiry semantics are byte-for-byte equivalent; tests/test_agent_availability.py passes unmodified.",
+    "nonGoals": [
+      "Changing any observable status, reason, source, observed_at or retry_after value",
+      "Regenerating project/analysis.toon.yaml or project/planfile-tickets.yaml (integration-owned artifacts)",
+      "Renaming or removing any public name",
+      "Reformatting pre-existing spans of src/koru/agent_availability.py outside the refactored function"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Decompose get_agent_availability into three single-responsibility private module functions mirroring the module's existing function-oriented style: environment override resolution, registry-entry parsing with the invalid-entry fallback, and expired-block reset. The public function keeps only normalization and dispatch; each helper returns an explicit AgentAvailability so behavior is equivalent.",
+      "components": [
+        {
+          "name": "agent-availability",
+          "paths": [
+            "src/koru/agent_availability.py",
+            "tests/test_agent_availability.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; the original single get_agent_availability body is restored verbatim."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "code2llm <worktree> -f all -o /tmp/opencode/code2llm-ticket191 --no-chunk --exclude *.md --exclude plugins (complexity re-measured on get_agent_availability)"
+        ],
+        "evidence": "Re-run code2llm reports CC < 15 for get_agent_availability."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=src python -m pytest tests/test_agent_availability.py -q"
+        ],
+        "evidence": "Existing agent-availability suite passes unmodified."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koru/agent_availability.py"
+        ],
+        "evidence": "Lint passes on the refactored module; ruff format status of pre-existing untouched spans is unchanged from the accepted base."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "Governance gate passes with zero errors."
+      }
+    ]
+  }
+}

@@ -11,6 +11,7 @@
   "allowedPaths": [
     "project/ticket-172/**",
     "project/TICKETS.md",
+    ".gitattributes",
     ".governance/manifest.json",
     ".governance/manifest.base.json",
     ".governance/manifest.lock.json",
@@ -31,8 +32,13 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "6b65c7f23a162f7be9077197500160ecb6a8dddc",
+    "acceptedBaseSha": "0f61e0e51b359bb4cd5d4794c302fb9a96af1977",
     "targetBranch": "main",
+    "standardAdoption": {
+      "sourceRepository": "wellmanifest/new-project",
+      "fromRevision": "b6ba9c21a65a6a5648ecf904b64c3b75295e136f",
+      "toRevision": "a8245857259d8d42115108f191c586b76cb1e2bd"
+    },
     "outcome": "The adoption lock's managed target set equals the package manifest's managed strategies with drift-free digests, and Koru runs the published wellmanifest/new-project 0.20.33 projection with matching packaging pins and verified S0-S4 evidence receipts.",
     "nonGoals": [
       "No source, test or behaviour change in Koru itself beyond the standard-managed projection",
@@ -54,6 +60,7 @@
         {
           "name": "governance-adoption-instance",
           "paths": [
+            ".gitattributes",
             ".governance/manifest.json",
             ".governance/manifest.base.json",
             ".governance/manifest.lock.json",

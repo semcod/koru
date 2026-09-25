@@ -54,6 +54,19 @@ def published_checks_text(text: str, callers: list[str]) -> list[str]:
     """
     if "pull_request" not in text:
         return []  # A workflow that never runs on a PR cannot gate one.
+    # A pull_request trigger with exclusively the 'closed' type publishes
+    # checks that run after the merge decision, never before.  They cannot
+    # gate a pull request and must not inflate the required-checks declaration.
+    has_closed_type = bool(re.search(r"\btypes:\s*\[\s*closed\s*\]", text)) or bool(
+        re.search(r"\btypes:\s*\n\s*-\s*closed\b", text)
+    )
+    has_gating_types = bool(
+        re.search(r"\btypes:\s*\[.*\b(?:opened|synchronize|reopened|ready_for_review)\b", text)
+    ) or bool(
+        re.search(r"\btypes:\s*\n(?:\s*-[^\n]*\n)*\s*-\s*(?:opened|synchronize|reopened|ready_for_review)\b", text)
+    )
+    if has_closed_type and not has_gating_types:
+        return []
     names: list[str] = []
     current: str | None = None
     calls_reusable = False

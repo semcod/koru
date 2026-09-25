@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>koru dashboard</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <style>
   :root {
     --bg: #0f1115;
@@ -173,6 +174,33 @@
   table { width: 100%; border-collapse: collapse; }
   .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .table-wrap table { min-width: 620px; }
+
+  .model-toolbar { display: flex; align-items: end; flex-wrap: wrap; gap: 12px 20px; margin: 18px 0; }
+  .model-toolbar label { display: grid; gap: 6px; color: var(--muted); font-size: 12px; flex: 1 1 240px; }
+  .model-toolbar input { width: 100%; max-width: 360px; padding: 9px 12px; }
+  .model-toolbar input:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .model-source-status { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .model-table-wrap { max-height: 560px; border: 1px solid var(--border); border-radius: 8px; }
+  .model-table-wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .model-table { table-layout: fixed; min-width: 880px !important; }
+  .model-table th { position: sticky; top: 0; z-index: 1; background: #1b2030; padding: 11px 12px; }
+  .model-table td { padding: 12px; vertical-align: middle; overflow-wrap: anywhere; }
+  .model-table tbody tr:nth-child(even) { background: rgba(138, 147, 166, 0.035); }
+  .model-table tbody tr:hover { background: rgba(110, 231, 183, 0.045); }
+  .model-table tbody tr:last-child td { border-bottom: 0; }
+  .model-table .model-time-col { width: 148px; }
+  .model-table .model-source-col { width: 100px; white-space: nowrap; }
+  .model-table .model-status-col { width: 96px; }
+  .model-table .model-token-col { width: 88px; text-align: right; font-variant-numeric: tabular-nums; }
+  .model-timestamp { display: grid; gap: 3px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .model-time { color: var(--fg); font: 600 14px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; }
+  .model-date { color: #aab4c8; font-size: 12px; }
+  .model-name { display: block; font-weight: 600; font-size: 13px; margin-top: 3px; }
+  .model-provider, .model-identity { color: var(--muted); font-size: 11px; }
+  .model-identity { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+  .model-empty { padding: 24px 12px; text-align: center; color: var(--muted); }
+  .model-history-subheading { margin: 24px 0 6px; font-size: 14px; }
+  @media (max-width: 600px) { .model-toolbar { align-items: stretch; } .model-toolbar input { max-width: none; } }
   .form-stack { display: flex; flex-direction: column; gap: 8px; }
   .form-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .form-stack label {
@@ -358,6 +386,7 @@ const tabs = [
   ["policy", "Policy"],
   ["plugin-logs", "Plugin logs"],
   ["logs", "Logs"],
+  ["models", "Models"],
   ["terminals", "Terminals"],
   ["system", "System config"],
   ["settings", "Settings"],
@@ -1053,6 +1082,7 @@ function renderViewContent(ctx, topo, runtime, configPayload, envConfigPayload) 
     logs: [
       renderLogsPanel(),
     ],
+    models: [renderModelHistoryPanel()],
     terminals: [
       renderTerminalsPanel(),
     ],
@@ -1088,6 +1118,10 @@ function renderCurrentViewFromCache() {
   if (!lastRenderPayload) return false;
   const root = $("root");
   if (!root) return false;
+  if (state.tab === "models" && root.querySelector("#model-history-observed") && modelHistoryScope === state.project) {
+    loadModelHistory();
+    return true;
+  }
   const form = $("create-ticket-form");
   const editingTicket = form && ($("ct-title")?.value || $("ct-description")?.value);
   const configForm = $("config-form");
@@ -1307,6 +1341,111 @@ function connectLogSSE() {
   } catch (e) {
     setStatus("error: " + e.message, "pill err");
   }
+}
+
+// Actual model metadata stays separate from Koru's requested-model receipts.
+let modelHistory = null;
+let modelHistoryScope = null;
+let modelHistoryLoading = false;
+let modelFilter = "";
+
+function renderModelHistoryPanel() {
+  if (state.tab !== "models") return "";
+  setTimeout(() => { paintModelHistory(); loadModelHistory(); }, 0);
+  return panel("Models — observed history", `
+    <p class="muted">OpenCode messages for this project · SubLLM requests for koru-agent across projects.
+    All timestamps are UTC. A completed message does not mean a completed ticket.</p>
+    <div class="model-toolbar">
+      <label for="model-history-filter">Filter provider or model
+        <input id="model-history-filter" type="search" value="${attr(modelFilter)}"
+          placeholder="e.g. glm-5.3-flash" oninput="modelFilter=this.value;paintModelHistory()" autocomplete="off">
+      </label>
+      <div id="model-history-status" class="model-source-status" role="status" aria-live="polite">Loading history…</div>
+    </div>
+    <div id="model-history-observed"></div>
+    <h3 class="model-history-subheading">Koru routing decisions</h3>
+    <p class="muted">Requested models are configuration decisions, not proof of execution.</p>
+    <div id="model-history-decisions"></div>
+  `, true);
+}
+
+function modelTimestamp(value) {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) return '<span class="muted">Unknown time</span>';
+  const iso = date.toISOString();
+  return `<time class="model-timestamp" datetime="${attr(iso)}" title="${attr(iso)}"
+    aria-label="${attr(iso.slice(0,10) + ' ' + iso.slice(11,23) + ' UTC')}">
+    <span class="model-date">${iso.slice(0,10)}</span><span class="model-time">${iso.slice(11,23)}</span></time>`;
+}
+
+function modelStatus(value) {
+  const status = String(value || "unknown");
+  const tone = ["success", "completed", "cli_success"].includes(status) ? "ok"
+    : ["error", "failed"].includes(status) ? "err" : "warn";
+  return `<span class="pill ${tone}">${esc(status)}</span>`;
+}
+
+function modelTable(headers, rows, label) {
+  return `<div class="table-wrap model-table-wrap" role="region" aria-label="${attr(label)}" tabindex="0">
+    <table class="model-table" aria-label="${attr(label)}"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+async function loadModelHistory() {
+  if (state.tab !== "models" || modelHistoryLoading) return;
+  modelHistoryLoading = true;
+  const scope = state.project;
+  try {
+    const response = await fetch("/api/model-history" + projectQuery(), {cache: "no-store"});
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    const data = await response.json();
+    if (scope !== state.project) return;
+    modelHistory = data;
+    modelHistoryScope = scope;
+  } catch (error) {
+    if (scope === state.project) { modelHistory = {error: error.message}; modelHistoryScope = scope; }
+  } finally {
+    modelHistoryLoading = false;
+    paintModelHistory();
+  }
+}
+
+function paintModelHistory() {
+  const target = $("model-history-observed"), status = $("model-history-status");
+  if (!target || !status || modelHistoryScope !== state.project || !modelHistory) return;
+  if (modelHistory.error) {
+    status.textContent = modelHistory.error;
+    target.innerHTML = '<p class="model-empty">History is temporarily unavailable. Retrying automatically…</p>';
+    $("model-history-decisions").innerHTML = "";
+    return;
+  }
+  const oc = modelHistory.opencode || {}, sub = modelHistory.subllm || {};
+  const filter = modelFilter.toLowerCase();
+  const matches = row => `${row.provider || ""}/${row.model || row.requested_model || ""}`.toLowerCase().includes(filter);
+  const all = [...(oc.calls || []).map(row => ({...row, origin: "OpenCode", identity: row.session_id})),
+               ...(sub.calls || []).map(row => ({...row, origin: "SubLLM", identity: row.function}))];
+  const observed = all.filter(matches).sort((a,b) => String(b.timestamp).localeCompare(String(a.timestamp)));
+  status.innerHTML = `<span class="pill">OpenCode: ${esc(oc.status || "unknown")}</span>
+    <span class="pill">SubLLM: ${esc(sub.status || "unknown")}</span>
+    <span class="muted">${observed.length} / ${all.length} records · UTC</span>`;
+  const token = value => Number.isInteger(value) ? value.toLocaleString("en-US") : '<span class="muted" title="Not recorded">—</span>';
+  target.innerHTML = observed.length ? modelTable(
+    '<th scope="col" class="model-time-col">Timestamp · UTC</th><th scope="col" class="model-source-col">Source</th>' +
+    '<th scope="col">Provider / model</th><th scope="col" class="model-status-col">Status</th>' +
+    '<th scope="col" class="model-token-col">Input tokens</th><th scope="col" class="model-token-col">Output tokens</th>' +
+    '<th scope="col">Session / function</th>',
+    observed.map(row => `<tr><td>${modelTimestamp(row.timestamp)}</td><td class="model-source-col">${esc(row.origin)}</td>
+      <td><span class="model-provider">${esc(row.provider || "unknown")}</span><span class="model-name">${esc(row.model || "unknown")}</span></td>
+      <td>${modelStatus(row.status)}</td><td class="model-token-col">${token(row.input_tokens)}</td>
+      <td class="model-token-col">${token(row.output_tokens)}</td><td class="model-identity">${esc(row.identity || "unknown")}</td></tr>`).join(""),
+    "Observed model history") : '<p class="model-empty">No observed model records for this scope and filter.</p>';
+  const decisions = (modelHistory.decisions || []).filter(matches);
+  $("model-history-decisions").innerHTML = decisions.length ? modelTable(
+    '<th scope="col" class="model-time-col">Timestamp · UTC</th><th scope="col">Ticket</th>' +
+    '<th scope="col">Requested model</th><th scope="col">Reason</th><th scope="col" class="model-status-col">CLI status</th>',
+    decisions.map(row => `<tr><td>${modelTimestamp(row.timestamp)}</td><td>${esc(row.ticket || "unknown")}</td>
+      <td><span class="model-name">${esc(row.requested_model || "client default")}</span></td>
+      <td>${esc(row.reason)}</td><td>${modelStatus(row.status)}</td></tr>`).join(""), "Koru routing decisions") :
+    '<p class="model-empty">No routing receipts yet. Historical sessions are not assigned to tickets by guesswork.</p>';
 }
 
 // --- Terminals tab: grid of opencode serve instances + supervisor ---
@@ -2105,7 +2244,7 @@ async function refresh() {
     // Fast first paint for the Logs and Terminals tabs: neither view depends
     // on the slow context/topology/config endpoints — render immediately so
     // the SSE stream / terminals poller can start while the brief loads.
-    if ((state.tab === "logs" || state.tab === "terminals") && !lastRenderPayload) {
+    if ((state.tab === "logs" || state.tab === "terminals" || state.tab === "models") && !lastRenderPayload) {
       lastRenderPayload = { ctx: {}, topo: {}, runtime: {}, configPayload: {}, envConfigPayload: {} };
       renderCurrentViewFromCache();
     }
