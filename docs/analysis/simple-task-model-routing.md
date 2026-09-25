@@ -29,6 +29,7 @@
     "validator-release:673f4a387f3227a96b7040c76f82fc80e7697b2f-usage-9c40e04f4777 (src/validator_agent/github.py, src/validator_agent/direct_validation.py)"
   ]
 }
+---
 # Koru: wybór modelu dla prostych zadań
 
 ## Aktualizacja v5: audyt wyścigu exact-head przy scaleniu PR361 (STARTER-735), 2026-09-20
