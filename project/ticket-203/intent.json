@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-203",
+  "summary": "Reduce cyclomatic complexity in ticket command service",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-203/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/ticket_command/service.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "533c567327eb12fd7946d925c54a18a235d3ad5a",
+    "targetBranch": "main",
+    "outcome": "Decompose run_ticket in src/koru/ticket_command/service.py into focused helper functions (_init_state_folder, _check_prior_state, _prepare_ticket_state, _execute_ticket_step, _commit_ticket_step, _publish_and_report_steps) to reduce cyclomatic complexity from CC=35 to <= 8 while preserving identical execution lifecycle and reconciliation behavior.",
+    "nonGoals": [
+      "Changing ticket command execution steps or error handling",
+      "Altering state caching, locking, or verification semantics"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _init_state_folder, _check_prior_state, _prepare_ticket_state, _execute_ticket_step, _commit_ticket_step, and _publish_and_report_steps from run_ticket.",
+      "components": [
+        {
+          "name": "ticket-command-service",
+          "paths": [
+            "src/koru/ticket_command/service.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore inline run_ticket implementation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m radon cc src/koru/ticket_command/service.py -s"
+        ],
+        "evidence": "Cyclomatic complexity of run_ticket and all helpers is <= 8."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest -q tests/test_ticket_command.py tests/test_ticket_command_delivery.py tests/test_ticket_command_reporting.py"
+        ],
+        "evidence": "All existing ticket command tests pass unchanged."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
