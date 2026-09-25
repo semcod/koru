@@ -190,14 +190,15 @@ def _add_standard_scope_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="koru fleet",
-        description=__doc__,
-    )
-    sub = parser.add_subparsers(dest="fleet_command", required=True)
-
+def _build_loop_subparsers(sub: argparse._SubParsersAction) -> None:
     up = sub.add_parser("up", help="Discover and supervise autonomous loops for every koru project.")
+    _add_up_arguments(up)
+
+    ls = sub.add_parser("ls", help="List discovered koru-managed projects and exit.")
+    ls.add_argument("--workspace", type=Path, default=None)
+
+
+def _add_up_arguments(up: argparse.ArgumentParser) -> None:
     up.add_argument(
         "--workspace",
         type=Path,
@@ -225,9 +226,8 @@ def _build_parser() -> argparse.ArgumentParser:
         "child (e.g. -- --ide claude --ticket-sources all).",
     )
 
-    ls = sub.add_parser("ls", help="List discovered koru-managed projects and exit.")
-    ls.add_argument("--workspace", type=Path, default=None)
 
+def _build_bootstrap_subparser(sub: argparse._SubParsersAction) -> None:
     boot = sub.add_parser(
         "bootstrap",
         aliases=["init"],
@@ -237,6 +237,11 @@ def _build_parser() -> argparse.ArgumentParser:
             "by default)."
         ),
     )
+    _add_bootstrap_scope_arguments(boot)
+    _add_bootstrap_init_arguments(boot)
+
+
+def _add_bootstrap_scope_arguments(boot: argparse.ArgumentParser) -> None:
     boot.add_argument(
         "workspace",
         type=Path,
@@ -244,16 +249,6 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Parent folder containing sibling projects "
         "(default: $KORU_FLEET_WORKSPACE or ~/github).",
-    )
-    boot.add_argument(
-        "--umbrella",
-        action="store_true",
-        help="Also initialise the workspace root itself (git optional).",
-    )
-    boot.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Report what would change without writing files.",
     )
     boot.add_argument(
         "--include",
@@ -282,6 +277,19 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Also consider directories without a .git entry (default: git-only).",
     )
+
+
+def _add_bootstrap_init_arguments(boot: argparse.ArgumentParser) -> None:
+    boot.add_argument(
+        "--umbrella",
+        action="store_true",
+        help="Also initialise the workspace root itself (git optional).",
+    )
+    boot.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report what would change without writing files.",
+    )
     boot.add_argument(
         "--force",
         action="store_true",
@@ -302,6 +310,8 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Write host-environment.{json,md} on fresh init (off by default for fleet-scale bootstrap).",
     )
 
+
+def _build_standard_subparsers(sub: argparse._SubParsersAction) -> None:
     standard = sub.add_parser(
         "standard-update",
         aliases=["standard-scan"],
@@ -310,6 +320,20 @@ def _build_parser() -> argparse.ArgumentParser:
             "waiting-input Planfile adoption tickets."
         ),
     )
+    _add_standard_update_arguments(standard)
+
+    inventory = sub.add_parser(
+        "standard-inventory",
+        aliases=["standard-scope"],
+        help=(
+            "Audit selected and excluded governed checkouts without emitting or "
+            "changing tickets."
+        ),
+    )
+    _add_standard_inventory_arguments(inventory)
+
+
+def _add_standard_update_arguments(standard: argparse.ArgumentParser) -> None:
     standard.add_argument(
         "workspace",
         type=Path,
@@ -337,14 +361,8 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     _add_standard_scope_arguments(standard)
 
-    inventory = sub.add_parser(
-        "standard-inventory",
-        aliases=["standard-scope"],
-        help=(
-            "Audit selected and excluded governed checkouts without emitting or "
-            "changing tickets."
-        ),
-    )
+
+def _add_standard_inventory_arguments(inventory: argparse.ArgumentParser) -> None:
     inventory.add_argument(
         "workspace",
         type=Path,
@@ -360,6 +378,18 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     _add_standard_scope_arguments(inventory)
     inventory.set_defaults(emit_tickets=False, show_excluded=True)
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru fleet",
+        description=__doc__,
+    )
+    sub = parser.add_subparsers(dest="fleet_command", required=True)
+
+    _build_loop_subparsers(sub)
+    _build_bootstrap_subparser(sub)
+    _build_standard_subparsers(sub)
 
     return parser
 
