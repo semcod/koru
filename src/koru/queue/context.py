@@ -25,7 +25,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 _logger = logging.getLogger(__name__)
 
@@ -332,14 +332,23 @@ def _context_files_to_include(project: Path, request: dict[str, Any]) -> list[st
     return files_to_include
 
 
+class _TargetRef(NamedTuple):
+    """Resolved target symbol / line metadata for one context file."""
+
+    symbol: str | None
+    line: int | None
+
+
 def _resolve_target_symbol_and_line(
     rel_path: str, request: dict[str, Any]
-) -> tuple[str | None, int | None]:
+) -> _TargetRef:
     """Resolve target symbol name and line number for rel_path from request metadata."""
     symbol = request.get("target_symbol")
     line = request.get("target_line")
     if symbol is not None or line is not None:
-        return (str(symbol) if symbol else None, int(line) if line is not None else None)
+        return _TargetRef(
+            str(symbol) if symbol else None, int(line) if line is not None else None
+        )
 
     # Inspect prompt and ticket_description for code smell / location markers
     text_corpus = " ".join(
@@ -349,7 +358,7 @@ def _resolve_target_symbol_and_line(
         ]
     )
     if not text_corpus:
-        return None, None
+        return _TargetRef(None, None)
 
     filename = Path(rel_path).name
     # Match path:line, e.g. vdisplay_client.py:2442 or src/foo.py:123
@@ -375,12 +384,22 @@ def _resolve_target_symbol_and_line(
                 symbol = candidate
                 break
 
-    return (str(symbol) if symbol else None, int(line) if line is not None else None)
+    return _TargetRef(
+        str(symbol) if symbol else None, int(line) if line is not None else None
+    )
+
+
+class _CodeSlice(NamedTuple):
+    """Extracted source slice with its original line span."""
+
+    text: str
+    start_line: int
+    end_line: int
 
 
 def _extract_python_symbol_slice(
     content: str, symbol_name: str, context_lines: int = 15
-) -> tuple[str, int, int] | None:
+) -> _CodeSlice | None:
     """Extract a focused AST slice around symbol_name in Python code."""
     try:
         tree = ast.parse(content)
@@ -412,20 +431,62 @@ def _extract_python_symbol_slice(
                 )
                 body = "\n".join(lines[start - 1 : end])
                 header_parts.append(body)
-                return "\n\n".join(header_parts), start, end
+                return _CodeSlice("\n\n".join(header_parts), start, end)
     return None
 
 
 def _extract_line_slice(
     content: str, target_line: int, window: int = 80
-) -> tuple[str, int, int]:
+) -> _CodeSlice:
     """Extract a window of lines around target_line."""
     lines = content.splitlines()
     start = max(1, target_line - window)
     end = min(len(lines), target_line + window)
     header = f"# ... [focused slice around line {target_line}: lines {start}-{end} of {len(lines)}] ..."
     body = "\n".join(lines[start - 1 : end])
-    return f"{header}\n\n{body}", start, end
+    return _CodeSlice(f"{header}\n\n{body}", start, end)
+
+
+class _FocusedSlice(NamedTuple):
+    """Focused replacement content for one file, plus its header note."""
+
+    content: str
+    note: str | None
+
+
+def _focused_file_slice(
+    rel: str,
+    content: str,
+    lang: str,
+    request: dict[str, Any] | None,
+) -> _FocusedSlice:
+    """Return focused slice content for one file.
+
+    When the file exceeds ``LARGE_FILE_SLICE_THRESHOLD_CHARS`` and target
+    symbol or line metadata is present in ``request``, a focused slice is
+    generated instead of dumping the entire file; otherwise the content is
+    returned unchanged.
+    """
+    if not request or len(content) <= LARGE_FILE_SLICE_THRESHOLD_CHARS:
+        return _FocusedSlice(content, None)
+
+    target = _resolve_target_symbol_and_line(rel, request)
+    if target.symbol and lang == "py":
+        code_slice = _extract_python_symbol_slice(content, target.symbol)
+        if code_slice:
+            return _FocusedSlice(
+                code_slice.text,
+                f"focused slice for '{target.symbol}',"
+                f" lines {code_slice.start_line}-{code_slice.end_line}",
+            )
+    elif target.line is not None:
+        code_slice = _extract_line_slice(content, target.line)
+        return _FocusedSlice(
+            code_slice.text,
+            f"focused slice around line {target.line},"
+            f" lines {code_slice.start_line}-{code_slice.end_line}",
+        )
+    return _FocusedSlice(content, None)
 
 
 def _context_file_sections(
@@ -435,9 +496,9 @@ def _context_file_sections(
 ) -> tuple[list[str], list[str]]:
     """Return ``(markdown_sections, included_files)`` for readable files.
 
-    When a file exceeds ``LARGE_FILE_SLICE_THRESHOLD_CHARS`` and target symbol
-    or line metadata is present, a focused slice is generated instead of dumping
-    the entire file.
+    Oversized files are narrowed to a focused slice by
+    :func:`_focused_file_slice` when target symbol or line metadata is
+    present.
     """
     sections: list[str] = []
     included_files: list[str] = []
@@ -446,25 +507,9 @@ def _context_file_sections(
         if content is None:
             continue
         lang = Path(rel).suffix.lstrip(".")
-        slice_info = None
-
-        if request and len(content) > LARGE_FILE_SLICE_THRESHOLD_CHARS:
-            target_symbol, target_line = _resolve_target_symbol_and_line(rel, request)
-            if target_symbol and lang == "py":
-                ast_res = _extract_python_symbol_slice(content, target_symbol)
-                if ast_res:
-                    sliced_content, start_l, end_l = ast_res
-                    content = sliced_content
-                    slice_info = f"focused slice for '{target_symbol}', lines {start_l}-{end_l}"
-            elif target_line is not None:
-                sliced_content, start_l, end_l = _extract_line_slice(content, target_line)
-                content = sliced_content
-                slice_info = f"focused slice around line {target_line}, lines {start_l}-{end_l}"
-
-        header = f"## {rel}"
-        if slice_info:
-            header += f" ({slice_info})"
-        sections.append(f"{header}\n\n```{lang}\n{content}\n```")
+        focused = _focused_file_slice(rel, content, lang, request)
+        header = f"## {rel}" + (f" ({focused.note})" if focused.note else "")
+        sections.append(f"{header}\n\n```{lang}\n{focused.content}\n```")
         included_files.append(rel)
     return sections, included_files
 
