@@ -11,6 +11,7 @@ navigation only and are never fetched or executed by an agent.
 - Local adoption lock: [.governance/manifest.lock.json](.governance/manifest.lock.json)
 - Local package map: [.governance/package-manifest.json](.governance/package-manifest.json)
 - Canonical instructions: [AGENTS template](https://github.com/wellmanifest/new-project/blob/main/template/files/AGENTS.template.md)
+- Autonomous merge standard: [AUTONOMOUS_MERGE.md](https://github.com/wellmanifest/merge/blob/main/docs/AUTONOMOUS_MERGE.md)
 - Host contract: [agent-hosts.json](https://github.com/wellmanifest/new-project/blob/main/governance/agent-hosts.json)
 - Immutable adoption/updater: [create_adoption_lock.py](https://github.com/wellmanifest/new-project/blob/main/scripts/create_adoption_lock.py)
 - Worktree contract: [worktrees.schema.json](https://github.com/wellmanifest/worktrees/blob/main/models/worktrees.schema.json)
@@ -274,3 +275,28 @@ must create a `checkpoint` before a context, tool or process boundary. On a
 deterministic failure or unresolved ownership, write a concise `handoff` with
 the next observable action and `stop`; do not retry the same failed path
 indefinitely.
+
+<!-- wellmanifest:protected-delivery:start -->
+## Protected delivery and continuity
+
+Passing tests is necessary, but never grants review or merge authority.
+When publication is authorized, invoke the repository's declared protected
+delivery controller and independent Validator. Approval must bind the exact
+repository, PR, HEAD, ticket and trusted actor; only the protected controller
+may merge after all required gates and trusted approval succeed.
+
+Never self-approve, rotate reviewer accounts, bypass branch protection, or
+use an administrative token or browser session to evade a review or API limit.
+On quota exhaustion, preserve the exact-head checkpoint and signed review
+progress, then resume the same authorized transport after the limit resets.
+A model verdict, local PASS, or Markdown instruction is not approval evidence.
+
+If a conflicting upstream change requires rebuilding the ticket, revalidate
+ownership and intent first, then obtain fresh validation for the resulting
+HEAD. Keep the reviewed HEAD frozen through approval and merge.
+
+Review and publication retain the declared WIP limits. Cleanup requires
+verified integration, released ownership, and an exact-path audit of dirty
+state and HEAD reachability. Preserve unknown or unique data; never force
+removal merely to clear a governance lock.
+<!-- wellmanifest:protected-delivery:end -->

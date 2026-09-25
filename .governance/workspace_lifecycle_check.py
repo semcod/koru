@@ -497,10 +497,14 @@ def local_branch_findings(
     return findings
 
 
-def discover_workspace_repositories(workspace_root: Path) -> set[Path]:
+def discover_workspace_repositories(
+    workspace_root: Path, allow_empty: bool = False
+) -> set[Path]:
     if not workspace_root.is_dir():
         raise AuditError(f"workspace root is not a directory: {workspace_root}")
     candidates: list[Path] = []
+    if (workspace_root / ".git").exists():
+        candidates.append(workspace_root)
     for child in workspace_root.iterdir():
         if not child.is_dir():
             continue
@@ -532,17 +536,46 @@ def discover_workspace_repositories(workspace_root: Path) -> set[Path]:
                 f"workspace contains more than {MAX_REPOSITORIES} repositories"
             )
         pending.extend(sorted(discovered, key=str))
+    if not candidate_paths and not allow_empty:
+        raise AuditError(
+            f"workspace root contains no Git repositories: {workspace_root}"
+        )
     return candidate_paths
 
 
 def evaluate(
-    workspace_root: Path, allowed: set[Path]
+    workspace_root: Path,
+    allowed: set[Path],
+    allow_empty: bool = False,
+    target_repository: Path | None = None,
 ) -> tuple[list[Finding], dict[str, Any]]:
-    candidate_paths = discover_workspace_repositories(workspace_root)
+    candidate_paths = discover_workspace_repositories(
+        workspace_root, allow_empty=allow_empty
+    )
     checkouts = [
         inspect_checkout(candidate) for candidate in sorted(candidate_paths, key=str)
     ]
     inventory = workspace_inventory(checkouts)
+    if not inventory["entries"] and not allow_empty:
+        raise AuditError(
+            f"workspace inventory is empty for workspace root: {workspace_root}"
+        )
+    if target_repository is not None:
+        target_resolved = target_repository.expanduser().resolve()
+        target_matched = False
+        try:
+            target_checkout = inspect_checkout(target_resolved)
+            target_matched = any(
+                c.path == target_resolved
+                or c.common_git_dir == target_checkout.common_git_dir
+                for c in checkouts
+            )
+        except Exception:
+            target_matched = any(c.path == target_resolved for c in checkouts)
+        if not target_matched:
+            raise AuditError(
+                f"workspace inventory omitted required target repository: {target_repository}"
+            )
     inventory_by_path = {
         Path(entry["path"]): entry for entry in inventory["entries"]
     }
@@ -637,14 +670,37 @@ def main(argv: list[str] | None = None) -> int:
         help="Exact active secondary checkout allowed during this non-terminal audit.",
     )
     parser.add_argument("--format", choices=("text", "json"), default="text")
+    parser.add_argument(
+        "--target-repository",
+        "--target-root",
+        "--target",
+        dest="target_repository",
+        default=None,
+        type=Path,
+        help="Exact target repository checkout that must be covered by the inventory.",
+    )
+    parser.add_argument(
+        "--allow-empty",
+        action="store_true",
+        default=False,
+        help="Allow empty workspace repository inventory without failing the audit.",
+    )
     args = parser.parse_args(argv)
 
     findings: list[Finding]
     inventory: dict[str, Any]
     try:
         allowed = {path.expanduser().resolve() for path in args.allow}
+        target_repo = (
+            args.target_repository.expanduser().resolve()
+            if args.target_repository
+            else None
+        )
         findings, inventory = evaluate(
-            args.workspace_root.expanduser().resolve(), allowed
+            args.workspace_root.expanduser().resolve(),
+            allowed,
+            allow_empty=args.allow_empty,
+            target_repository=target_repo,
         )
     except AuditError as error:
         findings = [Finding(

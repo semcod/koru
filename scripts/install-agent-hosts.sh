@@ -169,6 +169,19 @@ activate_in_place() {
     fi
   done <<< "$targets"
   git -C "$dest" config core.hooksPath "$hooks" || return 1
+
+  local driver_path=""
+  for candidate in ".governance/ticket_index_merge_driver.py" "scripts/ticket_index_merge_driver.py"; do
+    if [[ -f "$dest/$candidate" ]]; then
+      driver_path="$candidate"
+      break
+    fi
+  done
+  if [[ -n "$driver_path" ]]; then
+    git -C "$dest" config merge.wellmanifest-ticket-index.name "Wellmanifest Ticket Index Merge Driver" || true
+    git -C "$dest" config merge.wellmanifest-ticket-index.driver "python3 $driver_path %O %A %B %P" || true
+  fi
+
   echo "Activated host contract and core.hooksPath=$hooks in $dest"
 }
 

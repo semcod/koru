@@ -2,6 +2,12 @@
   "schema": "new-project.package-manifest/v1",
   "files": [
     {
+      "source": "scripts/ticket_recovery.py",
+      "target": ".governance/ticket_recovery.py",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
       "source": "scripts/work_start_check.py",
       "target": ".governance/work_start_check.py",
       "strategy": "managed",
@@ -356,6 +362,24 @@
       "executable": true
     },
     {
+      "source": "scripts/ticket_index_merge_driver.py",
+      "target": ".governance/ticket_index_merge_driver.py",
+      "strategy": "managed",
+      "executable": true
+    },
+    {
+      "source": "scripts/prune_merged_worktrees.py",
+      "target": ".governance/prune_merged_worktrees.py",
+      "strategy": "managed",
+      "executable": true
+    },
+    {
+      "source": "template/files/.gitattributes",
+      "target": ".gitattributes",
+      "strategy": "seed",
+      "executable": false
+    },
+    {
       "source": "governance/intent.schema.json",
       "target": ".governance/intent.schema.json",
       "strategy": "managed",
@@ -406,6 +430,12 @@
     {
       "source": "template/files/new-project-governance.workflow.yml",
       "target": ".github/workflows/new-project-governance.yml",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "template/files/new-project-branch-hygiene.workflow.yml",
+      "target": ".github/workflows/new-project-branch-hygiene.yml",
       "strategy": "managed",
       "executable": false
     },

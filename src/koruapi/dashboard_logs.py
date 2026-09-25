@@ -11,6 +11,7 @@ unidirectional (server → client).
 
 from __future__ import annotations
 
+import ast
 import json
 import time
 from pathlib import Path
@@ -31,6 +32,8 @@ def _parse_nfo_line(line: str) -> dict[str, Any] | None:
         record = json.loads(line)
     except (json.JSONDecodeError, ValueError):
         return None
+    if not isinstance(record, dict):
+        return None
     level = str(record.get("level", "INFO")).upper()
     timestamp = record.get("timestamp", "")
     kwargs_raw = record.get("kwargs", "")
@@ -38,12 +41,14 @@ def _parse_nfo_line(line: str) -> dict[str, Any] | None:
     category = ""
     if isinstance(kwargs_raw, str):
         try:
-            kwargs = eval(kwargs_raw)  # noqa: S307 — nfo stores dict repr
+            kwargs = ast.literal_eval(kwargs_raw)
         except Exception:  # noqa: BLE001
             kwargs = {}
     elif isinstance(kwargs_raw, dict):
         kwargs = kwargs_raw
     else:
+        kwargs = {}
+    if not isinstance(kwargs, dict):
         kwargs = {}
     message = str(kwargs.get("activity_message", "") or "")
     category = str(kwargs.get("category", "") or "")
@@ -177,7 +182,7 @@ def sse_log_stream(
                         auto_offset = f.tell()
             except OSError:
                 pass
-        yield f": keepalive\n\n"
+        yield ": keepalive\n\n"
         time.sleep(poll_interval)
 
 
@@ -195,7 +200,7 @@ def handle_sse_logs_request(handler: Any, config: Any) -> None:
         limit = 100
 
     if level_param and level_param != "ALL":
-        levels = {l.strip() for l in level_param.split(",") if l.strip()}
+        levels = {level.strip() for level in level_param.split(",") if level.strip()}
     else:
         levels = {"ERROR", "WARNING", "INFO", "DEBUG"}
 

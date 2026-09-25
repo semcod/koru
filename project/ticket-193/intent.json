@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-193",
+  "summary": "Reduce cyclomatic complexity: publish (CC=16)",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-193/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/ticket_command/publication.py",
+    "tests/test_ticket_command_delivery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9bbd7ff89a907df1affbea1e1578956940ccdc49",
+    "targetBranch": "main",
+    "outcome": "publish in src/koru/ticket_command/publication.py drops from cyclomatic complexity 16 to below the code2llm limit 15 by extracting behavior-preserving module-level helpers (_require_verified_head, _publish_direct_main, _verified_pulls, _create_pull_request, _merge_through_validator, _observed_pull) and delegating from a small publish that only dispatches between main-only and validator delivery. HEAD verification, the main-only push/ls-remote gate, ticket-branch prefix enforcement, pull-request identity/ambiguity/binding checks, PR creation argv and body text, the protected validator merge invocation with pinned environment, the pending-merge RuntimeError and both published result payloads are byte-for-byte equivalent; the duplicated gh pr list argv collapses into _verified_pulls. A new test pins the previously uncovered pull-request creation path; the existing delivery suites pass unmodified.",
+    "nonGoals": [
+      "Changing any observable command argv, environment, diagnostic message or result payload",
+      "Regenerating project/analysis.toon.yaml or project/planfile-tickets.yaml (integration-owned artifacts)",
+      "Renaming or removing the public publish function or its signature",
+      "Reformatting pre-existing spans of src/koru/ticket_command/publication.py outside the refactored function"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Decompose publish into single-responsibility private module functions mirroring the module's existing function-oriented style: exact-head verification, direct-main publication, filtered pull-request listing, pull-request creation, the protected validator merge invocation and post-merge observation. The public function keeps workspace/head extraction and delivery dispatch only; each helper returns explicit values so behavior is equivalent and the public surface is unchanged.",
+      "components": [
+        {
+          "name": "ticket-command-delivery",
+          "paths": [
+            "src/koru/ticket_command/publication.py",
+            "tests/test_ticket_command_delivery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; the original single publish body is restored verbatim."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "code2llm <worktree> -f all -o /tmp/opencode/code2llm-ticket193 --no-chunk --exclude '*.md' (complexity re-measured on publish)"
+        ],
+        "evidence": "Re-run code2llm reports CC < 15 for publish."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=src python -m pytest tests/test_ticket_command_delivery.py tests/test_ticket_command.py tests/test_ticket_command_batch.py tests/test_ticket_command_reporting.py -q"
+        ],
+        "evidence": "New behavior-pinning test and existing consumer suites pass unmodified."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koru/ticket_command/publication.py tests/test_ticket_command_delivery.py"
+        ],
+        "evidence": "Lint passes on the refactored module and the extended test module."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "Governance gate passes with zero errors."
+      }
+    ]
+  }
+}

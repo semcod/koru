@@ -127,8 +127,11 @@ def _changed_paths(root: Path, base: str) -> list[str]:
 
 
 def pytest_sessionstart(session: object) -> None:
-    """Run repository governance once before pytest collects product tests."""
+    """Run repository governance once before pytest executes product tests."""
     config = getattr(session, "config", None)
+    options = getattr(config, "option", None)
+    if bool(getattr(options, "collectonly", False)):
+        return
     rootpath = getattr(config, "rootpath", Path.cwd())
     root = Path(str(rootpath)).resolve()
     gate = root / "project" / "governance-check.sh"

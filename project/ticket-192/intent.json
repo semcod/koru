@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-192",
+  "summary": "Reduce cyclomatic complexity: merge_missing_ticket_records (CC=25)",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-192/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/planfile_compat.py",
+    "tests/test_planfile_compat.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "17270fafdea8003c07d0dfd2a44fcb4b1867e6a4",
+    "targetBranch": "main",
+    "outcome": "merge_missing_ticket_records drops from cyclomatic complexity 25 to below the code2llm limit 15 by extracting behavior-preserving module-level helpers (_ticket_identifier, _normalized_status, _reported_ticket_ids, _already_covered, _decorated_recovery, _recover_missing_records, _compatibility_report). Record pairing (id/ticket_id fallback, strip, dedupe, reported-payload authority), legacy/unknown status decoration, sprint marker removal, report counting and read-error propagation are byte-for-byte equivalent; a new tests/test_planfile_compat.py pins the behavior and the existing consumer suites pass unmodified.",
+    "nonGoals": [
+      "Changing any observable merged record field, diagnostic payload or report count",
+      "Regenerating project/analysis.toon.yaml or project/planfile-tickets.yaml (integration-owned artifacts)",
+      "Renaming or removing any public name in koru.planfile_compat",
+      "Reformatting pre-existing spans of src/koru/planfile_compat.py outside the refactored function"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Decompose merge_missing_ticket_records into single-responsibility private module functions mirroring the module's existing function-oriented style: identifier/status normalization, reported-id collection, coverage test, diagnostic decoration, the recovery loop and report assembly. The public function keeps only source loading and composition; each helper returns explicit values so behavior is equivalent and the public surface is unchanged.",
+      "components": [
+        {
+          "name": "planfile-compat",
+          "paths": [
+            "src/koru/planfile_compat.py",
+            "tests/test_planfile_compat.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; the original single merge_missing_ticket_records body is restored verbatim."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "code2llm <worktree> -f all -o /tmp/opencode/code2llm-ticket192 --no-chunk --exclude *.md --exclude plugins (complexity re-measured on merge_missing_ticket_records)"
+        ],
+        "evidence": "Re-run code2llm reports CC < 15 for merge_missing_ticket_records."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=src python -m pytest tests/test_planfile_compat.py tests/test_queue_clean.py tests/test_context.py tests/test_planfile_queue.py -q"
+        ],
+        "evidence": "New behavior-pinning suite and existing consumer suites pass unmodified."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koru/planfile_compat.py tests/test_planfile_compat.py"
+        ],
+        "evidence": "Lint passes on the refactored module and the new test module."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh --base origin/main"
+        ],
+        "evidence": "Governance gate passes with zero errors."
+      }
+    ]
+  }
+}
