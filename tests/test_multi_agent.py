@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
@@ -16,7 +15,6 @@ from koru.multi_agent import (
     get_pending_tasks_for_project,
     is_koru_project,
     parse_multi_agent_args,
-    run_multi_agent_auto,
 )
 
 

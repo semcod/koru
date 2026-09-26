@@ -11,13 +11,12 @@ from pathlib import Path
 import pytest
 
 from koru.scan_todo import (
-    DEFAULT_SCAN_EXCLUDES,
-    count_todo_markers,
     count_todo_markers_in_project,
 )
 
-CARGO_MANIFEST = Path(__file__).resolve().parent.parent / "packages" / "koru-scan-todo" / "Cargo.toml"
-RUST_BIN = Path(__file__).resolve().parent.parent / "packages" / "koru-scan-todo" / "target" / "release" / "koru-scan-todo"
+_PKG_ROOT = Path(__file__).resolve().parent.parent / "packages" / "koru-scan-todo"
+CARGO_MANIFEST = _PKG_ROOT / "Cargo.toml"
+RUST_BIN = _PKG_ROOT / "target" / "release" / "koru-scan-todo"
 
 
 @pytest.fixture(scope="module")

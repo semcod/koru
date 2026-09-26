@@ -10,7 +10,6 @@ must keep resolving through the facade, and the test-facing
 
 from __future__ import annotations
 
-import json
 import os
 from pathlib import Path
 from types import SimpleNamespace
@@ -134,7 +133,10 @@ def test_facade_patch_target_still_steers_pipeline(
 # --------------------------------------------------------- todo2code_config
 
 
-@pytest.mark.parametrize("raw,expected", [("1", True), ("true", True), ("yes", True), ("on", True), ("0", False), ("off", False)])
+@pytest.mark.parametrize(
+    "raw,expected",
+    [("1", True), ("true", True), ("yes", True), ("on", True), ("0", False), ("off", False)],
+)
 def test_env_flag_truthy_set(clean_env: Path, monkeypatch: pytest.MonkeyPatch, raw: str, expected: bool) -> None:
     monkeypatch.setenv("KORU_TODO2CODE_PROBE_FLAG", raw)
     assert todo2code_config._env_flag("KORU_TODO2CODE_PROBE_FLAG", False) is expected

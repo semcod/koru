@@ -9,8 +9,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from koruapi import opencode_terminals as ot
 from koruapi import opencode_supervisor as ocs
+from koruapi import opencode_terminals as ot
 
 
 class TestRegistry:
@@ -486,7 +486,8 @@ class TestProviderFailover:
         log_file.write_text(
             'timestamp=2026-09-17T10:40:31.387Z level=ERROR run=db234658 message="stream error" '
             'providerID=zai modelID=glm-5.3 session.id=ses_test123 small=false agent=build mode=primary '
-            'error.error="AI_APICallError: Usage limit reached for 5 hour. Your limit will reset at 2026-09-17 18:48:17"\n',
+            'error.error="AI_APICallError: Usage limit reached for 5 hour. '
+            'Your limit will reset at 2026-09-17 18:48:17"\n',
             encoding="utf-8",
         )
         detected = ot.scan_opencode_log_for_exhaustion(log_path=log_file)

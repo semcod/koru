@@ -76,24 +76,24 @@ from koru.autonomy.todo2code_plans import _string_list as _string_list
 from koru.autonomy.todo2code_plans import _truncate as _truncate
 from koru.autonomy.todo2code_plans import find_latest_plans_path as find_latest_plans_path
 from koru.autonomy.todo2code_tickets import _PRIORITY_MAP as _PRIORITY_MAP
-from koru.autonomy.todo2code_tickets import _ExistingPlanTickets as _ExistingPlanTickets
-from koru.autonomy.todo2code_tickets import _PlanDispatch as _PlanDispatch
-from koru.autonomy.todo2code_tickets import _PlanIdentity as _PlanIdentity
-from koru.autonomy.todo2code_tickets import _RankedPlans as _RankedPlans
 from koru.autonomy.todo2code_tickets import _apply_plan_tickets as _apply_plan_tickets
 from koru.autonomy.todo2code_tickets import _dispatch_plan_task as _dispatch_plan_task
 from koru.autonomy.todo2code_tickets import _enrich_plan_scaffold as _enrich_plan_scaffold
 from koru.autonomy.todo2code_tickets import _existing_todo2code_keys as _existing_todo2code_keys
+from koru.autonomy.todo2code_tickets import _ExistingPlanTickets as _ExistingPlanTickets
 from koru.autonomy.todo2code_tickets import _file_evidence as _file_evidence
 from koru.autonomy.todo2code_tickets import _file_plan_ticket as _file_plan_ticket
 from koru.autonomy.todo2code_tickets import _plan_identity as _plan_identity
+from koru.autonomy.todo2code_tickets import _PlanDispatch as _PlanDispatch
+from koru.autonomy.todo2code_tickets import _PlanIdentity as _PlanIdentity
 from koru.autonomy.todo2code_tickets import _rank_useful_plans as _rank_useful_plans
+from koru.autonomy.todo2code_tickets import _RankedPlans as _RankedPlans
 from koru.autonomy.todo2code_tickets import _read_sprint_tickets as _read_sprint_tickets
 from koru.autonomy.todo2code_tickets import _record_plan_dispatch as _record_plan_dispatch
+from koru.autonomy.todo2code_tickets import _relative_plans_path as _relative_plans_path
 from koru.autonomy.todo2code_tickets import (
     _remember_todo2code_ticket as _remember_todo2code_ticket,
 )
-from koru.autonomy.todo2code_tickets import _relative_plans_path as _relative_plans_path
 from koru.autonomy.todo2code_tickets import (
     _resolve_plan_priority as _resolve_plan_priority,
 )

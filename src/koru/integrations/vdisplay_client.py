@@ -10,17 +10,12 @@ from __future__ import annotations
 import base64  # noqa: F401
 import logging
 import os
-import urllib.error
-import urllib.request
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
 from koru.integrations import autonomy_session as _autonomy_session  # noqa: E402
 from koru.integrations.photo_vql_config import llm_vision_enabled  # noqa: E402,F401
-from koru.integrations.photo_vql_monitor import (  # noqa: E402
-    resolve_vdisplay_source_for_ide as _resolve_vdisplay_source_impl,
-)
 
 begin_autonomy_session = _autonomy_session.begin_autonomy_session
 
@@ -119,10 +114,7 @@ from koru.integrations.vdisplay_readiness import (  # noqa: E402
     _VDISPLAY_DIRECT,
     _VDISPLAY_IMPORT_ERROR,
     _ensure_real_vdisplay_on_path,
-    _ensure_vdisplay_runtime as _vr_ensure_vdisplay_runtime,
     _load_vdisplay_control as _vr_load_vdisplay_control,
-    _real_vdisplay_src,
-    _reload_vdisplay_direct as _vr_reload_vdisplay_direct,
     _vdisplay_control,  # noqa: F401
 )
 
@@ -158,7 +150,7 @@ except Exception:
 
 
 
-from koru.integrations.vdisplay_readiness import (  # noqa: E402
+from koru.integrations.vdisplay_readiness import (  # noqa: E402,I001
     _agent_url,
     _canonical_ide,  # noqa: F401
     _probe_agent,
@@ -415,7 +407,7 @@ def vdisplay_fallback_enabled(*, ide: str | None = None, plugin_connected: bool 
 
 # Desktop probe extracted to koru.integrations.vdisplay.desktop_probe;
 # re-exported here for backward compatibility.
-from koru.integrations.vdisplay.desktop_probe import (  # noqa: E402,F401
+from koru.integrations.vdisplay.desktop_probe import (  # noqa: E402,F401,I001
     _desktop_probe,
     _desktop_probe_ide_hints,
     _desktop_probe_ide_surface_rank,
@@ -423,7 +415,7 @@ from koru.integrations.vdisplay.desktop_probe import (  # noqa: E402,F401
 )
 
 # Surface capture confirmation extracted to vdisplay.surface_capture.
-from koru.integrations.vdisplay.surface_capture import (  # noqa: E402,F401
+from koru.integrations.vdisplay.surface_capture import (  # noqa: E402,F401,I001
     _apply_surface_capture_confirmation,
     _apply_surface_capture_confirmed,
     _apply_surface_capture_error_fallback,
