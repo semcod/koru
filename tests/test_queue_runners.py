@@ -187,3 +187,96 @@ def test_run_taskand_request_cli_fallback(monkeypatch, tmp_path: Path) -> None:
     assert res.run_id == "cli-req"
 
 
+def test_run_taskand_request_missing_uri_or_plan(monkeypatch, tmp_path: Path) -> None:
+    from koru.queue.runners import run_taskand_request
+
+    def mock_urlopen(req, timeout=None):
+        url = req.full_url if hasattr(req, "full_url") else str(req)
+        if "/healthz" in url:
+            return _MockHttpResponse(b"OK", 200)
+        raise RuntimeError(f"Unexpected url: {url}")
+
+    monkeypatch.setattr("koru.queue.runners.urllib.request.urlopen", mock_urlopen)
+
+    res = run_taskand_request({"gateway_url": "http://127.0.0.1:8077"}, tmp_path)
+    assert res.returncode == 1
+    assert res.status_code == 400
+    assert res.stderr == "Missing uri or plan in taskand request"
+    assert res.uri == ""
+
+
+def test_run_taskand_request_gateway_and_cli_unavailable(monkeypatch, tmp_path: Path) -> None:
+    from koru.queue.runners import run_taskand_request
+
+    def mock_urlopen(req, timeout=None):
+        raise ConnectionRefusedError("Gateway offline")
+
+    monkeypatch.setattr("koru.queue.runners.urllib.request.urlopen", mock_urlopen)
+    monkeypatch.setattr("koru.queue.runners._find_taskand_cli", lambda _project: None)
+
+    res = run_taskand_request(
+        {"uri": "proc://taskand.dev/shell/run/v1", "gateway_url": "http://127.0.0.1:8077"},
+        tmp_path,
+    )
+    assert res.returncode == 1
+    assert res.status_code == 503
+    assert "Taskand gateway unavailable" in res.stderr
+    assert res.uri == "proc://taskand.dev/shell/run/v1"
+
+
+def test_run_taskand_request_http_orchestrator_failure(monkeypatch, tmp_path: Path) -> None:
+    from koru.queue.runners import run_taskand_request
+
+    def mock_urlopen(req, timeout=None):
+        url = req.full_url if hasattr(req, "full_url") else str(req)
+        if "/healthz" in url:
+            return _MockHttpResponse(b"OK", 200)
+        if "/api/orchestrator" in url:
+            body = b'{"ok": true, "result": {"runId": "orch-fail", "status": "FAILED"}}'
+            return _MockHttpResponse(body, 200)
+        raise RuntimeError(f"Unexpected url: {url}")
+
+    monkeypatch.setattr("koru.queue.runners.urllib.request.urlopen", mock_urlopen)
+
+    res = run_taskand_request(
+        {
+            "plan": {"goal": "failing DAG", "steps": []},
+            "gateway_url": "http://127.0.0.1:8077",
+        },
+        tmp_path,
+    )
+    assert res.returncode == 1
+    assert res.run_id == "orch-fail"
+    assert res.stderr == "Orchestrator finished with status: FAILED"
+
+
+def test_run_taskand_request_cli_invalid_json(monkeypatch, tmp_path: Path) -> None:
+    import subprocess
+
+    from koru.queue.runners import run_taskand_request
+
+    def mock_urlopen(req, timeout=None):
+        raise ConnectionRefusedError("Gateway offline")
+
+    monkeypatch.setattr("koru.queue.runners.urllib.request.urlopen", mock_urlopen)
+    fake_cli = tmp_path / "bin" / "taskand"
+    fake_cli.parent.mkdir(parents=True)
+    fake_cli.write_text("#!/bin/sh\nexit 0\n")
+    fake_cli.chmod(0o755)
+    monkeypatch.setenv("TASKAND_BIN", str(fake_cli))
+
+    def mock_run_captured(cmd, cwd=None, env=None, shell=False):
+        return subprocess.CompletedProcess(cmd, 3, "not-json", "")
+
+    monkeypatch.setattr("koru.queue.runners._run_captured_subprocess", mock_run_captured)
+
+    res = run_taskand_request(
+        {
+            "uri": "proc://taskand.dev/shell/run/v1",
+            "data": {"cmd": "hello"},
+        },
+        tmp_path,
+    )
+    assert res.returncode == 3
+    assert res.status_code == 500
+    assert res.stderr == "Invalid JSON output from taskand CLI"
