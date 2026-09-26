@@ -1,0 +1,112 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-260",
+  "summary": "Resolve remaining ruff lint errors across codebase",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-260/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/todo2code_discovery.py",
+    "src/koru/integrations/vdisplay_client.py",
+    "src/koru/queue/runner.py",
+    "src/koru/queue/runners.py",
+    "tests/test_queue_runners.py",
+    "tests/test_dashboard_terminals.py",
+    "tests/test_multi_agent.py",
+    "tests/test_scan_todo_rust.py",
+    "tests/test_todo2code_modules.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5460695c54804ef5b651a22f20cc814c0941121f",
+    "targetBranch": "main",
+    "outcome": "Fix all remaining ruff lint and formatting errors across the codebase to ensure post_run_verify in koru.yaml passes cleanly.",
+    "nonGoals": [
+      "Changing business logic in queue runner or runners",
+      "Altering test semantics or behavior"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Sort imports and remove unused imports in runner.py, runners.py, test_queue_runners.py, todo2code_discovery.py, vdisplay_client.py, and test_multi_agent.py; break long lines in test_dashboard_terminals.py, test_scan_todo_rust.py, and test_todo2code_modules.py.",
+      "components": [
+        {
+          "name": "koru-queue",
+          "paths": [
+            "src/koru/queue/runner.py",
+            "src/koru/queue/runners.py",
+            "tests/test_queue_runners.py"
+          ]
+        },
+        {
+          "name": "koru-autonomy-and-integrations",
+          "paths": [
+            "src/koru/autonomy/todo2code_discovery.py",
+            "src/koru/integrations/vdisplay_client.py",
+            "tests/test_dashboard_terminals.py",
+            "tests/test_multi_agent.py"
+          ]
+        },
+        {
+          "name": "koru-scanners-and-config",
+          "paths": [
+            "tests/test_scan_todo_rust.py",
+            "tests/test_todo2code_modules.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit to restore previous files."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "ruff check src tests"
+        ],
+        "evidence": "Ruff check on all src and tests reports zero errors."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_queue_runners.py tests/test_dashboard_terminals.py tests/test_multi_agent.py tests/test_scan_todo_rust.py tests/test_todo2code_modules.py"
+        ],
+        "evidence": "All tests in modified test suites pass without error."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}

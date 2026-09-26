@@ -19,7 +19,6 @@ from koru.queue.types import ApiRunResult, LlmRunResult, TaskandRunResult
 from korullm import probe_subllm_route, run_subllm_messages
 
 
-
 def _planfile_env() -> dict[str, str]:
     """Force a wide, non-TTY console so planfile's Rich output stays one
     JSON object per line. Without this, long handler strings get wrapped

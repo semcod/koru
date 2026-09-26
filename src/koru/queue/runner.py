@@ -50,7 +50,6 @@ from koru.queue.ticket import (
     ticket_llm_request,
     ticket_taskand_request,
 )
-
 from koru.queue.ticket_templates import hydrate_subactor_repair_ticket, hydrate_todo2code_ticket
 from koru.queue.types import CommandResult, QueueRunResult
 

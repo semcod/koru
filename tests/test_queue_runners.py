@@ -96,6 +96,7 @@ class _MockHttpResponse:
 
 def test_run_taskand_request_http_proc_success(monkeypatch, tmp_path: Path) -> None:
     from urllib.error import HTTPError
+
     from koru.queue.runners import run_taskand_request
 
     def mock_urlopen(req, timeout=None):
@@ -154,6 +155,7 @@ def test_run_taskand_request_http_orchestrator_success(monkeypatch, tmp_path: Pa
 
 def test_run_taskand_request_cli_fallback(monkeypatch, tmp_path: Path) -> None:
     import subprocess
+
     from koru.queue.runners import run_taskand_request
 
     def mock_urlopen(req, timeout=None):
