@@ -9,19 +9,25 @@ from typing import Any
 
 import pytest
 
+_LOADED_MODULES: dict[str, ModuleType] = {}
+
 
 def _load_module(name: str, path: Path) -> ModuleType:
-    spec = importlib.util.spec_from_file_location(name, path)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    module_dir = str(path.resolve().parent)
-    sys.path.insert(0, module_dir)
-    try:
-        spec.loader.exec_module(module)
-    finally:
-        sys.path.remove(module_dir)
-    return module
+    # Cache per name: re-executing app.py would re-register its prometheus
+    # collectors in the default registry (Duplicated timeseries).
+    if name not in _LOADED_MODULES:
+        spec = importlib.util.spec_from_file_location(name, path)
+        assert spec is not None
+        assert spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        module_dir = str(path.resolve().parent)
+        sys.path.insert(0, module_dir)
+        try:
+            spec.loader.exec_module(module)
+        finally:
+            sys.path.remove(module_dir)
+        _LOADED_MODULES[name] = module
+    return _LOADED_MODULES[name]
 
 
 class _CounterHandle:
@@ -216,3 +222,48 @@ def test_run_docker_uses_expected_command(monkeypatch) -> None:
             "arg",
         ]
     ]
+
+
+def test_build_command_assembles_base_and_flag_bundles() -> None:
+    pytest.importorskip("fastapi")
+    pytest.importorskip("prometheus_client")
+    module = _load_module(
+        "healing_app_main",
+        Path("services/healing-webhook/app.py"),
+    )
+
+    assert module._build_command(["tool"]) == ["tool"]
+    assert module._build_command(["tool", "x"], None, ["--flag"], ["--m", "v"]) == [
+        "tool",
+        "x",
+        "--flag",
+        "--m",
+        "v",
+    ]
+    # The base list must be copied so callers cannot mutate a shared literal.
+    base = ["tool"]
+    out = module._build_command(base, ["--flag"])
+    base.append("mutated")
+    assert out == ["tool", "--flag"]
+
+
+def test_build_planfile_command_appends_labels() -> None:
+    pytest.importorskip("fastapi")
+    pytest.importorskip("prometheus_client")
+    module = _load_module(
+        "healing_app_main",
+        Path("services/healing-webhook/app.py"),
+    )
+    payload = {
+        "name": "Fix endpoint",
+        "priority": "P1",
+        "source": "healing-webhook",
+        "description": "desc",
+        "labels": ["llm-ready", "severity:error"],
+    }
+
+    out = module._build_planfile_command(payload)
+
+    assert out[:3] == [module.PLANFILE_BIN, "ticket", "create"]
+    assert out[3] == "Fix endpoint"
+    assert out[-4:] == ["--label", "llm-ready", "--label", "severity:error"]
