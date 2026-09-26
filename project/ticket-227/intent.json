@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-227",
+  "summary": "Decompose god function validate_vql_chat_target in photo_vql_validation",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-227/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/photo_vql_validation.py",
+    "tests/test_jetbrains_surface_chat_target.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "53b9f8ef750f0bee0627f725082cefcf3b37e4ab",
+    "targetBranch": "main",
+    "outcome": "Decompose validate_vql_chat_target in src/koru/integrations/photo_vql_validation.py (PLF-053): bind the seven-field tuple unpack (_target_geometry) once as a TargetGeometry NamedTuple, move the app_match/label_ok/element-size derivations into _collect_vql_validation_errors/_live_vql_validation_errors, extract _target_is_map and the audit report literal into _vql_chat_validation_report, and make _target_bounds_size return a BoundsSize NamedTuple, dropping validate_vql_chat_target from CC=13 / fan-out=11 / mutations=23 to CC=3 / fan-out<=8 / mutations=5 (god-function thresholds: fan-out > 10, mutations > 6, CC > 12) with every touched or new helper under the same thresholds, while keeping the public validate_vql_chat_target signature, its exact 12-key result dict, and all module __all__ exports byte-identical for every input.",
+    "nonGoals": [
+      "Changing the validate_vql_chat_target signature, result-dict keys or any validation predicate/warning string",
+      "Refactoring validate_chat_coords_for_ide (pre-existing fan-out/mutation exceedance in the same file; lower severity, not the smell reported by PLF-053)",
+      "Extracting photo_vql_validation.py into a new module or touching vdisplay_client.py / photo_vql_target.py facades"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 1
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Return NamedTuples from _target_geometry (TargetGeometry) and _target_bounds_size (BoundsSize) and bind them as single locals, because code2llm double-counts every tuple-unpack assignment target (the 7-name unpack alone contributed 14 of the 23 mutations) and also counts each .append/.extend call as a mutation; the dict literal's two conditional expressions and method-or-None derivations move into _vql_chat_validation_report so CC and mutations drop together. Private helper signatures (_collect_vql_validation_errors, _live_vql_validation_errors) are module-internal: grep shows no importer or monkeypatch target outside photo_vql_validation.py, while validate_vql_chat_target stays late-bound through the vdisplay_client facade and __all__ unchanged.",
+      "components": [
+        {
+          "name": "photo-vql-validation",
+          "paths": [
+            "src/koru/integrations/photo_vql_validation.py",
+            "tests/test_jetbrains_surface_chat_target.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the single inline validate_vql_chat_target body."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"from code2llm.api import analyze; r = analyze('src/koru/integrations'); rows = [(s.name, s.line) for s in r.smells if s.file.endswith('photo_vql_validation.py')]; print(rows)\""
+        ],
+        "evidence": "The code2llm smell list for photo_vql_validation.py no longer contains 'God Function: validate_vql_chat_target' and no touched/new helper (TargetGeometry construction, _target_bounds_size, _target_geometry, _target_is_map, _vql_element_size_ok, _collect_vql_validation_errors, _live_vql_validation_errors, _vql_chat_validation_report) appears as a god function."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q tests/test_jetbrains_surface_chat_target.py tests/test_photo_vql_drive.py tests/test_photo_vql_orchestrator.py"
+        ],
+        "evidence": "All existing photo VQL validation/orchestrator/drive tests pass unchanged (orchestrator monkeypatches validate_vql_chat_target on the vdisplay_client facade, which keeps the same public signature), plus one new regression test asserting the exact full 12-key result dict for a representative target."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance gate passes with 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}

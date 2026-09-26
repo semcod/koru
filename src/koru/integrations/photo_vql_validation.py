@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NamedTuple
 
 VQL_TERMINAL_LABEL_NOISE = (
     ".py",
@@ -304,11 +304,18 @@ def _target_uses_fallback_center(target: dict[str, Any]) -> bool:
     return src in {"vql-analysis-fallback", ""} or "fallback" in note
 
 
-def _target_bounds_size(target: dict[str, Any]) -> tuple[int, int]:
+class BoundsSize(NamedTuple):
+    """Chat-target bounds size in pixels (0x0 when absent)."""
+
+    w: int
+    h: int
+
+
+def _target_bounds_size(target: dict[str, Any]) -> BoundsSize:
     bounds = target.get("bounds") or {}
     if not isinstance(bounds, dict):
-        return 0, 0
-    return (
+        return BoundsSize(0, 0)
+    return BoundsSize(
         int(bounds.get("w") or bounds.get("width") or 0),
         int(bounds.get("h") or bounds.get("height") or 0),
     )
@@ -318,18 +325,36 @@ def _target_label(target: dict[str, Any]) -> str:
     return str(target.get("label") or target.get("note") or "").lower()
 
 
+class TargetGeometry(NamedTuple):
+    """Click point, bounds size and label derived once from a chat target."""
+
+    lx: int
+    ly: int
+    bw: int
+    bh: int
+    area: int
+    has_bounds: bool
+    label: str
+
+
 def _target_geometry(
     target: dict[str, Any],
     *,
     x: int | None,
     y: int | None,
-) -> tuple[int, int, int, int, int, bool, str]:
+) -> TargetGeometry:
     cc = target.get("click_center") or {}
-    lx = int(x if x is not None else cc.get("x") or 0)
-    ly = int(y if y is not None else cc.get("y") or 0)
-    bw, bh = _target_bounds_size(target)
-    has_bounds = bw > 0 and bh > 0
-    return lx, ly, bw, bh, bw * bh if has_bounds else 0, has_bounds, _target_label(target)
+    size = _target_bounds_size(target)
+    has_bounds = size.w > 0 and size.h > 0
+    return TargetGeometry(
+        lx=int(x if x is not None else cc.get("x") or 0),
+        ly=int(y if y is not None else cc.get("y") or 0),
+        bw=size.w,
+        bh=size.h,
+        area=size.w * size.h if has_bounds else 0,
+        has_bounds=has_bounds,
+        label=_target_label(target),
+    )
 
 
 def _label_ok_for_chat(*, label: str, has_bounds: bool, bw: int, bh: int) -> bool:
@@ -348,21 +373,14 @@ def _collect_vql_validation_errors(
     *,
     is_code_edit: bool,
     is_map: bool,
-    app_match: bool,
     capture_mismatch: dict[str, Any] | None,
     method: str,
-    has_bounds: bool,
-    vql_element_size_ok: bool,
-    label: str,
-    area: int,
-    label_ok: bool,
+    geo: TargetGeometry,
     target: dict[str, Any],
-    bw: int,
-    bh: int,
 ) -> list[str]:
     if is_code_edit:
         return []
-    errors = _capture_validation_errors(app_match=app_match)
+    errors = _capture_validation_errors(app_match=capture_mismatch is None)
     errors.extend(
         _map_validation_errors(
             is_map=is_map,
@@ -371,18 +389,7 @@ def _collect_vql_validation_errors(
         )
     )
     if not is_map:
-        errors.extend(
-            _live_vql_validation_errors(
-                has_bounds=has_bounds,
-                vql_element_size_ok=vql_element_size_ok,
-                label=label,
-                area=area,
-                label_ok=label_ok,
-                target=target,
-                bw=bw,
-                bh=bh,
-            )
-        )
+        errors.extend(_live_vql_validation_errors(geo=geo, target=target))
     return errors
 
 
@@ -407,29 +414,34 @@ def _map_validation_errors(
 
 def _live_vql_validation_errors(
     *,
-    has_bounds: bool,
-    vql_element_size_ok: bool,
-    label: str,
-    area: int,
-    label_ok: bool,
+    geo: TargetGeometry,
     target: dict[str, Any],
-    bw: int,
-    bh: int,
 ) -> list[str]:
     errors: list[str] = []
-    if has_bounds and not vql_element_size_ok:
-        errors.append(f"vql_element_too_small_for_chat_composer_{bw}x{bh}")
-    if label == "background" or (label in {"", "background"} and has_bounds and area < 5000):
+    if geo.has_bounds and not _vql_element_size_ok(geo):
+        errors.append(f"vql_element_too_small_for_chat_composer_{geo.bw}x{geo.bh}")
+    if geo.label == "background" or (
+        geo.label in {"", "background"} and geo.has_bounds and geo.area < 5000
+    ):
         errors.append("vql_label_background_not_composer")
-    if _has_any(label, VQL_TERMINAL_LABEL_NOISE):
-        errors.append(f"vql_label_terminal_noise:{label[:40]}")
-    if _has_any(label, SHELL_POLLUTION_TOKENS):
+    if _has_any(geo.label, VQL_TERMINAL_LABEL_NOISE):
+        errors.append(f"vql_label_terminal_noise:{geo.label[:40]}")
+    if _has_any(geo.label, SHELL_POLLUTION_TOKENS):
         errors.append("vql_label_shell_pollution_from_terminal_text")
-    if not label_ok and has_bounds:
+    if not _label_ok_for_chat(
+        label=geo.label,
+        has_bounds=geo.has_bounds,
+        bw=geo.bw,
+        bh=geo.bh,
+    ) and geo.has_bounds:
         errors.append("vql_label_not_chat_composer")
     if _target_confidence_too_low(target):
         errors.append("vql_confidence_too_low")
     return errors
+
+
+def _vql_element_size_ok(geo: TargetGeometry) -> bool:
+    return (not geo.has_bounds) or (geo.bw >= 200 and geo.bh >= 25)
 
 
 def _target_confidence_too_low(target: dict[str, Any]) -> bool:
@@ -453,6 +465,47 @@ def _used_map_because_mismatch_or_bad_element(
     )
 
 
+def _target_is_map(*, method: str, target: dict[str, Any]) -> bool:
+    return method.startswith("map_") or str(target.get("id") or "").startswith("map:")
+
+
+def _vql_chat_validation_report(
+    *,
+    meta: dict | None,
+    capture_mismatch: dict[str, Any] | None,
+    is_code_edit: bool,
+    is_map: bool,
+    method: str,
+    geo: TargetGeometry,
+    coord_warnings: list[str],
+    validation_errors: list[str],
+) -> dict[str, Any]:
+    vql_valid = _vql_valid(
+        is_code_edit=is_code_edit,
+        is_map=is_map,
+        validation_errors=validation_errors,
+    )
+    app_match = capture_mismatch is None
+    return {
+        "ok": vql_valid and app_match and not coord_warnings,
+        "vql_valid": vql_valid,
+        "vql_element_size_ok": _vql_element_size_ok(geo),
+        "app_match": app_match,
+        "capture_title": capture_title_from_meta(meta),
+        "selection_method": method or None,
+        "is_map_target": is_map,
+        "validation_errors": validation_errors,
+        "coord_warnings": coord_warnings,
+        "bounds": {"w": geo.bw, "h": geo.bh} if geo.has_bounds else None,
+        "label": geo.label[:80] if geo.label else None,
+        "used_map_because_mismatch_or_bad_element": _used_map_because_mismatch_or_bad_element(
+            is_map=is_map,
+            capture_mismatch=capture_mismatch,
+            method=method,
+        ),
+    }
+
+
 def validate_vql_chat_target(
     target: dict[str, Any],
     *,
@@ -465,16 +518,12 @@ def validate_vql_chat_target(
     y: int | None = None,
 ) -> dict[str, Any]:
     """Hard validation of a VQL/map chat target before actuation (audit + inference_ok)."""
-    meta = meta or {}
     method = str(selection_method or target.get("selection_method") or "")
-    is_map = method.startswith("map_") or str(target.get("id") or "").startswith("map:")
-    lx, ly, bw, bh, area, has_bounds, label = _target_geometry(target, x=x, y=y)
-    vql_element_size_ok = (not has_bounds) or (bw >= 200 and bh >= 25)
-    label_ok = _label_ok_for_chat(label=label, has_bounds=has_bounds, bw=bw, bh=bh)
-    app_match = capture_mismatch is None
+    is_map = _target_is_map(method=method, target=target)
+    geo = _target_geometry(target, x=x, y=y)
     coord_warnings = validate_chat_coords_for_ide(
-        x=lx,
-        y=ly,
+        x=geo.lx,
+        y=geo.ly,
         ide=ide,
         target=target,
         is_code_edit=is_code_edit,
@@ -482,41 +531,21 @@ def validate_vql_chat_target(
     validation_errors = _collect_vql_validation_errors(
         is_code_edit=is_code_edit,
         is_map=is_map,
-        app_match=app_match,
         capture_mismatch=capture_mismatch,
         method=method,
-        has_bounds=has_bounds,
-        vql_element_size_ok=vql_element_size_ok,
-        label=label,
-        area=area,
-        label_ok=label_ok,
+        geo=geo,
         target=target,
-        bw=bw,
-        bh=bh,
     )
-    vql_valid = _vql_valid(
+    return _vql_chat_validation_report(
+        meta=meta,
+        capture_mismatch=capture_mismatch,
         is_code_edit=is_code_edit,
         is_map=is_map,
+        method=method,
+        geo=geo,
+        coord_warnings=coord_warnings,
         validation_errors=validation_errors,
     )
-    return {
-        "ok": vql_valid and app_match and not coord_warnings,
-        "vql_valid": vql_valid,
-        "vql_element_size_ok": vql_element_size_ok,
-        "app_match": app_match,
-        "capture_title": capture_title_from_meta(meta),
-        "selection_method": method or None,
-        "is_map_target": is_map,
-        "validation_errors": validation_errors,
-        "coord_warnings": coord_warnings,
-        "bounds": {"w": bw, "h": bh} if has_bounds else None,
-        "label": label[:80] if label else None,
-        "used_map_because_mismatch_or_bad_element": _used_map_because_mismatch_or_bad_element(
-            is_map=is_map,
-            capture_mismatch=capture_mismatch,
-            method=method,
-        ),
-    }
 
 
 __all__ = [
