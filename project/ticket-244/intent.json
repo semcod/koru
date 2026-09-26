@@ -1,0 +1,98 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-244",
+  "summary": "decompose god module context by extracting rules and sprint managers",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-244/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/context.py",
+    "src/koru/context_rules.py",
+    "src/koru/context_sprint.py",
+    "tests/test_context.py",
+    "tests/test_context_rules.py",
+    "tests/test_context_sprint.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8113ddc333f18983e34a2ba494f8637c111cabef",
+    "targetBranch": "main",
+    "outcome": "Decompose God Module src/koru/context.py by extracting LLM instruction and self-service rule synthesis into src/koru/context_rules.py, and planfile sprint data caching / ticket auto-promotion into src/koru/context_sprint.py. Maintain 100% backward compatibility with explicit re-exports in src/koru/context.py.",
+    "nonGoals": [
+      "Changing brief JSON schema or output contents",
+      "Altering policy validation or instruction rule semantics",
+      "Breaking public or internal imports from koru.context"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract instruction and self-service builders to koru.context_rules. Extract sprint data loading and auto-promotion to koru.context_sprint. Keep clean facade and build_context orchestration in koru.context with explicit re-exports.",
+      "components": [
+        {
+          "name": "koru-context",
+          "paths": [
+            "src/koru/context.py",
+            "src/koru/context_rules.py",
+            "src/koru/context_sprint.py",
+            "tests/test_context.py",
+            "tests/test_context_rules.py",
+            "tests/test_context_sprint.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit to restore inline rules and sprint managers in context.py and remove context_rules.py and context_sprint.py."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_context.py"
+        ],
+        "evidence": "All existing context tests in tests/test_context.py pass without modification."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "ruff check src/koru/context.py src/koru/context_rules.py src/koru/context_sprint.py",
+          "ruff format --check src/koru/context.py src/koru/context_rules.py src/koru/context_sprint.py"
+        ],
+        "evidence": "Ruff check and format report 0 findings."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "The governance gate reports 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}

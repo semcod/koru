@@ -18,7 +18,6 @@ This module never mutates state: pure read + format. Side effects (run
 log writes, ticket lifecycle calls) live elsewhere.
 """
 
-
 import contextlib
 import json
 import os
@@ -84,8 +83,52 @@ from koru.context_render import (
 from koru.context_render import (
     render_setup_required as _render_setup_required,  # noqa: F401
 )
+from koru.context_rules import (
+    _build_instructions as _build_instructions,  # noqa: F401
+)
+from koru.context_rules import (
+    _build_policy_rules as _build_policy_rules,  # noqa: F401
+)
+from koru.context_rules import (
+    _build_self_service as _build_self_service,  # noqa: F401
+)
+from koru.context_rules import (
+    _build_setup_instructions as _build_setup_instructions,  # noqa: F401
+)
+from koru.context_rules import (
+    _build_shared_rules as _build_shared_rules,  # noqa: F401
+)
+from koru.context_rules import (
+    _build_ticket_rules as _build_ticket_rules,  # noqa: F401
+)
+from koru.context_sprint import (
+    _SPRINT_YAML_CACHE as _SPRINT_YAML_CACHE,  # noqa: F401
+)
+from koru.context_sprint import (
+    _auto_promote_blocking_tickets as _auto_promote_blocking_tickets,  # noqa: F401
+)
+from koru.context_sprint import (
+    _fast_yaml_load as _fast_yaml_load,  # noqa: F401
+)
+from koru.context_sprint import (
+    _find_blocking_tickets as _find_blocking_tickets,  # noqa: F401
+)
+from koru.context_sprint import (
+    _load_sprint_data as _load_sprint_data,  # noqa: F401
+)
+from koru.context_sprint import (
+    _promote_blocking_to_critical as _promote_blocking_to_critical,  # noqa: F401
+)
+from koru.context_sprint import (
+    _promote_bug_priority as _promote_bug_priority,  # noqa: F401
+)
+from koru.context_sprint import (
+    _write_sprint_data as _write_sprint_data,  # noqa: F401
+)
 from koru.dotenv_loader import load_dotenv as _load_dotenv_impl
-from koru.git_attribution import KORU_AGENT_COAUTHOR_TRAILER
+from koru.git_attribution import (
+    KORU_AGENT_COAUTHOR_TRAILER as KORU_AGENT_COAUTHOR_TRAILER,  # noqa: F401
+)
 from koru.planfile_compat import PlanfileCompatibilityReport, merge_missing_ticket_records
 from koru.policy import Policy, load_policy
 from koru.project_pipeline import build_project_pipeline_brief
@@ -326,11 +369,7 @@ def _process_dict_payload(
     Returns:
         Tuple of (ticket_data, open_tickets, error)
     """
-    if (
-        not _resolve_include_fixtures(include_fixtures)
-        and not ticket_id
-        and _is_fixture_ticket(ticket_data)
-    ):
+    if not _resolve_include_fixtures(include_fixtures) and not ticket_id and _is_fixture_ticket(ticket_data):
         return None, [], "queue has only fixture tickets"
     else:
         return ticket_data, [ticket_data], None
@@ -623,335 +662,3 @@ def build_context(
         git_state=git_state,
         detected_environment=detected_environment,
     )
-
-
-# ---------------------------------------------------------------------------
-# Instruction & self-service text generators
-# ---------------------------------------------------------------------------
-
-
-# mtime/size-keyed cache for the sprint YAML. The dashboard re-requests
-# /api/context every ~5s and each build_context call parsed the whole
-# (1MB+, 300-ticket) current.yaml with the pure-Python loader — ~1.5s each,
-# multiple times per request. Cache the parse and skip it entirely while the
-# file is unchanged; use the libyaml C loader (≈8x faster) when present.
-_SPRINT_YAML_CACHE: dict[str, tuple[int, int, dict[str, Any] | None]] = {}
-
-
-def _fast_yaml_load(path: Path) -> Any:
-    """Parse a YAML file with the C loader when available (much faster)."""
-    import yaml
-
-    loader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
-    with open(path, encoding="utf-8") as f:
-        return yaml.load(f, Loader=loader)
-
-
-def _load_sprint_data(project: Path) -> dict[str, Any] | None:
-    """Load sprint data from current.yaml, cached by file mtime+size."""
-    from koru.runtime import planfile_dir
-
-    pf = planfile_dir(project)
-    sprint_file = pf / "sprints" / "current.yaml"
-
-    try:
-        stat = sprint_file.stat()
-    except OSError:
-        return None
-
-    key = str(sprint_file)
-    cached = _SPRINT_YAML_CACHE.get(key)
-    if cached is not None and cached[0] == stat.st_mtime_ns and cached[1] == stat.st_size:
-        return cached[2]
-
-    try:
-        sprint_data = _fast_yaml_load(sprint_file)
-    except Exception:
-        return None
-
-    result: dict[str, Any] | None = None
-    if (
-        sprint_data
-        and isinstance(sprint_data, dict)
-        and isinstance(sprint_data.get("sprint"), dict)
-        and "tickets" in sprint_data["sprint"]
-    ):
-        result = sprint_data
-
-    _SPRINT_YAML_CACHE[key] = (stat.st_mtime_ns, stat.st_size, result)
-    return result
-
-
-def _find_blocking_tickets(tickets: dict[str, Any]) -> set[str]:
-    """Find all ticket IDs that are blocking other tickets."""
-    blocking_tickets = set()
-    for _ticket_id, ticket in tickets.items():
-        if isinstance(ticket, dict):
-            blocked_by = ticket.get("blocked_by", [])
-            if blocked_by:
-                if isinstance(blocked_by, str):
-                    blocking_tickets.add(blocked_by)
-                elif isinstance(blocked_by, list):
-                    blocking_tickets.update(blocked_by)
-    return blocking_tickets
-
-
-def _promote_blocking_to_critical(
-    tickets: dict[str, Any],
-    blocking_tickets: set[str],
-) -> bool:
-    """Promote blocking tickets to critical priority. Returns True if any promoted."""
-    promoted = False
-    for blocking_id in blocking_tickets:
-        if blocking_id in tickets and isinstance(tickets[blocking_id], dict):
-            current_priority = tickets[blocking_id].get("priority", "normal")
-            if current_priority != "critical":
-                tickets[blocking_id]["priority"] = "critical"
-                promoted = True
-                print(
-                    f"🔥 Auto-promoted {blocking_id} from {current_priority} to critical"
-                    " (blocking)",
-                )
-    return promoted
-
-
-def _promote_bug_priority(tickets: dict[str, Any]) -> bool:
-    """Promote bugs to higher priority. Returns True if any promoted."""
-    promoted = False
-    for ticket_id, ticket in tickets.items():
-        if isinstance(ticket, dict):
-            labels = ticket.get("labels", [])
-            if "bug" in labels and ticket.get("status") in ["open", "ready"]:
-                current_priority = ticket.get("priority", "normal")
-                new_priority = None
-
-                if current_priority == "low":
-                    new_priority = "normal"
-                elif current_priority == "normal":
-                    new_priority = "high"
-                elif current_priority == "high":
-                    new_priority = "critical"
-
-                if new_priority and new_priority != current_priority:
-                    ticket["priority"] = new_priority
-                    promoted = True
-                    print(
-                        f"🐛 Auto-promoted bug {ticket_id} from {current_priority} "
-                        f"to {new_priority}",
-                    )
-    return promoted
-
-
-def _write_sprint_data(project: Path, sprint_data: dict[str, Any]) -> None:
-    """Write sprint data back to current.yaml file."""
-    from koru.runtime import planfile_dir
-
-    pf = planfile_dir(project)
-    sprint_file = pf / "sprints" / "current.yaml"
-
-    try:
-        import yaml
-
-        with open(sprint_file, "w", encoding="utf-8") as f:
-            yaml.dump(sprint_data, f, default_flow_style=False, allow_unicode=True)
-    except Exception as e:
-        print(f"⚠️ Failed to write sprint data: {e}")
-
-
-def _auto_promote_blocking_tickets(project: Path, runner: Callable | None = None) -> None:
-    """Automatically promote tickets that are blocking others to critical priority.
-
-    Also ensures bugs are prioritized over features when they have the same priority.
-    This ensures that blocking issues are resolved first, allowing the main
-    workflow to continue without manual intervention.
-    """
-    sprint_data = _load_sprint_data(project)
-    if not sprint_data:
-        return
-
-    tickets = sprint_data["sprint"]["tickets"]
-    blocking_tickets = _find_blocking_tickets(tickets)
-
-    promoted = _promote_blocking_to_critical(tickets, blocking_tickets)
-    promoted = _promote_bug_priority(tickets) or promoted
-
-    if promoted:
-        _write_sprint_data(project, sprint_data)
-
-
-def _build_instructions(
-    policy: Policy,
-    ticket: dict[str, Any] | None,
-    *,
-    planfile_initialised: bool,
-) -> list[str]:
-    """Imperative, copy-paste-able rules for the LLM agent.
-
-    Two flavours:
-        - planfile_initialised=False ⇒ base rules + SETUP REQUIRED guide.
-          The agent must NOT try to claim/start/complete tickets when
-          there is no sprint file to claim from.
-        - planfile_initialised=True  ⇒ base rules + the policy-derived
-          DO NOT list + ticket-scope rule + escape hatches.
-    """
-    rules: list[str] = [
-        "You are an LLM agent operating under koru. You MUST obey the "
-        "policy embedded in this brief. Violations terminate the session.",
-        "Use planfile commands for ALL state changes. Do not edit "
-        ".planfile/sprints/*.yaml directly.",
-    ]
-    if not planfile_initialised:
-        rules.extend(_build_setup_instructions())
-    else:
-        rules.extend(_build_shared_rules(policy, ticket))
-    return rules
-
-
-def _build_setup_instructions() -> list[str]:
-    """Instructions shown when ``.planfile/`` is missing.
-
-    The LLM should NOT try to claim a ticket — it should ask the human
-    operator to initialise the project (or, if it has shell rights,
-    run ``koru --init`` itself).
-    """
-    return [
-        "This project has not been initialised yet — there is no "
-        "`.planfile/config.yaml` and no sprint to claim tickets from.",
-        "Ask the human operator to run `koru --init` from the project "
-        "root (or `koru --init --from <pipeline.yaml>` to import an "
-        "existing flat pipeline). DO NOT create planfile files manually.",
-        "After initialisation, re-run `koru` to refresh this brief.",
-    ]
-
-
-def _build_policy_rules(policy: Policy) -> list[str]:
-    """Return rules derived from policy booleans and CI settings."""
-    rules: list[str] = []
-    if not policy.allow_commit:
-        rules.append(
-            "DO NOT run raw `git commit`. If committing is explicitly requested, "
-            "use `koru git commit` so koru can enforce attribution."
-        )
-    if not policy.allow_push:
-        rules.append(
-            "DO NOT run raw `git push`. If pushing is explicitly requested, use `koru git push`."
-        )
-    if not policy.allow_branch_create:
-        rules.append("DO NOT create or switch branches.")
-    if not policy.allow_tag:
-        rules.append("DO NOT create git tags.")
-    if not policy.allow_destructive_shell:
-        rules.append(
-            (
-                "DO NOT run destructive shell commands"
-                " (rm -rf /, dd, mkfs, shutdown, force-pushes, …)."
-            ),
-        )
-    if policy.require_ci_pass_before_complete:
-        if policy.ci_command:
-            rules.append(
-                f"Before completing a ticket, run `{policy.ci_command}` "
-                "and verify exit code 0. Only then call `planfile ticket done <id>`.",
-            )
-        else:
-            rules.append(
-                "Before completing a ticket, ask the human operator to "
-                "run the project's CI gate. Do not self-certify.",
-            )
-    return rules
-
-
-def _build_ticket_rules(ticket: dict[str, Any] | None) -> list[str]:
-    """Return rules derived from ticket state and priority."""
-    rules: list[str] = []
-    if ticket and isinstance(ticket.get("files"), list) and ticket["files"]:
-        scope = ", ".join(str(f) for f in ticket["files"][:10])
-        rules.append(
-            f"Limit edits to the ticket's declared files: {scope}. "
-            "Touching anything else requires blocking the ticket first "
-            '(`planfile ticket block <id> --reason "out-of-scope edit needed"`).',
-        )
-    if ticket is None:
-        rules.extend(
-            [
-                "If there is no active ticket, DO NOT ask the human what to work on.",
-                "Immediately run `koru scan --apply` to discover or create actionable tickets.",
-                (
-                    "After scan, run `planfile ticket next --format json`, "
-                    "then `planfile ticket start <id>` and begin implementation."
-                ),
-            ],
-        )
-    # Auto-repair instructions for critical blocking tickets
-    if ticket and ticket.get("priority") == "critical":
-        rules.extend(
-            [
-                "CRITICAL PRIORITY: This ticket is blocking other work.",
-                "AUTO-REPAIR MODE: Fix this issue immediately to unblock the workflow.",
-                "Do NOT ask for human input unless absolutely necessary.",
-                "Use all available tools and knowledge to resolve the blocking issue.",
-                "After fixing, immediately call `planfile ticket done <id>` to continue.",
-            ],
-        )
-    else:
-        rules.append(
-            "If you are blocked or need a human decision, call "
-            '`planfile ticket block <id> --reason "<question>"` and stop.',
-        )
-    return rules
-
-
-def _build_shared_rules(policy: Policy, ticket: dict[str, Any] | None) -> list[str]:
-    rules = [
-        f"When creating or preparing a Git commit, keep the human Git author "
-        f"unchanged and include this trailer: `{KORU_AGENT_COAUTHOR_TRAILER}`.",
-    ]
-    rules.extend(_build_policy_rules(policy))
-    rules.extend(_build_ticket_rules(ticket))
-    rules.extend(policy.notes)
-    return rules
-
-
-def _build_self_service(
-    policy: Policy,
-    ticket: dict[str, Any] | None,
-    *,
-    planfile_initialised: bool,
-) -> dict[str, Any]:
-    """Concrete CLI invocations the LLM can use without guessing.
-
-    When the project is not initialised, the only useful command is
-    ``koru --init`` — surfacing planfile ticket commands would be
-    misleading because there is no sprint to act on.
-    """
-    if not planfile_initialised:
-        return {
-            "init_project": "koru --init --project .",
-            "init_from_pipeline": "koru --init --project . --from <pipeline.yaml>",
-            "autonomous_bootstrap": (
-                "koru autonomous up --project . --max-cycles 1 --sleep-seconds 0 --no-autopilot"
-            ),
-            "refresh_brief": "koru --project .",
-        }
-    tid = ticket.get("id") if isinstance(ticket, dict) else None
-    ticket_command_prefix = "planfile ticket"
-    block: dict[str, Any] = {
-        "next_brief": "koru --project .",
-        "autonomous_up": "koru autonomous up --project .",
-        "autonomous_smoke": "koru autonomous up --project . --max-cycles 1 --sleep-seconds 0",
-        "list_open": f"{ticket_command_prefix} list --status open --format json",
-        "show_ticket": f"{ticket_command_prefix} show <id> --format json",
-        "block_for_input": f'{ticket_command_prefix} block <id> --reason "<question or blocker>"',
-    }
-    if tid:
-        block["start_this"] = f"{ticket_command_prefix} start {tid}"
-        block["done_this"] = f"{ticket_command_prefix} done {tid}"
-        block["block_this"] = f'{ticket_command_prefix} block {tid} --reason "<question or blocker>"'
-    if policy.ci_command:
-        block["verify_ci"] = policy.ci_command
-    return block
-
-
-# ---------------------------------------------------------------------------
-# Markdown rendering — for paste-into-IDE handoff
-# ---------------------------------------------------------------------------
