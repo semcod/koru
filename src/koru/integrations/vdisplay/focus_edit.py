@@ -103,6 +103,21 @@ def _photo_vql_stale_gate_override_ok(*, canon_probe: str, is_code_edit: bool) -
     return map_mismatch_ok or surface_mismatch_ok or code_edit_map_ok
 
 
+def _persist_blocked_gate_result(
+    blocked: dict | None, *, phase: str, event: str
+) -> dict | None:
+    """Persist a gate's abort payload to the active autonomy session and return it.
+
+    Single owner of the blocked-gate persist stanza so phase/event wiring for
+    every focus-edit gate (stale metadata, capture mismatch, map-source
+    preflight, per-target map mismatch, unverified chat) lives in one place.
+    """
+    session = _vdc()._autonomy_session.active_session_dir()
+    if session is not None:
+        _vdc()._autonomy_session.persist_autonomy_phase(session, phase, event, blocked)
+    return blocked
+
+
 def _photo_vql_stale_metadata_gate(*, ide: str, is_code_edit: bool) -> dict | None:
     """Abort dict when VQL metadata is stale/errored and no fallback allows it, else None."""
     meta_probe = _vdc().load_vql_metadata()
@@ -125,10 +140,7 @@ def _photo_vql_stale_metadata_gate(*, ide: str, is_code_edit: bool) -> dict | No
         "is_code_edit": is_code_edit,
         "hint": "run prepare_photo_vql_for_drive() first — observe must be fresh in .vdisplay/YYYY-MM-DD/.../observe/",
     }
-    session = _vdc()._autonomy_session.active_session_dir()
-    if session is not None:
-        _vdc()._autonomy_session.persist_autonomy_phase(session, "decide", "stale_abort", err)
-    return err
+    return _persist_blocked_gate_result(err, phase="decide", event="stale_abort")
 
 
 def _photo_vql_capture_mismatch_gate(
@@ -141,15 +153,15 @@ def _photo_vql_capture_mismatch_gate(
         is_code_edit=is_code_edit,
     ):
         return None
-    err = _vdc()._photo_vql_capture_mismatch_error(
-        mismatch=mismatch or {},
-        ide=ide,
-        is_code_edit=is_code_edit,
+    return _persist_blocked_gate_result(
+        _vdc()._photo_vql_capture_mismatch_error(
+            mismatch=mismatch or {},
+            ide=ide,
+            is_code_edit=is_code_edit,
+        ),
+        phase="decide",
+        event="ide_capture_blocked",
     )
-    session = _vdc()._autonomy_session.active_session_dir()
-    if session is not None:
-        _vdc()._autonomy_session.persist_autonomy_phase(session, "decide", "ide_capture_blocked", err)
-    return err
 
 
 def _photo_vql_map_source_preflight_gate(
@@ -159,23 +171,21 @@ def _photo_vql_map_source_preflight_gate(
     ide_map_source_mismatch = _vdc()._map_capture_mismatch_for_ide(ide=ide, source=source)
     if not ide_map_source_mismatch or _vdc()._map_source_mismatch_actuation_allowed():
         return None
-    blocked = _vdc()._photo_vql_map_source_mismatch_error(
-        map_mismatch=ide_map_source_mismatch,
-        target={
-            "id": "map:ide-prompt",
-            "source": ide_map_source_mismatch.get("map_path"),
-            "selection_method": "map_source_preflight",
-        },
-        ide=ide,
-        source=source,
-        is_code_edit=is_code_edit,
+    return _persist_blocked_gate_result(
+        _vdc()._photo_vql_map_source_mismatch_error(
+            map_mismatch=ide_map_source_mismatch,
+            target={
+                "id": "map:ide-prompt",
+                "source": ide_map_source_mismatch.get("map_path"),
+                "selection_method": "map_source_preflight",
+            },
+            ide=ide,
+            source=source,
+            is_code_edit=is_code_edit,
+        ),
+        phase="act",
+        event="map_source_mismatch_preflight_blocked",
     )
-    session = _vdc()._autonomy_session.active_session_dir()
-    if session is not None:
-        _vdc()._autonomy_session.persist_autonomy_phase(
-            session, "act", "map_source_mismatch_preflight_blocked", blocked
-        )
-    return blocked
 
 
 def _photo_vql_target_map_mismatch_gate(
@@ -184,17 +194,17 @@ def _photo_vql_target_map_mismatch_gate(
     """Per-target map/capture mismatch gate: (abort dict | None, map_source_mismatch)."""
     map_source_mismatch = _vdc()._map_capture_mismatch_for_target(target=t, ide=ide, source=source)
     if map_source_mismatch and not _vdc()._map_source_mismatch_actuation_allowed():
-        blocked = _vdc()._photo_vql_map_source_mismatch_error(
-            map_mismatch=map_source_mismatch,
-            target=t,
-            ide=ide,
-            source=source,
-            is_code_edit=is_code_edit,
-        )
-        session = _vdc()._autonomy_session.active_session_dir()
-        if session is not None:
-            _vdc()._autonomy_session.persist_autonomy_phase(session, "act", "map_source_mismatch_blocked", blocked)
-        return blocked, map_source_mismatch
+        return _persist_blocked_gate_result(
+            _vdc()._photo_vql_map_source_mismatch_error(
+                map_mismatch=map_source_mismatch,
+                target=t,
+                ide=ide,
+                source=source,
+                is_code_edit=is_code_edit,
+            ),
+            phase="act",
+            event="map_source_mismatch_blocked",
+        ), map_source_mismatch
     if map_source_mismatch:
         t["map_capture_mismatch"] = map_source_mismatch
     return None, map_source_mismatch
@@ -327,19 +337,19 @@ def _photo_vql_unverified_chat_gate(
         surface_mismatch_allowed=surface_mismatch_allowed,
     ):
         return None
-    blocked = _vdc()._photo_vql_unverified_chat_blocked(
-        command_plan=command_plan,
-        target_desc=target_desc,
-        target=t,
-        x=x,
-        y=y,
-        ide=ide,
-        mismatch=mismatch,
+    return _persist_blocked_gate_result(
+        _vdc()._photo_vql_unverified_chat_blocked(
+            command_plan=command_plan,
+            target_desc=target_desc,
+            target=t,
+            x=x,
+            y=y,
+            ide=ide,
+            mismatch=mismatch,
+        ),
+        phase="act",
+        event="chat_actuation_blocked",
     )
-    session = _vdc()._autonomy_session.active_session_dir()
-    if session is not None:
-        _vdc()._autonomy_session.persist_autonomy_phase(session, "act", "chat_actuation_blocked", blocked)
-    return blocked
 
 
 def _photo_vql_edit_mismatch_allowances(*, t: dict[str, Any], ide: str) -> tuple[bool, bool]:
