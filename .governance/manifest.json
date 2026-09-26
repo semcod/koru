@@ -38,6 +38,7 @@
           "app/**",
           "lib/**",
           "packages/**",
+          "services/**/*.py",
           "test/**",
           "tests/**"
         ]
