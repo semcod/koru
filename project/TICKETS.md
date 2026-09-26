@@ -257,4 +257,9 @@ project analysis or human-owned ticket inputs.
 | **ticket-254** | [`README.md`](./ticket-254/README.md) | - | - | - | - | - |
 | **ticket-255** | [`README.md`](./ticket-255/README.md) | - | - |  [`ai-antigravity.md`](./ticket-255/ai-antigravity.md) | - | - |
 | **ticket-256** | [`README.md`](./ticket-256/README.md) | - | - | - | - | - |
+| **ticket-257** | [`README.md`](./ticket-257/README.md) | - | - | - | - | - |
+| **ticket-258** | [`README.md`](./ticket-258/README.md) | - | - |  [`ai-antigravity.md`](./ticket-258/ai-antigravity.md) | - | - |
+| **ticket-259** | [`README.md`](./ticket-259/README.md) | - | - | - | - | - |
+| **ticket-260** | [`README.md`](./ticket-260/README.md) | - | - | - | - | - |
+| **ticket-261** | [`README.md`](./ticket-261/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->

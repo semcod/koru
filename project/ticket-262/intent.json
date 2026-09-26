@@ -1,0 +1,103 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-262",
+  "summary": "Decompose run_taskand_request in queue runners to reduce cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-262/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/runners.py",
+    "tests/test_queue_runners.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "06eced9f5cacfd596702ccb122e41e981aa2f5be",
+    "targetBranch": "main",
+    "outcome": "Decompose run_taskand_request in src/koru/queue/runners.py into focused helpers (config, health probe, target resolution, reply parsing, gateway POST, CLI fallback) to reduce its cyclomatic complexity from 47 to <=7 while preserving 100% backward-compatible behavior, and pin the previously uncovered branches with regression tests.",
+    "nonGoals": [
+      "Changing gateway/CLI selection strategy or request semantics",
+      "Modifying TaskandRunResult shape or the module's public interface",
+      "Reformatting pre-existing code outside the decomposed function"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _taskand_gateway_config, _probe_taskand_gateway, _taskand_gateway_target, _parse_taskand_gateway_payload (with _orchestrator_taskand_result and _proc_call_taskand_result behind a _TaskandReplyContext NamedTuple), _post_taskand_gateway (with _read_taskand_reply, _taskand_http_error_result, _taskand_url_error_result) and _run_taskand_cli_call from run_taskand_request in src/koru/queue/runners.py, leaving run_taskand_request as a compact strategy dispatcher with _TaskandGatewayConfig and _TaskandGatewayTarget NamedTuple carriers.",
+      "components": [
+        {
+          "name": "koru-queue-runners",
+          "paths": [
+            "src/koru/queue/runners.py",
+            "tests/test_queue_runners.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket-262 commit in src/koru/queue/runners.py and tests/test_queue_runners.py"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q tests/test_queue_runners.py tests/test_taskand_runner.py"
+        ],
+        "evidence": "All existing and newly added taskand runner tests pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m radon cc src/koru/queue/runners.py -s"
+        ],
+        "evidence": "run_taskand_request cyclomatic complexity drops from 47 to <=7; no extracted taskand helper exceeds 11."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "code2llm . -f all -o /tmp/koru-code2llm-ticket-262 --no-chunk --exclude *.md --exclude plugins"
+        ],
+        "evidence": "code2llm cc signal for queue.runners.run_taskand_request is at or below the limit of 15."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "ruff check src/koru/queue/runners.py tests/test_queue_runners.py"
+        ],
+        "evidence": "Ruff reports zero lint errors for the touched files."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
