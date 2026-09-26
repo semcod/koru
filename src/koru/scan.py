@@ -448,28 +448,35 @@ _TOON_LAYER_HOTSPOT_RE = re.compile(
 )
 
 
+# code2llm artifact probe locations, most preferred first: the copy under
+# ``<project>/project/`` wins over a repo-root copy of the same artifact.
+_ANALYSIS_ARTIFACT_PATHS = (
+    "project/analysis.toon.yaml",
+    "project/analysis.toon",
+    "analysis.toon.yaml",
+)
+_PLANFILE_TICKETS_ARTIFACT_PATHS = (
+    "project/planfile-tickets.yaml",
+    "planfile-tickets.yaml",
+)
+_CALLS_ARTIFACT_PATHS = ("project/calls.yaml", "calls.yaml")
+
+
 def _find_analysis_file(project: Path) -> tuple[Path | None, str]:
     """Find the code2llm analysis file and return (path, relative_path)."""
-    candidates = (
-        project / "project" / "analysis.toon.yaml",
-        project / "project" / "analysis.toon",
-        project / "analysis.toon.yaml",
-    )
-    path = next((p for p in candidates if p.is_file()), None)
-    if path is None:
-        return None, ""
-    return path, str(path.relative_to(project))
+    found = _first_existing_artifact(project, _ANALYSIS_ARTIFACT_PATHS)
+    return found if found is not None else (None, "")
 
 
 _CC_LOCATION_RE = re.compile(r"at `(?P<file>[^`:]+):(?P<line>\d+)`")
 
 
-def _load_yaml_mapping(candidates: tuple[Path, ...]) -> dict | None:
-    path = next((p for p in candidates if p.is_file()), None)
-    if path is None:
+def _load_yaml_mapping(project: Path, rel_paths: tuple[str, ...]) -> dict | None:
+    found = _first_existing_artifact(project, rel_paths)
+    if found is None:
         return None
     try:
-        payload = yaml.safe_load(path.read_text(encoding="utf-8", errors="ignore"))
+        payload = yaml.safe_load(found[0].read_text(encoding="utf-8", errors="ignore"))
     except (OSError, yaml.YAMLError):
         return None
     return payload if isinstance(payload, dict) else None
@@ -507,11 +514,7 @@ def _code2llm_cc_locations(project: Path) -> dict[str, list[str]]:
     Keys are both the fully-qualified name (``pkg.mod.func``) and the bare
     ``func``, since the two exports disagree on which they use.
     """
-    candidates = (
-        project / "project" / "planfile-tickets.yaml",
-        project / "planfile-tickets.yaml",
-    )
-    payload = _load_yaml_mapping(candidates)
+    payload = _load_yaml_mapping(project, _PLANFILE_TICKETS_ARTIFACT_PATHS)
     if payload is None:
         return {}
 
@@ -543,8 +546,7 @@ def _resolve_module_path(project: Path, module: str) -> str | None:
 
 def _code2llm_module_paths(project: Path) -> dict[str, str]:
     """Map short module names from LAYERS rows to concrete source files."""
-    candidates = (project / "project" / "calls.yaml", project / "calls.yaml")
-    payload = _load_yaml_mapping(candidates)
+    payload = _load_yaml_mapping(project, _CALLS_ARTIFACT_PATHS)
     if payload is None:
         return {}
 
@@ -580,8 +582,7 @@ def _merge_call_graph_locations(project: Path, locations: dict[str, list[str]]) 
     and line. The module is dotted rather than a path, so resolve it against the
     filesystem — an unresolvable module is skipped rather than guessed at.
     """
-    candidates = (project / "project" / "calls.yaml", project / "calls.yaml")
-    payload = _load_yaml_mapping(candidates)
+    payload = _load_yaml_mapping(project, _CALLS_ARTIFACT_PATHS)
     nodes = payload.get("nodes") if payload else None
     if not isinstance(nodes, dict):
         return
@@ -744,11 +745,7 @@ def _planfile_dup_groups_are_extern_mirrors(project: Path) -> bool | None:
 
     ``None`` when no such tickets exist (caller should fall back to LAYERS).
     """
-    candidates = (
-        project / "project" / "planfile-tickets.yaml",
-        project / "planfile-tickets.yaml",
-    )
-    payload = _load_yaml_mapping(candidates)
+    payload = _load_yaml_mapping(project, _PLANFILE_TICKETS_ARTIFACT_PATHS)
     if payload is None:
         return None
     groups: list[tuple[str, ...]] = []
@@ -789,11 +786,7 @@ def _should_skip_code2llm_dup_ticket(
         plan = _planfile_dup_groups_are_extern_mirrors(project)
         if plan is True:
             # Prefer byte-identity when the twin files are still on disk.
-            candidates = (
-                project / "project" / "planfile-tickets.yaml",
-                project / "planfile-tickets.yaml",
-            )
-            payload = _load_yaml_mapping(candidates)
+            payload = _load_yaml_mapping(project, _PLANFILE_TICKETS_ARTIFACT_PATHS)
             for ticket in (payload or {}).get("tickets") or []:
                 if not isinstance(ticket, dict) or ticket.get("signal") != "code2llm_dup":
                     continue

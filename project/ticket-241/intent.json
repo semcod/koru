@@ -1,0 +1,99 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-241",
+  "summary": "centralize code2llm artifact candidate paths in scan",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-241/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/scan.py",
+    "tests/test_scan.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3645d89221699c122d010c22391122d7f032f03f",
+    "targetBranch": "main",
+    "outcome": "Remove the code2llm `Shotgun Surgery: candidates` smell (planfile PLF-044) from src/koru/scan.py: mutation of `candidates` spanned 6 functions. The six hand-written `candidates` tuples plus inline `next((p for p in candidates if p.is_file()), None)` probes (_find_analysis_file, _code2llm_cc_locations, _code2llm_module_paths, _merge_call_graph_locations, _planfile_dup_groups_are_extern_mirrors, _should_skip_code2llm_dup_ticket) are replaced by three module constants (_ANALYSIS_ARTIFACT_PATHS, _PLANFILE_TICKETS_ARTIFACT_PATHS, _CALLS_ARTIFACT_PATHS; relative probe locations, most preferred first) with resolution routed through the pre-existing _first_existing_artifact helper. _load_yaml_mapping now takes (project, rel_paths) and resolves internally instead of accepting pre-built absolute candidates. Changing where a code2llm artifact is probed is now one constant edit instead of edits scattered across six functions. Probe tuples keep the exact previous order and membership — including the analysis order where the nested plain-text project/analysis.toon beats a repo-root analysis.toon.yaml copy, which no naive per-name nested-then-root expansion would preserve — so behavior is unchanged; a new regression test pins that order. No public surface changes: only private helpers and module constants are touched, and no consumer module is modified.",
+    "nonGoals": [
+      "Changing which files are probed or the probe priority order",
+      "Deduplicating the double planfile-tickets.yaml load inside _should_skip_code2llm_dup_ticket (pre-existing behavior kept verbatim)",
+      "Touching the separate candidates parameter of the suggestion-building cluster around _first_existing_artifact call sites",
+      "Reformatting pre-existing ruff format drift in tests/test_scan.py",
+      "Refactoring any other module flagged by code2llm"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Three frozen tuples of repo-relative probe paths plus the pre-existing _first_existing_artifact resolver replace six hand-built absolute-path tuples. _find_analysis_file returns the resolver's (path, rel) pair directly (the relative string equals the old str(path.relative_to(project))); _load_yaml_mapping takes (project, rel_paths) and keeps its tolerant yaml loading (missing file or non-mapping payload yields None). The artifact-location knowledge now lives in exactly one place per artifact, so the shotgun-surgery driver — the same variable mutated across six functions — is gone: `candidates` remains only as _first_existing_artifact's own parameter. No patch-target audit surface changes: tests reference the helpers by name and those names are unchanged.",
+      "components": [
+        {
+          "name": "koru-scan",
+          "paths": [
+            "src/koru/scan.py",
+            "tests/test_scan.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit to restore the six inline candidates tuples and the absolute-path _load_yaml_mapping signature."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_scan.py"
+        ],
+        "evidence": "66 passed including the new test_code2llm_artifact_probing_prefers_nested_copies; the 7 failures are byte-identical pre-existing reds at base HEAD 3645d892 (verified in a detached HEAD worktree: same 7 failed, 65 passed)."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_scan_phase.py tests/test_todo2code_discovery.py tests/test_autonomous.py tests/test_fleet_admission.py tests/test_scan_split.py tests/test_scan_todo_rust.py tests/test_scan_todo.py tests/test_code2llm_discovery.py tests/test_ticket_evidence.py tests/test_execution_plan.py tests/test_plan_usefulness_scoring.py tests/test_refactor_planfile_handoff.py"
+        ],
+        "evidence": "252 passed, 2 failed; both failures (test_autonomous.py chat-activity/llx heuristics) also fail identically at base HEAD in a detached worktree."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "ruff check src/koru/scan.py tests/test_scan.py",
+          "ruff format --check src/koru/scan.py"
+        ],
+        "evidence": "Ruff check passes on both files; scan.py is format-clean. tests/test_scan.py format drift is pre-existing at base HEAD and excludes the added test lines (none appear in the would-reformat report)."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "The governance gate reports 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}
