@@ -225,5 +225,7 @@ project analysis or human-owned ticket inputs.
 | **ticket-220** | [`README.md`](./ticket-220/README.md) | - | - | - | - | - |
 | **ticket-221** | [`README.md`](./ticket-221/README.md) | - | - | - | - | - |
 | **ticket-222** | [`README.md`](./ticket-222/README.md) | - | - | - | - | - |
+| **ticket-223** | [`README.md`](./ticket-223/README.md) | - | - | - | - | - |
 | **ticket-224** | [`README.md`](./ticket-224/README.md) | - | - | - | - | - |
+| **ticket-225** | [`README.md`](./ticket-225/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->
