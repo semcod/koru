@@ -38,8 +38,8 @@ def test_env_truthy_matrix(monkeypatch: pytest.MonkeyPatch) -> None:
     assert autonomy_env.env_truthy("KORU_TEST_TRUTHY", True) is True
 
 
-def test_apply_autoloop_env_to_args_custom_environ() -> None:
-    args = SimpleNamespace(
+def _autoloop_args() -> SimpleNamespace:
+    return SimpleNamespace(
         ticket_sources="queue",
         idle_diagnostics="off",
         diagnostic_tickets=False,
@@ -65,7 +65,15 @@ def test_apply_autoloop_env_to_args_custom_environ() -> None:
         wup_track_dir=".wup/tracks",
         wup_diagnostic_tickets=True,
         wup_ticket_queue="default",
+        operator_pipeline=False,
+        operator_tickets=False,
+        operator_ticket_queue="default",
+        operator_ticket_priority="high",
     )
+
+
+def test_apply_autoloop_env_to_args_custom_environ() -> None:
+    args = _autoloop_args()
     fake_env = {
         **os.environ,
         "TICKET_SOURCES": "scan",
@@ -80,3 +88,62 @@ def test_apply_autoloop_env_to_args_custom_environ() -> None:
     assert args.autopilot_skip_drive_idle_streak == 2
     assert args.scan_after_idle_queue is True
     assert args.scan_after_idle_min_interval == 90.0
+
+
+def test_apply_autoloop_env_to_args_invalid_values_fall_back(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    args = _autoloop_args()
+    fake_env = {
+        **os.environ,
+        "TICKET_SOURCES": "bogus",
+        "AUTOPILOT_ACTION": "sideways",
+        "WUP_MODE": "nope",
+        "AUTOPILOT_SKIP_DRIVE_IDLE_STREAK": "not-a-number",
+        "SCAN_AFTER_IDLE_MIN_INTERVAL_SECONDS": "-5",
+        "AUTOPILOT_SKIP_STATUSES": "   ",
+    }
+    autonomy_env.apply_autoloop_env_to_args(args, environ=fake_env)
+    assert args.ticket_sources == "queue"
+    assert args.autopilot_action == "drive"
+    assert args.wup_mode == "testql"
+    assert args.autopilot_skip_drive_idle_streak == 0
+    assert args.scan_after_idle_min_interval == 0.0
+    assert args.autopilot_skip_statuses == "waiting_input"
+    assert "unknown TICKET_SOURCES" in capsys.readouterr().err
+
+
+def test_apply_autoloop_env_to_args_operator_fields_are_optional() -> None:
+    args = _autoloop_args()
+    del args.operator_pipeline, args.operator_tickets
+    del args.operator_ticket_queue, args.operator_ticket_priority
+    fake_env = {
+        **os.environ,
+        "KORU_OPERATOR_PIPELINE": "true",
+        "OPERATOR_TICKET_QUEUE": "ops",
+    }
+    autonomy_env.apply_autoloop_env_to_args(args, environ=fake_env)
+    assert not hasattr(args, "operator_pipeline")
+    assert not hasattr(args, "operator_ticket_queue")
+
+
+def test_apply_autoloop_env_to_args_blank_env_keeps_cli_values() -> None:
+    args = _autoloop_args()
+    fake_env = {
+        **os.environ,
+        "AUTOPILOT_SKIP_STATUSES": "",
+        "DIAGNOSTIC_TICKET_QUEUE": "  ",
+    }
+    autonomy_env.apply_autoloop_env_to_args(args, environ=fake_env)
+    assert args.autopilot_skip_statuses == "waiting_input"
+    assert args.diagnostic_ticket_queue == "default"
+    assert args.wup_watch is None
+
+
+def test_apply_autoloop_env_to_args_wup_watch_truth_set() -> None:
+    args = _autoloop_args()
+    autonomy_env.apply_autoloop_env_to_args(args, environ={**os.environ, "WUP_WATCH": "YES"})
+    assert args.wup_watch is True
+    args = _autoloop_args()
+    autonomy_env.apply_autoloop_env_to_args(args, environ={**os.environ, "WUP_WATCH": "0"})
+    assert args.wup_watch is False
