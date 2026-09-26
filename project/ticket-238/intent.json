@@ -1,0 +1,98 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-238",
+  "summary": "consolidate autoloop env overrides into declarative table",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-238/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/env.py",
+    "tests/test_autonomy_env.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "bc7dcb9810304c3963c72c2c22b15eb5e7eea849",
+    "targetBranch": "main",
+    "outcome": "Remove the code2llm `Shotgun Surgery: args` smell (planfile PLF-042) from src/koru/autonomy/env.py: mutation of `args` spanned 5 functions. The five per-domain mutators that each hand-wrote `args.<attr> = ...` assignments (_apply_ticket_and_diagnostics_env, _apply_autopilot_env, _apply_scan_env, _apply_wup_env, _apply_operator_env) are replaced by one declarative _AUTOLOOP_ENV_OVERRIDES: Final[tuple[_EnvOverride, ...]] table of 30 frozen _EnvOverride(env, dest, coerce, optional) rows built from four pure factories (_keep_flag truthiness, _keep_value non-blank string, _lower_choice validated choice with fallback, _keep_number clamped numeric) plus three bespoke coercions that keep special semantics verbatim (_coerce_ticket_sources preserving the invalid-value stderr warning and CLI keep, _coerce_idle_diagnostics preserving the ENABLE_IDLE_DIAGNOSTICS=full default chain, _coerce_wup_watch preserving the None pass-through). Every args write now happens in a single setattr loop inside apply_autoloop_env_to_args, so adding an autoloop env knob is one table row instead of assignments scattered across per-domain functions; optional=True rows skip args namespaces lacking the operator extras. The public surface (env_get, env_truthy, parse_boolish, AUTOLOOP_ENV_DEFAULTS, the apply_autoloop_env_to_args signature with the environ parameter) is unchanged and no consumer module is modified. Equivalence was verified before extraction by a 3209-case differential A/B against the original module (0 mismatches, covering the invalid TICKET_SOURCES warning path, blank envs, numeric clamping and optional operator fields).",
+    "nonGoals": [
+      "Changing env knob names, defaults, precedence or lookup order",
+      "Adding, removing or repurposing any autoloop env knob",
+      "Touching consumers of apply_autoloop_env_to_args (koru.autonomy.config, cycle, readiness, doctor, operator and autopilot modules)",
+      "Refactoring any other module flagged by code2llm"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "One frozen tuple of dataclass rows plus pure coercion closures replaces five imperative mutator functions; apply_autoloop_env_to_args keeps a single setattr loop with hasattr gating for optional rows. Closures read the env mapping and the current args value and never mutate args themselves, so each row is independently exercisable and the previous fall-through semantics (blank value keeps the CLI value, unparseable number keeps the current value, invalid choice warns or falls back) is encoded once per factory instead of once per knob. No patch-target audit surface changes: tests monkeypatch apply_autoloop_env_to_args or the module helpers it calls, all of which keep their names.",
+      "components": [
+        {
+          "name": "koru-autonomy-env",
+          "paths": [
+            "src/koru/autonomy/env.py",
+            "tests/test_autonomy_env.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit to restore the five per-domain _apply_*_env mutators."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_autonomy_env.py"
+        ],
+        "evidence": "All env-override tests pass, including the new edge guards for blank env keeping the CLI value, unparseable numbers keeping the current value, invalid lower-choice falling back and optional operator rows skipping namespaces that lack the attribute."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_autonomy_environment.py tests/test_autonomous.py tests/test_autonomous_reporting.py tests/test_autonomous_readiness.py tests/test_autonomous_gillm_fallback.py tests/test_doctor.py tests/test_ide_map_consolidation.py tests/test_autonomous_operator.py tests/test_autonomous_operator_reload.py tests/test_autonomous_operator_unsupported_ide.py tests/test_operator_pipeline.py tests/test_autopilot_config.py"
+        ],
+        "evidence": "The consumer slice (config_env, autonomy facade, readiness, doctor, reporting, operator and autopilot env consumers) passes unchanged, proving behavior preservation."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "ruff check src/koru/autonomy/env.py tests/test_autonomy_env.py",
+          "ruff format --check src/koru/autonomy/env.py tests/test_autonomy_env.py"
+        ],
+        "evidence": "Ruff reports no lint or formatting findings on the refactored module and its tests."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "The governance gate reports 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}
