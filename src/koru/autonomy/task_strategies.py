@@ -73,6 +73,30 @@ class PendingWorktree:
         return asdict(self)
 
 
+def _parse_check_statuses(checks: Any) -> str:
+    if not isinstance(checks, list):
+        return ""
+    states = [str(c.get("state") or c.get("conclusion") or "") for c in checks if isinstance(c, dict)]
+    return ",".join(filter(None, states))
+
+
+def _parse_pending_pr_item(item: Any) -> PendingPR | None:
+    if not isinstance(item, dict):
+        return None
+    number = item.get("number")
+    if not isinstance(number, int):
+        return None
+    return PendingPR(
+        number=number,
+        title=str(item.get("title") or ""),
+        head_branch=str(item.get("headRefName") or ""),
+        url=str(item.get("url") or ""),
+        mergeable=str(item.get("mergeable") or "UNKNOWN"),
+        review_decision=str(item.get("reviewDecision") or ""),
+        checks_status=_parse_check_statuses(item.get("statusCheckRollup")),
+    )
+
+
 def find_pending_prs(
     project: Path,
     *,
@@ -93,46 +117,18 @@ def find_pending_prs(
         "number,title,headRefName,url,mergeable,reviewDecision,statusCheckRollup",
     ]
     try:
-        if runner is not None:
-            proc = runner(cmd, project)
-        else:
-            proc = subprocess.run(cmd, cwd=str(project), capture_output=True, text=True, check=False)
+        proc = (
+            runner(cmd, project)
+            if runner is not None
+            else subprocess.run(cmd, cwd=str(project), capture_output=True, text=True, check=False)
+        )
         if proc.returncode != 0:
             return []
         data = json.loads(proc.stdout)
         if not isinstance(data, list):
             return []
 
-        prs: list[PendingPR] = []
-        for item in data:
-            if not isinstance(item, dict):
-                continue
-            number = item.get("number")
-            if not isinstance(number, int):
-                continue
-            title = str(item.get("title") or "")
-            branch = str(item.get("headRefName") or "")
-            url = str(item.get("url") or "")
-            mergeable = str(item.get("mergeable") or "UNKNOWN")
-            review_dec = str(item.get("reviewDecision") or "")
-
-            checks = item.get("statusCheckRollup")
-            checks_status = ""
-            if isinstance(checks, list):
-                states = [str(c.get("state") or c.get("conclusion") or "") for c in checks if isinstance(c, dict)]
-                checks_status = ",".join(filter(None, states))
-
-            prs.append(
-                PendingPR(
-                    number=number,
-                    title=title,
-                    head_branch=branch,
-                    url=url,
-                    mergeable=mergeable,
-                    review_decision=review_dec,
-                    checks_status=checks_status,
-                )
-            )
+        prs = [pr for item in data if (pr := _parse_pending_pr_item(item)) is not None]
         prs.sort(key=lambda p: p.number)
         return prs
     except Exception:
@@ -144,6 +140,90 @@ def _extract_ticket_id(text: str) -> str | None:
     if match:
         return f"ticket-{match.group(1)}"
     return None
+
+
+def _parse_worktrees_porcelain(stdout: str) -> list[tuple[str, str, str]]:
+    """Parse git worktree list --porcelain output into (path, head, branch) tuples."""
+    worktrees: list[tuple[str, str, str]] = []
+    curr_wt = ""
+    curr_head = ""
+    curr_br = ""
+
+    for line in stdout.splitlines():
+        if line.startswith("worktree "):
+            curr_wt = line.split(" ", 1)[1].strip()
+        elif line.startswith("HEAD "):
+            curr_head = line.split(" ", 1)[1].strip()
+        elif line.startswith("branch "):
+            curr_br = line.split(" ", 1)[1].strip()
+            worktrees.append((curr_wt, curr_head, curr_br))
+            curr_wt, curr_head, curr_br = "", "", ""
+        elif not line.strip() and curr_wt:
+            worktrees.append((curr_wt, curr_head, ""))
+            curr_wt, curr_head, curr_br = "", "", ""
+    return worktrees
+
+
+def _is_runner_worktree(path: Path) -> bool:
+    return path.name.startswith(".koru-run-") or "worktrees/run-" in str(path) or path.name.endswith("-verify")
+
+
+def _check_worktree_merged_and_ahead(
+    run_git: Callable[[list[str], Path], subprocess.CompletedProcess[str]],
+    resolved_project: Path,
+    branch_name: str,
+    head_sha: str,
+    base_branch: str,
+) -> tuple[bool, int]:
+    is_merged = False
+    commits_ahead = 0
+    if branch_name:
+        merge_proc = run_git(["merge-base", "--is-ancestor", branch_name, base_branch], resolved_project)
+        is_merged = merge_proc.returncode == 0
+
+        ahead_proc = run_git(["rev-list", "--count", f"{base_branch}..{branch_name}"], resolved_project)
+        if ahead_proc.returncode == 0 and ahead_proc.stdout.strip().isdigit():
+            commits_ahead = int(ahead_proc.stdout.strip())
+    elif head_sha:
+        merge_proc = run_git(["merge-base", "--is-ancestor", head_sha, base_branch], resolved_project)
+        is_merged = merge_proc.returncode == 0
+    return is_merged, commits_ahead
+
+
+def _inspect_single_worktree(
+    wt_path_str: str,
+    head_sha: str,
+    branch_ref: str,
+    resolved_project: Path,
+    base_branch: str,
+    run_git: Callable[[list[str], Path], subprocess.CompletedProcess[str]],
+) -> PendingWorktree | None:
+    wt_path = Path(wt_path_str).resolve()
+    if wt_path == resolved_project or _is_runner_worktree(wt_path):
+        return None
+
+    branch_name = branch_ref.replace("refs/heads/", "") if branch_ref else ""
+    ticket_id = _extract_ticket_id(wt_path.name) or (_extract_ticket_id(branch_name) if branch_name else None)
+
+    status_proc = run_git(["status", "--short"], wt_path)
+    is_dirty = bool(status_proc.stdout.strip())
+
+    is_merged, commits_ahead = _check_worktree_merged_and_ahead(
+        run_git, resolved_project, branch_name, head_sha, base_branch
+    )
+
+    if not (is_dirty or not is_merged or commits_ahead > 0):
+        return None
+
+    return PendingWorktree(
+        path=str(wt_path),
+        branch=branch_name,
+        ticket_id=ticket_id,
+        head_sha=head_sha,
+        is_dirty=is_dirty,
+        commits_ahead=commits_ahead,
+        is_merged=is_merged,
+    )
 
 
 def find_pending_worktrees(
@@ -159,6 +239,7 @@ def find_pending_worktrees(
     - Disposable temporary run checkouts (e.g. .koru-run-* or worktrees/run-*).
     - Worktrees whose branch is already merged into base_branch (and clean).
     """
+
     def _run_git(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
         if runner is not None:
             return runner(args, cwd)
@@ -169,77 +250,13 @@ def find_pending_worktrees(
     if proc.returncode != 0:
         return []
 
-    lines = proc.stdout.splitlines()
-    worktrees_raw: list[tuple[str, str, str]] = []
-    curr_wt = ""
-    curr_head = ""
-    curr_br = ""
-
-    for line in lines:
-        if line.startswith("worktree "):
-            curr_wt = line.split(" ", 1)[1].strip()
-        elif line.startswith("HEAD "):
-            curr_head = line.split(" ", 1)[1].strip()
-        elif line.startswith("branch "):
-            curr_br = line.split(" ", 1)[1].strip()
-            worktrees_raw.append((curr_wt, curr_head, curr_br))
-            curr_wt, curr_head, curr_br = "", "", ""
-        elif not line.strip() and curr_wt:
-            # detached worktree
-            worktrees_raw.append((curr_wt, curr_head, ""))
-            curr_wt, curr_head, curr_br = "", "", ""
-
+    worktrees_raw = _parse_worktrees_porcelain(proc.stdout)
     pending: list[PendingWorktree] = []
     for wt_path_str, head_sha, branch_ref in worktrees_raw:
-        wt_path = Path(wt_path_str).resolve()
-        # Skip primary checkout
-        if wt_path == resolved_project:
-            continue
-        # Skip temporary runner throwaway worktrees
-        is_runner_wt = (
-            wt_path.name.startswith(".koru-run-")
-            or "worktrees/run-" in str(wt_path)
-            or wt_path.name.endswith("-verify")
-        )
-        if is_runner_wt:
-            continue
+        wt = _inspect_single_worktree(wt_path_str, head_sha, branch_ref, resolved_project, base_branch, _run_git)
+        if wt is not None:
+            pending.append(wt)
 
-        branch_name = branch_ref.replace("refs/heads/", "") if branch_ref else ""
-        ticket_id = _extract_ticket_id(wt_path.name) or (_extract_ticket_id(branch_name) if branch_name else None)
-
-        # Check dirty state
-        status_proc = _run_git(["status", "--short"], wt_path)
-        is_dirty = bool(status_proc.stdout.strip())
-
-        # Check if merged
-        is_merged = False
-        commits_ahead = 0
-        if branch_name:
-            merge_proc = _run_git(["merge-base", "--is-ancestor", branch_name, base_branch], resolved_project)
-            is_merged = (merge_proc.returncode == 0)
-
-            ahead_proc = _run_git(["rev-list", "--count", f"{base_branch}..{branch_name}"], resolved_project)
-            if ahead_proc.returncode == 0 and ahead_proc.stdout.strip().isdigit():
-                commits_ahead = int(ahead_proc.stdout.strip())
-        elif head_sha:
-            merge_proc = _run_git(["merge-base", "--is-ancestor", head_sha, base_branch], resolved_project)
-            is_merged = (merge_proc.returncode == 0)
-
-        # A worktree is pending if it is dirty, or not yet merged, or has unpushed commits ahead of base
-        if is_dirty or (not is_merged) or (commits_ahead > 0):
-            pending.append(
-                PendingWorktree(
-                    path=str(wt_path),
-                    branch=branch_name,
-                    ticket_id=ticket_id,
-                    head_sha=head_sha,
-                    is_dirty=is_dirty,
-                    commits_ahead=commits_ahead,
-                    is_merged=is_merged,
-                )
-            )
-
-    # Sort pending worktrees: dirty/active first, then by ticket id
     pending.sort(key=lambda w: (not w.is_dirty, w.is_merged, w.ticket_id or ""))
     return pending
 
