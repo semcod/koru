@@ -52,6 +52,20 @@ def test_provision_zed_writes_context_servers(tmp_path: Path) -> None:
     assert payload["context_servers"]["koru"]["args"] == ["mcp-serve"]
 
 
+def test_provision_windsurf_falls_back_to_global_config(tmp_path: Path, monkeypatch) -> None:
+    gpath = tmp_path / "windsurf-global-mcp.json"
+    monkeypatch.setattr(mcp_provision, "_windsurf_global_config", lambda: gpath)
+
+    result = mcp_provision.provision_windsurf(tmp_path, dry_run=False)
+
+    assert result["ide"] == "windsurf"
+    assert result["action"] == "added"
+    assert result["path"] == str(gpath)
+    payload = json.loads(gpath.read_text(encoding="utf-8"))
+    assert payload["mcpServers"]["koru"]["args"] == ["mcp-serve"]
+    assert not (tmp_path / ".windsurf").exists()
+
+
 def test_provision_vscodium_uses_vscode_workspace_mcp_file(tmp_path: Path) -> None:
     result = mcp_provision.provision_vscodium(tmp_path, dry_run=False)
 
