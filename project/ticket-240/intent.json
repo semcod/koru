@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-240",
+  "summary": "implement task execution strategies prioritizing pending prs then worktrees then issues",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-240/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/execution_plan.py",
+    "src/koru/autonomy/task_strategies.py",
+    "src/koru/autonomy_strategy/**",
+    "src/koru/cli_decide.py",
+    "src/koru/cli_work.py",
+    "tests/test_task_execution_strategies.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3645d89221699c122d010c22391122d7f032f03f",
+    "targetBranch": "main",
+    "outcome": "Implement pluggable task execution strategies with default 'in_flight_first' prioritizing: 1) Pending PRs, 2) Pending local worktrees, 3) New tasks / issues. Add task_strategies module with PR/worktree detectors and strategy resolution; integrate with compile_execution_plan, cli_decide, cli_work, and autonomy_strategy defaults.",
+    "nonGoals": [
+      "Modifying GitHub branch protection rules",
+      "Removing existing legacy task profiles",
+      "Altering unrelated autonomy subsystems"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 35,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Introduce src/koru/autonomy/task_strategies.py providing strategy definitions (in_flight_first, accordion_detail_to_general, worktree_first, issues_first) with find_pending_prs and find_pending_worktrees detectors. Update compile_execution_plan to prioritize pending PRs first (phase=pending_pr) and pending local worktrees second (phase=pending_worktree) before falling back to planfile_queue or whole-project discovery. Expose strategy flag on koru decide and koru work next.",
+      "components": [
+        {
+          "name": "koru-task-strategies",
+          "paths": [
+            "src/koru/autonomy/execution_plan.py",
+            "src/koru/autonomy/task_strategies.py",
+            "src/koru/autonomy_strategy/defaults.py",
+            "src/koru/cli_decide.py",
+            "src/koru/cli_work.py",
+            "tests/test_task_execution_strategies.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit to restore previous execution plan compilation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_task_execution_strategies.py"
+        ],
+        "evidence": "All task execution strategy tests pass, verifying in_flight_first prioritization (PRs -> worktrees -> issues) and CLI flag integration."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_execution_plan.py"
+        ],
+        "evidence": "Execution plan regression suite passes."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "The governance gate reports 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}

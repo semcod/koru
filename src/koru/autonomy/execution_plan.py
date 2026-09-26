@@ -13,6 +13,15 @@ from typing import Any, NamedTuple
 import yaml
 
 from koru.autonomy.ide_work import _current_sprint_tickets, sprint_ticket_status_summary
+from koru.autonomy.task_strategies import (
+    DEFAULT_TASK_STRATEGY,
+    STRATEGY_ORDER,
+    PendingPR,
+    PendingWorktree,
+    find_pending_prs,
+    find_pending_worktrees,
+    resolve_task_strategy,
+)
 from koru.autonomy_strategy import load_autonomy_strategy
 from koru.autonomy_strategy.heuristics import build_strategy_heuristics
 
@@ -44,12 +53,18 @@ class ExecutionPlan:
     steps: list[ExecutionStep]
     signals: dict[str, Any]
     selected_ticket: dict[str, Any] | None = None
+    selected_pr: dict[str, Any] | None = None
+    selected_worktree: dict[str, Any] | None = None
     summary: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
         if self.selected_ticket is not None:
             payload["selected_ticket"] = _ticket_summary(self.selected_ticket, Path(self.project))
+        if self.selected_pr is not None:
+            payload["selected_pr"] = self.selected_pr
+        if self.selected_worktree is not None:
+            payload["selected_worktree"] = self.selected_worktree
         return payload
 
 
@@ -117,7 +132,6 @@ def _ticket_matches_profile(match: dict[str, Any], ticket: dict[str, Any]) -> bo
     return bool(labels_any or signals_any or patterns)
 
 
-
 def _profile_matches(profile: dict[str, Any], *, ticket: dict[str, Any] | None, phase: str) -> bool:
     match = profile.get("match")
     if not isinstance(match, dict):
@@ -180,23 +194,83 @@ def _target_source_lines(project: Path, ticket: dict[str, Any]) -> int | None:
     return None
 
 
+def _first_code_file(project: Path, ticket: dict[str, Any]) -> Path | None:
+    files = ticket.get("files")
+    if not isinstance(files, list):
+        return None
+    for entry in files:
+        rel = str(entry).strip()
+        if not rel or rel.endswith(".toon.yaml") or rel.startswith("project/"):
+            continue
+        candidate = project / rel
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _count_lines(path: Path) -> int | None:
+    try:
+        return sum(1 for _ in path.open("r", encoding="utf-8", errors="replace"))
+    except OSError:
+        return None
+
+
+def _evidence_artifact_sha(ticket: dict[str, Any]) -> str | None:
+    source = ticket.get("source")
+    if not isinstance(source, dict):
+        return None
+    context = source.get("context")
+    if not isinstance(context, dict):
+        return None
+    evidence = context.get("evidence")
+    if not isinstance(evidence, dict):
+        return None
+    files = evidence.get("files")
+    if isinstance(files, list) and files:
+        first = files[0]
+        if isinstance(first, dict) and first.get("sha256"):
+            return str(first["sha256"])
+    artifact = evidence.get("artifact")
+    if isinstance(artifact, dict) and artifact.get("sha256"):
+        return str(artifact["sha256"])
+    return None
+
+
+def _file_sha256(path: Path) -> str | None:
+    import hashlib
+
+    try:
+        digest = hashlib.sha256()
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(65536), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
+    except OSError:
+        return None
+
+
 def _ticket_likely_complete(project: Path, ticket: dict[str, Any]) -> bool:
-    """Skip planfile tickets whose target file no longer matches scan evidence."""
     labels = _ticket_labels(ticket)
     lines = _target_source_lines(project, ticket)
-    if lines is None:
-        return False
-    if "god-module" in labels and lines < 250:
-        return True
-    if "cyclomatic" in labels and lines < 120:
-        return True
-    if "large-module" in labels and lines < 400:
-        return True
+    if lines is not None:
+        if "god-module" in labels and lines < 250:
+            return True
+        if "cyclomatic" in labels and lines < 80:
+            return True
+    evidence_sha = _evidence_artifact_sha(ticket)
+    if evidence_sha:
+        code_file = _first_code_file(project, ticket)
+        if code_file is not None:
+            current_sha = _file_sha256(code_file)
+            if current_sha and current_sha != evidence_sha:
+                if lines is not None and lines < 250:
+                    return True
     return False
 
 
 def _ticket_sort_key(project: Path, ticket: dict[str, Any]) -> tuple[int, int, str]:
-    priority = _PRIORITY_RANK.get(str(ticket.get("priority") or "normal"), 2)
+    priority_label = str(ticket.get("priority") or "normal").lower()
+    priority = _PRIORITY_RANK.get(priority_label, 99)
     labels = _ticket_labels(ticket)
     deprioritize = 0
     lines = _target_source_lines(project, ticket)
@@ -350,19 +424,82 @@ def _queued_ticket_steps(
     return steps
 
 
+def _pr_steps(project: Path, pr: PendingPR) -> list[ExecutionStep]:
+    """Build execution steps for triaging, validating, and merging an open PR."""
+    return [
+        ExecutionStep(
+            id="view_pr",
+            kind="shell",
+            reason=f"Inspect open PR #{pr.number} checks, mergeability, and details.",
+            commands=[f"gh pr view {pr.number} --json number,title,state,checks,mergeable"],
+            hint=f"Review PR #{pr.number} ({pr.title}) on branch {pr.head_branch}",
+            repo=str(project.resolve()),
+            auto_runnable=True,
+        ),
+        ExecutionStep(
+            id="finish_pr",
+            kind="validator_merge",
+            reason=f"Validate and autonomously merge open PR #{pr.number}.",
+            commands=[f"koru work finish --pr {pr.number} --merge --project {project.resolve()}"],
+            hint=f"Merge PR #{pr.number} via validator-agent when checks pass",
+            repo=str(project.resolve()),
+            auto_runnable=False,
+        ),
+    ]
+
+
+def _worktree_steps(project: Path, wt: PendingWorktree) -> list[ExecutionStep]:
+    """Build execution steps for resuming, testing, and completing a pending worktree."""
+    tid = wt.ticket_id or "work"
+    return [
+        ExecutionStep(
+            id="status_worktree",
+            kind="shell",
+            reason=f"Inspect git status in pending worktree {wt.path}.",
+            commands=[f"git -C {wt.path} status --short"],
+            hint=f"Check uncommitted or unmerged state in {wt.path}",
+            repo=wt.path,
+            auto_runnable=True,
+        ),
+        ExecutionStep(
+            id="test_worktree",
+            kind="shell",
+            reason=f"Run verification tests in pending worktree {wt.path}.",
+            commands=[f"sh -c 'cd {wt.path} && koru ci run'"],
+            hint=f"Run verification tests in {wt.path}",
+            repo=wt.path,
+            auto_runnable=True,
+        ),
+        ExecutionStep(
+            id="finish_worktree",
+            kind="worktree_finish",
+            reason=f"Commit, push, and open PR for pending worktree {wt.path}.",
+            commands=[f"sh -c 'cd {wt.path} && koru work finish --ticket {tid} --open-pr'"],
+            hint=f"Finish work in {wt.path} and open PR",
+            repo=wt.path,
+            auto_runnable=False,
+        ),
+    ]
+
+
 class _PlanSignals(NamedTuple):
     """Signal payload plus the open refactor tickets it was computed from."""
 
     payload: dict[str, Any]
     open_tickets: list[dict[str, Any]]
+    pending_prs: list[PendingPR]
+    pending_worktrees: list[PendingWorktree]
 
 
 class _PlanSelection(NamedTuple):
-    """Chosen plan phase with the steps and ticket that represent it."""
+    """Chosen plan phase with the steps, ticket, PR, or worktree that represent it."""
 
     phase: str
     steps: list[ExecutionStep]
-    selected: dict[str, Any] | None
+    selected: dict[str, Any] | None = None
+    selected_pr: dict[str, Any] | None = None
+    selected_worktree: dict[str, Any] | None = None
+    summary: str = ""
 
 
 def _pipeline_order(strategy: dict[str, Any]) -> list[Any]:
@@ -371,12 +508,25 @@ def _pipeline_order(strategy: dict[str, Any]) -> list[Any]:
     return order
 
 
-def _collect_plan_signals(project: Path) -> _PlanSignals:
+def _collect_plan_signals(
+    project: Path,
+    *,
+    task_strategy: str = DEFAULT_TASK_STRATEGY,
+    pending_prs: list[PendingPR] | None = None,
+    pending_worktrees: list[PendingWorktree] | None = None,
+) -> _PlanSignals:
     open_tickets = _open_refactor_tickets(project)
+    prs = pending_prs if pending_prs is not None else find_pending_prs(project)
+    wts = pending_worktrees if pending_worktrees is not None else find_pending_worktrees(project)
     payload: dict[str, Any] = {
         "planfile": sprint_ticket_status_summary(project),
         "open_refactor_tickets": len(open_tickets),
         "skipped_likely_complete": _count_skipped_complete(project),
+        "task_strategy": task_strategy,
+        "pending_prs_count": len(prs),
+        "pending_worktrees_count": len(wts),
+        "pending_prs": [p.to_dict() for p in prs],
+        "pending_worktrees": [w.to_dict() for w in wts],
         "heuristics": build_strategy_heuristics(project),
     }
     try:
@@ -385,7 +535,12 @@ def _collect_plan_signals(project: Path) -> _PlanSignals:
         payload["llm"] = resolve_work_llm_context(project).to_dict()
     except Exception:
         pass
-    return _PlanSignals(payload=payload, open_tickets=open_tickets)
+    return _PlanSignals(
+        payload=payload,
+        open_tickets=open_tickets,
+        pending_prs=prs,
+        pending_worktrees=wts,
+    )
 
 
 def _discovery_steps(project: Path, phase: str) -> list[ExecutionStep]:
@@ -410,44 +565,110 @@ def _discovery_selection(project: Path, order: list[Any]) -> _PlanSelection:
                 phase=phase,
                 steps=_discovery_steps(project, phase),
                 selected=None,
+                summary=f"phase={phase}",
             )
-    return _PlanSelection(phase="idle", steps=[], selected=None)
+    return _PlanSelection(phase="idle", steps=[], selected=None, summary="phase=idle")
 
 
-def _select_plan_work(project: Path, strategy: dict[str, Any], open_tickets: list[dict[str, Any]]) -> _PlanSelection:
-    if open_tickets:
-        phase = "planfile_queue"
-        selected = open_tickets[0]
-        return _PlanSelection(
-            phase=phase,
-            steps=_queued_ticket_steps(project, selected, phase),
-            selected=selected,
-        )
-    return _discovery_selection(project, _pipeline_order(strategy))
+def _select_plan_work(
+    project: Path,
+    strategy: dict[str, Any],
+    open_tickets: list[dict[str, Any]],
+    *,
+    task_strategy: str = DEFAULT_TASK_STRATEGY,
+    pending_prs: list[PendingPR] | None = None,
+    pending_worktrees: list[PendingWorktree] | None = None,
+) -> _PlanSelection:
+    order = STRATEGY_ORDER.get(task_strategy, STRATEGY_ORDER[DEFAULT_TASK_STRATEGY])
+
+    prs = pending_prs if pending_prs is not None else find_pending_prs(project)
+    wts = pending_worktrees if pending_worktrees is not None else find_pending_worktrees(project)
+
+    for target in order:
+        if target == "pending_prs" and prs:
+            pr = prs[0]
+            steps = _pr_steps(project, pr)
+            return _PlanSelection(
+                phase="pending_pr",
+                steps=steps,
+                selected=None,
+                selected_pr=pr.to_dict(),
+                summary=f"phase=pending_pr pr=#{pr.number} title={pr.title}",
+            )
+        if target == "pending_worktrees" and wts:
+            wt = wts[0]
+            steps = _worktree_steps(project, wt)
+            return _PlanSelection(
+                phase="pending_worktree",
+                steps=steps,
+                selected=None,
+                selected_worktree=wt.to_dict(),
+                summary=f"phase=pending_worktree ticket={wt.ticket_id or 'unknown'} branch={wt.branch}",
+            )
+        if target == "issues":
+            if open_tickets:
+                phase = "planfile_queue"
+                selected = open_tickets[0]
+                return _PlanSelection(
+                    phase=phase,
+                    steps=_queued_ticket_steps(project, selected, phase),
+                    selected=selected,
+                    summary=f"phase={phase} ticket={selected.get('id')}",
+                )
+            return _discovery_selection(project, _pipeline_order(strategy))
+
+    return _PlanSelection(phase="idle", steps=[], selected=None, summary="phase=idle")
 
 
 def _plan_summary(selection: _PlanSelection) -> str:
+    if selection.summary:
+        return selection.summary
     summary = f"phase={selection.phase}"
     if selection.selected is not None:
         profile = selection.steps[0].profile_id if selection.steps else "n/a"
         summary += f" ticket={selection.selected.get('id')} profile={profile}"
+    elif selection.selected_pr is not None:
+        summary += f" pr=#{selection.selected_pr.get('number')}"
+    elif selection.selected_worktree is not None:
+        summary += f" worktree={selection.selected_worktree.get('ticket_id')}"
     return summary
 
 
-def compile_execution_plan(project: Path) -> ExecutionPlan:
+def compile_execution_plan(
+    project: Path,
+    strategy_override: str | None = None,
+    *,
+    pending_prs: list[PendingPR] | None = None,
+    pending_worktrees: list[PendingWorktree] | None = None,
+) -> ExecutionPlan:
     project = project.resolve()
     strategy = load_autonomy_strategy(project) or {}
-    signals = _collect_plan_signals(project)
-    selection = _select_plan_work(project, strategy, signals.open_tickets)
+    active_strategy = resolve_task_strategy(project, explicit_strategy=strategy_override)
+    signals = _collect_plan_signals(
+        project,
+        task_strategy=active_strategy,
+        pending_prs=pending_prs,
+        pending_worktrees=pending_worktrees,
+    )
+    selection = _select_plan_work(
+        project,
+        strategy,
+        signals.open_tickets,
+        task_strategy=active_strategy,
+        pending_prs=signals.pending_prs,
+        pending_worktrees=signals.pending_worktrees,
+    )
     return ExecutionPlan(
         schema=_SCHEMA,
         project=str(project),
-        strategy_id=str(strategy.get("id") or "unknown"),
+        strategy_id=active_strategy,
         phase=selection.phase,
         steps=selection.steps,
         signals=signals.payload,
         selected_ticket=selection.selected,
-        summary=_plan_summary(selection),
+        selected_pr=selection.selected_pr,
+        selected_worktree=selection.selected_worktree,
+        summary=selection.summary or _plan_summary(selection),
     )
 
 

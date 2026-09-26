@@ -53,7 +53,8 @@ def _action_start(args: argparse.Namespace) -> int:
 
 
 def _action_next(args: argparse.Namespace) -> int:
-    plan = compile_execution_plan(args.project)
+    strategy_override = getattr(args, "strategy", None)
+    plan = compile_execution_plan(args.project, strategy_override=strategy_override)
     llm_ctx = resolve_work_llm_context(args.project)
     payload: dict = {
         "status": "planned",
@@ -157,6 +158,7 @@ _FINISH_ARGS: tuple[_ArgSpec, ...] = (
 _NEXT_ARGS: tuple[_ArgSpec, ...] = (
     ("--run-gates", {"action": "store_true", "help": "Run auto steps from decide plan."}),
     ("--start-branch", {"action": "store_true", "help": "koru work start on selected ticket."}),
+    ("--strategy", {"default": None, "help": "Task execution strategy override."}),
     ("--base", {"default": "main"}),
     ("--no-push", {"action": "store_true"}),
     ("--remote", {"default": "origin"}),

@@ -18,8 +18,19 @@ def _print_plan(plan, fmt: str) -> None:
         return
     print(f"koru decide: {plan.summary}")
     print(f"  strategy: {plan.strategy_id}")
-    print(f"  signals: {plan.signals.get('planfile')}")
-    if plan.selected_ticket:
+    signals = plan.signals or {}
+    prs_count = signals.get("pending_prs_count", 0)
+    wts_count = signals.get("pending_worktrees_count", 0)
+    open_tickets = signals.get("open_refactor_tickets", 0)
+    print(f"  in-flight: pending_prs={prs_count} pending_worktrees={wts_count} open_tickets={open_tickets}")
+    if plan.selected_pr:
+        pr = payload.get("selected_pr") or {}
+        print(f"  pr: #{pr.get('number')} — {pr.get('title')} (branch={pr.get('head_branch')})")
+    elif plan.selected_worktree:
+        wt = payload.get("selected_worktree") or {}
+        wt_info = f"(branch={wt.get('branch')} dirty={wt.get('is_dirty')})"
+        print(f"  worktree: {wt.get('ticket_id')} — {wt.get('path')} {wt_info}")
+    elif plan.selected_ticket:
         ticket = payload.get("selected_ticket") or {}
         print(
             f"  ticket: {ticket.get('id')} — {ticket.get('name')} "
@@ -45,6 +56,11 @@ def decide_main(argv: list[str]) -> int:
     parser.add_argument("--project", type=Path, default=Path.cwd())
     parser.add_argument("--format", choices=("text", "json"), default="text")
     parser.add_argument(
+        "--strategy",
+        default=None,
+        help="Task execution strategy (in_flight_first, accordion_detail_to_general, worktree_first, issues_first).",
+    )
+    parser.add_argument(
         "--run",
         action="store_true",
         help="Execute auto-runnable shell steps from the compiled plan.",
@@ -57,7 +73,7 @@ def decide_main(argv: list[str]) -> int:
     args = parser.parse_args(argv)
 
     try:
-        plan = compile_execution_plan(args.project)
+        plan = compile_execution_plan(args.project, strategy_override=args.strategy)
     except Exception as exc:
         print(f"koru decide: {exc}", file=sys.stderr)
         return 2

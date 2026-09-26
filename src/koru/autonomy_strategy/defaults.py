@@ -8,15 +8,19 @@ import yaml
 
 DEFAULT_AUTONOMY_STRATEGY: dict[str, Any] = {
     "schema": "1.0",
-    "id": "accordion_detail_to_general",
+    "id": "in_flight_first",
+    "task_strategy": "in_flight_first",
     "description": (
-        "Default autonomy rhythm: execute concrete planfile tickets first; "
-        "when the queue is empty, broaden to whole-project discovery and "
-        "turn findings back into focused planfile tickets."
+        "Default autonomy rhythm: prioritize in-flight work before opening new tasks. "
+        "1) Pending PRs: review, validate, and merge open PRs. "
+        "2) Pending local worktrees: complete, verify, and publish local unmerged/dirty worktrees. "
+        "3) New tasks: execute open planfile tickets, then broaden to whole-project discovery."
     ),
     "source_of_truth": "planfile",
     "default_pipeline": {
         "order": [
+            "pending_prs",
+            "pending_worktrees",
             "planfile_queue",
             "idle_scan",
             "whole_project_discovery",
