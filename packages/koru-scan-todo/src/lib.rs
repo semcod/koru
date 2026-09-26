@@ -88,83 +88,114 @@ pub fn extract_python_comments(text: &str) -> Vec<&str> {
     let bytes = text.as_bytes();
     let mut state = LexState::Normal;
     let mut i = 0;
-    let len = bytes.len();
 
-    while i < len {
-        let b = bytes[i];
-
+    while i < bytes.len() {
         match state {
             LexState::Normal => {
-                if i + 2 < len && bytes[i] == b'"' && bytes[i + 1] == b'"' && bytes[i + 2] == b'"' {
-                    state = LexState::TripleDoubleQuote;
-                    i += 3;
-                } else if i + 2 < len && bytes[i] == b'\'' && bytes[i + 1] == b'\'' && bytes[i + 2] == b'\'' {
-                    state = LexState::TripleSingleQuote;
-                    i += 3;
-                } else if b == b'"' {
-                    state = LexState::DoubleQuote;
-                    i += 1;
-                } else if b == b'\'' {
-                    state = LexState::SingleQuote;
-                    i += 1;
-                } else if b == b'#' {
-                    let comment_start = i;
-                    let mut line_end = i;
-                    while line_end < len && bytes[line_end] != b'\n' && bytes[line_end] != b'\r' {
-                        line_end += 1;
-                    }
-                    if let Ok(comment) = std::str::from_utf8(&bytes[comment_start..line_end]) {
-                        comments.push(comment);
-                    }
-                    i = line_end;
-                } else {
-                    i += 1;
+                let (next_state, next_i, comment_range) = lex_normal(bytes, i);
+                if let Some((start, end)) = comment_range {
+                    push_comment(&mut comments, bytes, start, end);
                 }
+                state = next_state;
+                i = next_i;
             }
-            LexState::SingleQuote => {
-                if b == b'\\' && i + 1 < len {
-                    i += 2;
-                } else if b == b'\'' || b == b'\n' {
-                    state = LexState::Normal;
-                    i += 1;
-                } else {
-                    i += 1;
-                }
+            LexState::SingleQuote | LexState::DoubleQuote => {
+                i = skip_quoted_string(bytes, i, quote_byte(state));
+                state = LexState::Normal;
             }
-            LexState::DoubleQuote => {
-                if b == b'\\' && i + 1 < len {
-                    i += 2;
-                } else if b == b'"' || b == b'\n' {
-                    state = LexState::Normal;
-                    i += 1;
-                } else {
-                    i += 1;
-                }
-            }
-            LexState::TripleSingleQuote => {
-                if b == b'\\' && i + 1 < len {
-                    i += 2;
-                } else if i + 2 < len && bytes[i] == b'\'' && bytes[i + 1] == b'\'' && bytes[i + 2] == b'\'' {
-                    state = LexState::Normal;
-                    i += 3;
-                } else {
-                    i += 1;
-                }
-            }
-            LexState::TripleDoubleQuote => {
-                if b == b'\\' && i + 1 < len {
-                    i += 2;
-                } else if i + 2 < len && bytes[i] == b'"' && bytes[i + 1] == b'"' && bytes[i + 2] == b'"' {
-                    state = LexState::Normal;
-                    i += 3;
-                } else {
-                    i += 1;
-                }
+            LexState::TripleSingleQuote | LexState::TripleDoubleQuote => {
+                i = skip_triple_quoted_string(bytes, i, quote_byte(state));
+                state = LexState::Normal;
             }
         }
     }
 
     comments
+}
+
+/// Quote byte that opens and closes the string literal for a string `state`.
+fn quote_byte(state: LexState) -> u8 {
+    match state {
+        LexState::SingleQuote | LexState::TripleSingleQuote => b'\'',
+        LexState::DoubleQuote | LexState::TripleDoubleQuote => b'"',
+        LexState::Normal => unreachable!("Normal is not a string literal state"),
+    }
+}
+
+/// Consume one token from `LexState::Normal` starting at byte `i`.
+/// Returns the next state, the next byte index, and the `[start, end)` range
+/// of a comment when one was consumed.
+fn lex_normal(bytes: &[u8], i: usize) -> (LexState, usize, Option<(usize, usize)>) {
+    let b = bytes[i];
+    if is_triple_quote(bytes, i, b'"') {
+        (LexState::TripleDoubleQuote, i + 3, None)
+    } else if is_triple_quote(bytes, i, b'\'') {
+        (LexState::TripleSingleQuote, i + 3, None)
+    } else if b == b'"' {
+        (LexState::DoubleQuote, i + 1, None)
+    } else if b == b'\'' {
+        (LexState::SingleQuote, i + 1, None)
+    } else if b == b'#' {
+        let end = comment_line_end(bytes, i);
+        (LexState::Normal, end, Some((i, end)))
+    } else {
+        (LexState::Normal, i + 1, None)
+    }
+}
+
+/// Byte index just past the last comment character of the line starting at
+/// the `#` byte `start`; stops before `\n` or `\r`, or at end of input.
+fn comment_line_end(bytes: &[u8], start: usize) -> usize {
+    let mut end = start;
+    while end < bytes.len() && bytes[end] != b'\n' && bytes[end] != b'\r' {
+        end += 1;
+    }
+    end
+}
+
+/// Push the comment spanning `[start, end)` when those bytes are valid UTF-8.
+fn push_comment<'a>(comments: &mut Vec<&'a str>, bytes: &'a [u8], start: usize, end: usize) {
+    if let Ok(comment) = std::str::from_utf8(&bytes[start..end]) {
+        comments.push(comment);
+    }
+}
+
+/// True when a triple `quote` delimiter starts at byte `i`.
+fn is_triple_quote(bytes: &[u8], i: usize, quote: u8) -> bool {
+    i + 2 < bytes.len() && bytes[i] == quote && bytes[i + 1] == quote && bytes[i + 2] == quote
+}
+
+/// Consume the body of a single-line quoted string starting at `i`.
+/// Returns the index just past the closing quote, past the newline that
+/// terminates an unterminated literal, or end of input.
+fn skip_quoted_string(bytes: &[u8], mut i: usize, quote: u8) -> usize {
+    let len = bytes.len();
+    while i < len {
+        if bytes[i] == b'\\' && i + 1 < len {
+            i += 2;
+        } else if bytes[i] == quote || bytes[i] == b'\n' {
+            return i + 1;
+        } else {
+            i += 1;
+        }
+    }
+    len
+}
+
+/// Consume the body of a triple-quoted string starting at `i`.
+/// Returns the index just past the closing triple quote or end of input.
+fn skip_triple_quoted_string(bytes: &[u8], mut i: usize, quote: u8) -> usize {
+    let len = bytes.len();
+    while i + 2 < len {
+        if bytes[i] == b'\\' && i + 1 < len {
+            i += 2;
+        } else if is_triple_quote(bytes, i, quote) {
+            return i + 3;
+        } else {
+            i += 1;
+        }
+    }
+    len
 }
 
 /// Count TODO/FIXME/XXX/HACK markers in comments of a source text.

@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-231",
+  "summary": "Reduce cyclomatic complexity in extract_python_comments",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-231/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/koru-scan-todo/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ae342592e44f95b206219ab86abec80ae9e1fe96",
+    "targetBranch": "main",
+    "outcome": "Decompose the five-state Python comment lexer in packages/koru-scan-todo/src/lib.rs (code2llm CC=38, limit 15) into small per-state helpers: lex_normal (one Normal-state token step returning next state, next index and optional comment range), comment_line_end (comment line scan), push_comment (UTF-8 boundary push), skip_quoted_string (single/double-quoted body with escapes), skip_triple_quoted_string plus is_triple_quote (triple-quoted body) and quote_byte (quote byte for a string state). extract_python_comments keeps the exact public signature and only drives the state-machine loop, so every extracted comment and marker count is byte-identical.",
+    "nonGoals": [
+      "Changing lexer behavior, extracted comment boundaries or marker counts",
+      "Changing the public crate API (extract_python_comments signature, count_todo_markers, ScanOptions, DEFAULT_SCAN_EXCLUDES)",
+      "Regenerating project/analysis.toon.yaml or other integration-owned discovery artifacts (analysis is regenerated under /tmp only)",
+      "Refactoring other lib.rs functions (count_markers_in_text, glob_match, is_koruignored, count_todo_markers_in_project) that are under the CC limit"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep the LexState state machine but move each state's branch-heavy transition logic into private helpers so no single function exceeds the CC limit: the public function only advances (state, index) and collects comment ranges. lex_normal returns (next_state, next_index, Option<(start, end)>); quoted-string states consume their body via skip_quoted_string/skip_triple_quoted_string parameterized by the quote byte, with escape handling copied verbatim from the original arms so boundary behavior (backslash at end of input, unterminated strings, newline terminating single-line strings) is unchanged.",
+      "components": [
+        {
+          "name": "koru-scan-todo-rust",
+          "paths": [
+            "packages/koru-scan-todo/src/lib.rs"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the single commit to restore the original monolithic lexer loop."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "cargo test --manifest-path packages/koru-scan-todo/Cargo.toml"
+        ],
+        "evidence": "Rust unit tests (marker counting, string-vs-comment, glob, koruignore) pass unchanged."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest -p no:wellmanifest_governance tests/test_scan_todo_rust.py"
+        ],
+        "evidence": "Python integration/benchmark tests pass unchanged, proving CLI-level output compatibility."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "code2llm packages/koru-scan-todo -f all -o /tmp/code2llm-ticket231 --no-chunk --exclude *.md --exclude plugins"
+        ],
+        "evidence": "Regenerated smell scan reports extract_python_comments CC <= 15 and no new complexity smell for the crate. Repository-owned project/ artifacts are not regenerated."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance gate passes from the ticket worktree."
+      }
+    ]
+  }
+}
