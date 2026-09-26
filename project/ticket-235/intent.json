@@ -1,0 +1,105 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-235",
+  "summary": "Split god module todo2code_discovery by responsibility",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-235/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/todo2code_config.py",
+    "src/koru/autonomy/todo2code_plans.py",
+    "src/koru/autonomy/todo2code_tickets.py",
+    "src/koru/autonomy/todo2code_discovery.py",
+    "tests/test_todo2code_modules.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e5abaf1a2a7d0fc939fc5d8a1d1f7c12f33303b3",
+    "targetBranch": "main",
+    "outcome": "Split src/koru/autonomy/todo2code_discovery.py (code2llm god module: 846 lines, 5 classes) by responsibility into three modules behind a stable facade: todo2code_config.py (os.environ-then-.env knob lookup _env_flag/_env_float/_env_int plus the _config_value re-export from koru.queue.todo2code_support, todo2code_enabled, output-dir containment _out_dir, discovery limit resolution _discovery_limits, and the shared defaults DEFAULT_SOURCE/DEFAULT_OUT_SUBDIR/DEFAULT_MAX_TICKETS/DEFAULT_STALE_MINUTES/DEFAULT_TIMEOUT_SECONDS/DEFAULT_MIN_USEFULNESS), todo2code_plans.py (plan artifact discovery PLANS_FILENAME/find_latest_plans_path, freshness _plans_fresh, JSON loading _load_plan_set, and plan-field normalization _string_list/_truncate/_plan_paths/_plan_dedupe_key/_slug) and todo2code_tickets.py (sprint dedupe identities _ExistingPlanTickets/_read_sprint_tickets/_remember_todo2code_ticket/_existing_todo2code_keys, ticket text and scaffold assembly _PRIORITY_MAP/_file_evidence/_ticket_title/_ticket_plan_lines/_ticket_change_lines/_ticket_risk_lines/_ticket_recovery_lines/_ticket_text/_ticket_scaffold, usefulness ranking _RankedPlans/_rank_useful_plans, and planfile filing _relative_plans_path/_PlanIdentity/_plan_identity/_resolve_plan_priority/_enrich_plan_scaffold/_PlanDispatch/_dispatch_plan_task/_file_plan_ticket/_record_plan_dispatch/_apply_plan_tickets). todo2code_discovery.py keeps only the pipeline (Runner, Todo2codeDiscoveryOutcome, _default_runner, _run_t2c_pipeline, _consume_plan_set, run_todo2code_discovery, format_todo2code_summary) and re-exports every moved name with redundant aliases so 'from koru.autonomy.todo2code_discovery import ...' stays working, including the test-facing _t2c_executable patch target consumed by run_todo2code_discovery through facade globals, scan.py's _PRIORITY_MAP/_plan_dedupe_key/DEFAULT_SOURCE and code_change_autonomy.py's _config_value/_out_dir. Behavior is preserved verbatim (functions move unmodified); the four existing test_todo2code_* test files pass unchanged and tests/test_todo2code_modules.py pins the moved behavior at its new homes plus the facade re-export surface and the facade-level _t2c_executable patch path.",
+    "nonGoals": [
+      "Changing discovery behavior, skip reasons, freshness semantics, dedupe identities or ticket scaffolds",
+      "Renaming environment knobs, defaults or the os.environ-before-.env lookup order",
+      "Touching src/koru/scan.py, src/koru/autonomy/code_change_autonomy.py, src/koru/autonomy/phases/scan_phase.py, src/koru/ide_doctor_cli.py or any other consumer",
+      "Modifying the existing test_todo2code_* test files",
+      "Splitting or refactoring any other module flagged by code2llm"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Move functions verbatim (same private names) into three responsibility modules and re-export them from the koru.autonomy.todo2code_discovery facade with redundant aliases (the nxdo_discovery pattern from ticket-234). A patch audit found exactly one facade-level monkeypatch target (tests patch td._t2c_executable, consumed by run_todo2code_discovery, which stays in the facade and resolves the name through facade globals at call time) and one cross-module patch target (koru.tasks.create_nl_task, consumed by _dispatch_plan_task through a function-local import that moves with it), so plain import-time re-exports suffice without call-time facade indirection; the facade __all__ is unchanged.",
+      "components": [
+        {
+          "name": "koru-autonomy-todo2code",
+          "paths": [
+            "src/koru/autonomy/todo2code_discovery.py",
+            "src/koru/autonomy/todo2code_config.py",
+            "src/koru/autonomy/todo2code_plans.py",
+            "src/koru/autonomy/todo2code_tickets.py",
+            "tests/test_todo2code_modules.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the single 846-line src/koru/autonomy/todo2code_discovery.py."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "wc -l src/koru/autonomy/todo2code_discovery.py src/koru/autonomy/todo2code_config.py src/koru/autonomy/todo2code_plans.py src/koru/autonomy/todo2code_tickets.py"
+        ],
+        "evidence": "todo2code_discovery.py drops from 846 lines to the pipeline facade; each responsibility module stays a focused non-god module (function count under the code2llm gate of 40)."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_todo2code_discovery.py tests/test_todo2code_dedupe.py tests/test_todo2code_plan_ranking.py tests/test_todo2code_ticket_text.py"
+        ],
+        "evidence": "All four pre-split test files pass unchanged against the split modules."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "git diff --stat e5abaf1a -- src/koru/scan.py src/koru/autonomy/code_change_autonomy.py src/koru/autonomy/phases/scan_phase.py src/koru/ide_doctor_cli.py"
+        ],
+        "evidence": "No consumer file is modified; every pre-split name still resolves through the facade."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python -m pytest -q tests/test_todo2code_modules.py",
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Focused tests at the new module homes and facade stability pins pass; governance gate reports 0 errors."
+      }
+    ]
+  }
+}
