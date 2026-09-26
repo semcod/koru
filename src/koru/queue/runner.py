@@ -39,6 +39,7 @@ from koru.queue.runners import (
     run_llm_request,
     run_process,
     run_shell_command,
+    run_taskand_request,
 )
 from koru.queue.shell_evidence import LLM_RUN_NOTE_TAG, SHELL_RUN_NOTE_TAG, format_shell_run_note
 from koru.queue.ticket import (
@@ -47,7 +48,9 @@ from koru.queue.ticket import (
     ticket_api_request,
     ticket_command,
     ticket_llm_request,
+    ticket_taskand_request,
 )
+
 from koru.queue.ticket_templates import hydrate_subactor_repair_ticket, hydrate_todo2code_ticket
 from koru.queue.types import CommandResult, QueueRunResult
 
@@ -175,7 +178,13 @@ def _resolve_ticket_action(
         ), "LLM ticket is missing inputs.prompt (or description / name)"
     if executor_kind == "shell":
         return ticket_command(ticket), "Shell ticket is missing inputs.script or executor.handler"
+    if executor_kind in ("taskand", "process"):
+        return (
+            ticket_taskand_request(ticket),
+            "Taskand ticket is missing inputs.process_uri, inputs.plan, or executor.handler",
+        )
     return None
+
 
 
 def _handle_dry_run(
@@ -273,6 +282,7 @@ def _execute_action(
     api_runner: Callable[[dict[str, Any], Path], CommandResult],
     llm_runner: Callable[[dict[str, Any], Path], CommandResult],
     shell_runner: Callable[[str, Path], CommandResult],
+    taskand_runner: Callable[[dict[str, Any], Path], CommandResult] = run_taskand_request,
 ) -> tuple[CommandResult, str]:
     if executor_kind == "api":
         result = api_runner(action, project)
@@ -281,6 +291,9 @@ def _execute_action(
         action = _enrich_llm_request_with_context(action, project)
         result = llm_runner(action, project)
         action_label = f"llm {action.get('model') or _DEFAULT_LLM_MODEL}"
+    elif executor_kind in ("taskand", "process"):
+        result = taskand_runner(action, project)
+        action_label = f"taskand {action.get('uri') or 'orchestrator'}"
     else:
         try:
             from koru.activity_log import activity
@@ -291,6 +304,7 @@ def _execute_action(
         result = shell_runner(str(action), project)
         action_label = str(action)
     return result, action_label
+
 
 
 def _append_shell_evidence(
@@ -778,8 +792,10 @@ def _run_next_planfile_task_impl(
     shell_runner: Callable[[str, Path], CommandResult] = run_shell_command,
     api_runner: Callable[[dict[str, any], Path], CommandResult] = run_api_request,
     llm_runner: Callable[[dict[str, any], Path], CommandResult] = run_llm_request,
+    taskand_runner: Callable[[dict[str, any], Path], CommandResult] = run_taskand_request,
     prompt_runner: Callable[[str, str], str | None] = default_human_prompt,
 ) -> QueueRunResult:
+
     """Execute one runnable planfile ticket, if any.
 
     When ``interactive`` is true and the next ticket is a ``human``
@@ -903,7 +919,9 @@ def _run_next_planfile_task_impl(
             api_runner,
             llm_runner,
             shell_runner,
+            taskand_runner,
         )
+
 
         result, patch_outcome, patch_evidence = _apply_patch_step(
             project,
@@ -954,6 +972,7 @@ def run_next_planfile_task(
     shell_runner: Callable[[str, Path], CommandResult] = run_shell_command,
     api_runner: Callable[[dict[str, any], Path], CommandResult] = run_api_request,
     llm_runner: Callable[[dict[str, any], Path], CommandResult] = run_llm_request,
+    taskand_runner: Callable[[dict[str, any], Path], CommandResult] = run_taskand_request,
     prompt_runner: Callable[[str, str], str | None] = default_human_prompt,
 ) -> QueueRunResult:
     from koru.bounded_contexts.planfile_queue.application import PlanfileQueueCommandService
@@ -972,9 +991,11 @@ def run_next_planfile_task(
             shell_runner=shell_runner,
             api_runner=api_runner,
             llm_runner=llm_runner,
+            taskand_runner=taskand_runner,
             prompt_runner=prompt_runner,
         )
     )
+
 
 
 SUCCESS_QUEUE_STATUSES = frozenset({"completed", "idle", "waiting_input", "dry_run"})

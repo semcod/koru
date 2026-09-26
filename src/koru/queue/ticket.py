@@ -260,6 +260,41 @@ def ticket_api_request(ticket: dict) -> dict[str, Any] | None:
     }
 
 
+def ticket_taskand_request(ticket: dict) -> dict[str, Any] | None:
+    """Translate an executor.kind=taskand or process ticket into a Taskand call spec.
+
+    Returns None when the ticket lacks the minimum signal (a process URI or DAG plan),
+    so the queue runner can block the ticket with a descriptive reason.
+    """
+    inputs = ticket.get("inputs") or {}
+    executor = ticket.get("executor") or {}
+
+    uri = (
+        inputs.get("taskand_uri")
+        or inputs.get("process_uri")
+        or inputs.get("uri")
+        or executor.get("handler")
+    )
+    plan = inputs.get("plan") or inputs.get("dag") or inputs.get("blueprint")
+    if not uri and not plan:
+        return None
+
+    return {
+        "uri": str(uri) if uri else None,
+        "data": inputs.get("data") or inputs.get("input") or inputs.get("params") or {},
+        "plan": plan,
+        "run_id": inputs.get("run_id"),
+        "gateway_url": (
+            inputs.get("gateway_url")
+            or os.getenv("TASKAND_GATEWAY_URL")
+            or os.getenv("TASKAND_GATEWAY")
+            or "http://127.0.0.1:8077"
+        ),
+        "timeout_seconds": float(inputs.get("timeout_seconds") or 60.0),
+    }
+
+
+
 def _has_planfile_cli_module() -> bool:
     try:
         return find_spec("planfile.cli") is not None

@@ -1,0 +1,93 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-255",
+  "summary": "Integrate Taskand process runner adapter into Koru queue",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-255/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/types.py",
+    "src/koru/queue/ticket.py",
+    "src/koru/queue/runners.py",
+    "src/koru/queue/runner.py",
+    "src/koru/bounded_contexts/planfile_queue/commands/__init__.py",
+    "src/koru/bounded_contexts/planfile_queue/application.py",
+    "tests/test_queue_runners.py",
+    "tests/test_taskand_runner.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "563746cbeb7930ec597c48198ddd551280101739",
+    "targetBranch": "main",
+    "outcome": "Integrate Taskand process execution framework with Koru queue system by introducing TaskandRunResult, ticket_taskand_request, run_taskand_request supporting both Gateway HTTP (/api/proc/call, /api/orchestrator) and local CLI fallback (taskand call), and wiring executor.kind in ('taskand', 'process') into Koru queue runners.",
+    "nonGoals": [
+      "Cross-package Python imports between koru and taskand",
+      "Altering existing shell, api, or llm executor behavior"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Introduce a dedicated Taskand queue executor that handles process URIs and DAG orchestrator plans over HTTP or local CLI with zero cross-package imports.",
+      "components": [
+        {
+          "name": "koru-queue-taskand-runner",
+          "paths": [
+            "src/koru/queue/types.py",
+            "src/koru/queue/ticket.py",
+            "src/koru/queue/runners.py",
+            "src/koru/queue/runner.py",
+            "src/koru/bounded_contexts/planfile_queue/commands/__init__.py",
+            "src/koru/bounded_contexts/planfile_queue/application.py",
+            "tests/test_queue_runners.py",
+            "tests/test_taskand_runner.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit to restore previous runner definitions."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q tests/test_queue_runners.py tests/test_taskand_runner.py"
+        ],
+        "evidence": "All unit and integration tests for Taskand runner adapter pass cleanly."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
