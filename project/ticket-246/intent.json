@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-246",
+  "summary": "fix queued ticket execution step resolution and plan summary in execution plan",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-246/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/execution_plan.py",
+    "tests/test_queued_execution_steps.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "66204c12096763d39b37c9e30496d2cac0bfe341",
+    "targetBranch": "main",
+    "outcome": "Fix queued ticket execution step resolution and plan summary in src/koru/autonomy/execution_plan.py by dispatching _queued_ticket_steps through module namespace so monkeypatched profile/workflow functions take effect, and formatting plan summary to include profile id in planfile_queue phase.",
+    "nonGoals": [
+      "Breaking public or internal imports from koru.autonomy.execution_plan",
+      "Altering task strategy resolution order"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Implement _queued_ticket_steps in koru.autonomy.execution_plan to bind module-level _select_profile, _workflow_steps, and _load_task_profiles, and include profile id in planfile_queue summary in _select_plan_work.",
+      "components": [
+        {
+          "name": "koru-autonomy-execution-plan",
+          "paths": [
+            "src/koru/autonomy/execution_plan.py",
+            "tests/test_queued_execution_steps.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit to restore the previous execution_plan.py implementation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_queued_execution_steps.py tests/test_execution_plan.py"
+        ],
+        "evidence": "All tests in tests/test_queued_execution_steps.py and tests/test_execution_plan.py pass without errors."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "ruff check src/koru/autonomy/execution_plan.py",
+          "ruff format --check src/koru/autonomy/execution_plan.py"
+        ],
+        "evidence": "Ruff check and format report 0 findings."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "The governance gate reports 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}

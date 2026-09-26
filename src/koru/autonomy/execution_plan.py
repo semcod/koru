@@ -63,9 +63,6 @@ from koru.autonomy.execution_plan_steps import (
     pr_steps as _pr_steps,
 )
 from koru.autonomy.execution_plan_steps import (
-    queued_ticket_steps as _queued_ticket_steps,
-)
-from koru.autonomy.execution_plan_steps import (
     workflow_steps as _workflow_steps,
 )
 from koru.autonomy.execution_plan_steps import (
@@ -147,6 +144,41 @@ class _PlanSelection(NamedTuple):
 
 def _select_profile(ticket: dict[str, Any] | None, phase: str) -> tuple[str | None, dict[str, Any] | None]:
     return select_profile(ticket, phase, profiles_doc=_load_task_profiles())
+
+
+def _queued_ticket_steps(
+    project: Path,
+    selected: dict[str, Any],
+    phase: str,
+) -> list[ExecutionStep]:
+    repo = Path(resolve_ticket_repo(project, selected) or project)
+    profile_id, profile = _select_profile(selected, phase)
+    if profile is None:
+        profiles_doc = _load_task_profiles()
+        fallback_id = _fallback_profile_id(profiles_doc)
+        profile = (profiles_doc.get("profiles") or {}).get(fallback_id)
+        profile_id = fallback_id if isinstance(profile, dict) else None
+    if isinstance(profile, dict):
+        steps = _workflow_steps(
+            profile,
+            project=project,
+            repo=repo,
+            ticket=selected,
+            profile_id=profile_id or "generic",
+            phase=phase,
+        )
+    else:
+        steps = [
+            ExecutionStep(
+                id="work_ticket",
+                kind="ide_work",
+                reason="Runnable planfile ticket without a matching profile.",
+                ticket_id=str(selected.get("id")),
+                repo=str(repo.resolve()),
+                hint=_ticket_name(selected),
+            ),
+        ]
+    return steps
 
 
 def _pipeline_order(strategy: dict[str, Any]) -> list[Any]:
@@ -249,11 +281,13 @@ def _select_plan_work(
             if open_tickets:
                 phase = "planfile_queue"
                 selected = open_tickets[0]
+                steps = _queued_ticket_steps(project, selected, phase)
+                profile = steps[0].profile_id if steps else "n/a"
                 return _PlanSelection(
                     phase=phase,
-                    steps=_queued_ticket_steps(project, selected, phase),
+                    steps=steps,
                     selected=selected,
-                    summary=f"phase={phase} ticket={selected.get('id')}",
+                    summary=f"phase={phase} ticket={selected.get('id')} profile={profile}",
                 )
             return _discovery_selection(project, _pipeline_order(strategy))
 
