@@ -249,7 +249,12 @@ project analysis or human-owned ticket inputs.
 | **ticket-245** | [`README.md`](./ticket-245/README.md) | - | - | - | - | - |
 | **ticket-246** | [`README.md`](./ticket-246/README.md) | - | - | - | - | - |
 | **ticket-247** | [`README.md`](./ticket-247/README.md) | - | - | - | - | - |
+| **ticket-248** | [`README.md`](./ticket-248/README.md) | - | - |  [`ai-antigravity.md`](./ticket-248/ai-antigravity.md) | - | - |
 | **ticket-249** | [`README.md`](./ticket-249/README.md) | - | - |  [`ai-claude.md`](./ticket-249/ai-claude.md) | - | - |
 | **ticket-251** | [`README.md`](./ticket-251/README.md) | - | - | - | - | - |
 | **ticket-252** | [`README.md`](./ticket-252/README.md) | - | - | - | - | - |
+| **ticket-253** | [`README.md`](./ticket-253/README.md) | - | - | - | - | - |
+| **ticket-254** | [`README.md`](./ticket-254/README.md) | - | - | - | - | - |
+| **ticket-255** | [`README.md`](./ticket-255/README.md) | - | - |  [`ai-antigravity.md`](./ticket-255/ai-antigravity.md) | - | - |
+| **ticket-256** | [`README.md`](./ticket-256/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->

@@ -1,0 +1,92 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-258",
+  "summary": "Fix post-run verify test and ruff lint failures",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-258/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay_readiness.py",
+    "tests/test_autonomy_strategy.py",
+    "tests/test_cli_summary.py",
+    "tests/test_vdisplay_readiness.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "39ccdd35074d2c13b06c4a8a4fcdbfb7678c0aa6",
+    "targetBranch": "main",
+    "outcome": "Fix post_run_verify failure in autonomous loop by updating test_autonomy_strategy.py to expect in_flight_first default strategy and resolving ruff lint errors in tests and src/koru/integrations/vdisplay_readiness.py.",
+    "nonGoals": [
+      "Changing runtime autonomy strategy logic",
+      "Altering test semantics beyond expected strategy assertion"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Update expected strategy_id in test_autonomy_strategy.py from accordion_detail_to_general to in_flight_first, format long lines in test_cli_summary.py, and remove unused imports in test_vdisplay_readiness.py and src/koru/integrations/vdisplay_readiness.py.",
+      "components": [
+        {
+          "name": "koru-tests-lint-fixes",
+          "paths": [
+            "tests/test_autonomy_strategy.py",
+            "tests/test_cli_summary.py",
+            "tests/test_vdisplay_readiness.py",
+            "src/koru/integrations/vdisplay_readiness.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit to restore previous test files."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_autonomy_strategy.py"
+        ],
+        "evidence": "tests/test_autonomy_strategy.py passes without errors."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "ruff check tests/test_autonomy_strategy.py tests/test_cli_summary.py tests/test_vdisplay_readiness.py src/koru/integrations/vdisplay_readiness.py"
+        ],
+        "evidence": "Ruff check on scoped files reports 0 findings."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
