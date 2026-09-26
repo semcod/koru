@@ -6,7 +6,7 @@ import os
 import sys
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from koru.autonomy.autopilot_status import parse_autopilot_status
 from koru.autonomy.env import env_get
@@ -142,31 +142,37 @@ def _default_shell_execute_profile(client_id: str) -> str:
     return "default"
 
 
-def configure_loop_state(
-    args: Any,
-    project: Path,
-    *,
-    effective_flags: Any,
-    apply_agent_lane_environ: Any,
-    resolve_autopilot_ide: Any,
-    resolve_ide_route_fn: Any,
-    state_factory: Any,
-    load_checkpoint: Any,
-) -> tuple[bool, str | None, str, Any, Path, int]:
-    """Configure queue flags, autopilot IDE, and loop state."""
+class _QueueSelection(NamedTuple):
+    """Effective queue flags for the autonomous loop."""
+
+    enable_scan: bool
+    queue_name: str | None
+
+
+class _LoopCheckpoint(NamedTuple):
+    """Loop state plus the checkpoint file it was restored from."""
+
+    state: Any
+    path: Path
+    restored_cycle: int
+
+
+def _resolve_queue_selection(args: Any, *, effective_flags: Any) -> _QueueSelection:
+    """Fold the ticket-source flags into one queue request."""
     enable_scan, use_all_queues = effective_flags(args.ticket_sources)
-    queue_name = None if use_all_queues else args.queue_name
-    # apply_agent_lane_environ is already called in build_and_log_startup_probe
-    # so we can read the lane directly from the environment variable
-    lane = resolve_agent_lane_from_environ(
-        args,
-        project,
-        apply_agent_lane_environ=apply_agent_lane_environ,
-        environ=os.environ,
+    return _QueueSelection(
+        enable_scan=enable_scan,
+        queue_name=None if use_all_queues else args.queue_name,
     )
-    # Shell client targets (claude-code, aider, codex, …) bypass IDE-route
-    # resolution: the drive step talks to the vendor CLI via tillm instead of
-    # the autopilot daemon.
+
+
+def _resolve_shell_client(args: Any, lane: str | None, *, project: Path) -> str | None:
+    """Resolve the tillm shell-client target, if any.
+
+    Priority: an explicit ``--ide <shell-client>`` token, then
+    ``KORU_TILLM_CLIENT``/``URIRUN_KORU_IDE``, then ``--ide auto``
+    autodetection on editor-less hosts.
+    """
     from koru.tillm_bridge import (
         looks_like_shell_client,
         shell_drive_client_id,
@@ -201,35 +207,106 @@ def configure_loop_state(
                 f"'{shell_client}' (tillm). Pass --ide to override.",
                 file=sys.stderr,
             )
-    if shell_client:
-        selected_ide = shell_client
-        os.environ["KORU_TILLM_CLIENT"] = shell_client
-        llm_model = (getattr(args, "llm_model", None) or "").strip()
-        if llm_model:
-            os.environ["KORU_TILLM_MODEL"] = llm_model
-            os.environ["KORU_TILLM_FORCE_MODEL"] = llm_model
-        # Autonomous drive needs the client to apply edits and run checks;
-        # the conservative default profile would leave it read-only — but only
-        # for clients that actually support an ``automation`` profile (aider does not).
-        if "KORU_TILLM_EXECUTE_PROFILE" not in os.environ:
-            os.environ["KORU_TILLM_EXECUTE_PROFILE"] = _default_shell_execute_profile(
-                shell_client
-            )
-    else:
-        # Resolve lane slugs (cursor-main, jetbrains-main) to canonical IDE ids (cursor, jetbrains).
-        selected_ide, _autopilot_ide_source = resolve_autopilot_ide(
-            args.autopilot_ide,
-            lane,
-            resolve_ide_route_fn=resolve_ide_route_fn,
+    return shell_client
+
+
+def _export_shell_client_env(shell_client: str, args: Any) -> None:
+    """Export the tillm env overrides an autonomous shell-client drive needs."""
+    os.environ["KORU_TILLM_CLIENT"] = shell_client
+    llm_model = (getattr(args, "llm_model", None) or "").strip()
+    if llm_model:
+        os.environ["KORU_TILLM_MODEL"] = llm_model
+        os.environ["KORU_TILLM_FORCE_MODEL"] = llm_model
+    # Autonomous drive needs the client to apply edits and run checks;
+    # the conservative default profile would leave it read-only — but only
+    # for clients that actually support an ``automation`` profile (aider does not).
+    if "KORU_TILLM_EXECUTE_PROFILE" not in os.environ:
+        os.environ["KORU_TILLM_EXECUTE_PROFILE"] = _default_shell_execute_profile(
+            shell_client
         )
-    loop_state = state_factory()
-    checkpoint_path = (project / ".planfile/.koru/autonomous-state.json").resolve()
-    restored_cycle = load_checkpoint(
-        checkpoint_path,
-        state=loop_state,
+
+
+def _resolve_selected_ide(
+    args: Any,
+    lane: str | None,
+    *,
+    shell_client: str | None,
+    resolve_autopilot_ide: Any,
+    resolve_ide_route_fn: Any,
+) -> str:
+    """Pick the autopilot target: the shell client, or the canonical IDE id."""
+    if shell_client:
+        _export_shell_client_env(shell_client, args)
+        return shell_client
+    # Resolve lane slugs (cursor-main, jetbrains-main) to canonical IDE ids (cursor, jetbrains).
+    selected_ide, _autopilot_ide_source = resolve_autopilot_ide(
+        args.autopilot_ide,
+        lane,
+        resolve_ide_route_fn=resolve_ide_route_fn,
+    )
+    return selected_ide
+
+
+def _restore_loop_checkpoint(
+    project: Path,
+    *,
+    state_factory: Any,
+    load_checkpoint: Any,
+    stdio_format: str,
+) -> _LoopCheckpoint:
+    """Create the loop state and restore the persisted autonomous checkpoint."""
+    state = state_factory()
+    path = (project / ".planfile/.koru/autonomous-state.json").resolve()
+    restored_cycle = load_checkpoint(path, state=state, stdio_format=stdio_format)
+    return _LoopCheckpoint(state=state, path=path, restored_cycle=restored_cycle)
+
+
+def configure_loop_state(
+    args: Any,
+    project: Path,
+    *,
+    effective_flags: Any,
+    apply_agent_lane_environ: Any,
+    resolve_autopilot_ide: Any,
+    resolve_ide_route_fn: Any,
+    state_factory: Any,
+    load_checkpoint: Any,
+) -> tuple[bool, str | None, str, Any, Path, int]:
+    """Configure queue flags, autopilot IDE, and loop state."""
+    queues = _resolve_queue_selection(args, effective_flags=effective_flags)
+    # apply_agent_lane_environ is already called in build_and_log_startup_probe
+    # so we can read the lane directly from the environment variable
+    lane = resolve_agent_lane_from_environ(
+        args,
+        project,
+        apply_agent_lane_environ=apply_agent_lane_environ,
+        environ=os.environ,
+    )
+    # Shell client targets (claude-code, aider, codex, …) bypass IDE-route
+    # resolution: the drive step talks to the vendor CLI via tillm instead of
+    # the autopilot daemon.
+    shell_client = _resolve_shell_client(args, lane, project=project)
+    selected_ide = _resolve_selected_ide(
+        args,
+        lane,
+        shell_client=shell_client,
+        resolve_autopilot_ide=resolve_autopilot_ide,
+        resolve_ide_route_fn=resolve_ide_route_fn,
+    )
+    checkpoint = _restore_loop_checkpoint(
+        project,
+        state_factory=state_factory,
+        load_checkpoint=load_checkpoint,
         stdio_format=args.emit_events,
     )
-    return enable_scan, queue_name, selected_ide, loop_state, checkpoint_path, restored_cycle
+    return (
+        queues.enable_scan,
+        queues.queue_name,
+        selected_ide,
+        checkpoint.state,
+        checkpoint.path,
+        checkpoint.restored_cycle,
+    )
 
 
 def select_and_log_cycle_profile(

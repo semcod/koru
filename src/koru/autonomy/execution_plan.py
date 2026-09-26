@@ -8,7 +8,7 @@ from dataclasses import asdict, dataclass, field
 from functools import lru_cache
 from importlib import resources
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 import yaml
 
@@ -350,63 +350,104 @@ def _queued_ticket_steps(
     return steps
 
 
-def compile_execution_plan(project: Path) -> ExecutionPlan:
-    project = project.resolve()
-    strategy = load_autonomy_strategy(project) or {}
-    strategy_id = str(strategy.get("id") or "unknown")
+class _PlanSignals(NamedTuple):
+    """Signal payload plus the open refactor tickets it was computed from."""
+
+    payload: dict[str, Any]
+    open_tickets: list[dict[str, Any]]
+
+
+class _PlanSelection(NamedTuple):
+    """Chosen plan phase with the steps and ticket that represent it."""
+
+    phase: str
+    steps: list[ExecutionStep]
+    selected: dict[str, Any] | None
+
+
+def _pipeline_order(strategy: dict[str, Any]) -> list[Any]:
     pipeline = strategy.get("default_pipeline") if isinstance(strategy.get("default_pipeline"), dict) else {}
     order = pipeline.get("order") if isinstance(pipeline.get("order"), list) else []
-    heuristics = build_strategy_heuristics(project)
+    return order
+
+
+def _collect_plan_signals(project: Path) -> _PlanSignals:
     open_tickets = _open_refactor_tickets(project)
-    signals: dict[str, Any] = {
+    payload: dict[str, Any] = {
         "planfile": sprint_ticket_status_summary(project),
         "open_refactor_tickets": len(open_tickets),
         "skipped_likely_complete": _count_skipped_complete(project),
-        "heuristics": heuristics,
+        "heuristics": build_strategy_heuristics(project),
     }
     try:
         from koru.work.llm_provenance import resolve_work_llm_context
 
-        signals["llm"] = resolve_work_llm_context(project).to_dict()
+        payload["llm"] = resolve_work_llm_context(project).to_dict()
     except Exception:
         pass
+    return _PlanSignals(payload=payload, open_tickets=open_tickets)
 
-    steps: list[ExecutionStep] = []
-    selected: dict[str, Any] | None = None
-    phase = "idle"
 
+def _discovery_steps(project: Path, phase: str) -> list[ExecutionStep]:
+    profile_id, profile = _select_profile(None, phase)
+    if not isinstance(profile, dict):
+        return []
+    return _workflow_steps(
+        profile,
+        project=project,
+        repo=project,
+        ticket=None,
+        profile_id=profile_id or phase,
+        phase=phase,
+    )
+
+
+def _discovery_selection(project: Path, order: list[Any]) -> _PlanSelection:
+    for phase_name in order:
+        if phase_name in {"idle_scan", "whole_project_discovery"}:
+            phase = str(phase_name)
+            return _PlanSelection(
+                phase=phase,
+                steps=_discovery_steps(project, phase),
+                selected=None,
+            )
+    return _PlanSelection(phase="idle", steps=[], selected=None)
+
+
+def _select_plan_work(project: Path, strategy: dict[str, Any], open_tickets: list[dict[str, Any]]) -> _PlanSelection:
     if open_tickets:
         phase = "planfile_queue"
         selected = open_tickets[0]
-        steps = _queued_ticket_steps(project, selected, phase)
-    else:
-        for phase_name in order:
-            if phase_name in {"idle_scan", "whole_project_discovery"}:
-                phase = str(phase_name)
-                profile_id, profile = _select_profile(None, phase)
-                if isinstance(profile, dict):
-                    steps = _workflow_steps(
-                        profile,
-                        project=project,
-                        repo=project,
-                        ticket=None,
-                        profile_id=profile_id or phase,
-                        phase=phase,
-                    )
-                break
+        return _PlanSelection(
+            phase=phase,
+            steps=_queued_ticket_steps(project, selected, phase),
+            selected=selected,
+        )
+    return _discovery_selection(project, _pipeline_order(strategy))
 
-    summary = f"phase={phase}"
-    if selected is not None:
-        summary += f" ticket={selected.get('id')} profile={steps[0].profile_id if steps else 'n/a'}"
+
+def _plan_summary(selection: _PlanSelection) -> str:
+    summary = f"phase={selection.phase}"
+    if selection.selected is not None:
+        profile = selection.steps[0].profile_id if selection.steps else "n/a"
+        summary += f" ticket={selection.selected.get('id')} profile={profile}"
+    return summary
+
+
+def compile_execution_plan(project: Path) -> ExecutionPlan:
+    project = project.resolve()
+    strategy = load_autonomy_strategy(project) or {}
+    signals = _collect_plan_signals(project)
+    selection = _select_plan_work(project, strategy, signals.open_tickets)
     return ExecutionPlan(
         schema=_SCHEMA,
         project=str(project),
-        strategy_id=strategy_id,
-        phase=phase,
-        steps=steps,
-        signals=signals,
-        selected_ticket=selected,
-        summary=summary,
+        strategy_id=str(strategy.get("id") or "unknown"),
+        phase=selection.phase,
+        steps=selection.steps,
+        signals=signals.payload,
+        selected_ticket=selection.selected,
+        summary=_plan_summary(selection),
     )
 
 

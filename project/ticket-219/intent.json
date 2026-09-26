@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-219",
+  "summary": "decompose god function main in uri2koru cli",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-219/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/uri2koru/src/uri2koru/cli.py",
+    "packages/uri2koru/tests/test_uri2koru.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3506e31db46d810e8ce903d5abab513dd644887e",
+    "targetBranch": "main",
+    "outcome": "Decompose main in packages/uri2koru/src/uri2koru/cli.py (PLF-037): extract _add_decode/_add_run/_add_resolve subcommand registrars and a _build_parser assembly so the argparse construction leaves main, and route each dispatched subcommand through _cmd_decode/_cmd_run/_cmd_resolve handlers, dropping main from CC=12 / fan-out=16 / mutations=19 to CC=4 / fan-out=5 / mutations=1 (god-function thresholds: fan-out > 10, mutations > 6, CC > 12) with every new helper under the same thresholds, while keeping the public main(argv)->int contract, the uri2koru console-script binding and byte-identical stdout/stderr/exit-code behavior for all three subcommands.",
+    "nonGoals": [
+      "Reducing the pre-existing god function nlp2uri in packages/uri2koru/src/uri2koru/nlp2uri.py (untouched by this ticket)",
+      "Changing subcommand names, flags, defaults, help texts or output formatting",
+      "Extracting cli.py into a new module or package"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Split the argparse construction into per-subcommand registrars (_add_decode, _add_run, _add_resolve) because code2llm counts each add_* method call as a mutation, so a single _build_parser would keep 16 mutations and remain a god function; each registrar holds at most 5 mutations. Dispatch handlers stay in cli.py and call the module-level uri_to_dsl/run_uri/nlp2uri imports directly so existing uri2koru.cli patch targets keep working (late binding through the module facade).",
+      "components": [
+        {
+          "name": "uri2koru-cli",
+          "paths": [
+            "packages/uri2koru/src/uri2koru/cli.py",
+            "packages/uri2koru/tests/test_uri2koru.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the single inline main function."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -c \"from code2llm.api import analyze; r = analyze('packages/uri2koru/src'); print([(s.name, s.line) for s in r.smells if s.file.endswith('cli.py')]); print({k: v for k, v in r.metrics.items() if k.endswith('cli.main')})\""
+        ],
+        "evidence": "The code2llm smell list contains no function defined in cli.py and cli.main reports CC=4, fan-out=5, below every god-function threshold."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest -q packages/uri2koru/tests/test_uri2koru.py"
+        ],
+        "evidence": "All existing uri2koru tests pass unchanged plus new main() dispatch regression tests covering decode, run (text and --json), resolve (text and --json) and the unknown-command exit path."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance gate passes with 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}

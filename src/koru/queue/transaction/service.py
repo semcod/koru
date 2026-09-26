@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
+from typing import NamedTuple
 
 from koru.queue.journal import (
     PHASE_APPLIED,
@@ -66,6 +67,14 @@ ShellRunner = Callable[[str, Path], CommandResult]
 Authorizer = Callable[[PatchPlan, dict], PatchOutcome | None]
 
 
+class _ScreenedPatch(NamedTuple):
+    """What survived the two screens that run before any plan exists."""
+
+    diff: str | None
+    proposal: dict | None
+    refusal: PatchOutcome | None
+
+
 def execute_patch_transaction(
     project: Path,
     result: CommandResult,
@@ -82,15 +91,47 @@ def execute_patch_transaction(
     Refusals that fire before a plan exists (no diff, symlink screen) are not
     journaled: there is no run identity yet, and nothing was going to change.
     """
-    diff, proposal, refusal = extract_patch(result)
-    if diff is None:
-        return PatchTransactionResult(result, refusal)
+    screened = _screen_before_plan(result)
+    if screened.diff is None or screened.refusal is not None:
+        return PatchTransactionResult(result, screened.refusal)
 
-    refusal = screen_diff_contents(diff)
+    plan = build_patch_plan(
+        project, ticket, screened.diff, manifest, proposal=screened.proposal,
+    )
+    journal = _open_run_journal(project, plan, screened.proposal)
+    if plan.verify_error is not None:
+        # The ticket asked for a gate that cannot be honoured. Refusing beats
+        # every alternative: falling through to a weaker gate would let a typo
+        # disable verification, and artifact mode would still record a run
+        # whose governance was misconfigured.
+        return _refuse_invalid_verify_profile(result, plan, journal)
+    freeze = ManifestFreeze(plan, manifest)
+
+    if plan.mode == PROMOTION_ARTIFACT:
+        return _deliver_artifact(result, plan, freeze, journal)
+
+    refusal = _screen_promotion_gates(plan, journal)
     if refusal is not None:
-        return PatchTransactionResult(result, refusal)
+        return PatchTransactionResult(result, refusal, plan=plan, manifest=freeze.manifest)
 
-    plan = build_patch_plan(project, ticket, diff, manifest, proposal=proposal)
+    outcome = _run_plan(plan, freeze, shell_runner, journal, authorize=authorize)
+    return PatchTransactionResult(result, outcome, plan=plan, manifest=freeze.manifest)
+
+
+def _screen_before_plan(result: CommandResult) -> _ScreenedPatch:
+    """Refuse replies that never earn a run: no usable diff, or an unsafe one."""
+    screened = _ScreenedPatch(*extract_patch(result))
+    if screened.diff is not None:
+        screened = screened._replace(refusal=screen_diff_contents(screened.diff))
+    return screened
+
+
+def _open_run_journal(
+    project: Path,
+    plan: PatchPlan,
+    proposal: dict | None,
+) -> RunJournal:
+    """Give the run its identity and record what was resolved from the ticket."""
     journal = RunJournal(project, plan.run_id)
     journal.append(
         PHASE_RESOLVED,
@@ -102,52 +143,78 @@ def execute_patch_transaction(
             "proposal_sha256": (proposal or {}).get("proposal_sha256"),
         },
     )
-    if plan.verify_error is not None:
-        # The ticket asked for a gate that cannot be honoured. Refusing beats
-        # every alternative: falling through to a weaker gate would let a typo
-        # disable verification, and artifact mode would still record a run
-        # whose governance was misconfigured.
-        journal.append(PHASE_REFUSED, data={"code": VERIFY_PROFILE_INVALID})
-        return PatchTransactionResult(
-            result,
-            PatchOutcome(code=VERIFY_PROFILE_INVALID, message=plan.verify_error),
-            plan=plan,
-        )
-    freeze = ManifestFreeze(plan, manifest)
+    return journal
 
-    if plan.mode == PROMOTION_ARTIFACT:
-        frozen = freeze.freeze()
-        journal.append(PHASE_FROZEN, manifest_hash=frozen["manifest_hash"])
-        deliver_patch_artifact(plan, frozen)
-        journal.append(PHASE_COMPLETED, data={"delivery": "artifact"})
-        return PatchTransactionResult(result, None, plan=plan, manifest=freeze.manifest)
 
+def _refuse_invalid_verify_profile(
+    result: CommandResult,
+    plan: PatchPlan,
+    journal: RunJournal,
+) -> PatchTransactionResult:
+    """Refuse, as a journaled decision, a run whose declared gate cannot run."""
+    journal.append(PHASE_REFUSED, data={"code": VERIFY_PROFILE_INVALID})
+    return PatchTransactionResult(
+        result,
+        PatchOutcome(code=VERIFY_PROFILE_INVALID, message=plan.verify_error),
+        plan=plan,
+    )
+
+
+def _deliver_artifact(
+    result: CommandResult,
+    plan: PatchPlan,
+    freeze: ManifestFreeze,
+    journal: RunJournal,
+) -> PatchTransactionResult:
+    """Artifact mode: freeze the patch and hand it over, touching no workspace."""
+    frozen = freeze.freeze()
+    journal.append(PHASE_FROZEN, manifest_hash=frozen["manifest_hash"])
+    deliver_patch_artifact(plan, frozen)
+    journal.append(PHASE_COMPLETED, data={"delivery": "artifact"})
+    return PatchTransactionResult(result, None, plan=plan, manifest=freeze.manifest)
+
+
+def _screen_promotion_gates(plan: PatchPlan, journal: RunJournal) -> PatchOutcome | None:
+    """Refuse a plan that may not attempt promotion, recording why.
+
+    Two gates answer one question — may this run land anything at all? The
+    precondition screen covers the mechanics; the branch screen holds the
+    mode's own promise.
+    """
     refusal = screen_promotion_preconditions(plan)
     if refusal is not None:
         journal.append(PHASE_REFUSED, data={"code": refusal.code})
-        return PatchTransactionResult(result, refusal, plan=plan, manifest=freeze.manifest)
+        return refusal
+    if plan.mode != PROMOTION_BRANCH or plan.isolated:
+        return None
+    # Branch promises a verified commit and an untouched shared tree; a run
+    # that cannot isolate (no gate to verify with, or no worktree support)
+    # cannot keep either promise. Falling back to writing the workspace
+    # would be the silent downgrade the mode exists to rule out.
+    journal.append(PHASE_REFUSED, data={"code": PROMOTION_FAILED})
+    return PatchOutcome(
+        code=PROMOTION_FAILED,
+        message=(
+            "promotion_mode=branch requires a verify gate and worktree "
+            "isolation, and this run has neither a resolvable verify command "
+            "nor an isolatable checkout. Name a verify profile (or command), "
+            "or explicitly choose promotion_mode=apply for an unverified "
+            "local application."
+        ),
+    )
 
-    if plan.mode == PROMOTION_BRANCH and not plan.isolated:
-        # Branch promises a verified commit and an untouched shared tree; a run
-        # that cannot isolate (no gate to verify with, or no worktree support)
-        # cannot keep either promise. Falling back to writing the workspace
-        # would be the silent downgrade the mode exists to rule out.
-        refusal = PatchOutcome(
-            code=PROMOTION_FAILED,
-            message=(
-                "promotion_mode=branch requires a verify gate and worktree "
-                "isolation, and this run has neither a resolvable verify command "
-                "nor an isolatable checkout. Name a verify profile (or command), "
-                "or explicitly choose promotion_mode=apply for an unverified "
-                "local application."
-            ),
-        )
-        journal.append(PHASE_REFUSED, data={"code": refusal.code})
-        return PatchTransactionResult(result, refusal, plan=plan, manifest=freeze.manifest)
 
+def _run_plan(
+    plan: PatchPlan,
+    freeze: ManifestFreeze,
+    shell_runner: ShellRunner,
+    journal: RunJournal,
+    *,
+    authorize: Authorizer | None = None,
+) -> PatchOutcome | None:
+    """Verify the plan isolated when it can be, directly when it cannot."""
     run = _run_isolated if plan.isolated else _run_direct
-    outcome = run(plan, freeze, shell_runner, journal, authorize=authorize)
-    return PatchTransactionResult(result, outcome, plan=plan, manifest=freeze.manifest)
+    return run(plan, freeze, shell_runner, journal, authorize=authorize)
 
 
 def _authorize(

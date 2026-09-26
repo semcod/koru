@@ -1,0 +1,102 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-221",
+  "summary": "Split god module queue context",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-221/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/context.py",
+    "src/koru/queue/context_exclusions.py",
+    "src/koru/queue/context_files.py",
+    "src/koru/queue/context_slicing.py",
+    "tests/test_queue_context_modules.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f2c09232236b788619eff07916374e449b7e4129",
+    "targetBranch": "main",
+    "outcome": "Split src/koru/queue/context.py (code2llm GOD: 581 lines, 4 classes, 14 mutations, max CC=19) by responsibility into three modules behind a stable facade: context_exclusions.py (non-negotiable secret/VCS/generated exclusion policy + _is_excluded), context_files.py (request-driven file selection, glob/auto-include collection, safe bounded reads, file tree) and context_slicing.py (focused AST/line-window slicing of oversized files with target symbol/line resolution). context.py keeps only the assembly pipeline (ContextResult, _context_file_sections, _truncate_context_text, build_project_context, DEFAULT_MAX_CONTEXT_CHARS) and re-exports every moved private name via redundant aliases so `from koru.queue.context import ...` stays byte-compatible, including the test-facing _is_excluded and _resolve_target_symbol_and_line. Behavior is preserved verbatim (functions move unmodified); tests/test_llm_context.py passes unchanged and tests/test_queue_context_modules.py pins the moved behavior at its new homes plus the facade re-export surface.",
+    "nonGoals": [
+      "Changing context assembly behavior, output format, exclusions or slicing heuristics",
+      "Touching src/koru/queue/runner.py or any other consumer of build_project_context",
+      "Splitting or refactoring any other queue module flagged by code2llm"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Move functions verbatim (same private names) into three responsibility modules and re-export them from the koru.queue.context facade with redundant aliases (the koru.scan -> koru.scan_todo pattern). An audit found no monkeypatch/patch targets on koru.queue.context in src/, tests/ or packages/ (the patched koru.context.build_context is a different module), so plain import-time re-exports suffice without call-time facade indirection; the two private names tests import (_is_excluded, _resolve_target_symbol_and_line) keep working through the facade.",
+      "components": [
+        {
+          "name": "koru-queue-context",
+          "paths": [
+            "src/koru/queue/context.py",
+            "src/koru/queue/context_exclusions.py",
+            "src/koru/queue/context_files.py",
+            "src/koru/queue/context_slicing.py",
+            "tests/test_queue_context_modules.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the single 581-line src/koru/queue/context.py."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "wc -l src/koru/queue/context.py src/koru/queue/context_exclusions.py src/koru/queue/context_files.py src/koru/queue/context_slicing.py"
+        ],
+        "evidence": "context.py drops from 581 lines to the assembly facade only; each responsibility module stays a focused non-god module."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_llm_context.py tests/test_queue_context_modules.py"
+        ],
+        "evidence": "Existing context suite passes unchanged (51 passed; the test_cursor_llm no-default-cap failure is pre-existing on main and untouched by this ticket) and the new focused suite passes."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "PYTHONPATH=src python3 -c \"from koru.queue.context import DEFAULT_MAX_CONTEXT_CHARS, LARGE_FILE_SLICE_THRESHOLD_CHARS, ContextResult, _is_excluded, _resolve_target_symbol_and_line, build_project_context; from koru.queue import runner; assert _is_excluded('.env') and not _is_excluded('src/app.py'); assert DEFAULT_MAX_CONTEXT_CHARS == 32_000; print('facade stable')\""
+        ],
+        "evidence": "Every pre-split import path (public and private) still resolves through the facade and src/koru/queue/runner.py is unmodified."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance gate passes with 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}
