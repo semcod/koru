@@ -14,8 +14,11 @@ from unittest.mock import patch
 
 from koru import cli_scan
 from koru.scan import (
+    _PLANFILE_TICKETS_ARTIFACT_PATHS,
     ScanResult,
     Suggestion,
+    _find_analysis_file,
+    _load_yaml_mapping,
     _suggestion_dedupe_key,
     run_scan,
     scan_gitignore_drift,
@@ -588,6 +591,23 @@ class TestRunScan(unittest.TestCase):
             self.assertRegex(artifact["sha256"], r"^[0-9a-f]{64}$")
             self.assertIn("code2llm", evidence["regenerate_command"])
             self.assertIn("--planfile-apply", evidence["regenerate_command"])
+
+    def test_code2llm_artifact_probing_prefers_nested_copies(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "project").mkdir()
+            # A nested plain-text analysis beats a repo-root YAML copy.
+            nested = project / "project" / "analysis.toon"
+            nested.write_text("HEALTH\n", encoding="utf-8")
+            (project / "analysis.toon.yaml").write_text("HEALTH\n", encoding="utf-8")
+            self.assertEqual(_find_analysis_file(project), (nested, "project/analysis.toon"))
+
+            # Mapping loaders fall back to the repo-root copy when project/ has none.
+            (project / "planfile-tickets.yaml").write_text("tickets: []\n", encoding="utf-8")
+            self.assertEqual(
+                _load_yaml_mapping(project, _PLANFILE_TICKETS_ARTIFACT_PATHS),
+                {"tickets": []},
+            )
 
     def test_apply_create_failure_is_skipped(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
