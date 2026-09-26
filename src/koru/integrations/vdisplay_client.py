@@ -571,7 +571,8 @@ from koru.integrations.vdisplay.capture_gates import (  # noqa: E402,F401,I001
 )
 from koru.integrations.vdisplay.focus_edit import (  # noqa: E402,F401,I001
     _photo_vql_focus_target, _photo_vql_edit_result, _photo_vql_stale_gate_override_ok,
-    _photo_vql_stale_metadata_gate, _photo_vql_capture_mismatch_gate, _photo_vql_map_source_preflight_gate,
+    _persist_blocked_gate_result, _photo_vql_stale_metadata_gate, _photo_vql_capture_mismatch_gate,
+    _photo_vql_map_source_preflight_gate,
     _photo_vql_target_map_mismatch_gate, _photo_vql_maybe_clear_mismatch, _photo_vql_refined_target,
     _photo_vql_command_plan_pre_act, _photo_vql_unverified_chat_gate, _photo_vql_edit_mismatch_allowances,
     _photo_vql_combined_ok_after_edit, _photo_vql_run_paste_verification, _photo_vql_post_paste_verification,

@@ -1,0 +1,92 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-239",
+  "summary": "Consolidate photo-VQL blocked-gate persistence in focus_edit",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-239/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay/focus_edit.py",
+    "src/koru/integrations/vdisplay_client.py",
+    "tests/test_photo_vql_blocked_gates.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3645d89221699c122d010c22391122d7f032f03f",
+    "targetBranch": "main",
+    "outcome": "Remove the code2llm `Shotgun Surgery: blocked` finding (planfile PLF-043) by consolidating the repeated blocked-gate persistence stanza in src/koru/integrations/vdisplay/focus_edit.py. On origin/main the smell lives in focus_edit.py (the ticket-236 split moved the gates verbatim out of vdisplay_client.py): the `active_session_dir()/persist_autonomy_phase` persist-and-return stanza is repeated inline in _photo_vql_stale_metadata_gate, _photo_vql_capture_mismatch_gate, _photo_vql_map_source_preflight_gate, _photo_vql_target_map_mismatch_gate and _photo_vql_unverified_chat_gate, and the `blocked` local is assigned in 5 functions (detector threshold: >=5 per file). Add one module-local helper _persist_blocked_gate_result(blocked, *, phase, event) that owns the persist stanza (via the late-binding _vdc() facade, preserving the facade-level monkeypatch surface) and route the five gates through it, removing the per-gate `blocked`/`err` locals; re-export the helper from the vdisplay_client facade as the ticket-236 module-split contract requires for every focus_edit def. After the change `blocked` is assigned in 2 focus_edit.py functions (_photo_vql_selected_target, _photo_vql_refined_plan) — under the >=5 threshold — and changing how blocked payloads are persisted touches one function instead of five. Add tests/test_photo_vql_blocked_gates.py pinning the phase/event wiring of every gate and the no-session path. Behavior, log text, abort payload shapes and event names are unchanged.",
+    "nonGoals": [
+      "Changing any gate predicate, abort payload shape, log line, phase/event name or default flag",
+      "Renaming or moving any gate function; the only facade change is importing the new helper for the split contract (no existing name or __all__ entry changes)",
+      "Touching the send-chat `blocked` flow in vdisplay/chat_send.py (single-function file grouping, under the detector threshold)",
+      "Refactoring other code2llm findings (scan.py, mcp_provision.py, etc.)"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep the gates in focus_edit.py and extract only the duplicated persist-and-return tail into a module-local helper _persist_blocked_gate_result. The helper resolves _autonomy_session through the lazy _vdc() facade at call time, exactly like the inline stanzas it replaces, so tests that monkeypatch vdisplay_client._autonomy_session attributes keep steering every gate. The helper is re-exported from the vdisplay_client facade because tests/test_vdisplay_module_split.py pins that every def of a responsibility module is re-exported.",
+      "components": [
+        {
+          "name": "koru-integrations-vdisplay",
+          "paths": [
+            "src/koru/integrations/vdisplay/focus_edit.py",
+            "src/koru/integrations/vdisplay_client.py",
+            "tests/test_photo_vql_blocked_gates.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit to restore the inline persist stanzas in the five gates."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "PYTHONPATH=src python3 -m pytest -q tests/test_photo_vql_blocked_gates.py tests/test_photo_vql_orchestrator.py tests/test_photo_vql_drive.py tests/test_photo_vql_guard_vision.py tests/test_photo_vql_monitor_source.py tests/test_vdisplay_module_split.py"
+        ],
+        "evidence": "All photo-VQL/vdisplay tests pass unchanged, including the facade-level monkeypatch surface and the ticket-236 module-split pins (focus_edit stays under the 40-def god-module gate: 28 -> 29 defs)."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 - <<'PY'\nimport ast\nsrc = ast.parse(open('src/koru/integrations/vdisplay/focus_edit.py').read())\nfns = [n for n in src.body if isinstance(n, ast.FunctionDef)]\nblocked = set()\nfor f in fns:\n    for node in ast.walk(f):\n        if isinstance(node, ast.Assign):\n            for t in node.targets:\n                for name in getattr(t, 'elts', [t]):\n                    if isinstance(name, ast.Name) and name.id == 'blocked':\n                        blocked.add(f.name)\nprint(sorted(blocked))\nassert len(blocked) < 5, blocked\nPY"
+        ],
+        "evidence": "The `blocked` local is assigned in fewer than 5 functions of focus_edit.py (code2llm shotgun-surgery threshold is >=5 mutations of one variable per file)."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m ruff check src/koru/integrations/vdisplay/focus_edit.py tests/test_photo_vql_blocked_gates.py"
+        ],
+        "evidence": "No new ruff findings on the touched files."
+      }
+    ]
+  }
+}
