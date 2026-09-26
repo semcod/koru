@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-216",
+  "summary": "Decompose god function compile_inert_plan",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-216/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/poa/plan_compile.py",
+    "tests/test_poa_registry.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9ea111ee30c6d7a733fcc249f178de133a96f2f0",
+    "targetBranch": "main",
+    "outcome": "Decompose god function compile_inert_plan in src/koru/poa/plan_compile.py (PLF-034): extract planning-input/policy-boundary validation (_validate_planning_inputs returning a _ValidatedInputs NamedTuple), snapshot validity-window enforcement (_require_validity_window), plan-request hashing (_request_hash), per-step compilation (_compile_planned_steps over _planned_step, _compensation_process_uri and _binding_evidence, returning a _PlannedCompilation NamedTuple), plan assembly (_build_plan returning a _CompiledPlan NamedTuple) and result assembly (_planning_result), dropping compile_inert_plan from CC=10 / fan-out=18 / mutations=23 to CC=1 / fan-out=8 / mutations=5 (god-function thresholds: fan-out > 10, mutations > 6, CC > 12) while producing a value-identical planning result: same validation order and error messages, same key sets (compensation_process_uri present only when the step declares a compensation capability), same idempotency-key and plan_id derivation, and same hash-pinned plan/result documents; the module's public API (compile_inert_plan, verify_planning_result) is unchanged.",
+    "nonGoals": [
+      "Refactoring the separately ticketed verify_planning_result and _select_bindings smells in the same module",
+      "Changing the poa.plan/v1 or koru.poa/planning-result/v1 document shapes or the module's public API",
+      "Altering binding selection, dependency-graph validation or any validation semantics"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Single-level helper extraction with NamedTuple results: compile_inert_plan keeps only validate/window/request/graph/select/compile/build/result orchestration. The code2llm mutation heuristic counts every assignment and mutation-method call inside a function body, so the removed assignments (validated documents, expected policy input, parsed datetimes, request/plan/result dicts, loop accumulators) must move out of the function rather than merely be reorganized; helpers each stay at or below fan-out 9 / mutations 4 / CC 7 (measured). The conditional compensation_process_uri key is derived in its own helper and only written into the planned step when the step declares a compensation capability, preserving the closed plan document shape; document key order is irrelevant to the RFC8785 canonical hashes but preserved regardless.",
+      "components": [
+        {
+          "name": "poa-plan-compile",
+          "paths": [
+            "src/koru/poa/plan_compile.py",
+            "tests/test_poa_registry.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the single inline compile_inert_plan body."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python (code2llm ProjectAnalyzer/SmellDetector probe on src/koru/poa, enable_metrics=True)"
+        ],
+        "evidence": "compile_inert_plan and every new helper are below the god-function thresholds in code2llm analysis of the module; every pre-existing function's metrics are unchanged (verify_planning_result 10/13/5, _select_bindings 9/11/10, _validate_process_graph 10/7/4, _require_process_uri_kind 1/2/1)."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "PYTHONPATH=$PWD/src <repo-venv>/bin/python -m pytest tests/test_poa_registry.py tests/test_poa_logs.py -q"
+        ],
+        "evidence": "Existing POA suites pass unchanged; behavior is preserved by pure extraction (same public API, same documents)."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
