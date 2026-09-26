@@ -5548,6 +5548,39 @@ def test_run_idle_diagnostics_creates_deduped_ticket(tmp_path, monkeypatch) -> N
     assert "[AUTO-DIAG] regix needs attention" in sprint.read_text(encoding="utf-8")
 
 
+def test_build_command_merges_optional_flag_groups() -> None:
+    assert autonomous_wup_mod._build_command(["wup", "watch"]) == ["wup", "watch"]
+    assert autonomous_wup_mod._build_command(
+        ["wup"], ["--mode", "testql"], None, [], ["--config", "wup.yaml"]
+    ) == ["wup", "--mode", "testql", "--config", "wup.yaml"]
+
+
+def test_build_command_copies_base_list() -> None:
+    base = ["docker", "compose"]
+    built = autonomous_wup_mod._build_command(base, ["--profile", "simulator"])
+    assert built == ["docker", "compose", "--profile", "simulator"]
+    assert base == ["docker", "compose"]
+
+
+def test_compose_ps_command_orders_profiles_before_ps() -> None:
+    assert autonomous_wup_mod._compose_ps_command(
+        "docker-compose.yml", ("simulator", "debug"), "firmware"
+    ) == [
+        "docker",
+        "compose",
+        "-f",
+        "docker-compose.yml",
+        "--profile",
+        "simulator",
+        "--profile",
+        "debug",
+        "ps",
+        "--format",
+        "json",
+        "firmware",
+    ]
+
+
 def test_wup_watch_command_uses_testql_mode(tmp_path) -> None:
     scripts = tmp_path / "scripts"
     scripts.mkdir()

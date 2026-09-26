@@ -121,24 +121,51 @@ def _wup_cpu_throttle_arg(value: float) -> str:
     return str(value)
 
 
+def _build_command(base: list[str], *groups: list[str] | None) -> list[str]:
+    """Assemble a subprocess argv from a base plus optional flag groups.
+
+    Single owner of the "argv list, then conditionally append flags" pattern,
+    so command assembly logic changes in one place instead of rippling across
+    call sites.
+    """
+    command = list(base)
+    for group in groups:
+        if group:
+            command.extend(group)
+    return command
+
+
+def _compose_command(
+    compose_file: str,
+    profiles: tuple[str, ...],
+    *trailing: str,
+) -> list[str]:
+    """Assemble a Docker Compose argv bound to one manifest and its profiles."""
+    return _build_command(
+        ["docker", "compose", "-f", compose_file],
+        *[["--profile", profile] for profile in profiles],
+        list(trailing),
+    )
+
+
 def _wup_watch_command(config: WupWatchConfig) -> list[str]:
-    command = [
-        "wup",
-        "watch",
-        str(config.project),
-        "--deps",
-        config.deps_file,
-        "--cpu-throttle",
-        _wup_cpu_throttle_arg(config.cpu_throttle),
-        "--debounce",
-        str(config.debounce),
-        "--cooldown",
-        str(config.cooldown),
-        "--mode",
-        config.mode,
-    ]
-    if config.mode == "testql":
-        command.extend(
+    return _build_command(
+        [
+            "wup",
+            "watch",
+            str(config.project),
+            "--deps",
+            config.deps_file,
+            "--cpu-throttle",
+            _wup_cpu_throttle_arg(config.cpu_throttle),
+            "--debounce",
+            str(config.debounce),
+            "--cooldown",
+            str(config.cooldown),
+            "--mode",
+            config.mode,
+        ],
+        (
             [
                 "--scenarios-dir",
                 config.scenarios_dir,
@@ -148,11 +175,12 @@ def _wup_watch_command(config: WupWatchConfig) -> list[str]:
                 config.track_dir,
                 "--quick-limit",
                 str(config.quick_limit),
-            ],
-        )
-    if config.config is not None:
-        command.extend(["--config", str(config.config)])
-    return command
+            ]
+            if config.mode == "testql"
+            else None
+        ),
+        (["--config", str(config.config)] if config.config is not None else None),
+    )
 
 
 def _wup_autodetect(config: WupWatchConfig) -> bool:
@@ -261,11 +289,7 @@ def _compose_ps_command(
     profiles: tuple[str, ...],
     compose_service: str,
 ) -> list[str]:
-    command = ["docker", "compose", "-f", compose_file]
-    for profile in profiles:
-        command.extend(["--profile", profile])
-    command.extend(["ps", "--format", "json", compose_service])
-    return command
+    return _compose_command(compose_file, profiles, "ps", "--format", "json", compose_service)
 
 
 def _parse_compose_ps_json(raw: str) -> list[dict]:
@@ -337,13 +361,13 @@ def _wait_for_compose_service_ready(
     timeout = float(os.environ.get("KORU_WUP_COMPOSE_HEALTH_TIMEOUT", "30") or "30")
     if timeout <= 0:
         return
-    command = _compose_ps_command(compose_file, profiles, compose_service)
+    ps_command = _compose_ps_command(compose_file, profiles, compose_service)
     deadline = time.monotonic() + timeout
     last_status = ""
     while True:
         try:
             result = subprocess.run(
-                command,
+                ps_command,
                 cwd=config.project,
                 check=False,
                 capture_output=True,
@@ -384,14 +408,11 @@ def _ensure_wup_profiled_compose_services(
     if shutil.which("docker") is None:
         return
     for compose_file, profiles, compose_service in _profiled_compose_services(config):
-        command = ["docker", "compose", "-f", compose_file]
-        for profile in profiles:
-            command.extend(["--profile", profile])
-        command.extend(["up", "-d", compose_service])
-        _wup_stdio_info(f"+ {' '.join(command)}", fmt=stdio_format)
+        up_command = _compose_command(compose_file, profiles, "up", "-d", compose_service)
+        _wup_stdio_info(f"+ {' '.join(up_command)}", fmt=stdio_format)
         try:
             result = subprocess.run(
-                command,
+                up_command,
                 cwd=config.project,
                 check=False,
                 capture_output=True,
@@ -517,14 +538,14 @@ def _start_wup_watch(
     if _wup_watch_already_running(config, stdio_format=stdio_format):
         return None
     _ensure_wup_profiled_compose_services(config, stdio_format=stdio_format)
-    command = _wup_watch_command(config)
-    _wup_stdio_info(f"+ {' '.join(command)}", fmt=stdio_format)
-    process = subprocess.Popen(command, cwd=config.project, env=_wup_subprocess_env(config))
+    watch_command = _wup_watch_command(config)
+    _wup_stdio_info(f"+ {' '.join(watch_command)}", fmt=stdio_format)
+    process = subprocess.Popen(watch_command, cwd=config.project, env=_wup_subprocess_env(config))
     activity(
         "WUP",
         "watch process started",
         fmt=stdio_format,
-        data={"pid": process.pid, "command": command, "project": str(config.project)},
+        data={"pid": process.pid, "command": watch_command, "project": str(config.project)},
     )
     _wup_stdio_info(
         f"koru autonomous: started WUP watcher pid={process.pid} mode={config.mode}",

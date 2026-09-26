@@ -249,4 +249,6 @@ project analysis or human-owned ticket inputs.
 | **ticket-245** | [`README.md`](./ticket-245/README.md) | - | - | - | - | - |
 | **ticket-246** | [`README.md`](./ticket-246/README.md) | - | - | - | - | - |
 | **ticket-247** | [`README.md`](./ticket-247/README.md) | - | - | - | - | - |
+| **ticket-249** | [`README.md`](./ticket-249/README.md) | - | - |  [`ai-claude.md`](./ticket-249/ai-claude.md) | - | - |
+| **ticket-251** | [`README.md`](./ticket-251/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->
