@@ -7,57 +7,59 @@ letting the loop wait. ``nxdo`` can also plan for sibling repos
 (``KORU_NXDO_REPOS``), so the loop generates cross-repo work when the
 current project has nothing actionable.
 
-Environment knobs (looked up in ``os.environ`` first, then in the
-project's ``.env`` file — ``koru auto`` does not load ``.env`` into the
-process environment, so the fallback keeps configuration in the repo):
-
-- ``KORU_NXDO_ENABLE``: ``0``/``false`` disables the generator (default on).
-- ``KORU_NXDO_BIN``: explicit path to the ``nxdo`` executable. Fallbacks:
-  ``PATH`` lookup, then ``~/.venv/bin/nxdo`` (the shared semcod venv).
-- ``KORU_NXDO_REPOS``: ``:``/``,``-separated extra repos (globs allowed,
-  e.g. ``/home/tom/github/semcod/*``) to plan for after the project itself.
-  Only directories containing ``.git`` qualify.
-- ``KORU_NXDO_MAX_TICKETS``: cap of tickets created per run (default 5).
-- ``KORU_NXDO_COOLDOWN_SECONDS``: per-repo cooldown between LLM planning
-  runs (default 3600). Each run is a paid LLM call — the cooldown is the
-  cost control.
-- ``KORU_NXDO_EXTRA_CONTEXT``: extra prompt context passed to ``nxdo``.
-- ``KORU_NXDO_MODEL``: LLM model id passed as ``nxdo --model`` (OpenRouter
-  id without the ``openrouter/`` prefix, e.g. ``qwen/qwen3-coder-next``).
-  Without it nxdo falls back to its own ``LLM_MODEL``/default.
-- ``KORU_NXDO_TIMEOUT_SECONDS``: subprocess timeout (default 300).
-
-Tickets are created through :func:`koru.tasks.create_nl_task` (same path as
-code2llm discovery), so they carry proper ``execution``/``executor`` fields
-and STARTER-prefixed ids that the queue loop can pick up. ``nxdo``'s own
-``--sync-planfile`` is intentionally not used: it writes ``LANE-*`` tickets
-without an ``execution`` block, which the queue would never select.
+Module layout: the ``KORU_NXDO_*`` environment/.env knobs, binary
+resolution and target-repo selection live in
+:mod:`koru.autonomy.nxdo_config`, the per-repo cooldown stamps in
+:mod:`koru.autonomy.nxdo_cooldown`, and TaskPlan parsing plus planfile
+ticket filing in :mod:`koru.autonomy.nxdo_tickets`. This module keeps the
+pipeline (:func:`run_nxdo_discovery` → ``_preflight`` → ``_execute`` →
+``_record_attempt`` → ``_interpret_plan``) and re-exports the moved names
+(redundant aliases) so every pre-split ``koru.autonomy.nxdo_discovery``
+import — including the private ``_nxdo_executable`` patch target and
+``_dedupe_key`` used by tests — keeps working unchanged.
 """
 
 from __future__ import annotations
 
-import glob as _glob
-import json
-import os
-import re
-import shutil
 import subprocess
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, NamedTuple
 
-Runner = Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]]
-
-DEFAULT_SOURCE = "koru-nxdo-discovery"
-DEFAULT_MAX_TICKETS = 5
-DEFAULT_COOLDOWN_SECONDS = 3600.0
-DEFAULT_TIMEOUT_SECONDS = 300.0
-STAMP_RELPATH = Path(".planfile") / ".koru" / "nxdo-discovery.json"
-
-# nxdo Priority -> planfile priority accepted by create_nl_task.
-_PRIORITY_MAP = {"high": "high", "medium": "normal", "low": "low"}
+from koru.autonomy.nxdo_config import DEFAULT_TIMEOUT_SECONDS as DEFAULT_TIMEOUT_SECONDS
+from koru.autonomy.nxdo_config import Runner as Runner
+from koru.autonomy.nxdo_config import _api_key_available as _api_key_available
+from koru.autonomy.nxdo_config import _config_value as _config_value
+from koru.autonomy.nxdo_config import _default_runner as _default_runner
+from koru.autonomy.nxdo_config import _dotenv_value as _dotenv_value
+from koru.autonomy.nxdo_config import _env_flag as _env_flag
+from koru.autonomy.nxdo_config import _env_float as _env_float
+from koru.autonomy.nxdo_config import _env_int as _env_int
+from koru.autonomy.nxdo_config import _nxdo_executable as _nxdo_executable
+from koru.autonomy.nxdo_config import nxdo_enabled as nxdo_enabled
+from koru.autonomy.nxdo_config import nxdo_target_repos as nxdo_target_repos
+from koru.autonomy.nxdo_cooldown import DEFAULT_COOLDOWN_SECONDS as DEFAULT_COOLDOWN_SECONDS
+from koru.autonomy.nxdo_cooldown import STAMP_RELPATH as STAMP_RELPATH
+from koru.autonomy.nxdo_cooldown import _CooldownSelection as _CooldownSelection
+from koru.autonomy.nxdo_cooldown import _load_stamps as _load_stamps
+from koru.autonomy.nxdo_cooldown import _save_stamps as _save_stamps
+from koru.autonomy.nxdo_cooldown import _select_target_repo as _select_target_repo
+from koru.autonomy.nxdo_cooldown import _stamp_path as _stamp_path
+from koru.autonomy.nxdo_tickets import _PRIORITY_MAP as _PRIORITY_MAP
+from koru.autonomy.nxdo_tickets import DEFAULT_MAX_TICKETS as DEFAULT_MAX_TICKETS
+from koru.autonomy.nxdo_tickets import DEFAULT_SOURCE as DEFAULT_SOURCE
+from koru.autonomy.nxdo_tickets import _apply_plan_tickets as _apply_plan_tickets
+from koru.autonomy.nxdo_tickets import _dedupe_key as _dedupe_key
+from koru.autonomy.nxdo_tickets import (
+    _existing_nxdo_dedupe_keys as _existing_nxdo_dedupe_keys,
+)
+from koru.autonomy.nxdo_tickets import _plan_from_output as _plan_from_output
+from koru.autonomy.nxdo_tickets import _PlanFiling as _PlanFiling
+from koru.autonomy.nxdo_tickets import _slug as _slug
+from koru.autonomy.nxdo_tickets import _ticket_scaffold as _ticket_scaffold
+from koru.autonomy.nxdo_tickets import _ticket_text as _ticket_text
 
 
 class _Preflight(NamedTuple):
@@ -100,277 +102,6 @@ class NxdoDiscoveryOutcome:
             "skipped": list(self.skipped_titles),
             "error": self.error,
         }
-
-
-def _default_runner(cmd: Sequence[str], cwd: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        list(cmd),
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        check=False,
-        timeout=_env_float("KORU_NXDO_TIMEOUT_SECONDS", DEFAULT_TIMEOUT_SECONDS),
-    )
-
-
-def _dotenv_value(project: Path | None, name: str) -> str:
-    """Read ``name`` from ``<project>/.env`` (simple ``KEY=VALUE`` lines)."""
-    if project is None:
-        return ""
-    try:
-        text = (project / ".env").read_text(encoding="utf-8")
-    except OSError:
-        return ""
-    match = re.search(rf"^\s*{re.escape(name)}\s*=\s*(.+?)\s*$", text, re.M)
-    return match.group(1).strip().strip("'\"") if match else ""
-
-
-def _config_value(name: str, project: Path | None = None) -> str:
-    return (os.environ.get(name) or "").strip() or _dotenv_value(project, name)
-
-
-def _env_flag(name: str, default: bool, project: Path | None = None) -> bool:
-    raw = _config_value(name, project).lower()
-    if not raw:
-        return default
-    return raw in {"1", "true", "yes", "on"}
-
-
-def _env_float(name: str, default: float, project: Path | None = None) -> float:
-    try:
-        return float(_config_value(name, project) or default)
-    except (TypeError, ValueError):
-        return default
-
-
-def _env_int(name: str, default: int, project: Path | None = None) -> int:
-    try:
-        return int(_config_value(name, project) or default)
-    except (TypeError, ValueError):
-        return default
-
-
-def nxdo_enabled(project: Path | None = None) -> bool:
-    return _env_flag("KORU_NXDO_ENABLE", True, project)
-
-
-def _nxdo_executable(project: Path | None = None) -> str | None:
-    override = _config_value("KORU_NXDO_BIN", project)
-    if override:
-        return override if Path(override).is_file() else None
-    found = shutil.which("nxdo")
-    if found:
-        return found
-    fallback = Path.home() / ".venv" / "bin" / "nxdo"
-    return str(fallback) if fallback.is_file() else None
-
-
-def _api_key_available(project: Path) -> bool:
-    for key in ("OPENROUTER_API_KEY", "OPENAI_API_KEY"):
-        if (os.environ.get(key) or "").strip():
-            return True
-    env_file = project / ".env"
-    try:
-        text = env_file.read_text(encoding="utf-8")
-    except OSError:
-        return False
-    return bool(re.search(r"^\s*(OPENROUTER_API_KEY|OPENAI_API_KEY)\s*=\s*\S", text, re.M))
-
-
-def nxdo_target_repos(project: Path) -> list[Path]:
-    """The project itself plus ``KORU_NXDO_REPOS`` extras (globs expanded)."""
-    project = project.resolve()
-    repos: list[Path] = [project]
-    raw = _config_value("KORU_NXDO_REPOS", project)
-    if not raw:
-        return repos
-    for spec in re.split(r"[:,]", raw):
-        spec = os.path.expanduser(spec.strip())
-        if not spec:
-            continue
-        for hit in sorted(_glob.glob(spec)):
-            path = Path(hit).resolve()
-            if path == project or path in repos:
-                continue
-            if path.is_dir() and (path / ".git").exists():
-                repos.append(path)
-    return repos
-
-
-def _stamp_path(project: Path) -> Path:
-    return project / STAMP_RELPATH
-
-
-def _load_stamps(project: Path) -> dict[str, float]:
-    try:
-        data = json.loads(_stamp_path(project).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
-    if not isinstance(data, dict):
-        return {}
-    return {str(k): float(v) for k, v in data.items() if isinstance(v, (int, float))}
-
-
-def _save_stamps(project: Path, stamps: dict[str, float]) -> None:
-    path = _stamp_path(project)
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(stamps, indent=2, sort_keys=True), encoding="utf-8")
-    except OSError:
-        pass
-
-
-class _CooldownSelection(NamedTuple):
-    """Result of cooldown-based target-repo selection."""
-
-    repo: Path | None
-    remaining: float
-
-
-def _select_target_repo(project: Path, *, now: float) -> _CooldownSelection:
-    """First repo whose per-repo cooldown has expired (project first)."""
-    cooldown = _env_float("KORU_NXDO_COOLDOWN_SECONDS", DEFAULT_COOLDOWN_SECONDS, project)
-    stamps = _load_stamps(project)
-    best_remaining = float("inf")
-    for repo in nxdo_target_repos(project):
-        last = stamps.get(str(repo), 0.0)
-        remaining = cooldown - (now - last)
-        if remaining <= 0:
-            return _CooldownSelection(repo, 0.0)
-        best_remaining = min(best_remaining, remaining)
-    return _CooldownSelection(None, best_remaining)
-
-
-def _plan_from_output(stdout: str) -> dict[str, Any] | None:
-    """Extract the TaskPlan JSON object from ``nxdo plan --json`` output."""
-    text = (stdout or "").strip()
-    start = text.find("{")
-    end = text.rfind("}")
-    if start < 0 or end <= start:
-        return None
-    try:
-        data = json.loads(text[start : end + 1])
-    except ValueError:
-        return None
-    return data if isinstance(data, dict) else None
-
-
-def _slug(text: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:80]
-
-
-def _dedupe_key(repo: Path, task: dict[str, Any]) -> str:
-    return f"nxdo:{repo.name}:{_slug(str(task.get('title') or ''))}"
-
-
-def _existing_nxdo_dedupe_keys(project: Path, *, sprint: str = "current") -> set[str]:
-    try:
-        import yaml  # local import; yaml is already a runtime dep of koru
-
-        sprint_path = project / ".planfile" / "sprints" / f"{sprint}.yaml"
-        data = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
-    except (OSError, Exception):  # noqa: BLE001 - best-effort duplicate guard
-        return set()
-    sprint_data = data.get("sprint") if isinstance(data, dict) else None
-    tickets = sprint_data.get("tickets") if isinstance(sprint_data, dict) else None
-    if not isinstance(tickets, dict):
-        return set()
-    keys: set[str] = set()
-    for ticket in tickets.values():
-        if not isinstance(ticket, dict):
-            continue
-        source = ticket.get("source")
-        context = source.get("context") if isinstance(source, dict) else None
-        if not isinstance(context, dict):
-            continue
-        key = str(context.get("dedupe_key") or "").strip()
-        if key.startswith("nxdo:"):
-            keys.add(key)
-    return keys
-
-
-def _ticket_text(task: dict[str, Any], *, repo: Path, project: Path) -> str:
-    lines: list[str] = []
-    if repo != project:
-        lines.append(f"[repo: {repo}] Zadanie dotyczy repozytorium {repo} (nie {project.name}).")
-    description = str(task.get("description") or "").strip()
-    lines.append(description or str(task.get("title") or "nxdo task").strip())
-    criteria = [str(c).strip() for c in (task.get("acceptance_criteria") or []) if str(c).strip()]
-    if criteria:
-        lines.append("Acceptance criteria:")
-        lines.extend(f"- {c}" for c in criteria)
-    return "\n".join(lines)
-
-
-def _ticket_scaffold(task: dict[str, Any], *, repo: Path, project: Path) -> dict[str, Any]:
-    labels = ["nxdo", "discovery"]
-    task_type = str(task.get("task_type") or "").strip()
-    if task_type:
-        labels.append(task_type)
-    if repo != project:
-        labels.append("cross-repo")
-    return {
-        "title": str(task.get("title") or "nxdo discovery ticket").strip(),
-        "labels": labels,
-        "files": [],
-        "source_tool": DEFAULT_SOURCE,
-        "source_context": {
-            "signal": "nxdo_plan",
-            "dedupe_key": _dedupe_key(repo, task),
-            "repo": str(repo),
-        },
-        "executor_kind": "human",
-        "executor_mode": "interactive",
-    }
-
-
-class _PlanFiling(NamedTuple):
-    """Ticket-filing result of :func:`_apply_plan_tickets`."""
-
-    applied: list[str]
-    skipped: list[str]
-
-
-def _apply_plan_tickets(
-    project: Path,
-    repo: Path,
-    plan: dict[str, Any],
-    *,
-    limit: int,
-) -> _PlanFiling:
-    from koru.tasks import create_nl_task
-
-    tasks = [t for t in (plan.get("tasks") or []) if isinstance(t, dict)]
-    created_titles: list[str] = []
-    skipped_titles: list[str] = []
-    existing_keys = _existing_nxdo_dedupe_keys(project)
-    for task in tasks:
-        if len(created_titles) >= limit:
-            break
-        scaffold = _ticket_scaffold(task, repo=repo, project=project)
-        title = str(scaffold["title"])
-        key = str(scaffold["source_context"]["dedupe_key"])
-        if key in existing_keys:
-            skipped_titles.append(title)
-            continue
-        priority = _PRIORITY_MAP.get(str(task.get("priority") or "").lower(), "normal")
-        try:
-            created = create_nl_task(
-                project,
-                _ticket_text(task, repo=repo, project=project),
-                sprint="current",
-                priority=priority,
-                scaffold=scaffold,
-            )
-        except (OSError, ValueError) as exc:
-            skipped_titles.append(f"{title}: {exc}")
-            continue
-        if getattr(created, "reused", False):
-            skipped_titles.append(title)
-        else:
-            created_titles.append(title)
-            existing_keys.add(key)
-    return _PlanFiling(created_titles, skipped_titles)
 
 
 def _preflight(

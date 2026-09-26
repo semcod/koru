@@ -1,0 +1,106 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-234",
+  "summary": "Split god module nxdo_discovery by responsibility",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-234/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/nxdo_config.py",
+    "src/koru/autonomy/nxdo_cooldown.py",
+    "src/koru/autonomy/nxdo_discovery.py",
+    "src/koru/autonomy/nxdo_tickets.py",
+    "tests/test_nxdo_discovery.py",
+    "tests/test_nxdo_modules.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "eddb775d316695c6d2ded531c00e5d2f3762cab9",
+    "targetBranch": "main",
+    "outcome": "Split src/koru/autonomy/nxdo_discovery.py (code2llm GOD: 550 lines, 4 classes) by responsibility into three modules behind a stable facade: nxdo_config.py (os.environ-then-.env knob lookup _dotenv_value/_config_value/_env_flag/_env_float/_env_int, nxdo_enabled, nxdo binary resolution _nxdo_executable, API-key detection _api_key_available, KORU_NXDO_REPOS glob expansion nxdo_target_repos, and the subprocess contract Runner/DEFAULT_TIMEOUT_SECONDS/_default_runner), nxdo_cooldown.py (per-repo cost-control stamps DEFAULT_COOLDOWN_SECONDS/STAMP_RELPATH/_stamp_path/_load_stamps/_save_stamps/_CooldownSelection/_select_target_repo) and nxdo_tickets.py (TaskPlan parsing and planfile filing DEFAULT_SOURCE/DEFAULT_MAX_TICKETS/_PRIORITY_MAP/_plan_from_output/_slug/_dedupe_key/_existing_nxdo_dedupe_keys/_ticket_text/_ticket_scaffold/_PlanFiling/_apply_plan_tickets). nxdo_discovery.py keeps only the pipeline (NxdoDiscoveryOutcome, _Preflight, _preflight, _nxdo_command, _execute, _record_attempt, _failure_message, _interpret_plan, run_nxdo_discovery, format_nxdo_summary) and re-exports every moved name with redundant aliases so 'from koru.autonomy.nxdo_discovery import ...' stays byte-compatible, including the test-facing _nxdo_executable patch target and _dedupe_key. Behavior is preserved verbatim (functions move unmodified); tests/test_nxdo_discovery.py passes unchanged and tests/test_nxdo_modules.py pins the moved behavior at its new homes plus the facade re-export surface and the facade-level _nxdo_executable patch path.",
+    "nonGoals": [
+      "Changing planning behavior, skip reasons, cooldown semantics, dedupe keys or ticket scaffolds",
+      "Renaming environment knobs, defaults or the os.environ-before-.env lookup order",
+      "Touching src/koru/autonomy/phases/scan_phase.py or any other consumer of run_nxdo_discovery",
+      "Splitting or refactoring any other module flagged by code2llm"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Move functions verbatim (same private names) into three responsibility modules and re-export them from the koru.autonomy.nxdo_discovery facade with redundant aliases (the koru.queue.context pattern from the earlier queue split). A patch audit found exactly one facade-level monkeypatch target (tests patch nd._nxdo_executable, consumed by _preflight, which stays in the facade and resolves the name through facade globals at call time) and one cross-module patch target (koru.tasks.create_nl_task, consumed by _apply_plan_tickets through a function-local import), so plain import-time re-exports suffice without call-time facade indirection; the facade __all__ is unchanged.",
+      "components": [
+        {
+          "name": "koru-autonomy-nxdo",
+          "paths": [
+            "src/koru/autonomy/nxdo_discovery.py",
+            "src/koru/autonomy/nxdo_config.py",
+            "src/koru/autonomy/nxdo_cooldown.py",
+            "src/koru/autonomy/nxdo_tickets.py",
+            "tests/test_nxdo_discovery.py",
+            "tests/test_nxdo_modules.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the single 550-line src/koru/autonomy/nxdo_discovery.py."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "wc -l src/koru/autonomy/nxdo_discovery.py src/koru/autonomy/nxdo_config.py src/koru/autonomy/nxdo_cooldown.py src/koru/autonomy/nxdo_tickets.py"
+        ],
+        "evidence": "nxdo_discovery.py drops from 550 lines to the pipeline facade; each responsibility module stays a focused non-god module (<500 lines, <4 classes)."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_nxdo_discovery.py tests/test_scan_phase.py"
+        ],
+        "evidence": "Existing nxdo and scan-phase suites pass unchanged."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "PYTHONPATH=src python3 -c \"from koru.autonomy.nxdo_discovery import (DEFAULT_COOLDOWN_SECONDS, DEFAULT_MAX_TICKETS, DEFAULT_SOURCE, DEFAULT_TIMEOUT_SECONDS, STAMP_RELPATH, NxdoDiscoveryOutcome, Runner, format_nxdo_summary, nxdo_enabled, nxdo_target_repos, run_nxdo_discovery, _dedupe_key, _nxdo_executable); print('facade stable')\""
+        ],
+        "evidence": "Every pre-split import path (public and private) still resolves through the facade and src/koru/autonomy/phases/scan_phase.py is unmodified."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_nxdo_modules.py",
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "New focused suite passes at the new module homes and the governance gate passes with 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}
