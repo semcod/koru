@@ -86,3 +86,24 @@ class LlmRunResult:
     model: str
     usage: dict[str, int]
     raw: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class TaskandRunResult:
+    """Result of a Taskand process or orchestrator call.
+
+    ``stdout`` carries JSON or text output from the Taskand process.
+    ``returncode`` is 0 on success, non-zero on failure.
+    ``uri`` records the invoked process URI or orchestrator endpoint.
+    ``run_id`` optionally tracks the Taskand request ID or orchestration runId.
+    """
+
+    returncode: int
+    stdout: str
+    stderr: str
+    status_code: int = 0
+    uri: str = ""
+    run_id: str | None = None
+    data: dict[str, Any] | None = None
+    raw: dict[str, Any] | None = None
+

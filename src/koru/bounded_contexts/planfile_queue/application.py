@@ -81,8 +81,10 @@ class PlanfileQueueCommandService(CqrsService):
             shell_runner=command.shell_runner,
             api_runner=command.api_runner,
             llm_runner=command.llm_runner,
+            taskand_runner=command.taskand_runner,
             prompt_runner=command.prompt_runner,
         )
+
         event_type, payload, aggregate_id = _event_for_result(result)
         self.runtime.append_event(
             context=PLANFILE_QUEUE_CONTEXT,

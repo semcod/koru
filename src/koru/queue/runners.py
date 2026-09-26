@@ -9,13 +9,15 @@ import shutil
 import subprocess
 import time
 import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from koru.control_commands import api_command, shell_command
-from koru.queue.types import ApiRunResult, LlmRunResult
+from koru.queue.types import ApiRunResult, LlmRunResult, TaskandRunResult
 from korullm import probe_subllm_route, run_subllm_messages
+
 
 
 def _planfile_env() -> dict[str, str]:
@@ -490,3 +492,163 @@ def run_llm_request(request: dict[str, Any], project: Path) -> LlmRunResult:
 def preflight_llm_request(project: Path) -> tuple[bool, str]:
     """Probe Koru's central queue route without invoking a model."""
     return probe_subllm_route(project, route_function="queue-executor")
+
+
+def _find_taskand_cli(project: Path) -> Path | None:
+    """Find a usable taskand CLI binary."""
+    env_bin = os.getenv("TASKAND_BIN")
+    if env_bin:
+        p = Path(env_bin)
+        if p.is_file() and os.access(p, os.X_OK):
+            return p
+    which_bin = shutil.which("taskand")
+    if which_bin:
+        return Path(which_bin)
+    candidates = [
+        Path("/home/tom/github/paxlet-com/taskand/bin/taskand"),
+        project.parent / "paxlet-com" / "taskand" / "bin" / "taskand",
+        project.parent / "taskand" / "bin" / "taskand",
+        project / "bin" / "taskand",
+    ]
+    for candidate in candidates:
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return candidate
+    return None
+
+
+def run_taskand_request(request: dict[str, Any], project: Path) -> TaskandRunResult:
+    """Execute a task using Taskand process framework (via Gateway HTTP or local CLI)."""
+    gateway_url = str(
+        request.get("gateway_url")
+        or os.getenv("TASKAND_GATEWAY_URL")
+        or os.getenv("TASKAND_GATEWAY")
+        or "http://127.0.0.1:8077"
+    ).rstrip("/")
+    timeout = float(request.get("timeout_seconds") or 60.0)
+    auth_token = os.getenv("TASKAND_AUTH_TOKEN") or "taskand-admin-key"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {auth_token}",
+    }
+
+    # Probe gateway health
+    gateway_available = False
+    try:
+        health_req = urllib.request.Request(f"{gateway_url}/healthz", method="GET")
+        with urllib.request.urlopen(health_req, timeout=1.5) as resp:
+            if resp.status == 200:
+                gateway_available = True
+    except Exception:
+        gateway_available = False
+
+    plan = request.get("plan")
+    uri = request.get("uri")
+    data = request.get("data") or {}
+
+    if gateway_available:
+        if plan:
+            endpoint = f"{gateway_url}/api/orchestrator"
+            body: dict[str, Any] = {"plan": plan}
+            if request.get("run_id"):
+                body["runId"] = request["run_id"]
+        elif uri:
+            endpoint = f"{gateway_url}/api/proc/call"
+            body = {"uri": uri, "data": data, "timeout": int(timeout)}
+        else:
+            return TaskandRunResult(
+                returncode=1,
+                stdout="",
+                stderr="Missing uri or plan in taskand request",
+                status_code=400,
+                uri="",
+            )
+
+        post_data = json.dumps(body).encode("utf-8")
+        api_req = urllib.request.Request(endpoint, data=post_data, headers=headers, method="POST")
+        try:
+            with urllib.request.urlopen(api_req, timeout=timeout) as response:
+                text = response.read().decode("utf-8", errors="replace")
+                payload = json.loads(text) if text else {}
+                status_code = int(response.status)
+                result_field = payload.get("result") if isinstance(payload, dict) else payload
+                ok = payload.get("ok") if isinstance(payload, dict) else True
+                if isinstance(result_field, dict) and "status" in result_field:
+                    orch_status = str(result_field.get("status") or "")
+                    succeeded = orch_status == "SUCCEEDED"
+                    return TaskandRunResult(
+                        returncode=0 if succeeded else 1,
+                        stdout=text,
+                        stderr="" if succeeded else f"Orchestrator finished with status: {orch_status}",
+                        status_code=status_code,
+                        uri=uri or "proc://taskand.dev/orchestrator/execute/v1",
+                        run_id=result_field.get("runId"),
+                        data=result_field,
+                        raw=payload,
+                    )
+                else:
+                    succeeded = bool(ok) and (
+                        not isinstance(result_field, dict) or result_field.get("ok") is not False
+                    )
+                    return TaskandRunResult(
+                        returncode=0 if succeeded else 1,
+                        stdout=text,
+                        stderr="" if succeeded else str(payload.get("error") or "Process failed"),
+                        status_code=status_code,
+                        uri=uri or "",
+                        run_id=payload.get("requestId") if isinstance(payload, dict) else None,
+                        data=result_field if isinstance(result_field, dict) else None,
+                        raw=payload,
+                    )
+        except urllib.error.HTTPError as exc:
+            text = exc.read().decode("utf-8", errors="replace")
+            return TaskandRunResult(
+                returncode=1,
+                stdout=text,
+                stderr=f"HTTP {exc.code}: {text[:500]}",
+                status_code=int(exc.code),
+                uri=uri or "",
+            )
+        except urllib.error.URLError as exc:
+            return TaskandRunResult(
+                returncode=1,
+                stdout="",
+                stderr=f"Taskand request failed: {exc.reason}",
+                status_code=0,
+                uri=uri or "",
+            )
+
+    # Fallback to local CLI invocation
+    cli_bin = _find_taskand_cli(project)
+    if cli_bin and uri:
+        cmd = [str(cli_bin), "call", uri, json.dumps(data), "--json"]
+        proc = _run_captured_subprocess(cmd, cwd=project)
+        try:
+            parsed = json.loads(proc.stdout) if proc.stdout else {}
+            succeeded = proc.returncode == 0 and parsed.get("ok") is not False
+            return TaskandRunResult(
+                returncode=0 if succeeded else (proc.returncode or 1),
+                stdout=proc.stdout,
+                stderr=proc.stderr if proc.returncode != 0 else str(parsed.get("error") or ""),
+                status_code=200 if succeeded else 500,
+                uri=uri,
+                run_id=parsed.get("requestId"),
+                data=parsed,
+                raw=parsed,
+            )
+        except json.JSONDecodeError:
+            return TaskandRunResult(
+                returncode=proc.returncode or 1,
+                stdout=proc.stdout,
+                stderr=proc.stderr or "Invalid JSON output from taskand CLI",
+                status_code=500,
+                uri=uri,
+            )
+
+    return TaskandRunResult(
+        returncode=1,
+        stdout="",
+        stderr=f"Taskand gateway unavailable at {gateway_url} and no local taskand CLI found",
+        status_code=503,
+        uri=uri or "",
+    )
+
