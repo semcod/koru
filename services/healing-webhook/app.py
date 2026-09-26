@@ -160,25 +160,39 @@ def _enrich_ticket_with_vallm(alert: dict, payload: dict) -> None:
         log.debug("vallm enrichment skipped: %s", exc)
 
 
+def _build_command(base: list[str], *flags: list[str] | None) -> list[str]:
+    """Assemble a subprocess argv from a base plus optional flag bundles.
+
+    Single owner of the "argv list, then conditionally append/extend flags"
+    pattern used by every healing strategy, so command assembly logic
+    changes in one place instead of rippling across call sites.
+    """
+    cmd = list(base)
+    for extra in flags:
+        if extra:
+            cmd.extend(extra)
+    return cmd
+
+
 def _build_planfile_command(payload: dict) -> list[str]:
     """Build planfile ticket create command from payload."""
-    cmd = [
-        PLANFILE_BIN,
-        "ticket",
-        "create",
-        payload["name"],
-        "--priority",
-        payload["priority"],
-        "--sprint",
-        PLANFILE_SPRINT,
-        "--source",
-        payload["source"],
-        "--description",
-        payload["description"],
-    ]
-    for label in payload["labels"]:
-        cmd.extend(["--label", label])
-    return cmd
+    return _build_command(
+        [
+            PLANFILE_BIN,
+            "ticket",
+            "create",
+            payload["name"],
+            "--priority",
+            payload["priority"],
+            "--sprint",
+            PLANFILE_SPRINT,
+            "--source",
+            payload["source"],
+            "--description",
+            payload["description"],
+        ],
+        *(["--label", label] for label in payload["labels"]),
+    )
 
 
 def _extract_ticket_id_from_stdout(stdout: str) -> str | None:
@@ -243,8 +257,7 @@ def create_planfile_ticket(alert: dict, *, source: str = "healing-webhook") -> d
         (lbl.split(":", 1)[1] for lbl in payload["labels"] if lbl.startswith("severity:")),
         "unknown",
     )
-    cmd = _build_planfile_command(payload)
-    return _execute_planfile_create(cmd, severity)
+    return _execute_planfile_create(_build_planfile_command(payload), severity)
 
 
 def _docker_run_command(image: str, cmd: list[str]) -> list[str]:
@@ -304,10 +317,14 @@ def heal_redsl_improve(component: str, detail: dict) -> dict:
         _record_action("redsl_improve", "rate_limited", component, detail)
         return {"action": "redsl_improve", "outcome": "rate_limited"}
     _recent_actions.append(time.time())
-    cmd = ["python", "-m", "redsl", "improve", "/mnt/project", "--max-actions", "1"]
-    if DRY_RUN:
-        cmd.append("--dry-run")
-    code, out, err = _run_docker(REDSL_IMAGE, cmd, timeout=300)
+    code, out, err = _run_docker(
+        REDSL_IMAGE,
+        _build_command(
+            ["python", "-m", "redsl", "improve", "/mnt/project", "--max-actions", "1"],
+            ["--dry-run"] if DRY_RUN else None,
+        ),
+        timeout=300,
+    )
     outcome = "success" if code == 0 else "failed"
     _record_action(
         "redsl_improve",
@@ -324,10 +341,14 @@ def heal_rebuild_restore(component: str, detail: dict) -> dict:
         return {"action": "rebuild_restore", "outcome": "rate_limited"}
     _recent_actions.append(time.time())
     endpoint = detail.get("endpoint") or detail.get("instance") or "unknown"
-    cmd = ["restore", endpoint, "--results-dir", "/mnt/project/.rebuild"]
-    if DRY_RUN:
-        cmd.append("--dry-run")
-    code, out, err = _run_docker(REBUILD_IMAGE, cmd, timeout=600)
+    code, out, err = _run_docker(
+        REBUILD_IMAGE,
+        _build_command(
+            ["restore", endpoint, "--results-dir", "/mnt/project/.rebuild"],
+            ["--dry-run"] if DRY_RUN else None,
+        ),
+        timeout=600,
+    )
     outcome = "success" if code == 0 else "failed"
     _record_action(
         "rebuild_restore",
@@ -354,9 +375,13 @@ def heal_annotate(component: str, detail: dict) -> dict:
 
 def _run_vallm_check(file_path: str, timeout: int = 15) -> dict:
     """Quick syntax check (tier 1). Returns {ok, score, raw}."""
-    cmd = ["vallm", "check", "--file", file_path, "--output", "json"]
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        proc = subprocess.run(
+            _build_command(["vallm", "check", "--file", file_path, "--output", "json"]),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
         ok = proc.returncode == 0
         try:
             import json as _json
@@ -381,11 +406,16 @@ def _run_vallm_check(file_path: str, timeout: int = 15) -> dict:
 
 def _run_vallm_validate(file_path: str, model: str | None = None, timeout: int = 60) -> dict:
     """Full pipeline including LLM-as-judge (tier 2). Slower; uses LLM API key."""
-    cmd = ["vallm", "validate", "--file", file_path, "--output", "json"]
-    if model:
-        cmd.extend(["--model", model])
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        proc = subprocess.run(
+            _build_command(
+                ["vallm", "validate", "--file", file_path, "--output", "json"],
+                ["--model", model] if model else None,
+            ),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
         ok = proc.returncode == 0
         try:
             import json as _json
@@ -526,10 +556,9 @@ def _run_redup_check(timeout: int = 180) -> dict:
     Returns: {ok, groups, saved_lines, breach, top_groups, raw}
     """
     script = "scripts/redup-check.sh"
-    cmd = ["bash", script, "."]
     try:
         proc = subprocess.run(
-            cmd,
+            _build_command(["bash", script, "."]),
             capture_output=True,
             text=True,
             cwd=REPO_PATH,

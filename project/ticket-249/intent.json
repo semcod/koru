@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-249",
+  "summary": "Remove code2llm Shotgun Surgery: cmd smell (PLF-039) by consolidating healing-webhook argv construction into one _build_command helper",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-249/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "services/healing-webhook/app.py",
+    "tests/test_healing_webhook_split.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2931fc3fda41751b3ba1f343df533a9b48d2937c",
+    "targetBranch": "main",
+    "outcome": "services/healing-webhook/app.py assembles every subprocess argv through one _build_command helper, removing the code2llm Shotgun Surgery: cmd smell (planfile PLF-039).",
+    "nonGoals": [
+      "Sibling smells in the same file (payload/proc/outcome) tracked by separate planfile tickets",
+      "Behaviour or argv-shape changes to any healing strategy",
+      "Dockerfile or service packaging changes"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add a module-level _build_command(base, *flags) helper as the single owner of argv plus conditional flag assembly in services/healing-webhook/app.py; route the planfile, docker (redsl/rebuild), vallm and redup call sites through it so no function builds and mutates its own cmd list.",
+      "components": [
+        {
+          "name": "healing-webhook",
+          "paths": ["services/healing-webhook/**", "tests/test_healing_webhook_split.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the single ticket commit; every call site returns to its previous inline argv list with no cross-function coupling."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_healing_webhook_split.py -q"
+        ],
+        "evidence": "New tests cover _build_command base/flag-bundle/None handling (including base-list copy semantics) and _build_planfile_command label assembly."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_healing_webhook_split.py -q"
+        ],
+        "evidence": "Pre-existing test_run_docker_uses_expected_command still asserts the exact docker argv; the refactor only changes where argv lists are assembled."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 - <<'PY'\nfrom code2llm.core.config import Config\nfrom code2llm.core.analyzer import ProjectAnalyzer\nresult = ProjectAnalyzer(Config()).analyze_project('services/healing-webhook')\nassert not [s for s in result.smells if s.type == 'shotgun_surgery' and s.context.get('variable') == 'cmd']\nPY"
+        ],
+        "evidence": "code2llm ProjectAnalyzer over the services/healing-webhook package reports no shotgun_surgery smell for variable cmd after the consolidation."
+      }
+    ]
+  }
+}
