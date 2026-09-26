@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-259",
+  "summary": "Decompose propose_and_apply in execution to reduce cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-259/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/ticket_command/execution.py",
+    "tests/test_ticket_command.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e021f0498104a6a0ddef8507e7fa54737631eab0",
+    "targetBranch": "main",
+    "outcome": "Decompose propose_and_apply in src/koru/ticket_command/execution.py to reduce cyclomatic complexity from 20 to <=6 while preserving 100% backward compatibility and test coverage.",
+    "nonGoals": [
+      "Altering proposal prompt or diff parsing semantics",
+      "Changing public interface of propose_and_apply"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract focused helper functions _load_context_files, _build_proposal_prompt, _extract_and_validate_diff, and _apply_diff_to_workspace from propose_and_apply in src/koru/ticket_command/execution.py.",
+      "components": [
+        {
+          "name": "koru-ticket-execution",
+          "paths": [
+            "src/koru/ticket_command/execution.py",
+            "tests/test_ticket_command.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit in src/koru/ticket_command/execution.py"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_ticket_command.py"
+        ],
+        "evidence": "All tests in test_ticket_command.py pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m radon cc src/koru/ticket_command/execution.py -s"
+        ],
+        "evidence": "propose_and_apply cyclomatic complexity drops from 20 to <=6."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koru/ticket_command/execution.py tests/test_ticket_command.py"
+        ],
+        "evidence": "Ruff reports zero lint or formatting errors."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
