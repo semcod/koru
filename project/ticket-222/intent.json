@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-222",
+  "summary": "Decompose god function apply_plan_tickets",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-222/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/todo2code_discovery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a00d99116cf1621baf4d329bf5341dab1ffdcef4",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm god-function gates for _apply_plan_tickets in src/koru/autonomy/todo2code_discovery.py (fan-out 11->5, mutations 25->3, CC 7->3) by extracting the per-plan loop body into _file_plan_ticket and _record_plan_dispatch and by returning NamedTuples (_RankedPlans, _ExistingPlanTickets, _PlanIdentity, _PlanDispatch) from the ranking, dedupe-identity, plan-identity and dispatch helpers, while preserving identical usefulness filtering, deduplication identities, ticket-limit accounting, create_nl_task arguments and the (created, skipped, useful_count, filtered_out_count) return tuple.",
+    "nonGoals": [
+      "Refactoring the other god-flagged functions in this module (separate planfile tickets)",
+      "Changing plan usefulness scoring, ranking order or priority mapping",
+      "Altering task creation arguments, labels or executor scaffold fields",
+      "Extracting code into a new module (patch targets must stay module-local)"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep the pipeline in one module: split per-plan filing (scaffold + identity + dedupe skip) from dispatch bookkeeping (created/skipped append and dedupe-set growth), and replace multi-value tuple returns with NamedTuples so the orchestrator reads fields instead of unpacking.",
+      "components": [
+        {
+          "name": "autonomy-todo2code",
+          "paths": [
+            "src/koru/autonomy/todo2code_discovery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the inline _apply_plan_tickets loop with tuple-returning helpers."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m radon cc src/koru/autonomy/todo2code_discovery.py -s -n C"
+        ],
+        "evidence": "Cyclomatic complexity of _apply_plan_tickets and all touched helpers stays at Rank A/B; fan-out and mutation counts re-measured below the code2llm gates (fan-out<=10, mutations<=6)."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q tests/test_todo2code_discovery.py tests/test_todo2code_dedupe.py tests/test_todo2code_plan_ranking.py tests/test_todo2code_ticket_text.py tests/test_todo2code_autonomous_gate.py"
+        ],
+        "evidence": "All existing todo2code tests pass unchanged."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
