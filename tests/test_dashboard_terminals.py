@@ -495,6 +495,38 @@ class TestProviderFailover:
         assert detected[0]["sessionID"] == "ses_test123"
         assert ot.is_provider_exhausted("zai")
 
+    def test_scan_opencode_log_missing_file_returns_empty(self, tmp_path: Path) -> None:
+        assert ot.scan_opencode_log_for_exhaustion(log_path=tmp_path / "absent.log") == []
+
+    def test_scan_opencode_log_reads_only_tail(self, tmp_path: Path) -> None:
+        head = (
+            'timestamp=2026-09-17T10:40:31.387Z level=ERROR run=headrun message="stream error" '
+            'providerID=headp modelID=glm-5.3 error.error="AI_APICallError: Usage limit reached"\n'
+        )
+        tail = (
+            'timestamp=2026-09-17T11:40:31.387Z level=ERROR run=tailrun message="stream error" '
+            'providerID=tailp modelID=glm-5.3 error.error="AI_APICallError: Usage limit reached"\n'
+        )
+        log_file = tmp_path / "opencode.log"
+        log_file.write_text(head + tail, encoding="utf-8")
+        detected = ot.scan_opencode_log_for_exhaustion(
+            log_path=log_file, max_bytes=len(tail.encode("utf-8"))
+        )
+        assert [event["providerID"] for event in detected] == ["tailp"]
+        assert not ot.is_provider_exhausted("headp")
+        assert ot.is_provider_exhausted("tailp")
+
+    def test_scan_opencode_log_ignores_non_exhaustion_errors(self, tmp_path: Path) -> None:
+        log_file = tmp_path / "opencode.log"
+        log_file.write_text(
+            'timestamp=2026-09-17T10:40:31.387Z level=ERROR run=db234658 message="stream error" '
+            'providerID=zai modelID=glm-5.3 session.id=ses_test123 '
+            'error.error="Connection refused by peer"\n',
+            encoding="utf-8",
+        )
+        assert ot.scan_opencode_log_for_exhaustion(log_path=log_file) == []
+        assert not ot.is_provider_exhausted("zai")
+
     def test_get_available_models(self) -> None:
         cfg = {
             "model": "deepseek/deepseek-v4-pro",
