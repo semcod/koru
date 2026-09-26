@@ -38,7 +38,7 @@ import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from koru.autonomy.code_change_usefulness import (
     is_useful_plan,
@@ -259,11 +259,18 @@ def _remember_todo2code_ticket(
         title_files.add((name, files))
 
 
+class _ExistingPlanTickets(NamedTuple):
+    """Dedupe identities of plan tickets already present in a sprint."""
+
+    keys: set[str]
+    title_files: set[tuple[str, tuple[str, ...]]]
+
+
 def _existing_todo2code_keys(
     project: Path,
     *,
     sprint: str = "current",
-) -> tuple[set[str], set[tuple[str, tuple[str, ...]]]]:
+) -> _ExistingPlanTickets:
     """Return plan dedupe keys and (title, files) pairs already in the sprint.
 
     Plan ids are content-bound and change when the intent graph fingerprint
@@ -276,7 +283,7 @@ def _existing_todo2code_keys(
     for ticket in tickets.values():
         if isinstance(ticket, dict):
             _remember_todo2code_ticket(ticket, keys, title_files)
-    return keys, title_files
+    return _ExistingPlanTickets(keys, title_files)
 
 
 def _file_evidence(project: Path, path: Path) -> dict[str, object]:
@@ -480,9 +487,16 @@ def _ticket_scaffold(
     }
 
 
+class _RankedPlans(NamedTuple):
+    """Usefulness ranking of one plan set."""
+
+    useful: list[dict[str, Any]]
+    filtered_out: int
+
+
 def _rank_useful_plans(
     project: Path, plan_set: dict[str, Any], min_usefulness: float,
-) -> tuple[list[dict[str, Any]], int]:
+) -> _RankedPlans:
     raw_plans = [p for p in (plan_set.get("plans") or []) if isinstance(p, dict)]
     useful: list[dict[str, Any]] = []
     filtered_out = 0
@@ -496,7 +510,7 @@ def _rank_useful_plans(
     # Highest usefulness first so the ticket cap prefers real code work.
     useful.sort(key=lambda p: plan_usefulness_score(p, project=project), reverse=True)
 
-    return useful, filtered_out
+    return _RankedPlans(useful, filtered_out)
 
 
 def _relative_plans_path(project: Path, plans_path: Path) -> str:
@@ -506,11 +520,19 @@ def _relative_plans_path(project: Path, plans_path: Path) -> str:
         return str(plans_path)
 
 
-def _plan_identity(scaffold: dict[str, Any]) -> tuple[str, str, tuple[str, tuple[str, ...]]]:
+class _PlanIdentity(NamedTuple):
+    """Scaffold-derived identity of the ticket one plan would produce."""
+
+    title: str
+    key: str
+    title_key: tuple[str, tuple[str, ...]]
+
+
+def _plan_identity(scaffold: dict[str, Any]) -> _PlanIdentity:
     title = str(scaffold["title"])
     key = str(scaffold["source_context"]["dedupe_key"])
     files = tuple(str(v) for v in (scaffold.get("files") or []) if str(v).strip())
-    return title, key, (title, files)
+    return _PlanIdentity(title, key, (title, files))
 
 
 def _resolve_plan_priority(plan: dict[str, Any]) -> str:
@@ -529,14 +551,21 @@ def _enrich_plan_scaffold(scaffold: dict[str, Any], plan: dict[str, Any], projec
     )
 
 
+class _PlanDispatch(NamedTuple):
+    """Outcome of creating one plan's task via create_nl_task."""
+
+    created: bool
+    error: str | None
+
+
 def _dispatch_plan_task(
     project: Path,
     plan: dict[str, Any],
     scaffold: dict[str, Any],
     plans_rel: str,
     sprint: str,
-) -> tuple[bool, str | None]:
-    """Create task via create_nl_task; returns (created_bool, error_message)."""
+) -> _PlanDispatch:
+    """Create task via create_nl_task; reports the creation outcome."""
     from koru.tasks import create_nl_task
 
     priority = _resolve_plan_priority(plan)
@@ -550,10 +579,48 @@ def _dispatch_plan_task(
             scaffold=scaffold,
         )
     except (OSError, ValueError) as exc:
-        return False, str(exc)
+        return _PlanDispatch(False, str(exc))
     if getattr(created, "reused", False):
-        return False, None
-    return True, None
+        return _PlanDispatch(False, None)
+    return _PlanDispatch(True, None)
+
+
+def _file_plan_ticket(
+    project: Path,
+    plan: dict[str, Any],
+    created_titles: list[str],
+    skipped_titles: list[str],
+    *,
+    existing: _ExistingPlanTickets,
+    plans_path: Path,
+    source: str,
+    plans_rel: str,
+    sprint: str,
+) -> None:
+    """File one useful plan as a sprint ticket, or record why it was skipped."""
+    scaffold = _ticket_scaffold(plan, project=project, plans_path=plans_path, source=source)
+    identity = _plan_identity(scaffold)
+    if identity.key in existing.keys or identity.title_key in existing.title_files:
+        skipped_titles.append(identity.title)
+        return
+    dispatched = _dispatch_plan_task(project, plan, scaffold, plans_rel, sprint)
+    _record_plan_dispatch(dispatched, identity, created_titles, skipped_titles, existing)
+
+
+def _record_plan_dispatch(
+    dispatched: _PlanDispatch,
+    identity: _PlanIdentity,
+    created_titles: list[str],
+    skipped_titles: list[str],
+    existing: _ExistingPlanTickets,
+) -> None:
+    """Record a dispatched plan ticket as created, or as skipped with its error."""
+    if not dispatched.created:
+        skipped_titles.append(f"{identity.title}: {dispatched.error}" if dispatched.error else identity.title)
+        return
+    created_titles.append(identity.title)
+    existing.keys.add(identity.key)
+    existing.title_files.add(identity.title_key)
 
 
 def _apply_plan_tickets(
@@ -567,29 +634,27 @@ def _apply_plan_tickets(
     min_usefulness: float = DEFAULT_MIN_USEFULNESS,
 ) -> tuple[list[str], list[str], int, int]:
     """Return (created, skipped, useful_count, filtered_out_count)."""
-    useful, filtered_out = _rank_useful_plans(project, plan_set, min_usefulness)
-
+    ranked = _rank_useful_plans(project, plan_set, min_usefulness)
+    existing = _existing_todo2code_keys(project, sprint=sprint)
+    plans_rel = _relative_plans_path(project, plans_path)
     created_titles: list[str] = []
     skipped_titles: list[str] = []
-    existing_keys, existing_title_files = _existing_todo2code_keys(project, sprint=sprint)
-    plans_rel = _relative_plans_path(project, plans_path)
 
-    for plan in useful:
+    for plan in ranked.useful:
         if len(created_titles) >= limit:
             break
-        scaffold = _ticket_scaffold(plan, project=project, plans_path=plans_path, source=source)
-        title, key, title_key = _plan_identity(scaffold)
-        if key in existing_keys or title_key in existing_title_files:
-            skipped_titles.append(title)
-            continue
-        created, err = _dispatch_plan_task(project, plan, scaffold, plans_rel, sprint)
-        if not created:
-            skipped_titles.append(f"{title}: {err}" if err else title)
-            continue
-        created_titles.append(title)
-        existing_keys.add(key)
-        existing_title_files.add(title_key)
-    return created_titles, skipped_titles, len(useful), filtered_out
+        _file_plan_ticket(
+            project,
+            plan,
+            created_titles,
+            skipped_titles,
+            existing=existing,
+            plans_path=plans_path,
+            source=source,
+            plans_rel=plans_rel,
+            sprint=sprint,
+        )
+    return created_titles, skipped_titles, len(ranked.useful), ranked.filtered_out
 
 
 def _run_t2c_pipeline(
