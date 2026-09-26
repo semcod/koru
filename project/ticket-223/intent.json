@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-223",
+  "summary": "Decompose god function prepare_workspace",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-223/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/ticket_command/workspace.py",
+    "tests/test_ticket_command.py",
+    "tests/test_ticket_command_delivery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "61645062d129c5fe821b6f473ec5e3e3a0479dad",
+    "targetBranch": "main",
+    "outcome": "Decompose prepare_workspace in src/koru/ticket_command/workspace.py: extract the main-only delivery return into _main_only_workspace, the governed-delivery precondition gate (checker pin, feature probe, intent template) into _pinned_checker_args, the managed allocation into _allocate_ticket, the plan/validate cycle into _planned_layout, the lease creation into _write_lease, the worktree materialization into _materialize_worktree and the ticket record seeding into _seed_ticket_records, dropping the orchestrator from CC=10 / fan-out=23 / mutations=17 to CC=2 / fan-out=9 / mutations=6 (god-function thresholds: fan-out > 10, mutations > 6, CC > 12) while preserving the exact check order, error messages, lease bytes, worktree layout and the public prepare_workspace/preflight_workspace contract used by service.py and the ticket-command tests.",
+    "nonGoals": [
+      "Changing the delivery flow semantics, error strings or the order of preflight checks",
+      "Refactoring preflight_workspace, service.py or other modules of the ticket_command package",
+      "Altering the koru ticket GitHub-issue execution behavior"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Split the governed-delivery body of prepare_workspace into single-responsibility module-level helpers (_main_only_workspace, _pinned_checker_args, _allocate_ticket, _planned_layout, _write_lease, _materialize_worktree, _seed_ticket_records) that stay in workspace.py so the ticket-command tests keep patching module.command and module.git, and return values instead of unpacking tuples at call sites so code2llm does not double-count mutations.",
+      "components": [
+        {
+          "name": "ticket-command-workspace",
+          "paths": [
+            "src/koru/ticket_command/workspace.py",
+            "tests/test_ticket_command_delivery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the single inline prepare_workspace body."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m radon cc src/koru/ticket_command/workspace.py -s -n C"
+        ],
+        "evidence": "prepare_workspace is CC 2 with fan-out 9 and 6 mutations; every extracted helper is at or below every god-function threshold (fan-out > 10, mutations > 6, CC > 12)."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q tests/test_ticket_command_delivery.py tests/test_ticket_command.py"
+        ],
+        "evidence": "The real prepare_workspace integration test and the dirty-main refusal test pass unchanged; no error strings, check order or lease bytes changed."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest -q tests/test_ticket_command.py tests/test_ticket_command_batch.py tests/test_ticket_command_delivery.py tests/test_ticket_command_reporting.py"
+        ],
+        "evidence": "Full ticket-command suite passes."
+      }
+    ]
+  }
+}
