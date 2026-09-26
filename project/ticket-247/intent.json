@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-247",
+  "summary": "Assign services python code to application workstream in governance manifest",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-247/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".governance/manifest.json"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f46048b37bc1a66a930ecbd2cbf11590dae96efc",
+    "targetBranch": "main",
+    "outcome": "Add services/**/*.py to coordination.workstreams.application.ownedPaths in .governance/manifest.json so the Python service code under services/ (currently services/healing-webhook/*.py) is owned by the application workstream. This remediates GOV-WORKSTREAM-003: code2llm-discovered planfile tickets scoped to services/healing-webhook/app.py (PLF-039 and the Shotgun Surgery payload/proc/outcome siblings) could not be allocated to a workstream because no ownedPaths pattern covered those files. Infrastructure keeps services/**/Dockerfile*, which stays disjoint from the new Python-only glob, so rejectActiveScopeOverlap remains satisfied.",
+    "nonGoals": [
+      "No ownership change for services/**/Dockerfile* or any other infrastructure path",
+      "No source, test or behaviour change inside services/ itself",
+      "No changes to other workstreams' ownedPaths or to coordination settings other than the application list"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add the single glob services/**/*.py to the application workstream ownedPaths list in .governance/manifest.json, placed with the other code-root globs after packages/**. The glob matches exactly the four Python modules in services/healing-webhook/ and never matches a Dockerfile, so application and infrastructure ownership of services/ stays disjoint under the gate's pattern_covered_by predicate. .governance/manifest.json is not digest-pinned by .governance/manifest.lock.json (only manifest.base.json is), so no lock refresh is required.",
+      "components": [
+        {
+          "name": "governance-manifest",
+          "paths": [
+            ".governance/manifest.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [
+        "application workstream now owns services/**/*.py; services Python code previously matched no workstream and triggered GOV-WORKSTREAM-003 on ticket allocation"
+      ],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; application.ownedPaths returns to the previous six globs and services Python code is unowned again."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"import json,sys;sys.path.insert(0,'.governance');from governance_check import pattern_covered_by;m=json.load(open('.governance/manifest.json'));ws=m['coordination']['workstreams'];app=ws['application']['ownedPaths'];inf=ws['infrastructure']['ownedPaths'];assert 'services/**/*.py' in app;assert any(pattern_covered_by(p, 'services/**/*.py') for p in ['services/healing-webhook/app.py','services/healing-webhook/app_bootstrap.py','services/healing-webhook/app_command_routing.py','services/healing-webhook/ticket_builder.py']);assert all(not any(pattern_covered_by(p, o) for o in inf) for p in ['services/healing-webhook/app.py']);assert any(pattern_covered_by('services/healing-webhook/Dockerfile', o) for o in inf) and not any(pattern_covered_by('services/healing-webhook/Dockerfile', o) for o in app)\""
+        ],
+        "evidence": "The gate ownership predicate resolves every services/healing-webhook/*.py file to application only, keeps services Dockerfiles with infrastructure only, and the new glob is present in application.ownedPaths."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "The governance gate reports 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}
