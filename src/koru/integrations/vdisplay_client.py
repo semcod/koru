@@ -119,75 +119,44 @@ from koru.integrations.vdisplay.env_session import (  # noqa: E402
 )
 
 
-def _real_vdisplay_src() -> str | None:
-    candidates: list[str] = []
-    explicit = os.environ.get("VDISPLAY_SRC", "").strip()
-    if explicit:
-        candidates.append(explicit)
-    candidates.append(str(Path.home() / "github/wronai/vdisplay/src"))
-    candidates.append(str(Path.home() / "github/wronai/vdisplay"))
-    for raw in candidates:
-        root = Path(raw).expanduser()
-        src_root = root / "src" if (root / "src" / "vdisplay").is_dir() else root
-        if (src_root / "vdisplay" / "ide_prompt.py").is_file():
-            return str(src_root)
-    return None
-
-
-def _ensure_real_vdisplay_on_path() -> None:
-    import sys
-
-    root = _real_vdisplay_src()
-    if not root:
-        return
-    if root in sys.path:
-        sys.path.remove(root)
-    sys.path.insert(0, root)
-    pkg = sys.modules.get("vdisplay")
-    pkg_path = str(Path(root) / "vdisplay")
-    paths = getattr(pkg, "__path__", None)
-    if paths is not None and pkg_path not in list(paths):
-        try:
-            paths.insert(0, pkg_path)
-        except AttributeError:
-            paths.append(pkg_path)
-
+from koru.integrations.vdisplay_readiness import (  # noqa: E402
+    _VDISPLAY_DIRECT,
+    _VDISPLAY_IMPORT_ERROR,
+    _ensure_real_vdisplay_on_path,
+    _ensure_vdisplay_runtime as _vr_ensure_vdisplay_runtime,
+    _load_vdisplay_control as _vr_load_vdisplay_control,
+    _real_vdisplay_src,
+    _reload_vdisplay_direct as _vr_reload_vdisplay_direct,
+    _vdisplay_control,
+)
 
 _ensure_real_vdisplay_on_path()
+
+
+def _load_vdisplay_control() -> bool:
+    if not _VDISPLAY_DIRECT:
+        return False
+    return _vr_load_vdisplay_control()
+
+
+def _reload_vdisplay_direct() -> bool:
+    return _load_vdisplay_control()
+
+
+def _ensure_vdisplay_runtime() -> bool:
+    if _VDISPLAY_DIRECT:
+        return True
+    from koru.deps_autorepair import ensure_vdisplay_runtime
+
+    if not ensure_vdisplay_runtime(label="koru drive"):
+        return False
+    return _reload_vdisplay_direct()
 
 # Optional: LLM vision decision layer on top of photo VQL (enable via env + .env OpenRouter key)
 try:
     from koru.autonomy_strategy.openrouter import call_openrouter_vision
 except Exception:
     call_openrouter_vision = None
-
-_VDISPLAY_DIRECT = False
-_VDISPLAY_IMPORT_ERROR: str | None = None
-_vdisplay_control = None
-
-def _load_vdisplay_control():
-    """Lazy load to avoid top-level crashes from vdisplay submodules (e.g. missing dataclass in some versions) and make autonomy robust."""  # noqa: E501
-    global _VDISPLAY_DIRECT, _VDISPLAY_IMPORT_ERROR, _vdisplay_control
-    if _vdisplay_control is not None or _VDISPLAY_DIRECT:
-        return _VDISPLAY_DIRECT
-    try:
-        from vdisplay.application.services import control as control_mod
-        _vdisplay_control = control_mod
-        _VDISPLAY_DIRECT = True
-        _VDISPLAY_IMPORT_ERROR = None
-        return True
-    except Exception as exc:  # broader than ImportError (catches NameError etc inside vdisplay modules)
-        _VDISPLAY_DIRECT = False
-        _VDISPLAY_IMPORT_ERROR = str(exc)
-        return False
-
-# initial best-effort (non-fatal)
-try:
-    from vdisplay.application.services import control as _vdisplay_control
-    _VDISPLAY_DIRECT = True
-except Exception as exc:
-    _VDISPLAY_IMPORT_ERROR = str(exc)
-    _vdisplay_control = None
 
 _IDE_HINTS: dict[str, dict[str, str]] = {
     "windsurf": {"app": "Windsurf", "window_title_contains": "Windsurf"},
@@ -217,90 +186,30 @@ _SUBMIT_BUTTON_SELECTORS: tuple[dict[str, str], ...] = (
 )
 
 
-def _canonical_ide(ide: str) -> str:
-    try:
-        from koruide.ide import canonical_autopilot_ide_id
-
-        return canonical_autopilot_ide_id(ide) or ide.strip().lower()
-    except Exception:
-        return ide.strip().lower()
-
-
-def _agent_url() -> str | None:
-    explicit = os.environ.get("KORU_VDISPLAY_AGENT_URL", "").strip()
-    if explicit:
-        return explicit.rstrip("/")
-    try:
-        from koru.integrations.vdisplay_agent_bootstrap import (
-            apply_vdisplay_agent_env,
-            resolve_vdisplay_agent_url,
-        )
-
-        applied = apply_vdisplay_agent_env()
-        url = applied.get("agent_url") or resolve_vdisplay_agent_url()
-        if url:
-            return url.rstrip("/")
-        from vdisplay.agent_config import resolve_agent_url
-
-        return resolve_agent_url(allow_auto=True)
-    except ImportError:
-        try:
-            from koru.integrations.vdisplay_agent_bootstrap import resolve_vdisplay_agent_url
-
-            url = resolve_vdisplay_agent_url()
-            return url.rstrip("/") if url else None
-        except ImportError:
-            return None
-
-
-def _probe_agent(url: str) -> bool:
-    try:
-        from koru.integrations.vdisplay_agent_bootstrap import probe_vdisplay_agent
-
-        return probe_vdisplay_agent(url.rstrip("/"))
-    except ImportError:
-        pass
-    try:
-        with urllib.request.urlopen(f"{url.rstrip('/')}/health", timeout=0.5) as resp:
-            return resp.status == 200
-    except (urllib.error.URLError, TimeoutError, OSError, ValueError):
-        return False
-
-
-def _reload_vdisplay_direct() -> bool:
-    return _load_vdisplay_control()
-
-
-def _ensure_vdisplay_runtime() -> bool:
-    if _VDISPLAY_DIRECT:
-        return True
-    from koru.deps_autorepair import ensure_vdisplay_runtime
-
-    if not ensure_vdisplay_runtime(label="koru drive"):
-        return False
-    return _reload_vdisplay_direct()
+from koru.integrations.vdisplay_readiness import (  # noqa: E402
+    _agent_url,
+    _canonical_ide,
+    _probe_agent,
+    vdisplay_available as _vr_vdisplay_available,
+    vdisplay_missing_message as _vr_vdisplay_missing_message,
+)
 
 
 def vdisplay_available() -> bool:
-    if _VDISPLAY_DIRECT or _load_vdisplay_control():
-        return True
-    if _ensure_vdisplay_runtime():
-        return True
-    url = _agent_url()
-    return bool(url and _probe_agent(url))
+    return _vr_vdisplay_available(
+        direct=_VDISPLAY_DIRECT,
+        load_control=_load_vdisplay_control,
+        ensure_runtime=_ensure_vdisplay_runtime,
+        agent_url_fn=_agent_url,
+        probe_agent_fn=_probe_agent,
+    )
 
 
 def vdisplay_missing_message() -> str:
-    url = _agent_url()
-    if url:
-        return ""
-    hint = (
-        "Install vdisplay control plane: pip install vdisplay "
-        "or set KORU_VDISPLAY_AGENT_URL=http://127.0.0.1:8765"
+    return _vr_vdisplay_missing_message(
+        agent_url_fn=_agent_url,
+        import_error=_VDISPLAY_IMPORT_ERROR,
     )
-    if _VDISPLAY_IMPORT_ERROR:
-        return f"{hint} ({_VDISPLAY_IMPORT_ERROR})"
-    return hint
 
 
 def verify_chat_text_visible(
@@ -508,65 +417,41 @@ from koru.integrations.vdisplay.control_policy import (  # noqa: E402,I001
     _photo_vql_code_edit_enabled,  # noqa: F401
     _send_chat_os_injector_enabled,  # noqa: F401
     _trusted_visual_target_id,  # noqa: F401
-    simplified_control_likely_insufficient as _simplified_control_policy,
-    vdisplay_fallback_enabled as _vdisplay_fallback_policy,
+)
+from koru.integrations.vdisplay_readiness import (  # noqa: E402
+    _IDE_DEFAULT_SOURCE,
+    _capture_matches_requested_ide as _vr_capture_matches_requested_ide,
+    _prefer_photo_vql_chat as _vr_prefer_photo_vql_chat,
+    _vdisplay_source as _vr_vdisplay_source,
+    simplified_control_likely_insufficient,
+    vdisplay_fallback_enabled as _vr_vdisplay_fallback_enabled,
 )
 
 
-def simplified_control_likely_insufficient(*, ide: str, plugin_connected: bool = False) -> bool:
-    """Heuristic: simplified keyboard/plugin paths are unlikely to work."""
-    return _simplified_control_policy(ide=ide, plugin_connected=plugin_connected)
-
-
 def vdisplay_fallback_enabled(*, ide: str | None = None, plugin_connected: bool = False) -> bool:
-    """Whether drive may use vdisplay semantic control as fallback."""
-    return _vdisplay_fallback_policy(
+    return _vr_vdisplay_fallback_enabled(
         ide=ide,
         plugin_connected=plugin_connected,
-        available=vdisplay_available,
+        available_fn=vdisplay_available,
+    )
+
+
+def _capture_matches_requested_ide(ide: str) -> bool:
+    return _vr_capture_matches_requested_ide(
+        ide,
+        mismatch_fn=_photo_vql_ide_capture_mismatch,
     )
 
 
 def _prefer_photo_vql_chat(*, ide: str = "auto") -> bool:
-    """When set, send_chat uses photo VQL mouse+focus path before os_injector/ide_prompt."""
-    from koru.integrations.vdisplay.control_policy import prefer_photo_vql_chat
-
-    return prefer_photo_vql_chat(ide=ide, capture_matches=_capture_matches_requested_ide)
-
-
-def _capture_matches_requested_ide(ide: str) -> bool:
-    if os.environ.get("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }:
-        return True
-    return _photo_vql_ide_capture_mismatch(ide=ide) is None
+    return _vr_prefer_photo_vql_chat(
+        ide=ide,
+        capture_matches=_capture_matches_requested_ide,
+    )
 
 
 def _vdisplay_source() -> str:
-    explicit = os.environ.get("KORU_VDISPLAY_SOURCE", "").strip()
-    if explicit:
-        return explicit
-    ide = (
-        os.environ.get("KORU_DRIVE_IDE")
-        or os.environ.get("KORU_AUTOPILOT_INSTANCE")
-        or "auto"
-    )
-    return _vdisplay_source_for_ide(ide)
-
-
-_IDE_DEFAULT_SOURCE: dict[str, str] = {
-    "cursor": "DP-1",
-    "windsurf": "DP-1",
-    "antigravity": "DP-1",
-    "vscode": "DP-1",
-    "qoder": "DP-1",
-    "jetbrains": "DP-1",
-    "pycharm": "DP-1",
-    "idea": "DP-1",
-}
+    return _vr_vdisplay_source(source_for_ide_fn=_vdisplay_source_for_ide)
 
 # Desktop probe extracted to koru.integrations.vdisplay.desktop_probe;
 # re-exported here for backward compatibility.
@@ -589,27 +474,20 @@ from koru.integrations.vdisplay.surface_capture import (  # noqa: E402,F401
 )
 
 
+from koru.integrations.vdisplay_readiness import (  # noqa: E402
+    _abort_on_desktop_probe_fail,
+    _annotate_prepare_drive_readiness as _vr_annotate_prepare_drive_readiness,
+    _map_source_mismatch_actuation_allowed,
+    _resolve_vdisplay_source_for_ide as _vr_resolve_vdisplay_source_for_ide,
+    _vdisplay_source_for_ide as _vr_vdisplay_source_for_ide,
+)
+
+
 def _annotate_prepare_drive_readiness(out: dict[str, Any]) -> None:
-    reasons: list[str] = []
-    if not out.get("ok"):
-        reasons.append("prepare_not_ok")
-    if out.get("capture_confirmed") is False:
-        reasons.append("capture_not_confirmed")
-    if out.get("map_capture_mismatch") and not _map_source_mismatch_actuation_allowed():
-        reasons.append("map_capture_mismatch")
-    if int(out.get("main_vql_layers") or out.get("elements") or 0) <= 0 and not out.get("surface_only_fallback"):
-        reasons.append("empty_vql_layers")
-    out["drive_ready"] = not reasons
-    if reasons:
-        out["drive_blocked_reasons"] = reasons
-        out["drive_blocked_reason"] = reasons[0]
-        if out.get("map_capture_mismatch") and "map_capture_mismatch" in reasons:
-            out["map_actuation_ready"] = False
-    else:
-        out.pop("drive_blocked_reasons", None)
-        out.pop("drive_blocked_reason", None)
-        if out.get("map_capture_mismatch"):
-            out["map_actuation_ready"] = True
+    return _vr_annotate_prepare_drive_readiness(
+        out,
+        map_mismatch_allowed_fn=_map_source_mismatch_actuation_allowed,
+    )
 
 
 def _resolve_vdisplay_source_for_ide(
@@ -617,55 +495,22 @@ def _resolve_vdisplay_source_for_ide(
     *,
     probe: dict[str, Any] | None = None,
 ) -> tuple[str, dict[str, Any]]:
-    try:
-        return _resolve_vdisplay_source_impl(
-            ide,
-            canonical_ide=_canonical_ide,
-            desktop_probe=_desktop_probe,
-            probe=probe,
-            ide_default_source=_IDE_DEFAULT_SOURCE,
-        )
-    except TypeError as exc:
-        if "ide_default_source" not in str(exc):
-            raise
-        from koru.integrations import photo_vql_monitor as _photo_vql_monitor
-
-        previous_defaults = getattr(_photo_vql_monitor, "_IDE_DEFAULT_SOURCE", None)
-        _photo_vql_monitor._IDE_DEFAULT_SOURCE = _IDE_DEFAULT_SOURCE
-        try:
-            return _resolve_vdisplay_source_impl(
-                ide,
-                canonical_ide=_canonical_ide,
-                desktop_probe=_desktop_probe,
-                probe=probe,
-            )
-        finally:
-            if previous_defaults is not None:
-                _photo_vql_monitor._IDE_DEFAULT_SOURCE = previous_defaults
-
-
-def _abort_on_desktop_probe_fail() -> bool:
-    return os.environ.get("KORU_VDISPLAY_ABORT_ON_PROBE_FAIL", "1").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
+    return _vr_resolve_vdisplay_source_for_ide(
+        ide,
+        probe=probe,
+        canonical_ide_fn=_canonical_ide,
+        desktop_probe_fn=_desktop_probe,
+        ide_default_source=_IDE_DEFAULT_SOURCE,
+    )
 
 
 def _vdisplay_source_for_ide(ide: str) -> str:
-    explicit = os.environ.get("KORU_VDISPLAY_SOURCE", "").strip()
-    if explicit:
-        return explicit
-    try:
-        src, _probe = _resolve_vdisplay_source_for_ide(ide)
-        if src:
-            os.environ.setdefault("KORU_VDISPLAY_SOURCE", src)
-            return src
-    except Exception:
-        pass
-    canon = _canonical_ide(ide)
-    return _IDE_DEFAULT_SOURCE.get(canon, "DP-1")
+    return _vr_vdisplay_source_for_ide(
+        ide,
+        resolve_fn=_resolve_vdisplay_source_for_ide,
+        canonical_ide_fn=_canonical_ide,
+        ide_default_source=_IDE_DEFAULT_SOURCE,
+    )
 
 
 def _photo_vql_metadata_root() -> Path:
@@ -5316,22 +5161,6 @@ def _is_jetbrains_map_target(*, target: dict[str, Any], ide: str) -> bool:
 
 def _map_mismatch_allowed_for_target(*, target: dict[str, Any], ide: str) -> bool:
     return _is_jetbrains_map_target(target=target, ide=ide) and _allow_prepare_map_on_mismatch()
-
-
-def _map_source_mismatch_actuation_allowed() -> bool:
-    if os.environ.get("KORU_VDISPLAY_ALLOW_MAP_SOURCE_MISMATCH", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }:
-        return True
-    # Vision LLM locates the chat input from the raw screenshot, not the stored
-    # GUI map — so a map calibrated for a different monitor is irrelevant when
-    # vision decides the click coords.
-    from koru.integrations.photo_vql_guard import llm_vision_decision_enabled
-
-    return llm_vision_decision_enabled()
 
 
 def _map_capture_mismatch_for_target(
