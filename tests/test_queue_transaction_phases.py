@@ -16,6 +16,13 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
+from koru.queue.journal import (
+    PHASE_COMPLETED,
+    PHASE_FROZEN,
+    PHASE_REFUSED,
+    PHASE_RESOLVED,
+    read_events,
+)
 from koru.queue.patch_mode import (
     NO_PATCH_EMITTED,
     PATCH_INTRODUCES_SYMLINK,
@@ -32,6 +39,7 @@ from koru.queue.transaction import (
     ManifestFreeze,
     build_patch_plan,
     commit_if_requested,
+    execute_patch_transaction,
     extract_patch,
     guard_promotion,
     resolve_verify_command,
@@ -544,6 +552,66 @@ class TestBranchFirstDefault(_RepoCase):
             self.assertEqual(outcome.code, PROMOTION_FAILED)
             self.assertIn("verify", outcome.message)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+
+class TestOrchestratorJournal(_RepoCase):
+    """The orchestrator's journal is its contract, so its order is pinned.
+
+    ``execute_patch_transaction`` delegates its phases to helpers; these tests
+    hold the helpers to the same event sequence the inline code produced, one
+    decision path per journaled refusal style.
+    """
+
+    _REPLY = (
+        "```diff\n"
+        "diff --git a/a.txt b/a.txt\n"
+        "--- a/a.txt\n"
+        "+++ b/a.txt\n"
+        "@@ -1 +1 @@\n"
+        "-old\n"
+        "+new\n"
+        "```\n"
+    )
+
+    def _phases(self, project: Path, run_id: str) -> list[str]:
+        return [event["phase"] for event in read_events(project, run_id)]
+
+    def _run(self, project: Path, ticket: dict):
+        return execute_patch_transaction(
+            project, _reply(stdout=self._REPLY), ticket, lambda cmd, cwd: _reply(),
+        )
+
+    def test_an_artifact_run_journals_resolved_frozen_completed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+
+            transaction = self._run(
+                project, {"id": "OJ-1", "inputs": {"promotion_mode": "artifact"}},
+            )
+
+            self.assertIsNone(transaction.outcome, transaction.outcome)
+            assert transaction.plan is not None
+            self.assertEqual(
+                self._phases(project, transaction.plan.run_id),
+                [PHASE_RESOLVED, PHASE_FROZEN, PHASE_COMPLETED],
+            )
+
+    def test_a_refused_branch_run_journals_only_resolved_and_refused(self) -> None:
+        """The default branch mode with no gate refuses after one decision."""
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+
+            transaction = self._run(project, {"id": "OJ-2", "inputs": {}})
+
+            assert transaction.outcome is not None
+            self.assertEqual(transaction.outcome.code, PROMOTION_FAILED)
+            assert transaction.plan is not None
+            self.assertEqual(
+                self._phases(project, transaction.plan.run_id),
+                [PHASE_RESOLVED, PHASE_REFUSED],
+            )
 
 
 def _head_subject(project: Path) -> str:
