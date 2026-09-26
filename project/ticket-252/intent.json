@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-252",
+  "summary": "Address code smell: shotgun surgery command in operator wup",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-252/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/operator/operator_wup.py",
+    "tests/test_autonomous.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1561433e1afab3ae4e367de135dd7a7c866fe6ab",
+    "targetBranch": "main",
+    "outcome": "Remove the code2llm 'Shotgun Surgery: command' report for src/koru/autonomy/operator/operator_wup.py (PLF-042) by making argv-list mutation live in exactly one helper, _build_command(base, *groups), the only function that assigns and grows a command list. _wup_watch_command becomes a single _build_command expression whose optional testql and --config flag groups are passed as conditional groups; a _compose_command(compose_file, profiles, *trailing) wrapper owns the shared 'docker compose -f <file> [--profile p]...' prefix for both former construction sites, so _compose_ps_command returns _compose_command(..., \"ps\", \"--format\", \"json\", service) and _ensure_wup_profiled_compose_services builds its up argv through the same wrapper. The read-only consumers stop rebinding the name 'command': _wait_for_compose_service_ready uses ps_command, _ensure_wup_profiled_compose_services uses up_command and _start_wup_watch uses watch_command. Produced argv lists are byte-identical to before; the subprocess/Popen call sites, timeouts and env handling are untouched. tests/test_autonomous.py keeps every existing wup argv pin and adds focused tests for _build_command group semantics (None/empty skipped, base copied) and the _compose_ps_command profile ordering.",
+    "nonGoals": [
+      "Changing any produced argv, flag order, default, timeout or environment lookup",
+      "Renaming the public surface or the read-only planfile_command locals of _wup_subprocess_env",
+      "Deduplicating _wait_for_compose_service_ready's polling loop or any other operator_wup smell",
+      "Touching operator.py, operator registry siblings or the systemd watcher contract"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Centralize argv mutation in a single pure helper, _build_command(base, *groups), that copies the base list and extends it with each truthy group; every conditional flag becomes a conditional group argument at the call site. The docker-compose prefix knowledge additionally collapses into _compose_command(compose_file, profiles, *trailing), the only place that knows the base verb order 'docker compose -f <file> [--profile p]... <trailing>'. No module extraction is needed (the smell is intra-module), so there are no new patch targets and the import surface is unchanged.",
+      "components": [
+        {
+          "name": "operator-wup",
+          "paths": [
+            "src/koru/autonomy/operator/operator_wup.py",
+            "tests/test_autonomous.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the single ticket commit to restore the three scattered command constructions."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "grep -nE \"^    command = |^        command = |command\\.(append|extend)\" src/koru/autonomy/operator/operator_wup.py"
+        ],
+        "evidence": "The only command assignment and the only command.extend live inside _build_command."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q -p no:cacheprovider tests/test_autonomous.py -k wup"
+        ],
+        "evidence": "All existing wup argv pins (watch command modes, compose up/ps ordering, profile flags) plus the new _build_command and _compose_ps_command tests pass."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest -q -p no:cacheprovider tests/test_autonomous.py"
+        ],
+        "evidence": "Full autonomy suite passes; no baseline regression."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh --base 1561433e1afab3ae4e367de135dd7a7c866fe6ab"
+        ],
+        "evidence": "Governance gate reports 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}
