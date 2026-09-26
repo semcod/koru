@@ -1,0 +1,96 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-245",
+  "summary": "decompose god module execution plan by extracting task profile matcher and step generators",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-245/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/execution_plan.py",
+    "src/koru/autonomy/execution_plan_profiles.py",
+    "src/koru/autonomy/execution_plan_steps.py",
+    "tests/test_execution_plan.py",
+    "tests/test_execution_plan_profiles.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a82d547b2a59ceaff8cff468a71b65f6ef1a3ca5",
+    "targetBranch": "main",
+    "outcome": "Decompose God Module src/koru/autonomy/execution_plan.py by extracting task profile loading and matching into src/koru/autonomy/execution_plan_profiles.py, and workflow step generators into src/koru/autonomy/execution_plan_steps.py. Maintain 100% backward compatibility with explicit re-exports in src/koru/autonomy/execution_plan.py.",
+    "nonGoals": [
+      "Changing task profile YAML schema or profile matching semantics",
+      "Altering execution step generation or command templates",
+      "Breaking public or internal imports from koru.autonomy.execution_plan"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract profile matching to koru.autonomy.execution_plan_profiles. Extract step builders to koru.autonomy.execution_plan_steps. Keep plan compilation orchestration, signals collection, and dataclasses in koru.autonomy.execution_plan with explicit re-exports.",
+      "components": [
+        {
+          "name": "koru-autonomy-execution-plan",
+          "paths": [
+            "src/koru/autonomy/execution_plan.py",
+            "src/koru/autonomy/execution_plan_profiles.py",
+            "src/koru/autonomy/execution_plan_steps.py",
+            "tests/test_execution_plan.py",
+            "tests/test_execution_plan_profiles.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit to restore inline profile matching and step generators in execution_plan.py and remove execution_plan_profiles.py and execution_plan_steps.py."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_execution_plan.py tests/test_execution_profile_matching.py tests/test_queued_execution_steps.py tests/test_task_execution_strategies.py"
+        ],
+        "evidence": "All existing execution plan tests pass without modification."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "ruff check src/koru/autonomy/execution_plan.py src/koru/autonomy/execution_plan_profiles.py src/koru/autonomy/execution_plan_steps.py",
+          "ruff format --check src/koru/autonomy/execution_plan.py src/koru/autonomy/execution_plan_profiles.py src/koru/autonomy/execution_plan_steps.py"
+        ],
+        "evidence": "Ruff check and format report 0 findings."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "The governance gate reports 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}
