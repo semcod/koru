@@ -244,4 +244,5 @@ project analysis or human-owned ticket inputs.
 | **ticket-240** | [`README.md`](./ticket-240/README.md) | - | - | - | - | - |
 | **ticket-241** | [`README.md`](./ticket-241/README.md) | - | - | - | - | - |
 | **ticket-242** | [`README.md`](./ticket-242/README.md) | - | - | - | - | - |
+| **ticket-244** | [`README.md`](./ticket-244/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->
