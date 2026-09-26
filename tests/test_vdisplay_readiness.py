@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from koru.integrations import vdisplay_readiness as vr
 
 

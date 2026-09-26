@@ -16,18 +16,13 @@ def test_ensure_autonomy_strategy_creates_koru_yaml(tmp_path: Path) -> None:
     result = ensure_autonomy_strategy_config(tmp_path)
 
     assert result.created_koru_yaml is True
-    assert result.strategy_id == "accordion_detail_to_general"
+    assert result.strategy_id == "in_flight_first"
     strategy = load_autonomy_strategy(tmp_path)
     assert strategy is not None
     assert strategy["source_of_truth"] == "planfile"
-    assert strategy["idle_discovery"]["duplicate_cooldown_behavior"] == (
-        "continue_to_general_discovery"
-    )
+    assert strategy["idle_discovery"]["duplicate_cooldown_behavior"] == ("continue_to_general_discovery")
     assert strategy["idle_discovery"]["ide_follow_up"]["enabled"] is True
-    assert (
-        strategy["idle_discovery"]["ide_follow_up"]["workflow"]
-        == "standardized_project_discovery_ticket"
-    )
+    assert strategy["idle_discovery"]["ide_follow_up"]["workflow"] == "standardized_project_discovery_ticket"
     assert "Co jeszcze zostalo do wykonania?" in strategy["idle_discovery"]["ide_follow_up"]["prompt"]
 
 
@@ -43,7 +38,7 @@ def test_ensure_autonomy_strategy_appends_to_existing_yaml_without_autonomy(
     assert result.added_strategy is True
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     assert data["project"] == "kept"
-    assert data["autonomy"]["strategy"]["id"] == "accordion_detail_to_general"
+    assert data["autonomy"]["strategy"]["id"] == "in_flight_first"
 
 
 def test_strategy_prompt_mentions_editable_yaml_and_heuristics(tmp_path: Path) -> None:

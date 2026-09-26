@@ -10,8 +10,9 @@ import os
 import sys
 import urllib.error
 import urllib.request
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 
 def _real_vdisplay_src() -> str | None:
@@ -186,10 +187,7 @@ def vdisplay_missing_message(
     if url:
         return ""
     err = _VDISPLAY_IMPORT_ERROR if import_error is None else import_error
-    hint = (
-        "Install vdisplay control plane: pip install vdisplay "
-        "or set KORU_VDISPLAY_AGENT_URL=http://127.0.0.1:8765"
-    )
+    hint = "Install vdisplay control plane: pip install vdisplay or set KORU_VDISPLAY_AGENT_URL=http://127.0.0.1:8765"
     if err:
         return f"{hint} ({err})"
     return hint
@@ -350,11 +348,7 @@ def _vdisplay_source(*, source_for_ide_fn: Callable[[str], str] | None = None) -
     explicit = os.environ.get("KORU_VDISPLAY_SOURCE", "").strip()
     if explicit:
         return explicit
-    ide = (
-        os.environ.get("KORU_DRIVE_IDE")
-        or os.environ.get("KORU_AUTOPILOT_INSTANCE")
-        or "auto"
-    )
+    ide = os.environ.get("KORU_DRIVE_IDE") or os.environ.get("KORU_AUTOPILOT_INSTANCE") or "auto"
     src_fn = _vdisplay_source_for_ide if source_for_ide_fn is None else source_for_ide_fn
     return src_fn(ide)
 
@@ -382,11 +376,7 @@ def _annotate_prepare_drive_readiness(
         reasons.append("prepare_not_ok")
     if out.get("capture_confirmed") is False:
         reasons.append("capture_not_confirmed")
-    mismatch_fn = (
-        _map_source_mismatch_actuation_allowed
-        if map_mismatch_allowed_fn is None
-        else map_mismatch_allowed_fn
-    )
+    mismatch_fn = _map_source_mismatch_actuation_allowed if map_mismatch_allowed_fn is None else map_mismatch_allowed_fn
     if out.get("map_capture_mismatch") and not mismatch_fn():
         reasons.append("map_capture_mismatch")
     if int(out.get("main_vql_layers") or out.get("elements") or 0) <= 0 and not out.get("surface_only_fallback"):
