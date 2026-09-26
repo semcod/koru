@@ -12,6 +12,7 @@ from types import SimpleNamespace
 
 from koru.autonomy.post_run_verify import (
     PostRunVerifyConfig,
+    count_verify_failure_notes,
     fetch_recently_done_ticket_ids,
     load_post_run_verify_config,
     run_verify_commands,
@@ -90,6 +91,146 @@ queue:
                     for c in calls
                 ),
             )
+
+    def test_verify_parks_after_max_reopens(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            calls: list[list[str]] = []
+            notes = [
+                "post_run_verify failed (exit 1): pytest failed",
+                "post_run_verify failed (exit 1): pytest failed",
+                "post_run_verify failed (exit 1): pytest failed",
+            ]
+            status = {"value": "open"}
+
+            def shell_runner(_cmd: str, _proj: Path) -> SimpleNamespace:
+                return _fail("pytest failed")
+
+            def planfile_runner(cmd, _proj: Path) -> SimpleNamespace:
+                calls.append(list(cmd))
+                if cmd[:3] == ["planfile", "ticket", "show"]:
+                    return _ok(
+                        json.dumps(
+                            {
+                                "id": "PLF-1",
+                                "status": status["value"],
+                                "outputs": {"notes": notes},
+                            },
+                        ),
+                    )
+                if "blocked" in cmd:
+                    status["value"] = "blocked"
+                return _ok()
+
+            outcomes = verify_completed_tickets(
+                project,
+                ["PLF-1"],
+                config=PostRunVerifyConfig(
+                    enabled=True,
+                    commands=("pytest -q",),
+                    on_failure="reopen",
+                    max_reopens=3,
+                ),
+                planfile_runner=planfile_runner,
+                shell_runner=shell_runner,
+            )
+            self.assertEqual(outcomes[0]["action"], "parked")
+            self.assertTrue(
+                any(c[:4] == ["planfile", "ticket", "update", "PLF-1"] and "blocked" in c for c in calls),
+            )
+
+    def test_verify_reopen_budget_boundary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            calls: list[list[str]] = []
+
+            def shell_runner(_cmd: str, _proj: Path) -> SimpleNamespace:
+                return _fail("pytest failed")
+
+            def planfile_runner(cmd, _proj: Path) -> SimpleNamespace:
+                calls.append(list(cmd))
+                if cmd[:3] == ["planfile", "ticket", "show"]:
+                    return _ok(
+                        json.dumps(
+                            {
+                                "id": "PLF-1",
+                                "status": "open",
+                                "outputs": {
+                                    "notes": [
+                                        "post_run_verify failed (exit 1): x",
+                                        "post_run_verify failed (exit 1): y",
+                                        "unrelated operator note",
+                                    ],
+                                },
+                            },
+                        ),
+                    )
+                return _ok()
+
+            outcomes = verify_completed_tickets(
+                project,
+                ["PLF-1"],
+                config=PostRunVerifyConfig(
+                    enabled=True,
+                    commands=("pytest -q",),
+                    on_failure="reopen",
+                    max_reopens=3,
+                ),
+                planfile_runner=planfile_runner,
+                shell_runner=shell_runner,
+            )
+            self.assertEqual(outcomes[0]["action"], "reopened")
+
+    def test_verify_max_reopens_zero_keeps_reopening(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+
+            def shell_runner(_cmd: str, _proj: Path) -> SimpleNamespace:
+                return _fail("pytest failed")
+
+            def planfile_runner(cmd, _proj: Path) -> SimpleNamespace:
+                if cmd[:3] == ["planfile", "ticket", "show"]:
+                    return _ok(
+                        json.dumps(
+                            {
+                                "id": "PLF-1",
+                                "status": "open",
+                                "outputs": {
+                                    "notes": ["post_run_verify failed (exit 1): x"] * 10,
+                                },
+                            },
+                        ),
+                    )
+                return _ok()
+
+            outcomes = verify_completed_tickets(
+                project,
+                ["PLF-1"],
+                config=PostRunVerifyConfig(
+                    enabled=True,
+                    commands=("pytest -q",),
+                    on_failure="reopen",
+                    max_reopens=0,
+                ),
+                planfile_runner=planfile_runner,
+                shell_runner=shell_runner,
+            )
+            self.assertEqual(outcomes[0]["action"], "reopened")
+
+    def test_count_verify_failure_notes_shapes(self) -> None:
+        self.assertEqual(count_verify_failure_notes(None), 0)
+        self.assertEqual(count_verify_failure_notes({}), 0)
+        self.assertEqual(count_verify_failure_notes({"outputs": "bad"}), 0)
+        payload = {
+            "outputs": {
+                "notes": [
+                    "post_run_verify failed (exit 1): boom",
+                    {"text": "post_run_verify failed (exit 9): later"},
+                    "operator note",
+                ],
+            },
+        }
+        self.assertEqual(count_verify_failure_notes(payload), 2)
 
     def test_verify_after_ide_work_pending_done(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

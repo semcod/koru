@@ -1,0 +1,86 @@
+{
+ "schema": "new-project.intent/v3",
+ "ticket": "ticket-243",
+ "summary": "Park ticket after N post_run_verify reopen failures",
+ "workstream": "application",
+ "classification": {
+  "kind": "SERVICE",
+  "priority": "P2",
+  "origin": "health"
+ },
+ "allowedPaths": [
+  "project/ticket-243/**",
+  "TODO.md",
+  "project/TICKETS.md",
+  "src/koru/autonomy/post_run_verify.py",
+  "src/koru/autonomy/shell_drive_finalize.py",
+  "tests/test_post_run_verify.py"
+ ],
+ "forbiddenPaths": [
+  "project/ticket-*/user-*.md"
+ ],
+ "stacks": [],
+ "dependsOn": [],
+ "conflictsWith": [],
+ "integrationTicket": null,
+ "delivery": {
+  "acceptedBaseSha": "7001ea7f86c860f81a8aee4bec022e64016ae10e",
+  "targetBranch": "main",
+  "outcome": "Bound the post_run_verify reopen loop. PostRunVerifyConfig gains max_reopens (default 3, 0 disables). apply_verify_failure counts prior post_run_verify-failed notes via planfile ticket show --format json (new count_verify_failure_notes helper); once the ticket reaches the budget, on_failure=reopen escalates to a terminal blocked status (action parked) instead of another open, which the queue would redrive. This stops the observed PLF-2599-style drive->verify-fail->reopen->redrive loop that burned 49 drive cycles.",
+  "nonGoals": [
+   "Changing queue post_run_verify semantics for on_failure=block",
+   "Altering shell_drive_finalize behavior or capability detection",
+   "Changing drive retry limits in cycle_drive_retry or decision_arbiter",
+   "Marking the ticket done inside the verifier"
+  ],
+  "complexity": "S",
+  "estimatedMinutes": 25,
+  "budgets": {
+   "maxImplementationFiles": 3,
+   "maxAffectedComponents": 1,
+   "maxPublicInterfaceChanges": 1,
+   "maxRuntimeDependencies": 0
+  },
+  "architecture": {
+   "status": "accepted",
+   "decision": "Parking reuses the existing planfile blocked terminal status and the same update --status command shape as reopen, so no new planfile capability is required. The reopen budget is durable evidence: it counts notes already persisted on the ticket rather than volatile in-memory streaks, so restarts do not reset it. Unknown note shapes degrade to reopen (fail-open to legacy) while unreadable ticket JSON yields None and also falls back to reopen.",
+   "components": [
+    {
+     "name": "koru-autonomy-post-run-verify",
+     "paths": [
+      "src/koru/autonomy/post_run_verify.py",
+      "tests/test_post_run_verify.py"
+     ]
+    }
+   ],
+   "responsibilityChanges": false,
+   "interfaceChanges": [
+    "PostRunVerifyConfig.max_reopens field; count_verify_failure_notes export"
+   ],
+   "dataChanges": [],
+   "ui": {
+    "impact": "none",
+    "states": [],
+    "evidence": []
+   },
+   "rollback": "Revert the ticket commit; legacy unbounded reopen restored, or set max_reopens: 0 in koru.yaml."
+  },
+  "runtimeDependencies": [],
+  "validation": [
+   {
+    "criterion": "AC-01",
+    "commands": [
+     "python3 -m pytest -q tests/test_post_run_verify.py tests/test_post_run_verify_boundaries.py tests/test_post_run_verify_env.py tests/test_post_run_verify_persistence.py tests/test_shell_drive_finalize.py"
+    ],
+    "evidence": "89 passed; new tests cover parked-after-budget, boundary (2<3 reopens), max_reopens=0 legacy, and note-shape counting. Persistence call-sequence tests unchanged and green."
+   },
+   {
+    "criterion": "AC-02",
+    "commands": [
+     "bash project/governance-check.sh"
+    ],
+    "evidence": "pytest sessionstart gate GOV-PASS (0 errors, 0 warnings)."
+   }
+  ]
+ }
+}

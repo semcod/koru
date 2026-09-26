@@ -38,6 +38,7 @@ class PostRunVerifyConfig:
     after_ide_drive: bool = True
     ide_done_window_minutes: float = 30.0
     timeout_seconds: float = 300.0  # Per native command; custom runners own their bounds.
+    max_reopens: int = 3  # Reopen budget; 0 disables parking (legacy unbounded reopen).
 
 
 def _truthy_env(name: str) -> bool | None:
@@ -100,6 +101,14 @@ def _parse_verify_ide_settings(block: dict[str, Any]) -> tuple[bool, float]:
     return after_ide, ide_window
 
 
+def _parse_verify_max_reopens(value: Any) -> int:
+    try:
+        parsed = 0 if isinstance(value, bool) else int(value)
+    except (TypeError, ValueError):
+        return 3
+    return max(0, parsed)
+
+
 def _parse_verify_timeout(value: Any) -> float:
     """Return a positive finite deadline, or an invalid sentinel for not_run."""
     try:
@@ -130,6 +139,10 @@ def load_post_run_verify_config(project: Path) -> PostRunVerifyConfig | None:
     after_ide, ide_window = _parse_verify_ide_settings(block)
 
     timeout = _parse_verify_timeout(block.get("timeout_seconds", 300.0))
+    max_reopens = _parse_verify_max_reopens(block.get("max_reopens", 3))
+    env_max_reopens = os.environ.get("KORU_POST_RUN_VERIFY_MAX_REOPENS", "").strip()
+    if env_max_reopens:
+        max_reopens = _parse_verify_max_reopens(env_max_reopens)
 
     if not enabled and not commands:
         return None
@@ -141,6 +154,7 @@ def load_post_run_verify_config(project: Path) -> PostRunVerifyConfig | None:
         after_ide_drive=after_ide,
         ide_done_window_minutes=ide_window,
         timeout_seconds=timeout,
+        max_reopens=max_reopens,
     )
 
 
@@ -159,13 +173,12 @@ def _parse_iso_datetime(value: str | None) -> datetime | None:
     return dt
 
 
-def fetch_ticket_status(
+def _fetch_ticket_payload(
     project: Path,
     ticket_id: str,
     *,
     runner: PlanfileRunner,
-) -> str | None:
-    """Return lowercase planfile status for ``ticket_id``, or None."""
+) -> dict[str, Any] | None:
     try:
         result = runner(
             ["planfile", "ticket", "show", ticket_id, "--format", "json"],
@@ -179,7 +192,18 @@ def fetch_ticket_status(
         payload = json.loads((result.stdout or "").strip() or "{}")
     except json.JSONDecodeError:
         return None
-    if not isinstance(payload, dict):
+    return payload if isinstance(payload, dict) else None
+
+
+def fetch_ticket_status(
+    project: Path,
+    ticket_id: str,
+    *,
+    runner: PlanfileRunner,
+) -> str | None:
+    """Return lowercase planfile status for ``ticket_id``, or None."""
+    payload = _fetch_ticket_payload(project, ticket_id, runner=runner)
+    if payload is None:
         return None
     return str(payload.get("status") or "").lower() or None
 
@@ -353,6 +377,29 @@ def _truncate(text: str, limit: int) -> str:
     return f"...{text[-(limit - 3):]}"
 
 
+def _note_text(note: Any) -> str:
+    if isinstance(note, str):
+        return note
+    if isinstance(note, dict):
+        for key in ("text", "note", "message", "content"):
+            value = note.get(key)
+            if isinstance(value, str):
+                return value
+        return json.dumps(note, sort_keys=True, default=str)
+    return str(note)
+
+
+def count_verify_failure_notes(payload: dict[str, Any] | None) -> int:
+    """Count ``post_run_verify failed`` markers on a ``ticket show`` payload."""
+    if not isinstance(payload, dict):
+        return 0
+    outputs = payload.get("outputs")
+    notes = outputs.get("notes") if isinstance(outputs, dict) else payload.get("notes")
+    if not isinstance(notes, list):
+        return 0
+    return sum(1 for note in notes if "post_run_verify failed" in _note_text(note))
+
+
 def apply_verify_failure(
     project: Path,
     ticket_id: str,
@@ -377,10 +424,40 @@ def apply_verify_failure(
         result = runner(command, project)
         if result.returncode != 0:
             return "persistence_failed"
+        payload = _fetch_ticket_payload(project, ticket_id, runner=runner)
+    except (OSError, subprocess.SubprocessError):
+        return "persistence_failed"
+    status = str(payload.get("status") or "").lower() if payload else None
+    if status != expected_status:
+        return "persistence_failed"
+    if action == "reopened" and config.max_reopens > 0 and count_verify_failure_notes(payload) >= config.max_reopens:
+        return _park_ticket(project, ticket_id, config=config, runner=runner)
+    return action
+
+
+def _park_ticket(
+    project: Path,
+    ticket_id: str,
+    *,
+    config: PostRunVerifyConfig,
+    runner: PlanfileRunner,
+) -> str:
+    """Escalate a ticket that exhausted its reopen budget to terminal ``blocked``."""
+    reason = _truncate(
+        f"post_run_verify: parked after {config.max_reopens} verify failures; reopen/redrive loop bound reached",
+        config.max_output_chars,
+    )
+    try:
+        result = runner(
+            ["planfile", "ticket", "update", ticket_id, "--status", "blocked", "--note", reason],
+            project,
+        )
+        if result.returncode != 0:
+            return "persistence_failed"
         status = fetch_ticket_status(project, ticket_id, runner=runner)
     except (OSError, subprocess.SubprocessError):
         return "persistence_failed"
-    return action if status == expected_status else "persistence_failed"
+    return "parked" if status == "blocked" else "persistence_failed"
 
 
 def verify_completed_tickets(
@@ -444,6 +521,7 @@ def verify_completed_tickets(
 __all__ = [
     "PostRunVerifyConfig",
     "apply_verify_failure",
+    "count_verify_failure_notes",
     "fetch_recently_done_ticket_ids",
     "fetch_ticket_status",
     "load_post_run_verify_config",
