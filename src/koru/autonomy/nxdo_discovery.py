@@ -46,7 +46,7 @@ import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 Runner = Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]]
 
@@ -58,6 +58,20 @@ STAMP_RELPATH = Path(".planfile") / ".koru" / "nxdo-discovery.json"
 
 # nxdo Priority -> planfile priority accepted by create_nl_task.
 _PRIORITY_MAP = {"high": "high", "medium": "normal", "low": "low"}
+
+
+class _Preflight(NamedTuple):
+    """What :func:`_preflight` resolved: a skip reason or the run inputs.
+
+    ``binary``/``repo``/``started`` are only meaningful when ``reason`` is
+    ``None``; the cooldown stamp must reuse the ``started`` timestamp that
+    gated repo selection.
+    """
+
+    reason: str | None
+    binary: str | None
+    repo: Path | None
+    started: float
 
 
 @dataclass
@@ -206,7 +220,14 @@ def _save_stamps(project: Path, stamps: dict[str, float]) -> None:
         pass
 
 
-def _select_target_repo(project: Path, *, now: float) -> tuple[Path | None, float]:
+class _CooldownSelection(NamedTuple):
+    """Result of cooldown-based target-repo selection."""
+
+    repo: Path | None
+    remaining: float
+
+
+def _select_target_repo(project: Path, *, now: float) -> _CooldownSelection:
     """First repo whose per-repo cooldown has expired (project first)."""
     cooldown = _env_float("KORU_NXDO_COOLDOWN_SECONDS", DEFAULT_COOLDOWN_SECONDS, project)
     stamps = _load_stamps(project)
@@ -215,9 +236,9 @@ def _select_target_repo(project: Path, *, now: float) -> tuple[Path | None, floa
         last = stamps.get(str(repo), 0.0)
         remaining = cooldown - (now - last)
         if remaining <= 0:
-            return repo, 0.0
+            return _CooldownSelection(repo, 0.0)
         best_remaining = min(best_remaining, remaining)
-    return None, best_remaining
+    return _CooldownSelection(None, best_remaining)
 
 
 def _plan_from_output(stdout: str) -> dict[str, Any] | None:
@@ -303,13 +324,20 @@ def _ticket_scaffold(task: dict[str, Any], *, repo: Path, project: Path) -> dict
     }
 
 
+class _PlanFiling(NamedTuple):
+    """Ticket-filing result of :func:`_apply_plan_tickets`."""
+
+    applied: list[str]
+    skipped: list[str]
+
+
 def _apply_plan_tickets(
     project: Path,
     repo: Path,
     plan: dict[str, Any],
     *,
     limit: int,
-) -> tuple[list[str], list[str]]:
+) -> _PlanFiling:
     from koru.tasks import create_nl_task
 
     tasks = [t for t in (plan.get("tasks") or []) if isinstance(t, dict)]
@@ -342,7 +370,130 @@ def _apply_plan_tickets(
         else:
             created_titles.append(title)
             existing_keys.add(key)
-    return created_titles, skipped_titles
+    return _PlanFiling(created_titles, skipped_titles)
+
+
+def _preflight(
+    project: Path,
+    *,
+    now: Callable[[], float],
+    outcome: NxdoDiscoveryOutcome,
+) -> _Preflight:
+    """Run the guard checks; record the resolved binary/repo on ``outcome``.
+
+    Returns the skip ``reason``, or the inputs the run needs (binary, target
+    repo and the ``started`` timestamp used for cooldown stamping).
+    """
+    if not nxdo_enabled(project):
+        return _Preflight("disabled via KORU_NXDO_ENABLE", None, None, 0.0)
+    binary = _nxdo_executable(project)
+    if binary is None:
+        return _Preflight("nxdo not on PATH (set KORU_NXDO_BIN)", None, None, 0.0)
+    outcome.nxdo_path = binary
+    if not _api_key_available(project):
+        return _Preflight("no OPENROUTER_API_KEY/OPENAI_API_KEY (env or project .env)", None, None, 0.0)
+    started = now()
+    selection = _select_target_repo(project, now=started)
+    if selection.repo is None:
+        return _Preflight(
+            f"cooldown active for all repos (~{selection.remaining:.0f}s remaining)",
+            None,
+            None,
+            0.0,
+        )
+    outcome.target_repo = str(selection.repo)
+    return _Preflight(None, binary, selection.repo, started)
+
+
+def _nxdo_command(binary: str, repo: Path, project: Path) -> list[str]:
+    """``nxdo plan`` argv including the optional model/extra-context knobs."""
+    cmd = [binary, "plan", str(repo), "--json"]
+    model = _config_value("KORU_NXDO_MODEL", project)
+    if model:
+        cmd.extend(["--model", model])
+    extra_context = _config_value("KORU_NXDO_EXTRA_CONTEXT", project)
+    if extra_context:
+        cmd.extend(["--extra-context", extra_context])
+    return cmd
+
+
+def _execute(
+    pre: _Preflight,
+    project: Path,
+    *,
+    runner: Runner,
+    outcome: NxdoDiscoveryOutcome,
+) -> subprocess.CompletedProcess[str] | None:
+    """Run ``nxdo plan`` and time it; record duration (and exec errors).
+
+    Returns the completed process, or ``None`` when the subprocess could not
+    run at all (timeout or exec failure) — those paths must not stamp the
+    cooldown, so the caller stops before :func:`_record_attempt`.
+    """
+    cmd = _nxdo_command(pre.binary, pre.repo, project)
+    start = time.monotonic()
+    try:
+        result = runner(cmd, project)
+    except subprocess.TimeoutExpired as exc:
+        outcome.error = f"nxdo timed out after {exc.timeout}s"
+    except (OSError, ValueError) as exc:
+        outcome.error = f"nxdo exec failed: {exc}"
+    finally:
+        outcome.nxdo_duration_s = time.monotonic() - start
+    if outcome.error is not None:
+        return None
+    return result
+
+
+def _record_attempt(
+    project: Path,
+    repo: Path,
+    started: float,
+    result: subprocess.CompletedProcess[str],
+    *,
+    outcome: NxdoDiscoveryOutcome,
+) -> None:
+    """Record the run on ``outcome`` and stamp the per-repo cooldown.
+
+    The attempt is stamped even on failure: a failing repo must not burn an
+    LLM call every idle cycle.
+    """
+    outcome.nxdo_returncode = result.returncode
+    outcome.ran = True
+    stamps = _load_stamps(project)
+    stamps[str(repo)] = started
+    _save_stamps(project, stamps)
+
+
+def _failure_message(result: subprocess.CompletedProcess[str]) -> str:
+    """Last stderr/stdout line of a failed run, or an rc fallback."""
+    lines = (result.stderr or result.stdout or "").strip().splitlines()
+    return (lines[-1:] or [f"nxdo rc={result.returncode}"])[0]
+
+
+def _interpret_plan(
+    project: Path,
+    repo: Path,
+    result: subprocess.CompletedProcess[str],
+    *,
+    outcome: NxdoDiscoveryOutcome,
+) -> None:
+    """Turn a completed ``nxdo`` run into error or ticket fields."""
+    if result.returncode != 0:
+        outcome.error = _failure_message(result)
+        return
+    plan = _plan_from_output(result.stdout)
+    if plan is None:
+        outcome.error = "nxdo produced no parseable TaskPlan JSON"
+        return
+    filed = _apply_plan_tickets(
+        project,
+        repo,
+        plan,
+        limit=max(1, _env_int("KORU_NXDO_MAX_TICKETS", DEFAULT_MAX_TICKETS, project)),
+    )
+    outcome.applied_titles = filed.applied
+    outcome.skipped_titles = filed.skipped
 
 
 def run_nxdo_discovery(
@@ -359,70 +510,17 @@ def run_nxdo_discovery(
     project = project.resolve()
     outcome = NxdoDiscoveryOutcome()
 
-    if not nxdo_enabled(project):
-        outcome.skipped_reason = "disabled via KORU_NXDO_ENABLE"
+    pre = _preflight(project, now=now, outcome=outcome)
+    if pre.reason is not None:
+        outcome.skipped_reason = pre.reason
         return outcome
 
-    binary = _nxdo_executable(project)
-    if binary is None:
-        outcome.skipped_reason = "nxdo not on PATH (set KORU_NXDO_BIN)"
-        return outcome
-    outcome.nxdo_path = binary
-
-    if not _api_key_available(project):
-        outcome.skipped_reason = "no OPENROUTER_API_KEY/OPENAI_API_KEY (env or project .env)"
+    result = _execute(pre, project, runner=runner, outcome=outcome)
+    if result is None:
         return outcome
 
-    started = now()
-    repo, cooldown_remaining = _select_target_repo(project, now=started)
-    if repo is None:
-        outcome.skipped_reason = f"cooldown active for all repos (~{cooldown_remaining:.0f}s remaining)"
-        return outcome
-    outcome.target_repo = str(repo)
-
-    cmd = [binary, "plan", str(repo), "--json"]
-    model = _config_value("KORU_NXDO_MODEL", project)
-    if model:
-        cmd.extend(["--model", model])
-    extra_context = _config_value("KORU_NXDO_EXTRA_CONTEXT", project)
-    if extra_context:
-        cmd.extend(["--extra-context", extra_context])
-
-    start = time.monotonic()
-    try:
-        result = runner(cmd, project)
-    except subprocess.TimeoutExpired as exc:
-        outcome.error = f"nxdo timed out after {exc.timeout}s"
-        outcome.nxdo_duration_s = time.monotonic() - start
-        return outcome
-    except (OSError, ValueError) as exc:
-        outcome.error = f"nxdo exec failed: {exc}"
-        outcome.nxdo_duration_s = time.monotonic() - start
-        return outcome
-    outcome.nxdo_duration_s = time.monotonic() - start
-    outcome.nxdo_returncode = result.returncode
-    outcome.ran = True
-
-    # Stamp the attempt even on failure: a failing repo must not burn an
-    # LLM call every idle cycle.
-    stamps = _load_stamps(project)
-    stamps[str(repo)] = started
-    _save_stamps(project, stamps)
-
-    if result.returncode != 0:
-        lines = (result.stderr or result.stdout or "").strip().splitlines()
-        outcome.error = (lines[-1:] or [f"nxdo rc={result.returncode}"])[0]
-        return outcome
-
-    plan = _plan_from_output(result.stdout)
-    if plan is None:
-        outcome.error = "nxdo produced no parseable TaskPlan JSON"
-        return outcome
-
-    limit = max(1, _env_int("KORU_NXDO_MAX_TICKETS", DEFAULT_MAX_TICKETS, project))
-    applied, skipped = _apply_plan_tickets(project, repo, plan, limit=limit)
-    outcome.applied_titles = applied
-    outcome.skipped_titles = skipped
+    _record_attempt(project, pre.repo, pre.started, result, outcome=outcome)
+    _interpret_plan(project, pre.repo, result, outcome=outcome)
     return outcome
 
 

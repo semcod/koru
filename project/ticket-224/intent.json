@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-224",
+  "summary": "Decompose god function run_nxdo_discovery",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-224/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/nxdo_discovery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0c624c64bb32f8920036dcbd3b46d12c64873dba",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm god-function gates for run_nxdo_discovery in src/koru/autonomy/nxdo_discovery.py (fan-out 20->6, mutations 43->5, CC 14->3) by extracting the guard checks into _preflight (returning the _Preflight NamedTuple so the orchestrator reads fields instead of unpacking), argv assembly into _nxdo_command, the timed subprocess run into _execute, returncode/cooldown-stamp bookkeeping into _record_attempt, the failure line into _failure_message and rc/parse/apply interpretation into _interpret_plan, while preserving identical skip reasons, partial outcome-field population on each early return, exec-failure paths that skip the cooldown stamp, stamp timestamps, priority mapping, dedupe behavior, ticket limits and the NxdoDiscoveryOutcome return value.",
+    "nonGoals": [
+      "Refactoring the other god-flagged functions in this module (separate planfile tickets)",
+      "Changing environment-knob names, defaults or lookup order",
+      "Altering ticket scaffolds, dedupe keys or create_nl_task arguments",
+      "Extracting code into a new module (patch targets must stay module-local)"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep the pipeline in one module: split run_nxdo_discovery into phase helpers that each own a bounded slice of the NxdoDiscoveryOutcome writes (guards and resolved binary/repo, argv, timed exec, attempt recording with cooldown stamp, output interpretation), and return the guard result as a NamedTuple so the orchestrator sequences phases by field reads instead of tuple unpacking.",
+      "components": [
+        {
+          "name": "autonomy-nxdo",
+          "paths": [
+            "src/koru/autonomy/nxdo_discovery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the single inline run_nxdo_discovery pipeline."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "code2llm src/koru/autonomy/nxdo_discovery.py -m static -f json -o /tmp --no-chunk"
+        ],
+        "evidence": "run_nxdo_discovery and all touched helpers re-measure below the code2llm god-function gates (fan-out<=10, mutations<=6, CC<=12)."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest -q tests/test_nxdo_discovery.py tests/test_scan_phase.py"
+        ],
+        "evidence": "All existing nxdo_discovery and scan_phase tests pass unchanged."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
