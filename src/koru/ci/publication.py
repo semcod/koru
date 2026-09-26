@@ -12,6 +12,7 @@ import yaml
 
 from koru.ci.github import (
     GitHubCliError,
+    GitHubRepo,
     current_branch,
     find_open_pr_for_branch,
     gh_available,
@@ -87,6 +88,64 @@ def _resolve_validator_script(config: PublicationConfig) -> Path:
     return script
 
 
+def _resolve_target_pr(project: Path, repo: GitHubRepo, pr_number: int | None) -> int:
+    if pr_number is not None:
+        return pr_number
+    branch = current_branch(project)
+    resolved_pr = find_open_pr_for_branch(repo, branch)
+    if resolved_pr is None:
+        raise GitHubCliError(f"no open PR found for branch {branch!r}")
+    return resolved_pr
+
+
+def _verify_pr_mergeability(repo: GitHubRepo, pr_number: int) -> None:
+    merge_state = wait_for_pr_mergeable(repo, pr_number)
+    mergeable = merge_state.get("mergeable", "UNKNOWN")
+    merge_status = merge_state.get("mergeStateStatus", "UNKNOWN")
+    if mergeable == "CONFLICTING" or merge_status == "DIRTY":
+        raise GitHubCliError(
+            "pull request is not mergeable at the current head "
+            f"(mergeable={mergeable} merge_state_status={merge_status}); "
+            "rebase onto main and refresh acceptedBaseSha before dispatch",
+        )
+    if mergeable == "UNKNOWN" or merge_status == "UNKNOWN":
+        raise GitHubCliError(
+            "pull request mergeability is still UNKNOWN after polling; "
+            "retry after GitHub computes merge state or pass --update-branch",
+        )
+
+
+def _build_validator_command(
+    script: Path,
+    owner: str,
+    name: str,
+    pr_number: int,
+    ticket_id: str,
+    cfg: PublicationConfig,
+    dry_run: bool,
+) -> list[str]:
+    cmd = [
+        str(script),
+        "--owner",
+        owner,
+        "--name",
+        name,
+        "--pr",
+        str(pr_number),
+        "--ticket",
+        ticket_id,
+    ]
+    flags = [
+        ("--wait-checks", cfg.wait_checks),
+        ("--watch", cfg.watch),
+        ("--merge", cfg.merge),
+        ("--update-branch", cfg.update_branch),
+        ("--dry-run", dry_run),
+    ]
+    cmd.extend(flag for flag, enabled in flags if enabled)
+    return cmd
+
+
 def dispatch_validator_merge(
     project: Path,
     *,
@@ -109,52 +168,22 @@ def dispatch_validator_merge(
     repo = resolve_github_repo(project)
     resolved_owner = owner or repo.owner
     resolved_name = name or repo.name
-    resolved_pr = pr_number
-    if resolved_pr is None:
-        branch = current_branch(project)
-        resolved_pr = find_open_pr_for_branch(repo, branch)
-        if resolved_pr is None:
-            raise GitHubCliError(f"no open PR found for branch {branch!r}")
+    resolved_pr = _resolve_target_pr(project, repo, pr_number)
 
     if not dry_run:
-        merge_state = wait_for_pr_mergeable(repo, resolved_pr)
-        mergeable = merge_state.get("mergeable", "UNKNOWN")
-        merge_status = merge_state.get("mergeStateStatus", "UNKNOWN")
-        if mergeable == "CONFLICTING" or merge_status == "DIRTY":
-            raise GitHubCliError(
-                "pull request is not mergeable at the current head "
-                f"(mergeable={mergeable} merge_state_status={merge_status}); "
-                "rebase onto main and refresh acceptedBaseSha before dispatch",
-            )
-        if mergeable == "UNKNOWN" or merge_status == "UNKNOWN":
-            raise GitHubCliError(
-                "pull request mergeability is still UNKNOWN after polling; "
-                "retry after GitHub computes merge state or pass --update-branch",
-            )
+        _verify_pr_mergeability(repo, resolved_pr)
 
     frozen_head = resolve_pr_head_sha(repo, resolved_pr)
     script = _resolve_validator_script(cfg)
-    cmd = [
-        str(script),
-        "--owner",
+    cmd = _build_validator_command(
+        script,
         resolved_owner,
-        "--name",
         resolved_name,
-        "--pr",
-        str(resolved_pr),
-        "--ticket",
+        resolved_pr,
         ticket_id,
-    ]
-    if cfg.wait_checks:
-        cmd.append("--wait-checks")
-    if cfg.watch:
-        cmd.append("--watch")
-    if cfg.merge:
-        cmd.append("--merge")
-    if cfg.update_branch:
-        cmd.append("--update-branch")
-    if dry_run:
-        cmd.append("--dry-run")
+        cfg,
+        dry_run,
+    )
 
     if dry_run:
         return {
