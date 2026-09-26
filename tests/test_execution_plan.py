@@ -130,9 +130,12 @@ def test_profile_selection_uses_registry_order(monkeypatch) -> None:
 
 
 def test_fallback_profile_uses_registry_default() -> None:
-    assert execution_plan_module._fallback_profile_id(
-        {"defaults": {"fallback_profile": "custom"}},
-    ) == "custom"
+    assert (
+        execution_plan_module._fallback_profile_id(
+            {"defaults": {"fallback_profile": "custom"}},
+        )
+        == "custom"
+    )
 
 
 def test_task_profiles_verify_runs_full_ci() -> None:
@@ -176,3 +179,85 @@ def test_compile_plan_stays_idle_without_discovery_phase(tmp_path: Path) -> None
     assert plan.selected_ticket is None
     assert plan.summary == "phase=idle"
     assert plan.steps == []
+
+
+def test_select_pending_pr_returns_none_on_empty_list(tmp_path: Path) -> None:
+    result = execution_plan_module._select_pending_pr(tmp_path, [])
+    assert result is None
+
+
+def test_select_pending_pr_returns_selection_for_first_pr(tmp_path: Path) -> None:
+    from koru.autonomy.task_strategies import PendingPR
+
+    pr = PendingPR(
+        number=100,
+        title="Fix thing",
+        head_branch="ticket/100-fix",
+        url="https://example.com/pr/100",
+        mergeable="MERGEABLE",
+    )
+    result = execution_plan_module._select_pending_pr(tmp_path, [pr])
+    assert result is not None
+    assert result.phase == "pending_pr"
+    assert result.selected_pr is not None
+    assert result.selected_pr["number"] == 100
+
+
+def test_select_pending_worktree_returns_none_on_empty_list(tmp_path: Path) -> None:
+    result = execution_plan_module._select_pending_worktree(tmp_path, [])
+    assert result is None
+
+
+def test_select_pending_worktree_returns_selection(tmp_path: Path) -> None:
+    from koru.autonomy.task_strategies import PendingWorktree
+
+    wt = PendingWorktree(
+        path=str(tmp_path / ".worktrees" / "ticket-42--fix"),
+        branch="ticket/42-fix",
+        head_sha="def456",
+        ticket_id="42",
+        is_dirty=False,
+        is_merged=False,
+        commits_ahead=1,
+    )
+    result = execution_plan_module._select_pending_worktree(tmp_path, [wt])
+    assert result is not None
+    assert result.phase == "pending_worktree"
+    assert result.selected_worktree is not None
+    assert result.selected_worktree["ticket_id"] == "42"
+
+
+def test_select_issue_or_discovery_returns_ticket_selection(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    profiles = {
+        "defaults": {"fallback_profile": "generic"},
+        "profiles": {"generic": {"match": {}, "workflow": []}},
+    }
+    monkeypatch.setattr(execution_plan_module, "_load_task_profiles", lambda: profiles)
+
+    ticket = {"id": "PLF-001", "name": "Fix something", "files": [], "labels": []}
+    result = execution_plan_module._select_issue_or_discovery(
+        tmp_path,
+        {},
+        [ticket],
+    )
+    assert result is not None
+    assert result.phase == "planfile_queue"
+    assert result.selected is not None
+    assert result.selected["id"] == "PLF-001"
+
+
+def test_select_issue_or_discovery_falls_to_discovery_when_empty(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "koru.yaml").write_text(
+        "schema: '1.0'\nautonomy:\n  strategy:\n    id: test\n"
+        "    default_pipeline:\n      order: [planfile_queue, idle_scan]\n",
+        encoding="utf-8",
+    )
+    strategy = {"default_pipeline": {"order": ["idle_scan"]}}
+    result = execution_plan_module._select_issue_or_discovery(tmp_path, strategy, [])
+    assert result is not None
+    assert result.phase == "idle_scan"

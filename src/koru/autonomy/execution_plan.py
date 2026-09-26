@@ -241,6 +241,62 @@ def _discovery_selection(project: Path, order: list[Any]) -> _PlanSelection:
     return _PlanSelection(phase="idle", steps=[], selected=None, summary="phase=idle")
 
 
+def _select_pending_pr(
+    project: Path,
+    prs: list[PendingPR],
+) -> _PlanSelection | None:
+    """Return a selection for the highest-priority pending PR, if any."""
+    if not prs:
+        return None
+    pr = prs[0]
+    steps = _pr_steps(project, pr)
+    return _PlanSelection(
+        phase="pending_pr",
+        steps=steps,
+        selected=None,
+        selected_pr=pr.to_dict(),
+        summary=f"phase=pending_pr pr=#{pr.number} title={pr.title}",
+    )
+
+
+def _select_pending_worktree(
+    project: Path,
+    wts: list[PendingWorktree],
+) -> _PlanSelection | None:
+    """Return a selection for the highest-priority pending worktree, if any."""
+    if not wts:
+        return None
+    wt = wts[0]
+    steps = _worktree_steps(project, wt)
+    return _PlanSelection(
+        phase="pending_worktree",
+        steps=steps,
+        selected=None,
+        selected_worktree=wt.to_dict(),
+        summary=f"phase=pending_worktree ticket={wt.ticket_id or 'unknown'} branch={wt.branch}",
+    )
+
+
+def _select_issue_or_discovery(
+    project: Path,
+    strategy: dict[str, Any],
+    open_tickets: list[dict[str, Any]],
+) -> _PlanSelection | None:
+    """Return a selection for the next open ticket or a discovery phase."""
+    if open_tickets:
+        phase = "planfile_queue"
+        selected = open_tickets[0]
+        steps = _queued_ticket_steps(project, selected, phase)
+        profile = steps[0].profile_id if steps else "n/a"
+        return _PlanSelection(
+            phase=phase,
+            steps=steps,
+            selected=selected,
+            summary=f"phase={phase} ticket={selected.get('id')} profile={profile}",
+        )
+    return _discovery_selection(project, _pipeline_order(strategy))
+
+
 def _select_plan_work(
     project: Path,
     strategy: dict[str, Any],
@@ -256,40 +312,18 @@ def _select_plan_work(
     raw_wts = pending_worktrees if pending_worktrees is not None else find_pending_worktrees(project)
     wts = _filter_unmerged_worktrees(raw_wts)
 
+    _selectors: dict[str, Any] = {
+        "pending_prs": lambda: _select_pending_pr(project, prs),
+        "pending_worktrees": lambda: _select_pending_worktree(project, wts),
+        "issues": lambda: _select_issue_or_discovery(project, strategy, open_tickets),
+    }
+
     for target in order:
-        if target == "pending_prs" and prs:
-            pr = prs[0]
-            steps = _pr_steps(project, pr)
-            return _PlanSelection(
-                phase="pending_pr",
-                steps=steps,
-                selected=None,
-                selected_pr=pr.to_dict(),
-                summary=f"phase=pending_pr pr=#{pr.number} title={pr.title}",
-            )
-        if target == "pending_worktrees" and wts:
-            wt = wts[0]
-            steps = _worktree_steps(project, wt)
-            return _PlanSelection(
-                phase="pending_worktree",
-                steps=steps,
-                selected=None,
-                selected_worktree=wt.to_dict(),
-                summary=f"phase=pending_worktree ticket={wt.ticket_id or 'unknown'} branch={wt.branch}",
-            )
-        if target == "issues":
-            if open_tickets:
-                phase = "planfile_queue"
-                selected = open_tickets[0]
-                steps = _queued_ticket_steps(project, selected, phase)
-                profile = steps[0].profile_id if steps else "n/a"
-                return _PlanSelection(
-                    phase=phase,
-                    steps=steps,
-                    selected=selected,
-                    summary=f"phase={phase} ticket={selected.get('id')} profile={profile}",
-                )
-            return _discovery_selection(project, _pipeline_order(strategy))
+        selector = _selectors.get(target)
+        if selector is not None:
+            result = selector()
+            if result is not None:
+                return result
 
     return _PlanSelection(phase="idle", steps=[], selected=None, summary="phase=idle")
 
@@ -366,6 +400,9 @@ __all__ = [
     "_profile_order",
     "_queued_ticket_steps",
     "_select_plan_work",
+    "_select_pending_pr",
+    "_select_pending_worktree",
+    "_select_issue_or_discovery",
     "_select_profile",
     "_target_source_lines",
     "_ticket_labels",
