@@ -1,0 +1,13 @@
+[package]
+name = "koru-scan-todo"
+version = "0.1.0"
+edition = "2021"
+description = "Fast native work-marker scanning engine for Koru"
+
+[lib]
+name = "koru_scan_todo"
+path = "src/lib.rs"
+
+[[bin]]
+name = "koru-scan-todo"
+path = "src/main.rs"

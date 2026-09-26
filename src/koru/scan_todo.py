@@ -10,7 +10,10 @@ from __future__ import annotations
 
 import fnmatch
 import io
+import json
+import os
 import re
+import subprocess
 import tokenize
 from collections import Counter
 from collections.abc import Sequence
@@ -23,6 +26,10 @@ MARKER_RE = re.compile(r"\b(TODO|FIXME|XXX|HACK)\b[: ]")
 DEFAULT_SCAN_EXCLUDES: frozenset[str] = frozenset(
     {
         ".git",
+        ".worktrees",
+        ".subactor",
+        "target",
+        ".gradle",
         "__pycache__",
         ".venv",
         ".venv-test",
@@ -112,23 +119,79 @@ def is_koruignored(rel_path: Path, patterns: Sequence[str]) -> bool:
     return False
 
 
+def find_rust_scanner_binary() -> Path | None:
+    """Find compiled native koru-scan-todo binary if available."""
+    candidates = [
+        Path(__file__).resolve().parents[2] / "packages/koru-scan-todo/target/release/koru-scan-todo",
+        Path(__file__).resolve().parents[2] / "packages/koru-scan-todo/target/debug/koru-scan-todo",
+    ]
+    for candidate in candidates:
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return candidate
+    return None
+
+
+def count_todo_markers_in_project_rust(
+    project: Path,
+    *,
+    min_per_file: int = 3,
+    max_files_walked: int = 2_000,
+    binary_path: Path | None = None,
+) -> Counter[str] | None:
+    """Execute native Rust scan engine if available; returns None if binary is missing."""
+    bin_path = binary_path or find_rust_scanner_binary()
+    if not bin_path:
+        return None
+    try:
+        proc = subprocess.run(
+            [
+                str(bin_path),
+                str(project),
+                "--min",
+                str(min_per_file),
+                "--max-files",
+                str(max_files_walked),
+                "--json",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=30,
+        )
+        data = json.loads(proc.stdout)
+        files = data.get("files", {})
+        return Counter({k: int(v) for k, v in files.items()})
+    except (subprocess.SubprocessError, json.JSONDecodeError, OSError):
+        return None
+
+
 def count_todo_markers_in_project(
     project: Path,
     *,
     min_per_file: int = 3,
     max_files_walked: int = 2_000,
     excludes: frozenset[str] = DEFAULT_SCAN_EXCLUDES,
+    use_rust_if_available: bool = True,
 ) -> Counter[str]:
     """Pure scan engine: walk project files and count markers meeting min threshold."""
+    if use_rust_if_available:
+        rust_counts = count_todo_markers_in_project_rust(
+            project,
+            min_per_file=min_per_file,
+            max_files_walked=max_files_walked,
+        )
+        if rust_counts is not None:
+            return rust_counts
+
     counts: Counter[str] = Counter()
     koruignore_patterns = load_koruignore_patterns(project)
     walked = 0
     for path in project.rglob("*.py"):
+        if any(part in excludes for part in path.parts):
+            continue
         walked += 1
         if walked > max_files_walked:
             break
-        if any(part in excludes for part in path.parts):
-            continue
         rel_path = path.relative_to(project)
         if is_koruignored(rel_path, koruignore_patterns):
             continue

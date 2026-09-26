@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-230",
+  "summary": "Implement Rust engine prototype for scan_todo",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-230/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/koru-scan-todo/**",
+    "src/koru/scan_todo.py",
+    "tests/test_scan_todo_rust.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3a5397baf81d6c1625f91260bb7fd640067db2f4",
+    "targetBranch": "main",
+    "outcome": "Implement native Rust scanning engine prototype in packages/koru-scan-todo with high-performance comment tokenization, .koruignore filtering, CLI interface, and Python benchmark suite.",
+    "nonGoals": [
+      "Replacing all Python scanning probes in this ticket",
+      "Adding mandatory heavy build-time C-extensions to root pyproject.toml"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Create pure native Rust crate packages/koru-scan-todo matching the atomized scan_todo API; provide fast binary CLI with JSON output and integrate with Python benchmark tests.",
+      "components": [
+        {
+          "name": "koru-scan-todo-rust",
+          "paths": [
+            "packages/koru-scan-todo/**",
+            "src/koru/scan_todo.py",
+            "tests/test_scan_todo_rust.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Remove packages/koru-scan-todo and tests/test_scan_todo_rust.py."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "cargo test --manifest-path packages/koru-scan-todo/Cargo.toml"
+        ],
+        "evidence": "Rust unit tests pass cleanly."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -p no:wellmanifest_governance tests/test_scan_todo_rust.py"
+        ],
+        "evidence": "Python integration and benchmark tests pass cleanly."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
