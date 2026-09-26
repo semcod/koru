@@ -1,7 +1,7 @@
 // DOQL system map — koru
 // role: LLM-generated schema (SystemMapIR → DOQL)
 // format: nlp2dsl.system_map.v1
-// generated: 2026-09-25T20:52:52.461609+00:00
+// generated: 2026-09-26T06:48:40.293500+00:00
 
 environment[name="koru"] {
   ENV2LLM_CONTEXT: "/home/tom/github/semcod/koru/.nlp2dsl/registry/environment.doql.less";
@@ -11,7 +11,7 @@ environment[name="koru"] {
   OPENROUTER_API_KEY: "sk-o…c704";
   OPENROUTER_APP_NAME: "koru";
   OPENROUTER_APP_URL: "https://github.com/semcod/koru";
-  generated_at: "2026-09-25T20:52:46.225025+00:00";
+  generated_at: "2026-09-26T06:48:20.056257+00:00";
 }
 
 data {
@@ -226,7 +226,7 @@ host {
   status: "available";
   cron_available: true;
   cron_taskinity_installed: true;
-  probed_at: "2026-09-25T20:52:51.826904+00:00";
+  probed_at: "2026-09-26T06:48:38.171888+00:00";
   monitor_log_path: "/tmp/taskinity-monitor.log";
   capabilities_available: "docker,playwright,curl,crontab,openrouter,agent_http_any,www_8788,www_health,docker_containers,processes,ports";
   capabilities_missing: "cli_uri,cli_uri3,cli_hypervisor,cli_touri,cli_uri2flow,cli_nl2uri,adb,uia,agent_http_8101,agents";
@@ -786,9 +786,9 @@ host_port[53] {
   port: 8891;
   address: "127.0.0.1";
   protocol: "tcp";
-  pid: 1267981;
+  pid: 4173775;
   process: "python3";
-  detail: "users:((\"python3\",pid=1267981,fd=4),(\"python3\",pid=1267949,fd=4),(\"python3\",pid=1267946,fd=4),(\"python3\",pid=1267935,fd=4),(\"python3\",pid=1267061,fd=4))";
+  detail: "users:((\"python3\",pid=4173775,fd=4),(\"python3\",pid=4173742,fd=4),(\"python3\",pid=4173690,fd=4),(\"python3\",pid=4173676,fd=4),(\"python3\",pid=4171335,fd=4))";
 }
 
 host_port[54] {
@@ -1095,7 +1095,7 @@ host_process[0] {
   pid: 2946;
   ppid: 1;
   status: "Ssl";
-  elapsed: "6-14:39:24";
+  elapsed: "7-00:35:10";
   command: "python3";
   args: "/usr/bin/python3 -m uvicorn orchestrator:app --host 0.0.0.0 --port 8000 --log-level info";
 }
@@ -1104,7 +1104,7 @@ host_process[1] {
   pid: 3273;
   ppid: 1;
   status: "Ssl";
-  elapsed: "6-14:39:20";
+  elapsed: "7-00:35:07";
   command: "dockerd";
   args: "/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock";
 }
@@ -1113,7 +1113,7 @@ host_process[2] {
   pid: 3755;
   ppid: 3290;
   status: "Ssl";
-  elapsed: "6-14:39:19";
+  elapsed: "7-00:35:06";
   command: "python";
   args: "/home/tom/github/maskservice/c2004/.venv/bin/python -m monitoring.fleet_incidents.bridge --config /home/tom/github/maskservice/c2004/.subactor/cache/fleet-incidents/config.json --state /home/tom/github/maskservice/c2004/.subactor/cache/fleet-incidents";
 }
@@ -1122,7 +1122,7 @@ host_process[3] {
   pid: 5988;
   ppid: 5958;
   status: "Ssl";
-  elapsed: "6-14:39:15";
+  elapsed: "7-00:35:01";
   command: "uvicorn";
   args: "/usr/local/bin/python3.12 /usr/local/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000";
 }
@@ -1131,7 +1131,7 @@ host_process[4] {
   pid: 6036;
   ppid: 6008;
   status: "Ss";
-  elapsed: "6-14:39:15";
+  elapsed: "7-00:35:01";
   command: "docker-init";
   args: "/sbin/docker-init -- python -I -B -m onedev_agent.docker_gate --config /app/config/repositories.toml --docker /opt/onedev-docker-gate/engine-client";
 }
@@ -1140,7 +1140,7 @@ host_process[5] {
   pid: 6481;
   ppid: 6036;
   status: "S";
-  elapsed: "6-14:39:14";
+  elapsed: "7-00:35:01";
   command: "python";
   args: "python -I -B -m onedev_agent.docker_gate --config /app/config/repositories.toml --docker /opt/onedev-docker-gate/engine-client";
 }
@@ -1149,7 +1149,7 @@ host_process[6] {
   pid: 7058;
   ppid: 6973;
   status: "Ss";
-  elapsed: "6-14:39:14";
+  elapsed: "7-00:35:00";
   command: "uvicorn";
   args: "/usr/local/bin/python3.12 /usr/local/bin/uvicorn app.main:app --host 0.0.0.0 --port 8020";
 }
@@ -1158,7 +1158,7 @@ host_process[7] {
   pid: 7171;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:13";
+  elapsed: "7-00:35:00";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 8105 -container-ip 10.240.0.2 -container-port 8085 -use-listen-fd";
 }
@@ -1167,7 +1167,7 @@ host_process[8] {
   pid: 7890;
   ppid: 7644;
   status: "Ss";
-  elapsed: "6-14:39:13";
+  elapsed: "7-00:35:00";
   command: "docker-init";
   args: "/sbin/docker-init -- /usr/bin/buildkitd-entrypoint --allow-insecure-entitlement=network.host";
 }
@@ -1176,7 +1176,7 @@ host_process[9] {
   pid: 8183;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:13";
+  elapsed: "7-00:35:00";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 18830 -container-ip 192.168.240.3 -container-port 8080 -use-listen-fd";
 }
@@ -1185,7 +1185,7 @@ host_process[10] {
   pid: 8272;
   ppid: 8082;
   status: "Ssl";
-  elapsed: "6-14:39:13";
+  elapsed: "7-00:35:00";
   command: "registry";
   args: "registry serve /etc/docker/registry/config.yml";
 }
@@ -1194,7 +1194,7 @@ host_process[11] {
   pid: 8374;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:13";
+  elapsed: "7-00:35:00";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 8095 -container-ip 10.240.0.3 -container-port 8082 -use-listen-fd";
 }
@@ -1203,7 +1203,7 @@ host_process[12] {
   pid: 8552;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:13";
+  elapsed: "7-00:35:00";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8090 -container-ip 10.64.0.3 -container-port 80 -use-listen-fd";
 }
@@ -1212,7 +1212,7 @@ host_process[13] {
   pid: 8586;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:13";
+  elapsed: "7-00:34:59";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8090 -container-ip 10.64.0.3 -container-port 80 -use-listen-fd";
 }
@@ -1221,7 +1221,7 @@ host_process[14] {
   pid: 9163;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:13";
+  elapsed: "7-00:34:59";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 8097 -container-ip 10.240.0.4 -container-port 8083 -use-listen-fd";
 }
@@ -1230,7 +1230,7 @@ host_process[15] {
   pid: 9196;
   ppid: 8871;
   status: "Ss";
-  elapsed: "6-14:39:13";
+  elapsed: "7-00:34:59";
   command: "docker-init";
   args: "/sbin/docker-init -- /usr/bin/buildkitd-entrypoint --config /etc/buildkit/buildkitd.toml --allow-insecure-entitlement=network.host";
 }
@@ -1239,7 +1239,7 @@ host_process[16] {
   pid: 9670;
   ppid: 8905;
   status: "Ssl";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:59";
   command: "uvicorn";
   args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn app.main:app --host 0.0.0.0 --port 8002";
 }
@@ -1248,7 +1248,7 @@ host_process[17] {
   pid: 9696;
   ppid: 9157;
   status: "Ss";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:59";
   command: "docker-init";
   args: "/sbin/docker-init -- python -m gitive.server";
 }
@@ -1257,7 +1257,7 @@ host_process[18] {
   pid: 9718;
   ppid: 9364;
   status: "Ss";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:59";
   command: "uvicorn";
   args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000";
 }
@@ -1266,7 +1266,7 @@ host_process[19] {
   pid: 9867;
   ppid: 8894;
   status: "Ssl";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:59";
   command: "grafana";
   args: "grafana server --homepath=/usr/share/grafana --config=/etc/grafana/grafana.ini --packaging=docker cfg:default.log.mode=console cfg:default.paths.data=/var/lib/grafana cfg:default.paths.logs=/var/log/grafana cfg:default.paths.plugins=/var/lib/grafana/plugins cfg:default.paths.provisioning=/etc/grafana/provisioning";
 }
@@ -1275,7 +1275,7 @@ host_process[20] {
   pid: 9870;
   ppid: 8927;
   status: "Ssl";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:59";
   command: "uvicorn";
   args: "/usr/local/bin/python /usr/local/bin/uvicorn twinstudio.api:app --host 0.0.0.0 --port 8000 --no-access-log";
 }
@@ -1284,7 +1284,7 @@ host_process[21] {
   pid: 9871;
   ppid: 8830;
   status: "Ss";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:59";
   command: "docker-init";
   args: "/sbin/docker-init -- onedev-web-agent --config /app/config/repositories.toml --bind 0.0.0.0 --port 6612";
 }
@@ -1293,7 +1293,7 @@ host_process[22] {
   pid: 9905;
   ppid: 8999;
   status: "Ss";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:59";
   command: "uvicorn";
   args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn worker:app --host 0.0.0.0 --port 8000";
 }
@@ -1302,7 +1302,7 @@ host_process[23] {
   pid: 10095;
   ppid: 9580;
   status: "Ss";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:59";
   command: "tini";
   args: "/usr/bin/tini -- uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1";
 }
@@ -1311,7 +1311,7 @@ host_process[24] {
   pid: 10113;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:59";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8027 -container-ip 192.168.144.3 -container-port 8025 -use-listen-fd";
 }
@@ -1320,7 +1320,7 @@ host_process[25] {
   pid: 10153;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:59";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8027 -container-ip 192.168.144.3 -container-port 8025 -use-listen-fd";
 }
@@ -1329,7 +1329,7 @@ host_process[26] {
   pid: 10468;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:59";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8070 -container-ip 172.27.0.3 -container-port 8020 -use-listen-fd";
 }
@@ -1338,7 +1338,7 @@ host_process[27] {
   pid: 10504;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:59";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8070 -container-ip 172.27.0.3 -container-port 8020 -use-listen-fd";
 }
@@ -1347,7 +1347,7 @@ host_process[28] {
   pid: 10750;
   ppid: 9836;
   status: "Ssl";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:59";
   command: "uvicorn";
   args: "/usr/local/bin/python3.12 /usr/local/bin/uvicorn server:app --host 0.0.0.0 --port 5001";
 }
@@ -1356,7 +1356,7 @@ host_process[29] {
   pid: 10792;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:59";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 8791 -container-ip 192.168.64.3 -container-port 80 -use-listen-fd";
 }
@@ -1365,7 +1365,7 @@ host_process[30] {
   pid: 10955;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:59";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip ::1 -host-port 8791 -container-ip 192.168.64.3 -container-port 80 -use-listen-fd";
 }
@@ -1374,7 +1374,7 @@ host_process[31] {
   pid: 11614;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:12";
+  elapsed: "7-00:34:58";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 5000 -container-ip 10.64.9.2 -container-port 5000 -use-listen-fd";
 }
@@ -1383,7 +1383,7 @@ host_process[32] {
   pid: 11697;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:11";
+  elapsed: "7-00:34:58";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 8199 -container-ip 10.240.0.5 -container-port 8099 -use-listen-fd";
 }
@@ -1392,7 +1392,7 @@ host_process[33] {
   pid: 11750;
   ppid: 10618;
   status: "Ssl";
-  elapsed: "6-14:39:11";
+  elapsed: "7-00:34:58";
   command: "uvicorn";
   args: "/app/.venv/bin/python /app/.venv/bin/uvicorn agents.system.hypervisor_dashboard.main:app --host 0.0.0.0 --port 8788";
 }
@@ -1401,7 +1401,7 @@ host_process[34] {
   pid: 11783;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:11";
+  elapsed: "7-00:34:58";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 8792 -container-ip 192.168.64.4 -container-port 8792 -use-listen-fd";
 }
@@ -1410,7 +1410,7 @@ host_process[35] {
   pid: 11805;
   ppid: 10524;
   status: "Ssl";
-  elapsed: "6-14:39:11";
+  elapsed: "7-00:34:58";
   command: "uvicorn";
   args: "/usr/local/bin/python3.12 /usr/local/bin/uvicorn server:app --host 0.0.0.0 --port 5001";
 }
@@ -1419,7 +1419,7 @@ host_process[36] {
   pid: 11854;
   ppid: 10864;
   status: "Ss";
-  elapsed: "6-14:39:11";
+  elapsed: "7-00:34:58";
   command: "docker-init";
   args: "/sbin/docker-init -- onedev-agent --config /app/config/repositories.toml bootstrap-validation-relay --endpoint http://web-agent:6612/api/bootstrap-validations --allow-host web-agent --state-root /app/data/bootstrap-relay";
 }
@@ -1428,7 +1428,7 @@ host_process[37] {
   pid: 11864;
   ppid: 10387;
   status: "Ss";
-  elapsed: "6-14:39:11";
+  elapsed: "7-00:34:58";
   command: "uvicorn";
   args: "/usr/local/bin/python3.12 /usr/local/bin/uvicorn app.main:app --host 0.0.0.0 --port 8020";
 }
@@ -1437,7 +1437,7 @@ host_process[38] {
   pid: 11895;
   ppid: 11006;
   status: "Ss";
-  elapsed: "6-14:39:11";
+  elapsed: "7-00:34:58";
   command: "uvicorn";
   args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn worker:app --host 0.0.0.0 --port 8000";
 }
@@ -1446,7 +1446,7 @@ host_process[39] {
   pid: 11985;
   ppid: 10709;
   status: "Ssl";
-  elapsed: "6-14:39:11";
+  elapsed: "7-00:34:58";
   command: "uvicorn";
   args: "/usr/local/bin/python3.11 /usr/local/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000";
 }
@@ -1455,7 +1455,7 @@ host_process[40] {
   pid: 12437;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:11";
+  elapsed: "7-00:34:57";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 1026 -container-ip 10.240.0.7 -container-port 1025 -use-listen-fd";
 }
@@ -1464,7 +1464,7 @@ host_process[41] {
   pid: 12491;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:11";
+  elapsed: "7-00:34:57";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 8026 -container-ip 10.240.0.7 -container-port 8025 -use-listen-fd";
 }
@@ -1473,7 +1473,7 @@ host_process[42] {
   pid: 12737;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:10";
+  elapsed: "7-00:34:57";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 18883 -container-ip 10.201.7.2 -container-port 1883 -use-listen-fd";
 }
@@ -1482,7 +1482,7 @@ host_process[43] {
   pid: 12975;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:10";
+  elapsed: "7-00:34:56";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 6613 -container-ip 192.168.208.3 -container-port 5000 -use-listen-fd";
 }
@@ -1491,7 +1491,7 @@ host_process[44] {
   pid: 13166;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:09";
+  elapsed: "7-00:34:56";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 28004 -container-ip 10.250.57.3 -container-port 8000 -use-listen-fd";
 }
@@ -1500,7 +1500,7 @@ host_process[45] {
   pid: 13177;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:09";
+  elapsed: "7-00:34:56";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 28004 -container-ip 10.250.57.3 -container-port 8000 -use-listen-fd";
 }
@@ -1509,7 +1509,7 @@ host_process[46] {
   pid: 13431;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:09";
+  elapsed: "7-00:34:56";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8400 -container-ip 192.168.144.4 -container-port 8000 -use-listen-fd";
 }
@@ -1518,7 +1518,7 @@ host_process[47] {
   pid: 13443;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:09";
+  elapsed: "7-00:34:56";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8400 -container-ip 192.168.144.4 -container-port 8000 -use-listen-fd";
 }
@@ -1527,7 +1527,7 @@ host_process[48] {
   pid: 14950;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:06";
+  elapsed: "7-00:34:53";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8012 -container-ip 172.27.0.4 -container-port 8002 -use-listen-fd";
 }
@@ -1536,7 +1536,7 @@ host_process[49] {
   pid: 14962;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:06";
+  elapsed: "7-00:34:53";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8012 -container-ip 172.27.0.4 -container-port 8002 -use-listen-fd";
 }
@@ -1545,7 +1545,7 @@ host_process[50] {
   pid: 15126;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:06";
+  elapsed: "7-00:34:53";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 8088 -container-ip 10.64.6.2 -container-port 8000 -use-listen-fd";
 }
@@ -1554,7 +1554,7 @@ host_process[51] {
   pid: 15441;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:05";
+  elapsed: "7-00:34:52";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 20688 -container-ip 172.19.0.2 -container-port 8123 -use-listen-fd";
 }
@@ -1563,7 +1563,7 @@ host_process[52] {
   pid: 15448;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:05";
+  elapsed: "7-00:34:52";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 20688 -container-ip 172.19.0.2 -container-port 8123 -use-listen-fd";
 }
@@ -1572,7 +1572,7 @@ host_process[53] {
   pid: 15503;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:05";
+  elapsed: "7-00:34:52";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 20689 -container-ip 172.19.0.2 -container-port 9000 -use-listen-fd";
 }
@@ -1581,7 +1581,7 @@ host_process[54] {
   pid: 15521;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:05";
+  elapsed: "7-00:34:52";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 20689 -container-ip 172.19.0.2 -container-port 9000 -use-listen-fd";
 }
@@ -1590,7 +1590,7 @@ host_process[55] {
   pid: 15582;
   ppid: 10095;
   status: "Sl";
-  elapsed: "6-14:39:05";
+  elapsed: "7-00:34:52";
   command: "uvicorn";
   args: "/opt/venv/bin/python3 /opt/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1";
 }
@@ -1599,7 +1599,7 @@ host_process[56] {
   pid: 15826;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:05";
+  elapsed: "7-00:34:52";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 18123 -container-ip 10.201.7.3 -container-port 8123 -use-listen-fd";
 }
@@ -1608,7 +1608,7 @@ host_process[57] {
   pid: 15835;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:05";
+  elapsed: "7-00:34:52";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 18123 -container-ip 10.201.7.3 -container-port 8123 -use-listen-fd";
 }
@@ -1617,7 +1617,7 @@ host_process[58] {
   pid: 15887;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:05";
+  elapsed: "7-00:34:52";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 19000 -container-ip 10.201.7.3 -container-port 9000 -use-listen-fd";
 }
@@ -1626,7 +1626,7 @@ host_process[59] {
   pid: 15897;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:05";
+  elapsed: "7-00:34:52";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 19000 -container-ip 10.201.7.3 -container-port 9000 -use-listen-fd";
 }
@@ -1635,7 +1635,7 @@ host_process[60] {
   pid: 16090;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:05";
+  elapsed: "7-00:34:51";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 8089 -container-ip 10.64.5.2 -container-port 80 -use-listen-fd";
 }
@@ -1644,7 +1644,7 @@ host_process[61] {
   pid: 16231;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:04";
+  elapsed: "7-00:34:51";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 19443 -container-ip 10.64.1.3 -container-port 9443 -use-listen-fd";
 }
@@ -1653,7 +1653,7 @@ host_process[62] {
   pid: 16356;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:04";
+  elapsed: "7-00:34:51";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 3002 -container-ip 192.168.192.2 -container-port 3000 -use-listen-fd";
 }
@@ -1662,7 +1662,7 @@ host_process[63] {
   pid: 16363;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:04";
+  elapsed: "7-00:34:51";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 3002 -container-ip 192.168.192.2 -container-port 3000 -use-listen-fd";
 }
@@ -1671,7 +1671,7 @@ host_process[64] {
   pid: 16437;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:04";
+  elapsed: "7-00:34:51";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 3010 -container-ip 10.64.13.2 -container-port 3000 -use-listen-fd";
 }
@@ -1680,7 +1680,7 @@ host_process[65] {
   pid: 16448;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:04";
+  elapsed: "7-00:34:51";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 3010 -container-ip 10.64.13.2 -container-port 3000 -use-listen-fd";
 }
@@ -1689,7 +1689,7 @@ host_process[66] {
   pid: 16555;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:04";
+  elapsed: "7-00:34:51";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 9222 -container-ip 10.64.13.2 -container-port 9223 -use-listen-fd";
 }
@@ -1698,7 +1698,7 @@ host_process[67] {
   pid: 16628;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:04";
+  elapsed: "7-00:34:51";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 28010 -container-ip 10.250.57.4 -container-port 8000 -use-listen-fd";
 }
@@ -1707,7 +1707,7 @@ host_process[68] {
   pid: 16640;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:04";
+  elapsed: "7-00:34:51";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 28010 -container-ip 10.250.57.4 -container-port 8000 -use-listen-fd";
 }
@@ -1716,7 +1716,7 @@ host_process[69] {
   pid: 16786;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:04";
+  elapsed: "7-00:34:51";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 1883 -container-ip 192.168.144.5 -container-port 1883 -use-listen-fd";
 }
@@ -1725,7 +1725,7 @@ host_process[70] {
   pid: 16793;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:04";
+  elapsed: "7-00:34:51";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 1883 -container-ip 192.168.144.5 -container-port 1883 -use-listen-fd";
 }
@@ -1734,7 +1734,7 @@ host_process[71] {
   pid: 16823;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:04";
+  elapsed: "7-00:34:50";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 20690 -container-ip 172.19.0.3 -container-port 5001 -use-listen-fd";
 }
@@ -1743,7 +1743,7 @@ host_process[72] {
   pid: 16831;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:04";
+  elapsed: "7-00:34:50";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 20690 -container-ip 172.19.0.3 -container-port 5001 -use-listen-fd";
 }
@@ -1752,7 +1752,7 @@ host_process[73] {
   pid: 16885;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:04";
+  elapsed: "7-00:34:50";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 18788 -container-ip 10.64.0.6 -container-port 8788 -use-listen-fd";
 }
@@ -1761,7 +1761,7 @@ host_process[74] {
   pid: 16950;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:04";
+  elapsed: "7-00:34:50";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 6612 -container-ip 192.168.208.4 -container-port 6612 -use-listen-fd";
 }
@@ -1770,7 +1770,7 @@ host_process[75] {
   pid: 16964;
   ppid: 11961;
   status: "S";
-  elapsed: "6-14:39:03";
+  elapsed: "7-00:34:50";
   command: "s6-supervise";
   args: "s6-supervise svc-docker";
 }
@@ -1779,7 +1779,7 @@ host_process[76] {
   pid: 17240;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:03";
+  elapsed: "7-00:34:50";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 8004 -container-ip 172.27.0.6 -container-port 8000 -use-listen-fd";
 }
@@ -1788,7 +1788,7 @@ host_process[77] {
   pid: 17251;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:03";
+  elapsed: "7-00:34:50";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 8004 -container-ip 172.27.0.6 -container-port 8000 -use-listen-fd";
 }
@@ -1797,7 +1797,7 @@ host_process[78] {
   pid: 17417;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:03";
+  elapsed: "7-00:34:50";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 127.0.0.1 -host-port 8793 -container-ip 192.168.240.6 -container-port 8787 -use-listen-fd";
 }
@@ -1806,127 +1806,127 @@ host_process[79] {
   pid: 17505;
   ppid: 3273;
   status: "Sl";
-  elapsed: "6-14:39:03";
+  elapsed: "7-00:34:50";
   command: "docker-proxy";
   args: "/usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 15001 -container-ip 10.201.7.4 -container-port 5001 -use-listen-fd";
 }
 
 host_container[0] {
-  id: "fec538300b7a";
-  name: "identification-frontend";
-  image: "c2004-frontend:prod";
-  state: "running";
-  status: "Up 41 minutes (healthy)";
-  ports: "0.0.0.0:24678->24678/tcp, [::]:24678->24678/tcp, 0.0.0.0:8100->80/tcp, [::]:8100->80/tcp";
-  project: "c2004";
-  service: "frontend";
-}
-
-host_container[1] {
-  id: "044c319eda4b";
-  name: "identification-backend";
-  image: "c2004-backend";
-  state: "running";
-  status: "Up 41 minutes (healthy)";
-  ports: "0.0.0.0:8101->8000/tcp, [::]:8101->8000/tcp";
-  project: "c2004";
-  service: "backend";
-}
-
-host_container[2] {
-  id: "cacea00a0a21";
-  name: "connect-scenario-backend";
-  image: "c2004-connect-scenario-backend";
-  state: "running";
-  status: "Up 41 minutes (healthy)";
-  ports: "0.0.0.0:8108->8108/tcp, [::]:8108->8108/tcp";
-  project: "c2004";
-  service: "connect-scenario-backend";
-}
-
-host_container[3] {
-  id: "4c3ccb585fac";
-  name: "connect-scenario";
-  image: "c2004-connect-scenario";
-  state: "running";
-  status: "Up 44 minutes (healthy)";
-  ports: "0.0.0.0:8096->80/tcp, [::]:8096->80/tcp";
-  project: "c2004";
-  service: "connect-scenario";
-}
-
-host_container[4] {
-  id: "67dac1f6a6a9";
+  id: "4f1dac733a4b";
   name: "connect-template";
   image: "c2004-connect-template";
   state: "running";
-  status: "Up 44 minutes (healthy)";
+  status: "Up 4 minutes (healthy)";
   ports: "0.0.0.0:8094->80/tcp, [::]:8094->80/tcp";
   project: "c2004";
   service: "connect-template";
 }
 
+host_container[1] {
+  id: "cdc1b1c3f299";
+  name: "connect-scenario";
+  image: "c2004-connect-scenario";
+  state: "running";
+  status: "Up 4 minutes (healthy)";
+  ports: "0.0.0.0:8096->80/tcp, [::]:8096->80/tcp";
+  project: "c2004";
+  service: "connect-scenario";
+}
+
+host_container[2] {
+  id: "7636164f5576";
+  name: "identification-frontend";
+  image: "c2004-frontend:prod";
+  state: "running";
+  status: "Up 4 minutes (healthy)";
+  ports: "0.0.0.0:24678->24678/tcp, [::]:24678->24678/tcp, 0.0.0.0:8100->80/tcp, [::]:8100->80/tcp";
+  project: "c2004";
+  service: "frontend";
+}
+
+host_container[3] {
+  id: "67c20ec00c63";
+  name: "identification-backend";
+  image: "c2004-backend";
+  state: "running";
+  status: "Up 4 minutes (healthy)";
+  ports: "0.0.0.0:8101->8000/tcp, [::]:8101->8000/tcp";
+  project: "c2004";
+  service: "backend";
+}
+
+host_container[4] {
+  id: "4b114df7899b";
+  name: "connect-scenario-backend";
+  image: "c2004-connect-scenario-backend";
+  state: "running";
+  status: "Up 4 minutes (healthy)";
+  ports: "0.0.0.0:8108->8108/tcp, [::]:8108->8108/tcp";
+  project: "c2004";
+  service: "connect-scenario-backend";
+}
+
 host_container[5] {
-  id: "076e421b55b5";
+  id: "27d7f129bc67";
   name: "connect-data-backend";
   image: "c2004-connect-data-backend";
   state: "running";
-  status: "Up 44 minutes (healthy)";
+  status: "Up 4 minutes (healthy)";
   ports: "0.0.0.0:8121->8121/tcp, [::]:8121->8121/tcp";
   project: "c2004";
   service: "connect-data-backend";
 }
 
 host_container[6] {
-  id: "14041b8970c1";
+  id: "22aa4811d5db";
   name: "connect-template-backend";
   image: "c2004-connect-template-backend";
   state: "running";
-  status: "Up 44 minutes (healthy)";
+  status: "Up 4 minutes (healthy)";
   ports: "0.0.0.0:8106->8106/tcp, [::]:8106->8106/tcp";
   project: "c2004";
   service: "connect-template-backend";
 }
 
 host_container[7] {
-  id: "17bfef8526df";
-  name: "connect-test-backend";
-  image: "c2004-connect-test-backend";
+  id: "a5507a1140ce";
+  name: "connect-id-backend";
+  image: "c2004-connect-id-backend";
   state: "running";
-  status: "Up 44 minutes (healthy)";
-  ports: "0.0.0.0:8119->8119/tcp, [::]:8119->8119/tcp";
+  status: "Up 4 minutes (healthy)";
+  ports: "0.0.0.0:8103->8103/tcp, [::]:8103->8103/tcp, 8117/tcp";
   project: "c2004";
-  service: "connect-test-backend";
+  service: "connect-id-backend";
 }
 
 host_container[8] {
-  id: "4f86b3529380";
+  id: "c1954ca2a419";
   name: "connect-manager-backend";
   image: "c2004-connect-manager-backend";
   state: "running";
-  status: "Up 44 minutes (healthy)";
+  status: "Up 4 minutes (healthy)";
   ports: "0.0.0.0:8104->8104/tcp, [::]:8104->8104/tcp, 8107/tcp";
   project: "c2004";
   service: "connect-manager-backend";
 }
 
 host_container[9] {
-  id: "634a8b78cbef";
-  name: "connect-id-backend";
-  image: "c2004-connect-id-backend";
+  id: "a24abf214627";
+  name: "connect-test-backend";
+  image: "c2004-connect-test-backend";
   state: "running";
-  status: "Up 44 minutes (healthy)";
-  ports: "0.0.0.0:8103->8103/tcp, [::]:8103->8103/tcp, 8117/tcp";
+  status: "Up 4 minutes (healthy)";
+  ports: "0.0.0.0:8119->8119/tcp, [::]:8119->8119/tcp";
   project: "c2004";
-  service: "connect-id-backend";
+  service: "connect-test-backend";
 }
 
 host_container[10] {
-  id: "1d7a864b95b6";
+  id: "21a13debaed5";
   name: "connect-protocol-backend";
   image: "c2004-connect-protocol-backend";
   state: "running";
-  status: "Up 44 minutes (healthy)";
+  status: "Up 4 minutes (healthy)";
   ports: "0.0.0.0:8120->8120/tcp, [::]:8120->8120/tcp";
   project: "c2004";
   service: "connect-protocol-backend";
@@ -1937,7 +1937,7 @@ host_container[11] {
   name: "maskservice-fleet-local-dashboard-1";
   image: "maskservice-fleet-local-dashboard";
   state: "running";
-  status: "Up About an hour (healthy)";
+  status: "Up 11 hours (healthy)";
   project: "maskservice-fleet-local";
   service: "dashboard";
 }
@@ -1947,7 +1947,7 @@ host_container[12] {
   name: "connect-runtime";
   image: "c2004-connect-runtime";
   state: "running";
-  status: "Up 13 hours (healthy)";
+  status: "Up 23 hours (healthy)";
   ports: "0.0.0.0:8115->8115/tcp, [::]:8115->8115/tcp";
   project: "c2004";
   service: "connect-runtime";
@@ -1958,7 +1958,7 @@ host_container[13] {
   name: "connect-oql";
   image: "c2004-connect-oql";
   state: "running";
-  status: "Up 13 hours (healthy)";
+  status: "Up 23 hours (healthy)";
   ports: "0.0.0.0:8113->80/tcp, [::]:8113->80/tcp";
   project: "c2004";
   service: "connect-oql";
@@ -1969,7 +1969,7 @@ host_container[14] {
   name: "connect-oql-backend";
   image: "c2004-connect-oql-backend";
   state: "running";
-  status: "Up 13 hours (healthy)";
+  status: "Up 23 hours (healthy)";
   ports: "0.0.0.0:8114->8114/tcp, [::]:8114->8114/tcp";
   project: "c2004";
   service: "connect-oql-backend";
@@ -1980,7 +1980,7 @@ host_container[15] {
   name: "service-manager-pilot-backend";
   image: "c2004-service-manager-pilot";
   state: "running";
-  status: "Up 13 hours (healthy)";
+  status: "Up 23 hours (healthy)";
   ports: "0.0.0.0:8112->8000/tcp, [::]:8112->8000/tcp";
   project: "c2004";
   service: "service-manager-pilot";
@@ -1991,7 +1991,7 @@ host_container[16] {
   name: "oql-store";
   image: "c2004-oql-store";
   state: "running";
-  status: "Up 3 hours (healthy)";
+  status: "Up 13 hours (healthy)";
   ports: "0.0.0.0:8123->8123/tcp, [::]:8123->8123/tcp";
   project: "c2004";
   service: "oql-store";
@@ -2002,7 +2002,7 @@ host_container[17] {
   name: "service-id-pilot-backend";
   image: "c2004-service-id-pilot";
   state: "running";
-  status: "Up 13 hours (healthy)";
+  status: "Up 23 hours (healthy)";
   ports: "0.0.0.0:8111->8000/tcp, [::]:8111->8000/tcp";
   project: "c2004";
   service: "service-id-pilot";
@@ -2013,7 +2013,7 @@ host_container[18] {
   name: "c2004-maskauth-1";
   image: "c2004-maskauth";
   state: "running";
-  status: "Up 13 hours";
+  status: "Up 23 hours";
   ports: "0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp";
   project: "c2004";
   service: "maskauth";
@@ -2024,7 +2024,7 @@ host_container[19] {
   name: "oql-runtime-server";
   image: "c2004-oql-runtime-server";
   state: "running";
-  status: "Up 13 hours (healthy)";
+  status: "Up 23 hours (healthy)";
   ports: "0.0.0.0:8109->8101/tcp, [::]:8109->8101/tcp";
   project: "c2004";
   service: "oql-runtime-server";
@@ -2035,7 +2035,7 @@ host_container[20] {
   name: "c2004-postgres";
   image: "postgres:16-alpine";
   state: "running";
-  status: "Up 13 hours (healthy)";
+  status: "Up 23 hours (healthy)";
   ports: "0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp";
   project: "c2004";
   service: "postgres";
@@ -2046,7 +2046,7 @@ host_container[21] {
   name: "ifuri-onedev-pr-executor-2";
   image: "6a81a94fd630";
   state: "running";
-  status: "Up 14 hours";
+  status: "Up 24 hours";
   project: "ifuri-onedev";
   service: "pr-executor";
 }
@@ -2056,7 +2056,7 @@ host_container[22] {
   name: "ifuri-onedev-pr-coordinator-1";
   image: "3986b0578002";
   state: "running";
-  status: "Up 14 hours";
+  status: "Up 24 hours";
   project: "ifuri-onedev";
   service: "pr-coordinator";
 }
@@ -2066,7 +2066,7 @@ host_container[23] {
   name: "semcod-search-ci-coordinator-1";
   image: "ae3f930dbe2c";
   state: "running";
-  status: "Up 27 hours";
+  status: "Up 37 hours";
   project: "semcod-search-ci";
   service: "coordinator";
 }
@@ -2076,7 +2076,7 @@ host_container[24] {
   name: "semcod-search-ci-executor-1";
   image: "ae3f930dbe2c";
   state: "running";
-  status: "Up 27 hours";
+  status: "Up 37 hours";
   project: "semcod-search-ci";
   service: "executor";
 }
@@ -2086,7 +2086,7 @@ host_container[25] {
   name: "ifuri-onedev-maskauth-gate-1";
   image: "3986b0578002";
   state: "running";
-  status: "Up 47 hours";
+  status: "Up 2 days";
   project: "ifuri-onedev";
   service: "scheduler";
 }
@@ -2096,7 +2096,7 @@ host_container[26] {
   name: "clonerd-lan-caddy";
   image: "caddy:2-alpine";
   state: "running";
-  status: "Up 2 days";
+  status: "Up 50 seconds";
   project: "clonerd-dev";
   service: "lan-caddy";
 }
@@ -2106,7 +2106,7 @@ host_container[27] {
   name: "maskservice-fleet-local-auto-update-1";
   image: "maskservice-fleet-local-auto-update";
   state: "running";
-  status: "Up 2 days";
+  status: "Up 3 days";
   project: "maskservice-fleet-local";
   service: "auto-update";
 }
@@ -2116,7 +2116,7 @@ host_container[28] {
   name: "maskservice-fleet-local-git-mirror-1";
   image: "maskservice-fleet-local-git-mirror";
   state: "running";
-  status: "Up 2 days (healthy)";
+  status: "Up 3 days (healthy)";
   project: "maskservice-fleet-local";
   service: "git-mirror";
 }
@@ -2257,7 +2257,7 @@ host_container[41] {
   name: "panel-publication-ci-executor-1";
   image: "adfbb94f4c1f";
   state: "running";
-  status: "Up 5 days";
+  status: "Up 6 days";
   project: "panel-publication-ci";
   service: "executor";
 }
@@ -2267,7 +2267,7 @@ host_container[42] {
   name: "panel-publication-ci-coordinator-1";
   image: "2211e29086a3";
   state: "running";
-  status: "Up 5 days";
+  status: "Up 6 days";
   project: "panel-publication-ci";
   service: "coordinator";
 }
@@ -2296,7 +2296,7 @@ host_container[45] {
   name: "subactor-platform-analytics-1";
   image: "subactor-platform-analytics";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:8136->8094/tcp";
   project: "subactor-platform";
   service: "analytics";
@@ -2307,7 +2307,7 @@ host_container[46] {
   name: "ifuri-onedev-bootstrap-validation-relay-1";
   image: "fee8ea6df6b9";
   state: "running";
-  status: "Up 6 days";
+  status: "Up 7 days";
   project: "ifuri-onedev";
   service: "bootstrap-validation-relay";
 }
@@ -2317,7 +2317,7 @@ host_container[47] {
   name: "ifuri-onedev-web-agent-1";
   image: "fee8ea6df6b9";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:6612->6612/tcp";
   project: "ifuri-onedev";
   service: "web-agent";
@@ -2328,7 +2328,7 @@ host_container[48] {
   name: "ifuri-onedev-onedev-1";
   image: "1dev/server:16.0.8";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:6610-6611->6610-6611/tcp";
   project: "ifuri-onedev";
   service: "onedev";
@@ -2339,7 +2339,7 @@ host_container[49] {
   name: "ifuri-onedev-postgres-1";
   image: "postgres:16.9-alpine";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "5432/tcp";
   project: "ifuri-onedev";
   service: "postgres";
@@ -2350,7 +2350,7 @@ host_container[50] {
   name: "ifuri-onedev-registry-1";
   image: "registry:2.8.3";
   state: "running";
-  status: "Up 6 days";
+  status: "Up 7 days";
   ports: "127.0.0.1:6613->5000/tcp";
   project: "ifuri-onedev";
   service: "registry";
@@ -2361,7 +2361,7 @@ host_container[51] {
   name: "glm53-gateway-devpanel-20260915";
   image: "taskand-gateway:devpanel-patched";
   state: "running";
-  status: "Up 6 days";
+  status: "Up 7 days";
 }
 
 host_container[52] {
@@ -2369,7 +2369,7 @@ host_container[52] {
   name: "glm53-landing-devpanel-20260915";
   image: "b76de378d572";
   state: "running";
-  status: "Up 6 days";
+  status: "Up 7 days";
   ports: "0.0.0.0:8090->80/tcp, [::]:8090->80/tcp";
 }
 
@@ -2378,7 +2378,7 @@ host_container[53] {
   name: "subactor-platform-hr-control-1";
   image: "subactor-platform-hr-control";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:8092->8181/tcp, 127.0.0.1:18092->8181/tcp";
   project: "subactor-platform";
   service: "hr-control";
@@ -2389,7 +2389,7 @@ host_container[54] {
   name: "subactor-platform-grafana-1";
   image: "grafana/grafana";
   state: "running";
-  status: "Up 6 days";
+  status: "Up 7 days";
   ports: "127.0.0.1:3001->3000/tcp";
   project: "subactor-platform";
   service: "grafana";
@@ -2400,7 +2400,7 @@ host_container[55] {
   name: "subactor-platform-prometheus-1";
   image: "prom/prometheus";
   state: "running";
-  status: "Up 6 days";
+  status: "Up 7 days";
   ports: "127.0.0.1:9096->9090/tcp";
   project: "subactor-platform";
   service: "prometheus";
@@ -2411,7 +2411,7 @@ host_container[56] {
   name: "subactor-platform-urirun-lan-gateway-1";
   image: "f71b58f713a8";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:19443->9443/tcp";
   project: "subactor-platform";
   service: "urirun-lan-gateway";
@@ -2422,7 +2422,7 @@ host_container[57] {
   name: "subactor-platform-ops-observer-1";
   image: "065f3c6aaa74";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:8135->8088/tcp";
   project: "subactor-platform";
   service: "ops-observer";
@@ -2433,7 +2433,7 @@ host_container[58] {
   name: "subactor-platform-hr-bridge-1";
   image: "fa452bcb74c8";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   project: "subactor-platform";
   service: "hr-bridge";
 }
@@ -2443,7 +2443,7 @@ host_container[59] {
   name: "subactor-platform-project-importer-1";
   image: "b4f5783bd311";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:8122->8086/tcp";
   project: "subactor-platform";
   service: "project-importer";
@@ -2454,7 +2454,7 @@ host_container[60] {
   name: "subactor-platform-inbound-email-agent-1";
   image: "bd1ca74467c8";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   project: "subactor-platform";
   service: "inbound-email-agent";
 }
@@ -2464,7 +2464,7 @@ host_container[61] {
   name: "subactor-platform-twin-subactor-1";
   image: "eacfb3154976";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:8189->8188/tcp";
   project: "subactor-platform";
   service: "twin-subactor";
@@ -2475,7 +2475,7 @@ host_container[62] {
   name: "subactor-platform-org-core-1";
   image: "66498026c079";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:8105->8085/tcp";
   project: "subactor-platform";
   service: "org-core";
@@ -2486,7 +2486,7 @@ host_container[63] {
   name: "subactor-platform-system-status-1";
   image: "34bfed602cd4";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:8199->8099/tcp";
   project: "subactor-platform";
   service: "system-status";
@@ -2497,7 +2497,7 @@ host_container[64] {
   name: "subactor-platform-autonomy-chat-agent-1";
   image: "9ca519f928a4";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   project: "subactor-platform";
   service: "autonomy-chat-agent";
 }
@@ -2507,7 +2507,7 @@ host_container[65] {
   name: "subactor-platform-browser-agent-1";
   image: "3d8b2dd4a93b";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:8130->8087/tcp";
   project: "subactor-platform";
   service: "browser-agent";
@@ -2518,7 +2518,7 @@ host_container[66] {
   name: "subactor-platform-urirun-node-1";
   image: "81104667dc03";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   project: "subactor-platform";
   service: "urirun-node";
 }
@@ -2539,7 +2539,7 @@ host_container[68] {
   name: "subactor-platform-webhook-sink-1";
   image: "1f4b745407ed";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:8097->8083/tcp";
   project: "subactor-platform";
   service: "webhook-sink";
@@ -2550,7 +2550,7 @@ host_container[69] {
   name: "subactor-platform-mailpit-1";
   image: "axllent/mailpit";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "1110/tcp, 127.0.0.1:1026->1025/tcp, 127.0.0.1:8026->8025/tcp";
   project: "subactor-platform";
   service: "mailpit";
@@ -2561,7 +2561,7 @@ host_container[70] {
   name: "subactor-platform-llm-gateway-1";
   image: "478e62b8fb21";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:8098->8084/tcp";
   project: "subactor-platform";
   service: "llm-gateway";
@@ -2572,7 +2572,7 @@ host_container[71] {
   name: "subactor-platform-subauth-1";
   image: "0d537c0c176b";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:8197->8197/tcp";
   project: "subactor-platform";
   service: "subauth";
@@ -2583,7 +2583,7 @@ host_container[72] {
   name: "subactor-platform-mock-plesk-1";
   image: "e18e5c762a87";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:8095->8082/tcp";
   project: "subactor-platform";
   service: "mock-plesk";
@@ -2594,7 +2594,7 @@ host_container[73] {
   name: "subactor-platform-site-generator-1";
   image: "10b6a047624e";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "127.0.0.1:8140->80/tcp";
   project: "subactor-platform";
   service: "site-generator";
@@ -2605,7 +2605,7 @@ host_container[74] {
   name: "subactor-platform-views-1";
   image: "11245412f0aa";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "8080/tcp";
   project: "subactor-platform";
   service: "views";
@@ -2616,7 +2616,7 @@ host_container[75] {
   name: "buildx_buildkit_maskfleet-artifacts0";
   image: "moby/buildkit:buildx-stable-1";
   state: "running";
-  status: "Up 6 days";
+  status: "Up 7 days";
 }
 
 host_container[76] {
@@ -2624,7 +2624,7 @@ host_container[76] {
   name: "glm53-vm-browser-1";
   image: "lscr.io/linuxserver/chromium:latest";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "3001/tcp, 0.0.0.0:3010->3000/tcp, [::]:3010->3000/tcp, 127.0.0.1:9222->9223/tcp";
   project: "glm53";
   service: "vm-browser";
@@ -2635,7 +2635,7 @@ host_container[77] {
   name: "ifuri-onedev-docker-gate-1";
   image: "e4bd9083b6ba";
   state: "running";
-  status: "Up 6 days";
+  status: "Up 7 days";
   project: "ifuri-onedev";
   service: "scheduler";
 }
@@ -2645,7 +2645,7 @@ host_container[78] {
   name: "nlp2dsl-nlp-service-1";
   image: "maskservice/nlp2dsl-nlp-service:mcp";
   state: "running";
-  status: "Up 6 days";
+  status: "Up 7 days";
   ports: "0.0.0.0:8012->8002/tcp, [::]:8012->8002/tcp";
   project: "nlp2dsl";
   service: "nlp-service";
@@ -2656,7 +2656,7 @@ host_container[79] {
   name: "taskand-controller";
   image: "7eaf3a255d8e";
   state: "running";
-  status: "Up 6 days (healthy)";
+  status: "Up 7 days (healthy)";
   ports: "8787/tcp";
   project: "taskand";
   service: "controller";
