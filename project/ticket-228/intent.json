@@ -1,0 +1,104 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-228",
+  "summary": "Split god module coru.cli",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-228/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/coru/src/coru/**",
+    "packages/coru/tests/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "072245a8e8722d5292d324e1f445e06d246f420e",
+    "targetBranch": "main",
+    "outcome": "Split packages/coru/src/coru/cli.py (code2llm God Module: 180 top-level functions, 3 classes; detector threshold f_count > 40) into six responsibility modules plus the existing cli_terminal.py, keeping coru.cli as the stable facade. cli.py keeps only the command/dispatch surface (_cmd_* helpers, _dispatch_*, main; 23 top-level functions, 3 dataclasses) and re-imports every moved name so `from coru.cli import X` and `monkeypatch.setattr(coru_cli, \"X\", ...)` keep working for every pre-split name. New modules: cli_startup.py (project/log/startup/interactive/tool-bootstrap helpers, 34 fns), cli_daemon.py (lane/daemon resolution and lane env plumbing, 28 fns, owns the env-derived _KORU_SUBPROCESS_TIMEOUT_S constant used as a def-time default argument), cli_doctor.py (lane status payload, repair, doctor, 27 fns), cli_readiness.py (auto readiness/ownership gates, 21 fns), cli_diagnose.py (daemon start, runtime diagnostics, LLM prompt rewrite, 18 fns), cli_plan.py (plan chain build/execute and chat loop, 21 fns). cli_terminal.py gains _print_terminal_context; the seven terminal shims already duplicated byte-identically in cli_terminal.py are deleted from cli.py in favor of facade imports. Functions move verbatim; moved functions resolve cross-module and patch-target names through `from coru.cli import ...` at call time (the existing cli_calibration.py pattern) so test patching of coru.cli attributes is preserved exactly.",
+    "nonGoals": [
+      "Changing any CLI behavior, output, exit codes or argument parsing",
+      "Renaming, merging or rewriting any moved function body",
+      "Touching cli_parser.py, cli_dispatch.py, cli_checks.py, cli_lane.py, cli_reexec.py, cli_calibration.py beyond what their existing coru.cli facade imports already require (they are unmodified)",
+      "Regenerating project/analysis.toon.yaml or other integration-owned discovery artifacts",
+      "Splitting any other module flagged by code2llm (e.g. src/koru/integrations/vdisplay_client.py)"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Move functions verbatim (same private names) into six new responsibility modules and re-export them from the coru.cli facade (import-time re-exports for the facade surface itself). Unlike the koru.queue.context split (ticket-221, no patch targets), packages/coru/tests/test_coru_cli.py monkeypatches 67 distinct coru.cli attributes (e.g. _diagnose_lane, _default_lane, _run_koru_lane, _terminal_shell_context), and repair/runtime.py plus cli_calibration.py import private helpers from coru.cli at call time. Therefore every moved function that references a cli-namespace name outside its own destination module, and every reference to a test patch target regardless of location, resolves that name through a function-local `from coru.cli import ...` (call-time facade late binding, the pattern already used throughout cli_calibration.py). Same-module references to non-patch-target helpers stay direct. The three dataclasses (Plan, SessionContext, AutoReadiness) and the facade-only constants stay in cli.py; the single exception is _KORU_SUBPROCESS_TIMEOUT_S, which moves to cli_daemon.py because two moved functions use it as a def-time default argument and a def-time coru.cli import would be circular. The seven _terminal_*/IDE shim functions at cli.py:696-740 are byte-identical duplicates of cli_terminal.py definitions, so they are deleted, not moved; cli.py re-imports them from cli_terminal.",
+      "components": [
+        {
+          "name": "coru-cli",
+          "paths": [
+            "packages/coru/src/coru/cli.py",
+            "packages/coru/src/coru/cli_startup.py",
+            "packages/coru/src/coru/cli_daemon.py",
+            "packages/coru/src/coru/cli_doctor.py",
+            "packages/coru/src/coru/cli_readiness.py",
+            "packages/coru/src/coru/cli_diagnose.py",
+            "packages/coru/src/coru/cli_plan.py",
+            "packages/coru/src/coru/cli_terminal.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the single 3464-line cli.py."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q packages/coru/tests"
+        ],
+        "evidence": "All existing coru tests pass unchanged (no test edits), proving the facade and patch-target late binding preserved behavior."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "code2llm packages/coru -f all -o /tmp/code2llm-ticket228 --no-chunk --exclude *.md --exclude plugins"
+        ],
+        "evidence": "Regenerated smell scan reports no God Module for packages.coru.src.coru.cli or any new cli_* module (every module <= 40 top-level functions, <= 10 classes). Repository-owned project/ artifacts are not regenerated."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "python3 -m pytest -q packages/coru/tests/test_coru_cli.py -k test_lane_doctor_fix_uses_registry_before_fallback or test_lane_calibration_runs_desktop_preflight_and_single_drive"
+        ],
+        "evidence": "Heaviest monkeypatch-driven tests (patch _diagnose_lane/_lane_status_raw/_run_lane_repair/_target_plugin_rows on coru.cli then drive main()) still pass, proving call-time facade resolution."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance gate passes from the ticket worktree."
+      }
+    ]
+  }
+}

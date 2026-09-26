@@ -5,6 +5,8 @@ the higher-level ``_terminal_*`` helpers.
 """
 from __future__ import annotations
 
+import sys
+
 from coru import ide_detection
 
 
@@ -53,3 +55,25 @@ def _terminal_shell_context_fallback() -> tuple[str | None, str, bool]:
         vscode_family_env_hint=_vscode_family_env_hint,
         windsurf_terminal_marker=_windsurf_terminal_marker,
     )
+
+
+
+def _print_terminal_context(*, prefix: str = "[coru]") -> None:
+    from koru.autonomy.ide_operator_guidance import terminal_kind_label
+
+    ide, source, integrated = ide_detection.terminal_shell_context()
+    kind = ide_detection.terminal_host_kind()
+    if ide:
+        print(
+            f"{prefix} terminal: ide={ide} kind={kind} "
+            f"({terminal_kind_label(kind)}) source={source}",
+            file=sys.stderr,
+        )
+    else:
+        print(f"{prefix} terminal: system shell (no IDE host detected)", file=sys.stderr)
+    if integrated and ide:
+        print(
+            f"{prefix} lane hint: integrated {ide} terminal — "
+            f"use `coru {ide} auto` unless another IDE lane is intentional",
+            file=sys.stderr,
+        )
