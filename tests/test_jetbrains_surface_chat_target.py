@@ -66,6 +66,37 @@ def test_jetbrains_surface_target_passes_window_relative_validation() -> None:
     assert not val.get("coord_warnings")
 
 
+def test_validate_vql_chat_target_full_report_contract() -> None:
+    """The audit report keeps its exact key set and values (PLF-053 refactor)."""
+    from koru.integrations.photo_vql_validation import validate_vql_chat_target
+
+    target = {
+        "id": "window_0-input-46",
+        "role": "input",
+        "label": "Ask anything",
+        "click_center": {"x": 1985, "y": 1049},
+        "bounds": {"w": 280, "h": 32},
+        "source": "observe/capture.png.vql.json",
+        "selection_method": "jetbrains_corner_heuristic",
+        "confidence": 0.8,
+    }
+    val = validate_vql_chat_target(target, ide="jetbrains")
+    assert val == {
+        "ok": True,
+        "vql_valid": True,
+        "vql_element_size_ok": True,
+        "app_match": True,
+        "capture_title": None,
+        "selection_method": "jetbrains_corner_heuristic",
+        "is_map_target": False,
+        "validation_errors": [],
+        "coord_warnings": [],
+        "bounds": {"w": 280, "h": 32},
+        "label": "ask anything",
+        "used_map_because_mismatch_or_bad_element": False,
+    }
+
+
 def test_jetbrains_chat_target_skips_toolbox() -> None:
     surface = {
         "display_name": "Toolbox",
