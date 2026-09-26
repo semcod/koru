@@ -87,6 +87,29 @@ class Todo2codeAutonomousGateTest(unittest.TestCase):
                 ]],
             )
 
+    def test_docker_project_wraps_host_gates_when_container_declares_none(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "Dockerfile").write_text("FROM python:3.12\n", encoding="utf-8")
+            (project / "compose.yml").write_text(
+                "services:\n  app:\n    image: python:3.12\n", encoding="utf-8"
+            )
+            (project / "koru.yaml").write_text(
+                "when:\n  before_complete_ticket:\n    commands:\n      - python -m pytest -q\n"
+                "queue:\n  todo2code:\n    verification:\n      runtime: docker\n"
+                "      service: app\n",
+                encoding="utf-8",
+            )
+            commands, error = resolve_project_verify_commands(project)
+            self.assertIsNone(error)
+            self.assertEqual(
+                commands,
+                [[
+                    "docker", "compose", "-f", "compose.yml", "run", "--rm",
+                    "--entrypoint", "sh", "app", "-lc", "python -m pytest -q",
+                ]],
+            )
+
     def test_hydration_removes_legacy_model_and_token_caps(self) -> None:
         ticket = {
             "labels": ["todo2code"],

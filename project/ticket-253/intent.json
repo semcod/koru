@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-253",
+  "summary": "Address code smell: shotgun surgery commands in todo2code gate",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-253/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/todo2code_gate.py",
+    "tests/test_todo2code_autonomous_gate.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "91929bd0562a60585066eddea148badefb0fddf8",
+    "targetBranch": "main",
+    "outcome": "Remove the code2llm 'Shotgun Surgery: commands' report for src/koru/queue/todo2code_gate.py (PLF-043) by stopping the rebinding of the generic local name 'commands' across the verify-gate pipeline: infer_project_verify_commands returns the first detector hit through a single walrus 'declared' binding, _verify_from_koru_yaml names its raw koru.yaml extraction 'declared_commands', infer_project_verify_command and resolve_project_verify_commands name their pipeline value 'gates', and _compose_wrapped_commands selects the effective gate list once with the pure expression 'gates = container_commands or commands' instead of conditionally overwriting its parameter. No function in the module assigns or mutates a variable named 'commands' anymore, so the detector's same-file mutation count for that name drops from 5 functions to 0. Behavior is unchanged: detector precedence, 'sh -lc' wrapping, docker-compose wrapping and every error string are byte-identical. tests/test_todo2code_autonomous_gate.py adds test_docker_project_wraps_host_gates_when_container_declares_none pinning the previously untested compose fallback branch (no container commands declared -> host gates are wrapped).",
+    "nonGoals": [
+      "Changing detector precedence, produced command lists, wrapping or any error message",
+      "Renaming the public infer_project_verify_commands / infer_project_verify_command / resolve_project_verify_commands signatures that tests and ticket_templates.py rely on",
+      "Extracting a module or moving the gate (no new patch targets, facade late-binding untouched)",
+      "Touching todo2code_support.py or any other queue-module smell"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "The reported smell is generic-name coincidence inside one pipeline file: five independent locals all named 'commands' for different stages of verify-gate resolution (raw koru.yaml strings, detector hits, resolved gates, container-overridden gates). The remediation gives each stage local a stage-accurate name and turns the only conditional rebinding (parameter overwrite in _compose_wrapped_commands) into one pure selection expression, keeping command-list construction return-expression based like the ticket-251/252 lanes. No module extraction is needed (intra-file naming), so there are no new patch targets and the import surface is unchanged.",
+      "components": [
+        {
+          "name": "todo2code-gate",
+          "paths": [
+            "src/koru/queue/todo2code_gate.py",
+            "tests/test_todo2code_autonomous_gate.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the single ticket commit to restore the five 'commands' locals."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "grep -nE \"^ *commands *(=|\\+=)|commands\\.(append|extend|update|clear|pop|remove|add|set)\" src/koru/queue/todo2code_gate.py"
+        ],
+        "evidence": "The grep finds no assignment or mutating method call on a variable named 'commands'; the only remaining uses are read-only (parameter reads and the yaml key lookup)."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q -p no:cacheprovider tests/test_todo2code_autonomous_gate.py"
+        ],
+        "evidence": "All existing gate pins (detector precedence, multi-command koru.yaml, docker refusal, container-command override) plus the new compose-fallback test pass."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest -q -p no:cacheprovider tests/test_todo2code_ticket_text.py tests/test_todo2code_modules.py tests/test_todo2code_discovery.py"
+        ],
+        "evidence": "Neighboring todo2code suites that consume ticket_templates/gate hydration stay green."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh --base 91929bd0562a60585066eddea148badefb0fddf8 --changed-file src/koru/queue/todo2code_gate.py --changed-file tests/test_todo2code_autonomous_gate.py --changed-file project/TICKETS.md"
+        ],
+        "evidence": "Governance gate reports 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}
