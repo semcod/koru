@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-225",
+  "summary": "Decompose god function run_ticket2dsl",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-225/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/ticket2dsl.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "040d40d7f8b4bbfab79ff605eb1644d7616edb6a",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm god-function gates for run_ticket2dsl in src/koru/autonomy/ticket2dsl.py (fan-out 20->8, mutations 26->4, CC 10->5) by returning early skip/error outcomes straight from the Ticket2dslOutcome constructor, extracting the KORU_TICKET2DSL_MAX_UNITS/argument cap into _resolve_unit_limit, the post-build outcome snapshot into _ran_outcome, the koru.ticket-work-unit-set/v1 payload into _unit_set_payload and the three artifact writes into _write_ticket2dsl_artifacts/_write_artifact, and by having build_work_units return the private _BuiltUnits NamedTuple so the orchestrator reads .units/.filtered instead of unpacking a bare tuple, while preserving identical skip reasons, check order, limit resolution with max(1, ...) clamping, partial outcome-field population on every early return, OSError capture into outcome.error, artifact file names and payload contents.",
+    "nonGoals": [
+      "Refactoring the other god-flagged functions in this module (separate planfile tickets)",
+      "Changing sprint loading, open-status handling, usefulness filtering or unit scoring/ranking",
+      "Altering the work-unit contract, planfile DSL or intent JSONL rendering",
+      "Extracting code into a new module (patch targets must stay module-local)"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep the pipeline in one module: run_ticket2dsl stays a linear guard/build/snapshot/write sequence that constructs skip and error outcomes directly instead of mutating one shared object, and the artifact writing is split into a payload renderer plus a per-file writer so each helper owns a bounded slice of the outcome writes. build_work_units returns a private NamedTuple so callers read fields and the tuple-unpack mutation double-count stays out of the orchestrator.",
+      "components": [
+        {
+          "name": "autonomy-ticket2dsl",
+          "paths": [
+            "src/koru/autonomy/ticket2dsl.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the single inline run_ticket2dsl body with a bare (units, filtered) tuple return."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 /tmp/godcheck.py src/koru/autonomy/ticket2dsl.py"
+        ],
+        "evidence": "run_ticket2dsl and every touched or new helper re-measure below the code2llm god-function gates (fan-out 20->8, mutations 26->4, CC 10->5; all <= fan-out 10 / mutations 6 / CC 12)."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "PYTHONPATH=src python3 -m pytest tests/test_ticket2dsl.py -q"
+        ],
+        "evidence": "All existing ticket2dsl tests pass unchanged."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}

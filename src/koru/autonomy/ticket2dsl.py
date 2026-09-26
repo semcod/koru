@@ -23,7 +23,7 @@ import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from koru.autonomy.code_change_usefulness import (
     is_useful_code_change_path,
@@ -199,14 +199,21 @@ def _render_work_unit(
     }
 
 
+class _BuiltUnits(NamedTuple):
+    """Selected work units plus the count of tickets filtered out."""
+
+    units: list[dict[str, Any]]
+    filtered: int
+
+
 def build_work_units(
     project: Path,
     *,
     sprint: str = DEFAULT_SPRINT,
     max_units: int = DEFAULT_MAX_UNITS,
     only_todo2code: bool = False,
-) -> tuple[list[dict[str, Any]], int]:
-    """Return (units, filtered_out_count)."""
+) -> _BuiltUnits:
+    """Return the selected work units and the filtered-out count."""
     tickets = _load_sprint_tickets(project, sprint=sprint)
     candidates: list[tuple[float, dict[str, Any]]] = []
     filtered = 0
@@ -233,7 +240,7 @@ def build_work_units(
 
     candidates.sort(key=lambda item: item[0], reverse=True)
     selected = [unit for _, unit in candidates[: max(1, max_units)]]
-    return selected, filtered
+    return _BuiltUnits(selected, filtered)
 
 
 def _render_planfile_dsl(units: list[dict[str, Any]]) -> str:
@@ -284,6 +291,78 @@ def _render_intent_jsonl(units: list[dict[str, Any]], *, project: Path) -> str:
     return "\n".join(lines) + ("\n" if lines else "")
 
 
+def _resolve_unit_limit(max_units: int | None) -> int:
+    """Resolve the unit cap from the argument or ``KORU_TICKET2DSL_MAX_UNITS``."""
+    try:
+        limit = max_units if max_units is not None else int(
+            os.environ.get("KORU_TICKET2DSL_MAX_UNITS") or DEFAULT_MAX_UNITS
+        )
+    except ValueError:
+        limit = DEFAULT_MAX_UNITS
+    return max(1, limit)
+
+
+def _ran_outcome(units: list[dict[str, Any]], filtered: int) -> Ticket2dslOutcome:
+    """Snapshot the built units onto a fresh outcome, before artifact writing."""
+    return Ticket2dslOutcome(
+        ran=True,
+        units_count=len(units),
+        filtered_out_count=filtered,
+        ticket_ids=[str(unit.get("ticketId")) for unit in units],
+    )
+
+
+def _unit_set_payload(
+    project: Path, sprint: str, units: list[dict[str, Any]], filtered: int,
+) -> dict[str, Any]:
+    """Assemble the ``koru.ticket-work-unit-set/v1`` JSON payload."""
+    return {
+        "schemaVersion": "koru.ticket-work-unit-set/v1",
+        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "project": str(project),
+        "sprint": sprint,
+        "source": DEFAULT_SOURCE,
+        "units": units,
+        "counts": {
+            "units": len(units),
+            "filteredOut": filtered,
+        },
+    }
+
+
+def _write_artifact(path: Path, content: str) -> str:
+    """Write one artifact file and return its path as a string."""
+    path.write_text(content, encoding="utf-8")
+    return str(path)
+
+
+def _write_ticket2dsl_artifacts(
+    project: Path,
+    sprint: str,
+    units: list[dict[str, Any]],
+    filtered: int,
+    outcome: Ticket2dslOutcome,
+) -> None:
+    """Write the work-unit artifacts and record their paths on the outcome."""
+    try:
+        out_dir = project / DEFAULT_OUT_REL
+        out_dir.mkdir(parents=True, exist_ok=True)
+        outcome.json_path = _write_artifact(
+            out_dir / "work-units.json",
+            json.dumps(_unit_set_payload(project, sprint, units, filtered), indent=2, ensure_ascii=False) + "\n",
+        )
+        outcome.dsl_path = _write_artifact(
+            out_dir / "work-units.planfile.dsl",
+            _render_planfile_dsl(units),
+        )
+        outcome.intent_path = _write_artifact(
+            out_dir / "work-units.intent.jsonl",
+            _render_intent_jsonl(units, project=project),
+        )
+    except OSError as exc:
+        outcome.error = f"failed to write ticket2dsl artifacts: {exc}"
+
+
 def run_ticket2dsl(
     project: Path,
     *,
@@ -292,72 +371,30 @@ def run_ticket2dsl(
     only_todo2code: bool = False,
 ) -> Ticket2dslOutcome:
     project = project.resolve()
-    outcome = Ticket2dslOutcome()
 
     if not ticket2dsl_enabled(project):
-        outcome.skipped_reason = "disabled via KORU_TICKET2DSL_ENABLE"
-        return outcome
+        return Ticket2dslOutcome(skipped_reason="disabled via KORU_TICKET2DSL_ENABLE")
 
     if not (project / ".planfile" / "sprints" / f"{sprint}.yaml").is_file():
-        outcome.skipped_reason = f"no planfile sprint {sprint}"
-        return outcome
+        return Ticket2dslOutcome(skipped_reason=f"no planfile sprint {sprint}")
 
     try:
-        limit = max_units if max_units is not None else int(
-            os.environ.get("KORU_TICKET2DSL_MAX_UNITS") or DEFAULT_MAX_UNITS
-        )
-    except ValueError:
-        limit = DEFAULT_MAX_UNITS
-
-    try:
-        units, filtered = build_work_units(
+        built = build_work_units(
             project,
             sprint=sprint,
-            max_units=max(1, limit),
+            max_units=_resolve_unit_limit(max_units),
             only_todo2code=only_todo2code,
         )
     except Exception as exc:  # noqa: BLE001
-        outcome.error = f"ticket2dsl failed: {exc}"
-        return outcome
+        return Ticket2dslOutcome(error=f"ticket2dsl failed: {exc}")
 
-    outcome.ran = True
-    outcome.units_count = len(units)
-    outcome.filtered_out_count = filtered
-    outcome.ticket_ids = [str(u.get("ticketId")) for u in units]
+    outcome = _ran_outcome(built.units, built.filtered)
 
-    if not units:
+    if not built.units:
         outcome.skipped_reason = "no useful open tickets with implementable paths"
         return outcome
 
-    out_dir = project / DEFAULT_OUT_REL
-    try:
-        out_dir.mkdir(parents=True, exist_ok=True)
-        generated_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-        payload = {
-            "schemaVersion": "koru.ticket-work-unit-set/v1",
-            "generatedAt": generated_at,
-            "project": str(project),
-            "sprint": sprint,
-            "source": DEFAULT_SOURCE,
-            "units": units,
-            "counts": {
-                "units": len(units),
-                "filteredOut": filtered,
-            },
-        }
-        json_path = out_dir / "work-units.json"
-        dsl_path = out_dir / "work-units.planfile.dsl"
-        intent_path = out_dir / "work-units.intent.jsonl"
-        json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-        dsl_path.write_text(_render_planfile_dsl(units), encoding="utf-8")
-        intent_path.write_text(_render_intent_jsonl(units, project=project), encoding="utf-8")
-        outcome.json_path = str(json_path)
-        outcome.dsl_path = str(dsl_path)
-        outcome.intent_path = str(intent_path)
-    except OSError as exc:
-        outcome.error = f"failed to write ticket2dsl artifacts: {exc}"
-        return outcome
-
+    _write_ticket2dsl_artifacts(project, sprint, built.units, built.filtered, outcome)
     return outcome
 
 
