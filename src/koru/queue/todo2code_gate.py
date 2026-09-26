@@ -17,9 +17,8 @@ from koru.queue.todo2code_support import build_pipeline_cmd
 def infer_project_verify_commands(project: Path) -> list[list[str]]:
     """Return all declared completion gates, or one conventional fallback."""
     for detector in (_verify_from_koru_yaml, _verify_from_package_json):
-        commands = detector(project)
-        if commands:
-            return commands
+        if declared := detector(project):
+            return declared
     return _verify_toolchain_fallback(project)
 
 
@@ -31,12 +30,12 @@ def _verify_from_koru_yaml(project: Path) -> list[list[str]]:
         import yaml
 
         data = yaml.safe_load(koru_yaml.read_text(encoding="utf-8")) or {}
-        commands = (((data.get("when") or {}).get("before_complete_ticket") or {}).get(
+        declared_commands = (((data.get("when") or {}).get("before_complete_ticket") or {}).get(
             "commands",
         ) or [])
     except (OSError, AttributeError, ValueError):
         return []
-    declared = [str(command).strip() for command in commands if str(command).strip()]
+    declared = [str(command).strip() for command in declared_commands if str(command).strip()]
     return [["sh", "-lc", command] for command in declared]
 
 
@@ -72,8 +71,8 @@ def _verify_toolchain_fallback(project: Path) -> list[list[str]]:
 
 def infer_project_verify_command(project: Path) -> list[str] | None:
     """Compatibility facade returning the first resolved verification gate."""
-    commands = infer_project_verify_commands(project)
-    return commands[0] if commands else None
+    gates = infer_project_verify_commands(project)
+    return gates[0] if gates else None
 
 
 def _compose_path(project: Path) -> Path | None:
@@ -109,19 +108,19 @@ def _docker_verification(project: Path) -> tuple[dict, str | None]:
 
 def resolve_project_verify_commands(project: Path) -> tuple[list[list[str]], str | None]:
     """Resolve verification commands without silently escaping a Docker manifest."""
-    commands = infer_project_verify_commands(project)
-    if not commands:
+    gates = infer_project_verify_commands(project)
+    if not gates:
         return [], "no conventional project verify command could be inferred"
 
     compose = _compose_path(project)
     docker_project = (project / "Dockerfile").is_file() and compose is not None
     if not docker_project:
-        return commands, None
+        return gates, None
 
     config, error = _docker_verification(project)
     if error:
         return [], error
-    return _compose_wrapped_commands(project, config, commands, compose)
+    return _compose_wrapped_commands(project, config, gates, compose)
 
 
 def _compose_wrapped_commands(
@@ -133,8 +132,7 @@ def _compose_wrapped_commands(
         for command in declared
         if str(command).strip()
     ]
-    if container_commands:
-        commands = container_commands
+    gates = container_commands or commands
     configured_compose = str(config.get("compose_file") or compose.name).strip()
     compose_path = (project / configured_compose).resolve()
     try:
@@ -151,7 +149,7 @@ def _compose_wrapped_commands(
             base.extend(["--profile", str(profile).strip()])
     service = str(config["service"]).strip()
     wrapped = []
-    for command in commands:
+    for command in gates:
         shell_command = command[2] if command[:2] == ["sh", "-lc"] else shlex.join(command)
         wrapped.append(
             [*base, "run", "--rm", "--entrypoint", "sh", service, "-lc", shell_command]
