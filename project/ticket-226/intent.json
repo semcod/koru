@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-226",
+  "summary": "Decompose god function scan_opencode_log_for_exhaustion",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-226/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_terminals.py",
+    "tests/test_dashboard_terminals.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "53b9f8ef750f0bee0627f725082cefcf3b37e4ab",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm god-function gates for scan_opencode_log_for_exhaustion in src/koruapi/opencode_terminals.py (fan-out 14->5, mutations 22->4, CC 8->5) by extracting the tail read into _read_log_tail and the per-match provider marking into _stream_error_event (positional match.group access instead of tuple unpacking, which code2llm double-counts as mutations), while preserving the default log path, missing/unreadable-file empty result, max_bytes tail window, exhaustion-only marking and the event dict shape.",
+    "nonGoals": [
+      "Refactoring the other god-flagged functions in this module (separate planfile tickets)",
+      "Changing the exhaustion detection patterns or mark_provider_exhausted semantics",
+      "Extracting code into a new module (patch targets must stay module-local)",
+      "Renaming the public scan_opencode_log_for_exhaustion API"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep the module layout: scan_opencode_log_for_exhaustion stays a linear resolve/read/scan orchestrator that appends per-match events, the bounded tail read (existence check, size clamp, seek, decode) is isolated in _read_log_tail and the per-match exhaustion parse, provider marking and event dict build in _stream_error_event. The helper reads the regex groups positionally via match.group(N) so no tuple-unpack mutation double-counting re-enters the split.",
+      "components": [
+        {
+          "name": "koruapi-opencode-terminals",
+          "paths": [
+            "src/koruapi/opencode_terminals.py",
+            "tests/test_dashboard_terminals.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the single inline scan body with match.groups() tuple unpacking."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 /tmp/metrics_check.py src/koruapi/opencode_terminals.py"
+        ],
+        "evidence": "scan_opencode_log_for_exhaustion and the new helpers re-measure below the code2llm god-function gates (fan-out 14->5, mutations 22->4, CC 8->5; all <= fan-out 10 / mutations 6 / CC 12)."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest tests/test_dashboard_terminals.py tests/test_opencode_serve_scan.py -q"
+        ],
+        "evidence": "All existing terminal tests pass unchanged plus the three new scan tests."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}

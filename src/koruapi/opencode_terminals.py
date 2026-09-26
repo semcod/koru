@@ -394,6 +394,45 @@ def clear_provider_exhaustion(provider_id: str | None = None) -> None:
             _EXHAUSTED_PROVIDERS.pop(str(provider_id).strip().lower(), None)
 
 
+def _read_log_tail(log_path: Path, max_bytes: int) -> str | None:
+    """Read the last max_bytes bytes of a log file as text.
+
+    Returns None when the file is missing or unreadable.
+    """
+    if not log_path.is_file():
+        return None
+    try:
+        size = log_path.stat().st_size
+        offset = max(0, size - max_bytes)
+        with log_path.open("rb") as f:
+            if offset > 0:
+                f.seek(offset)
+            return f.read().decode("utf-8", "ignore")
+    except OSError:
+        return None
+
+
+def _stream_error_event(match: re.Match[str]) -> dict[str, Any] | None:
+    """Mark one matched provider exhausted and return its event dict.
+
+    Returns None when the matched error text carries no rate-limit/quota
+    signal, leaving provider state untouched.
+    """
+    error_msg = match.group(5)
+    parsed = parse_exhaustion_from_error(error_msg)
+    if not parsed[0]:
+        return None
+    record = mark_provider_exhausted(match.group(2), ttl_seconds=parsed[1], reason=error_msg)
+    return {
+        "run": match.group(1),
+        "providerID": match.group(2),
+        "modelID": match.group(3),
+        "sessionID": match.group(4) or "",
+        "error": error_msg,
+        "reset_at": record.get("reset_at"),
+    }
+
+
 def scan_opencode_log_for_exhaustion(
     log_path: Path | None = None,
     max_bytes: int = 128 * 1024,
@@ -405,34 +444,14 @@ def scan_opencode_log_for_exhaustion(
     """
     if log_path is None:
         log_path = Path.home() / ".local" / "share" / "opencode" / "log" / "opencode.log"
-    if not log_path.is_file():
+    raw = _read_log_tail(log_path, max_bytes)
+    if raw is None:
         return []
-    try:
-        size = log_path.stat().st_size
-        offset = max(0, size - max_bytes)
-        with log_path.open("rb") as f:
-            if offset > 0:
-                f.seek(offset)
-            raw = f.read().decode("utf-8", "ignore")
-    except OSError:
-        return []
-
     detected: list[dict[str, Any]] = []
     for match in _LOG_STREAM_ERROR_RE.finditer(raw):
-        run_id, provider_id, model_id, session_id, error_msg = match.groups()
-        is_ex, ttl, _ = parse_exhaustion_from_error(error_msg)
-        if is_ex:
-            record = mark_provider_exhausted(provider_id, ttl_seconds=ttl, reason=error_msg)
-            detected.append(
-                {
-                    "run": run_id,
-                    "providerID": provider_id,
-                    "modelID": model_id,
-                    "sessionID": session_id or "",
-                    "error": error_msg,
-                    "reset_at": record.get("reset_at"),
-                }
-            )
+        event = _stream_error_event(match)
+        if event is not None:
+            detected.append(event)
     return detected
 
 
