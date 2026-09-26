@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-264",
+  "summary": "assign scripts python code to application workstream ownedPaths",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-264/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".governance/manifest.json"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "483179868b9adb42da3d7704544839f666f3cd6d",
+    "targetBranch": "main",
+    "outcome": "Add scripts/**/*.py to coordination.workstreams.application.ownedPaths in .governance/manifest.json so the Python utility code under scripts/ is owned by the application workstream. This remediates GOV-WORKSTREAM-003: the code2llm-discovered planfile ticket scoped to scripts/sync-vscode-plugin-version.py (PLF-041, Shotgun Surgery: content) could not be allocated to a workstream because no ownedPaths pattern covered that file. Governance keeps scripts/publish-local-onedev-validator.sh and infrastructure keeps scripts/docker-ide-matrix.sh; the new Python-only glob never matches a .sh file, so rejectActiveScopeOverlap remains satisfied.",
+    "nonGoals": [
+      "No ownership change for the individually-owned shell scripts (scripts/publish-local-onedev-validator.sh under governance, scripts/docker-ide-matrix.sh under infrastructure)",
+      "No source, test or behaviour change inside scripts/ itself",
+      "No changes to other workstreams' ownedPaths or to coordination settings other than the application list"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add the single glob scripts/**/*.py to the application workstream ownedPaths list in .governance/manifest.json, placed with the other code-root globs after services/**/*.py. The glob matches Python files under scripts/ at any depth and never matches the two individually-owned .sh scripts, so application, governance and infrastructure ownership of scripts/ stays disjoint under the gate's pattern_covered_by predicate. .governance/manifest.json is not digest-pinned by .governance/manifest.lock.json (only manifest.base.json is), so no lock refresh is required.",
+      "components": [
+        {
+          "name": "governance-manifest",
+          "paths": [
+            ".governance/manifest.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [
+        "application workstream now owns scripts/**/*.py; scripts Python code previously matched no workstream and triggered GOV-WORKSTREAM-003 on ticket allocation"
+      ],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; application.ownedPaths returns to the previous globs and scripts Python code is unowned again."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"import json,sys;sys.path.insert(0,'.governance');from governance_check import pattern_covered_by;m=json.load(open('.governance/manifest.json'));ws=m['coordination']['workstreams'];app=ws['application']['ownedPaths'];gov=ws['governance']['ownedPaths'];inf=ws['infrastructure']['ownedPaths'];assert 'scripts/**/*.py' in app;assert any(pattern_covered_by('scripts/sync-vscode-plugin-version.py', p) for p in app);assert not any(pattern_covered_by('scripts/sync-vscode-plugin-version.py', p) for p in gov+inf);assert any(pattern_covered_by('scripts/publish-local-onedev-validator.sh', p) for p in gov) and not any(pattern_covered_by('scripts/publish-local-onedev-validator.sh', p) for p in app+inf);assert any(pattern_covered_by('scripts/docker-ide-matrix.sh', p) for p in inf) and not any(pattern_covered_by('scripts/docker-ide-matrix.sh', p) for p in app+gov)\""
+        ],
+        "evidence": "The gate ownership predicate resolves scripts/sync-vscode-plugin-version.py to application only, keeps scripts/publish-local-onedev-validator.sh with governance only and scripts/docker-ide-matrix.sh with infrastructure only, and the new glob is present in application.ownedPaths."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "The governance gate reports 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}
