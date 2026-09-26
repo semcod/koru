@@ -1,6 +1,8 @@
+import json
 from types import SimpleNamespace
 
 from nlp2koru.apply import apply_nl
+from nlp2koru.cli import main
 from nlp2koru.llm_backend import nl_to_dsl_line
 from nlp2koru.to_dsl import to_dsl
 
@@ -57,3 +59,71 @@ def test_injected_backend_remains_supported() -> None:
 
     assert nl_to_dsl_line("status", model="compatibility-hint", backend=backend) == "QUERY_LANE_STATUS"
     assert backend.observed_model == "compatibility-hint"
+
+
+def test_cli_to_dsl_prints_line(capsys) -> None:
+    code = main(["to-dsl", "show repair history", "--project", "."])
+
+    assert code == 0
+    assert capsys.readouterr().out.startswith("QUERY_REPAIR_HISTORY")
+
+
+def test_cli_to_dsl_json_outputs_line(capsys) -> None:
+    code = main(["to-dsl", "show repair history", "--project", ".", "--json"])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload[0].startswith("QUERY_REPAIR_HISTORY")
+
+
+def test_cli_to_dsl_error_exits_one(capsys, monkeypatch) -> None:
+    def fail(prompt, *, project, use_llm, llm_model):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("nlp2koru.cli.to_dsl", fail)
+
+    code = main(["to-dsl", "show repair history"])
+
+    assert code == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == "error: boom\n"
+
+
+def test_cli_apply_json_outputs_result(capsys, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "nlp2koru.cli.apply_nl",
+        lambda prompt, *, project, use_llm: SimpleNamespace(
+            dsl="VALIDATE_LANE --lane main",
+            ok=True,
+            error=None,
+            result=SimpleNamespace(output="ok"),
+            to_dict=lambda: {"dsl": "VALIDATE_LANE --lane main", "ok": True},
+        ),
+    )
+
+    code = main(["apply", "validate lane", "--json"])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["dsl"] == "VALIDATE_LANE --lane main"
+
+
+def test_cli_workflow_outputs_json(capsys) -> None:
+    code = main(["workflow", "validate lane"])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert "steps" in payload
+
+
+def test_cli_rewrite_prints_rewritten(capsys, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "nlp2koru.cli.rewrite_chat_prompt",
+        lambda prompt, *, ide, instance, model: f"rewritten:{prompt}",
+    )
+
+    code = main(["rewrite-chat", "validate lane", "--ide", "code"])
+
+    assert code == 0
+    assert capsys.readouterr().out == "rewritten:validate lane\n"

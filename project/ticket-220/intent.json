@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-220",
+  "summary": "Decompose god function main in nlp2koru cli",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-220/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/nlp2koru/src/nlp2koru/cli.py",
+    "packages/nlp2koru/tests/test_nlp2koru.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3506e31db46d810e8ce903d5abab513dd644887e",
+    "targetBranch": "main",
+    "outcome": "Decompose main in packages/nlp2koru/src/nlp2koru/cli.py (PLF-038): move argparse construction into declarative ArgumentSpec tables plus _add_arguments and _build_parser, and route each dispatched subcommand through _cmd_to_dsl/_cmd_apply/_cmd_workflow/_cmd_rewrite handlers, dropping main from CC=12 / fan-out=16 / mutations=31 to CC=4 / fan-out=6 / mutations=1 (god-function thresholds: fan-out > 10, mutations > 6, CC > 12) with every new helper under the same thresholds, while keeping the public main(argv)->int contract, the nlp2koru console-script binding and byte-identical stdout/stderr/exit-code behavior for all four subcommands.",
+    "nonGoals": [
+      "Changing subcommand names, flags, defaults, help texts or output formatting",
+      "Refactoring other functions in packages/nlp2koru (to_dsl, apply, llm_backend untouched)",
+      "Extracting cli.py into a new module or package"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Declare each subcommand's arguments as module-level ArgumentSpec tables (dsl2koru cli idiom) registered through a single _add_arguments loop, because code2llm counts every add_* method call as a mutation: the to-dsl and apply subcommands each take 5 arguments, so ticket-219-style per-subcommand registrars would hold 7 mutations (1 assign + add_parser + 5 add_argument) and stay above the mutation threshold. The spec loop keeps _build_parser at 5 mutations and _add_arguments at 1. Dispatch handlers stay in cli.py and call the module-level to_dsl/apply_nl/workflow_from_nl/rewrite_chat_prompt imports directly so existing nlp2koru.cli patch targets keep working (late binding through the module facade).",
+      "components": [
+        {
+          "name": "nlp2koru-cli",
+          "paths": [
+            "packages/nlp2koru/src/nlp2koru/cli.py",
+            "packages/nlp2koru/tests/test_nlp2koru.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the single inline main function."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -c \"from code2llm.api import analyze; r = analyze('packages/nlp2koru/src'); print([(s.name, s.line) for s in r.smells if s.file.endswith('cli.py')]); print({k: v for k, v in r.metrics.items() if 'nlp2koru.cli' in k})\""
+        ],
+        "evidence": "The code2llm smell list contains no function defined in cli.py and every cli function reports CC <= 12, fan-out <= 10, mutations <= 6."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "PYTHONPATH=packages/dsl2koru/src:packages/uri2koru/src:packages/nlpshim/src:packages/nlp2koru/src python3 -m pytest -q packages/nlp2koru/tests/test_nlp2koru.py"
+        ],
+        "evidence": "All existing nlp2koru tests pass unchanged (the dispatch-dependent test_apply_validate_lane failure is pre-existing on main and environmental) plus new main() dispatch regression tests covering to-dsl (text and --json), to-dsl error exit, apply --json, workflow and rewrite-chat."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance gate passes with 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}
