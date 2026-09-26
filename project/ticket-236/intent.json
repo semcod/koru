@@ -1,0 +1,112 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-236",
+  "summary": "Split god module vdisplay_client by responsibility",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-236/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay/*",
+    "src/koru/integrations/vdisplay_client.py",
+    "tests/test_vdisplay_module_split.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "28a9bc4f4066a62df4b49861f7c6bfe85f16e83f",
+    "targetBranch": "main",
+    "outcome": "Split src/koru/integrations/vdisplay_client.py (code2llm god module: 6546 lines, 272 top-level functions; gate is >40) into thirteen responsibility modules under src/koru/integrations/vdisplay/ plus a slim facade, moving every definition verbatim: source_policy (capture/source policy flags), vql_sidecar (sidecar observation, PNG resolution, capture meta interpretation and the refresh pipeline), imgl_loader (imgl/vdisplay CLI discovery, import machinery, subprocess env), ide_control (window focus and semantic IDE control orchestration), drive_prepare (photo-VQL drive preparation), chat_send (send_chat pipeline and selector plumbing with the _IDE_HINTS/_CHAT_INPUT_SELECTORS/_SUBMIT_BUTTON_SELECTORS constants), input_actuation (agent controls, keyboard submit, IDE-prompt and OS type-text), chat_target (photo-VQL chat target resolution), map_pointer (IDE-map capture/pointer target math), command_plan (VQL command plan, cursor validation, LLM coordinate resolution), capture_gates (capture-mismatch and unverified-chat gating), focus_edit (focus-and-edit pipeline and mouse move), vql_metadata (candidate/metadata loading, freshness policy and the optional-extra vdisplay.vql shims with their explanatory comment block). vdisplay_client.py keeps the runtime/availability wrappers, chat-text OCR verification, record_koru_drive_step and the vdisplay_fallback_enabled wrapper (10 defs) because they read the patchable _VDISPLAY_DIRECT facade state, and re-exports every moved name so `from koru.integrations.vdisplay_client import X` keeps working (the nxdo_discovery facade pattern from tickets 234/235). Behavior is preserved verbatim; the 62-name facade monkeypatch surface (audited across tests/ and packages/coru/tests/) keeps steering the pipeline because moved code resolves former module globals through a lazy `_vdc()` facade accessor at call time — patch targets route through the facade even when caller and callee share a new module, honoring the LOAD_GLOBAL/`__getattr__` regression record documented above the vdisplay.vql shims.",
+    "nonGoals": [
+      "Changing any drive/fallback/gating behavior, log text, or default flags",
+      "Renaming or re-signing any public or private function",
+      "Touching any consumer (src/koru/agent_backend_runtime.py, src/koru/autopilot/*, src/koru/autonomy/cycle/cycle_gate.py, src/koru/integrations/photo_vql_*.py, packages/coru/*, packages/koruide/src/*)",
+      "Modifying the existing vdisplay test files or the vdisplay_readiness/desktop_probe/portal_input/window_focus/pointer_calibration/drive_result/env_session/surface_capture/control_policy/photo_vql_meta modules",
+      "Splitting or refactoring any other module flagged by code2llm"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Move definitions verbatim (same names, bodies text-preserved by a line-exact splitter) into thirteen responsibility modules and re-export them from the koru.integrations.vdisplay_client facade (the nxdo_discovery pattern). A patch audit across tests/ and packages/coru/tests/ found 62 distinct facade-level monkeypatch targets (including re-exported aliases like _dry_run, llm_vision_enabled, _vql_candidates_polluted and the vdisplay.vql shims). Because moved callers no longer share the facade's globals, every reference that was a vdisplay_client module global resolves through a module-local lazy accessor `def _vdc(): import koru.integrations.vdisplay_client as m; return m` as `_vdc().NAME`; names that tests patch route through the facade even when caller and callee land in the same module. Facade-resident functions keep plain global lookups, which preserves patchability without indirection. No module-level `__getattr__` is introduced (regression class documented in the file tail). The facade `__all__` is unchanged.",
+      "components": [
+        {
+          "name": "koru-integrations-vdisplay",
+          "paths": [
+            "src/koru/integrations/vdisplay_client.py",
+            "src/koru/integrations/vdisplay/source_policy.py",
+            "src/koru/integrations/vdisplay/vql_sidecar.py",
+            "src/koru/integrations/vdisplay/imgl_loader.py",
+            "src/koru/integrations/vdisplay/ide_control.py",
+            "src/koru/integrations/vdisplay/drive_prepare.py",
+            "src/koru/integrations/vdisplay/chat_send.py",
+            "src/koru/integrations/vdisplay/input_actuation.py",
+            "src/koru/integrations/vdisplay/chat_target.py",
+            "src/koru/integrations/vdisplay/map_pointer.py",
+            "src/koru/integrations/vdisplay/command_plan.py",
+            "src/koru/integrations/vdisplay/capture_gates.py",
+            "src/koru/integrations/vdisplay/focus_edit.py",
+            "src/koru/integrations/vdisplay/vql_metadata.py",
+            "tests/test_vdisplay_module_split.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit to restore the single 6546-line src/koru/integrations/vdisplay_client.py."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -c \"import ast,sys; [ast.parse(open(p).read()) for p in ['src/koru/integrations/vdisplay_client.py'] + __import__('glob').glob('src/koru/integrations/vdisplay/*.py')]\""
+        ],
+        "evidence": "vdisplay_client.py drops from 272 top-level defs to 10 and from 6546 to ~1170 lines; each responsibility module holds <=29 defs, under the code2llm god-module gate of 40."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "PYTHONPATH=src python3 -m pytest -q tests/test_vdisplay_control_fallback.py tests/test_vdisplay_readiness.py tests/test_vdisplay_env_session.py tests/test_vdisplay_drive_result.py tests/test_photo_vql_orchestrator.py tests/test_photo_vql_drive.py tests/test_photo_vql_guard_vision.py tests/test_adaptive_pointer.py tests/test_surface_capture_confirmation.py tests/test_vdisplay_coordinate_contract.py tests/test_deps_autorepair.py"
+        ],
+        "evidence": "All pre-split vdisplay/photo-vql test files pass unchanged against the split modules, including the facade-level monkeypatch surface."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "PYTHONPATH=src python3 -c \"import koru.integrations.vdisplay_client as vc; assert all(hasattr(vc, n) for n in vc.__all__)\""
+        ],
+        "evidence": "Facade import surface stable: every __all__ name and every audited private patch target still resolves on koru.integrations.vdisplay_client; consumers (agent_backend_runtime, autopilot CLIs, cycle_gate, photo_vql_drive, coru, koruide) unmodified."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "PYTHONPATH=src python3 -m pytest -q tests/test_vdisplay_module_split.py"
+        ],
+        "evidence": "New pin test covers the re-export surface, the lazy facade routing for moved patch targets, and one behavior per responsibility module."
+      }
+    ]
+  }
+}
