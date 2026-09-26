@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-254",
+  "summary": "reduce cyclomatic complexity in task strategies by decomposing pending worktree and pr finders",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-254/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/task_strategies.py",
+    "tests/test_task_execution_strategies.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "91929bd0562a60585066eddea148badefb0fddf8",
+    "targetBranch": "main",
+    "outcome": "Reduce cyclomatic complexity in src/koru/autonomy/task_strategies.py by decomposing find_pending_worktrees (CC=24 -> <=6) and find_pending_prs (CC=18 -> <=5) into focused, single-responsibility helper functions while maintaining 100% backward compatibility and test coverage.",
+    "nonGoals": [
+      "Breaking public interfaces find_pending_worktrees or find_pending_prs",
+      "Altering worktree detection, filtering, or sorting logic",
+      "Altering PR parsing or status rollup logic"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract porcelain parsing and single worktree inspection helpers for find_pending_worktrees, and item/check parsing helpers for find_pending_prs in task_strategies.py.",
+      "components": [
+        {
+          "name": "koru-task-strategies",
+          "paths": [
+            "src/koru/autonomy/task_strategies.py",
+            "tests/test_task_execution_strategies.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit to restore the previous task_strategies.py implementation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_task_execution_strategies.py"
+        ],
+        "evidence": "All existing tests in tests/test_task_execution_strategies.py pass without modification."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "ruff check src/koru/autonomy/task_strategies.py",
+          "ruff format --check src/koru/autonomy/task_strategies.py"
+        ],
+        "evidence": "Ruff check and format report 0 findings."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "The governance gate reports 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}
