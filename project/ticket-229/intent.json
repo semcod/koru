@@ -1,0 +1,84 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-229",
+  "summary": "Add koru sum and summary command for daily execution overview",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-229/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli.py",
+    "src/koru/cli_summary.py",
+    "tests/test_cli_summary.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8a693047291288a64d0739172aab388218d4f064",
+    "targetBranch": "main",
+    "outcome": "Add koru sum and summary command to koru CLI dispatching daily execution overview metrics across Planfile sprints and GitHub PRs.",
+    "nonGoals": [
+      "Modifying core autonomous loop logic or modifying queue execution behavior"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 1
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Register sum and summary in koru.cli _SUBCOMMANDS and dispatch to koru.cli_summary.summary_main, gathering data via monag.summary.",
+      "components": [
+        {
+          "name": "koru-cli",
+          "paths": [
+            "src/koru/cli.py",
+            "src/koru/cli_summary.py",
+            "tests/test_cli_summary.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit to remove sum subcommand registration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q tests/test_cli_summary.py"
+        ],
+        "evidence": "All unit tests in tests/test_cli_summary.py pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}

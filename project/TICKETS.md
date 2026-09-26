@@ -230,4 +230,6 @@ project analysis or human-owned ticket inputs.
 | **ticket-225** | [`README.md`](./ticket-225/README.md) | - | - | - | - | - |
 | **ticket-226** | [`README.md`](./ticket-226/README.md) | - | - | - | - | - |
 | **ticket-227** | [`README.md`](./ticket-227/README.md) | - | - | - | - | - |
+| **ticket-228** | [`README.md`](./ticket-228/README.md) | - | - | - | - | - |
+| **ticket-229** | [`README.md`](./ticket-229/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->

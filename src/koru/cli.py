@@ -235,6 +235,8 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "on": lambda argv: _lazy_module_main("koru.cli_global_control", "on_main", argv),
     "off": lambda argv: _lazy_module_main("koru.cli_global_control", "off_main", argv),
     "status": lambda argv: _lazy_module_main("koru.cli_global_control", "status_main", argv),
+    "sum": lambda argv: _lazy_module_main("koru.cli_summary", "summary_main", argv),
+    "summary": lambda argv: _lazy_module_main("koru.cli_summary", "summary_main", argv),
 }
 
 #: Subcommands that stay usable while the global kill-switch is set.
@@ -244,6 +246,8 @@ _ALLOWED_WHEN_DISABLED: frozenset[str] = frozenset({
     "on",
     "off",
     "status",
+    "sum",
+    "summary",
     "doctor",
     "events",
     "context",
@@ -425,7 +429,7 @@ def _handle_parser_exit(exc: SystemExit, raw_args: list[str], subcommand: str) -
 
 
 _GLOBAL_CONTROL_SUBCOMMANDS: frozenset[str] = frozenset(
-    {"on", "off", "status", "agent-availability"}
+    {"on", "off", "status", "agent-availability", "sum", "summary"}
 )
 _NO_PROJECT_REEXEC_SUBCOMMANDS: frozenset[str] = frozenset({"goal", "ticket"})
 
