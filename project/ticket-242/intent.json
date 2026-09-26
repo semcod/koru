@@ -1,0 +1,101 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-242",
+  "summary": "decompose god module scan by extracting semcod quality artifact scanners",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-242/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/scan.py",
+    "src/koru/scan_artifacts.py",
+    "tests/test_scan.py",
+    "tests/test_scan_artifacts.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "7001ea7f86c860f81a8aee4bec022e64016ae10e",
+    "targetBranch": "main",
+    "outcome": "Decompose the `God Module: src.koru.scan` smell by extracting the semcod quality artifact scanning subsystem (jscpd, code2llm, testql, redup, vallm, pyqual, prefact, regix, redsl, metrun, pfix, todo2code) from src/koru/scan.py into src/koru/scan_artifacts.py. This reduces scan.py from 2,083 to 836 lines (a 60% reduction) while preserving 100% backward compatibility via explicit re-exports in scan.py.",
+    "nonGoals": [
+      "Changing the parsing logic or thresholds of any artifact scanner",
+      "Modifying core scan suggestion deduplication or ticket emission",
+      "Breaking public or internal import paths from koru.scan"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "All external semcod quality artifact scanners and their parsing helpers are cleanly extracted to koru.scan_artifacts. src/koru/scan.py re-exports all pre-existing public and internal symbols so all callers, CLI invocations, and tests remain completely unbroken.",
+      "components": [
+        {
+          "name": "koru-scan",
+          "paths": [
+            "src/koru/scan.py",
+            "src/koru/scan_artifacts.py",
+            "tests/test_scan.py",
+            "tests/test_scan_artifacts.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit to restore inline artifact scanners in scan.py and remove scan_artifacts.py."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_scan_artifacts.py"
+        ],
+        "evidence": "All 9 dedicated unit and contract tests in tests/test_scan_artifacts.py pass."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_scan.py -k TestScanSemcodArtifacts"
+        ],
+        "evidence": "All 24 regression tests in TestScanSemcodArtifacts pass without modification."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "ruff check src/koru/scan.py src/koru/scan_artifacts.py tests/test_scan_artifacts.py",
+          "ruff format --check src/koru/scan.py src/koru/scan_artifacts.py tests/test_scan_artifacts.py"
+        ],
+        "evidence": "Ruff check and format report 0 findings."
+      },
+      {
+        "criterion": "AC-05",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "The governance gate reports 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}
