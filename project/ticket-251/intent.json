@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-251",
+  "summary": "Address code smell: shotgun surgery command in dsl2koru argv",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-251/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/dsl2koru/src/dsl2koru/handlers/argv.py",
+    "packages/dsl2koru/tests/test_argv.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ac5fa71580ff581a28f2ebc694d5826d9e92762b",
+    "targetBranch": "main",
+    "outcome": "Remove the code2llm 'Shotgun Surgery: command' report for packages/dsl2koru/src/dsl2koru/handlers/argv.py (PLF-041) by replacing the seven list-mutating _build_*_args builders (each grew a local command list via append/extend) with pure return [...] expressions over three shared argv-fragment helpers: _flag_args(payload, key, flag) for boolean flags, _value_args(payload, key, flag) for flag+value pairs and _positional_args(payload, key) for raw positionals. Flag placement policy now lives in exactly one place per fragment kind; the calibration skip-flag tuple moves to a module constant consumed by a genexp. Produced argv lists are byte-identical to before; to_cli_args, the _ARG_BUILDERS verb map, the dsl2coru re-export and the module's public surface are untouched. packages/dsl2koru/tests/test_argv.py pins to_cli_args output for every dispatched verb plus the unknown-verb fallback, captured against the pre-refactor implementation.",
+    "nonGoals": [
+      "Changing any produced argv, flag order, default or fallback mapping",
+      "Touching handlers/command.py, handlers/runner.py or the dsl2coru compatibility re-export",
+      "Remediating any other smell reported for the dsl2koru or dsl2coru packages",
+      "Extracting argv.py into a new module (the smell is intra-module)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Make every builder a single return expression that concatenates literal argv fragments with unpacked helper results, so no function in the module assigns or mutates a shared command local; the append/extend knowledge collapses into the three fragment helpers. No module extraction is needed (the smell is intra-module), so there are no new patch targets and the module import surface is unchanged.",
+      "components": [
+        {
+          "name": "dsl2koru",
+          "paths": [
+            "packages/dsl2koru/src/dsl2koru/handlers/argv.py",
+            "packages/dsl2koru/tests/test_argv.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the single ticket commit to restore the seven list-mutating builders."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "grep -nE \"command = |command\\.(append|extend)\" packages/dsl2koru/src/dsl2koru/handlers/argv.py"
+        ],
+        "evidence": "No matches: no builder grows a command list any more."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=\"tests/fakes:src:packages/koruide/src:packages/coru/src:packages/koruenv/src:packages/nlpshim/src:packages/dsl2koru/src:packages/dsl2coru/src:packages/uri2koru/src:packages/nlp2koru/src:packages/cli2koru/src:packages/mcp2koru/src:packages/rest2koru/src\" python3 -m pytest -q -p no:cacheprovider packages/dsl2koru/tests/test_argv.py"
+        ],
+        "evidence": "36 to_cli_args pins (every dispatched verb, flag combinations and the unknown-verb fallback) pass against the refactored builders."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "PYTHONPATH=\"tests/fakes:src:packages/koruide/src:packages/coru/src:packages/koruenv/src:packages/nlpshim/src:packages/dsl2koru/src:packages/dsl2coru/src:packages/uri2koru/src:packages/nlp2koru/src:packages/cli2koru/src:packages/mcp2koru/src:packages/rest2koru/src\" python3 -m pytest -q -p no:cacheprovider packages/dsl2koru/tests/ packages/dsl2coru/tests/"
+        ],
+        "evidence": "Full dsl2koru (99 baseline + 36 new) and dsl2coru (35 baseline) suites pass; no baseline regression."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh --base ac5fa71580ff581a28f2ebc694d5826d9e92762b"
+        ],
+        "evidence": "Governance gate reports 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}
