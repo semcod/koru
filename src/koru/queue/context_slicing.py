@@ -28,54 +28,60 @@ class _TargetRef(NamedTuple):
     line: int | None
 
 
-def _resolve_target_symbol_and_line(
-    rel_path: str, request: dict[str, Any]
-) -> _TargetRef:
-    """Resolve target symbol name and line number for rel_path from request metadata."""
+_SYMBOL_PATTERNS = (
+    r"`(?:God Function|Feature Envy|Long Method|Shotgun Surgery|Data Clump):\s*([a-zA-Z0-9_]+)`",
+    r"(?:Function|Method|class|function|def)\s+['\"`]?([a-zA-Z0-9_]+)['\"`]?",
+    r"`([a-zA-Z0-9_]+)`\s+with\s+CC=",
+)
+
+
+def _resolve_target_from_request_meta(request: dict[str, Any]) -> _TargetRef | None:
     symbol = request.get("target_symbol")
     line = request.get("target_line")
     if symbol is not None or line is not None:
-        return _TargetRef(
-            str(symbol) if symbol else None, int(line) if line is not None else None
-        )
+        return _TargetRef(str(symbol) if symbol else None, int(line) if line is not None else None)
+    return None
 
-    # Inspect prompt and ticket_description for code smell / location markers
+
+def _extract_line_from_corpus(filename: str, text_corpus: str) -> int | None:
+    line_pattern = rf"(?:[\w./\-]+/)?{re.escape(filename)}:(\d+)"
+    m_line = re.search(line_pattern, text_corpus)
+    if not m_line:
+        return None
+    try:
+        return int(m_line.group(1))
+    except ValueError:
+        return None
+
+
+def _extract_symbol_from_corpus(text_corpus: str) -> str | None:
+    for pat in _SYMBOL_PATTERNS:
+        m_sym = re.search(pat, text_corpus)
+        if m_sym:
+            candidate = m_sym.group(1).strip()
+            if candidate and not candidate.isdigit() and len(candidate) > 1:
+                return candidate
+    return None
+
+
+def _resolve_target_symbol_and_line(rel_path: str, request: dict[str, Any]) -> _TargetRef:
+    """Resolve target symbol name and line number for rel_path from request metadata."""
+    if (direct := _resolve_target_from_request_meta(request)) is not None:
+        return direct
+
     text_corpus = " ".join(
         [
             str(request.get("prompt") or ""),
             str(request.get("ticket_description") or ""),
         ]
     )
-    if not text_corpus:
+    if not text_corpus.strip():
         return _TargetRef(None, None)
 
     filename = Path(rel_path).name
-    # Match path:line, e.g. vdisplay_client.py:2442 or src/foo.py:123
-    line_pattern = rf"(?:[\w./\-]+/)?{re.escape(filename)}:(\d+)"
-    m_line = re.search(line_pattern, text_corpus)
-    if m_line and line is None:
-        try:
-            line = int(m_line.group(1))
-        except ValueError:
-            pass
-
-    # Match symbol name in common reports (e.g. God Function: func_name or Function 'func_name')
-    symbol_patterns = (
-        r"`(?:God Function|Feature Envy|Long Method|Shotgun Surgery|Data Clump):\s*([a-zA-Z0-9_]+)`",
-        r"(?:Function|Method|class|function|def)\s+['\"`]?([a-zA-Z0-9_]+)['\"`]?",
-        r"`([a-zA-Z0-9_]+)`\s+with\s+CC=",
-    )
-    for pat in symbol_patterns:
-        m_sym = re.search(pat, text_corpus)
-        if m_sym and symbol is None:
-            candidate = m_sym.group(1).strip()
-            if candidate and not candidate.isdigit() and len(candidate) > 1:
-                symbol = candidate
-                break
-
-    return _TargetRef(
-        str(symbol) if symbol else None, int(line) if line is not None else None
-    )
+    line = _extract_line_from_corpus(filename, text_corpus)
+    symbol = _extract_symbol_from_corpus(text_corpus)
+    return _TargetRef(symbol, line)
 
 
 class _CodeSlice(NamedTuple):
@@ -86,9 +92,7 @@ class _CodeSlice(NamedTuple):
     end_line: int
 
 
-def _extract_python_symbol_slice(
-    content: str, symbol_name: str, context_lines: int = 15
-) -> _CodeSlice | None:
+def _extract_python_symbol_slice(content: str, symbol_name: str, context_lines: int = 15) -> _CodeSlice | None:
     """Extract a focused AST slice around symbol_name in Python code."""
     try:
         tree = ast.parse(content)
@@ -124,9 +128,7 @@ def _extract_python_symbol_slice(
     return None
 
 
-def _extract_line_slice(
-    content: str, target_line: int, window: int = 80
-) -> _CodeSlice:
+def _extract_line_slice(content: str, target_line: int, window: int = 80) -> _CodeSlice:
     """Extract a window of lines around target_line."""
     lines = content.splitlines()
     start = max(1, target_line - window)
@@ -165,14 +167,12 @@ def _focused_file_slice(
         if code_slice:
             return _FocusedSlice(
                 code_slice.text,
-                f"focused slice for '{target.symbol}',"
-                f" lines {code_slice.start_line}-{code_slice.end_line}",
+                f"focused slice for '{target.symbol}', lines {code_slice.start_line}-{code_slice.end_line}",
             )
     elif target.line is not None:
         code_slice = _extract_line_slice(content, target.line)
         return _FocusedSlice(
             code_slice.text,
-            f"focused slice around line {target.line},"
-            f" lines {code_slice.start_line}-{code_slice.end_line}",
+            f"focused slice around line {target.line}, lines {code_slice.start_line}-{code_slice.end_line}",
         )
     return _FocusedSlice(content, None)

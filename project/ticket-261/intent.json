@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-261",
+  "summary": "Decompose resolve_target_symbol_and_line in context_slicing to reduce cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-261/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/context_slicing.py",
+    "tests/test_queue_context_modules.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5460695c54804ef5b651a22f20cc814c0941121f",
+    "targetBranch": "main",
+    "outcome": "Decompose _resolve_target_symbol_and_line in src/koru/queue/context_slicing.py to reduce cyclomatic complexity from 19 to <=5 while maintaining 100% backward compatibility and test coverage.",
+    "nonGoals": [
+      "Changing target resolution regex or precedence semantics",
+      "Modifying public interface of context_slicing"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _resolve_target_from_request_meta, _extract_line_from_corpus, and _extract_symbol_from_corpus from _resolve_target_symbol_and_line in src/koru/queue/context_slicing.py.",
+      "components": [
+        {
+          "name": "koru-context-slicing",
+          "paths": [
+            "src/koru/queue/context_slicing.py",
+            "tests/test_queue_context_modules.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit in src/koru/queue/context_slicing.py"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_queue_context_modules.py"
+        ],
+        "evidence": "All tests in test_queue_context_modules.py pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m radon cc src/koru/queue/context_slicing.py -s"
+        ],
+        "evidence": "_resolve_target_symbol_and_line cyclomatic complexity drops from 19 to <=5."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koru/queue/context_slicing.py tests/test_queue_context_modules.py"
+        ],
+        "evidence": "Ruff reports zero lint or formatting errors."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
