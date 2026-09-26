@@ -1,0 +1,92 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-232",
+  "summary": "Extract vdisplay runtime and readiness helpers from vdisplay client",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-232/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay_client.py",
+    "src/koru/integrations/vdisplay_readiness.py",
+    "tests/test_vdisplay_readiness.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "09310f23c813885ff592ca4f25e6f40c4a224203",
+    "targetBranch": "main",
+    "outcome": "Extract vdisplay runtime discovery, agent probing, fallback decision policies, source resolution and readiness annotations from src/koru/integrations/vdisplay_client.py into src/koru/integrations/vdisplay_readiness.py with 100% backward-compatible re-exports and unit tests in tests/test_vdisplay_readiness.py.",
+    "nonGoals": [
+      "Changing vdisplay runtime loading or agent discovery semantics",
+      "Changing source resolution algorithm or IDE default display mappings",
+      "Altering preparation readiness annotation flags or blocking reasons",
+      "Modifying external public API of vdisplay_client"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract runtime, agent probe, fallback & readiness functions from src/koru/integrations/vdisplay_client.py to src/koru/integrations/vdisplay_readiness.py. Re-export all symbols in vdisplay_client.py to preserve complete backward compatibility for external callers and monkeypatching test suites.",
+      "components": [
+        {
+          "name": "koru-vdisplay-readiness",
+          "paths": [
+            "src/koru/integrations/vdisplay_readiness.py",
+            "src/koru/integrations/vdisplay_client.py",
+            "tests/test_vdisplay_readiness.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore the inline definitions in vdisplay_client.py and remove vdisplay_readiness.py."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q tests/test_vdisplay*.py -p no:wellmanifest_governance"
+        ],
+        "evidence": "All existing vdisplay client, agent bootstrap, and control fallback tests pass."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest -q tests/test_vdisplay_readiness.py -p no:wellmanifest_governance"
+        ],
+        "evidence": "New unit tests for vdisplay readiness and runtime helpers pass."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
