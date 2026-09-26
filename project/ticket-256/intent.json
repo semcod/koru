@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-256",
+  "summary": "decompose _action_set_token and switch_profile in git_cli to reduce cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-256/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/git_cli.py",
+    "tests/test_git_cli.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "563746cbeb7930ec597c48198ddd551280101739",
+    "targetBranch": "main",
+    "outcome": "Reduce cyclomatic complexity in src/koru/git_cli.py by decomposing _action_set_token (CC=23 -> <=4) and _action_switch_profile into reusable, single-responsibility helper functions (_acquire_vault_token, _login_gh_cli, _write_github_env) with zero regressions and 100% backward compatibility.",
+    "nonGoals": [
+      "Altering public CLI arguments or flags for 'koru git set-token' or 'switch-profile'",
+      "Altering .env key naming or file update semantics",
+      "Altering credential vault lease contracts"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _acquire_vault_token, _login_gh_cli, and shared _write_github_env helpers in git_cli.py.",
+      "components": [
+        {
+          "name": "koru-git-cli",
+          "paths": [
+            "src/koru/git_cli.py",
+            "tests/test_git_cli.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit to restore the previous git_cli.py implementation."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_git_cli.py"
+        ],
+        "evidence": "All existing tests in tests/test_git_cli.py pass without modification."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "ruff check src/koru/git_cli.py",
+          "ruff format --check src/koru/git_cli.py"
+        ],
+        "evidence": "Ruff check and format report 0 findings."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "The governance gate reports 0 errors from the ticket worktree."
+      }
+    ]
+  }
+}
