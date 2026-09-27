@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-276",
+  "summary": "Address code smell: shotgun surgery entry locals in opencode terminals",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-276/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_terminals.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a2b7ee3edc70cfeaa9a3935f21206071d132def5",
+    "targetBranch": "main",
+    "outcome": "Rename the generic local variable 'entry' to stage-accurate names in each of the nine functions of src/koruapi/opencode_terminals.py that mutate it: existing and new_record (register_instance, the registry record matched by URL being updated in place and the freshly built record appended), registered (set_auto_answer, the persisted registry record whose auto_answer flag flips), scanned and instance (discover_instances, a /proc-scanned serve process and the merged instance records it feeds), model_route and default_route (get_available_models, one offered provider/model pair and the config-declared default route), target (_resolve_terminal_target and terminal_prompt, the instance resolved as the prompt target - matching the pre-existing 'target' naming in stop_instance), instance (terminal_detail, terminal_messages, terminal_reply, the located instance each endpoint addresses). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'entry' group drops from 9 scopes to 0. Post-rename maxima stay low ('instance' 4, 'target' 4 - the renamed prompt-target pair joins the two pre-existing 'target' scopes in stop_instance and _file_part_chunk, every other renamed local 1 scope). Pure rename of function-internal locals; no signature, return shape or behavior change; no other file touched.",
+    "nonGoals": [
+      "No behavior, registry-format, HTTP or interface change",
+      "No restructuring into a shared instance-record abstraction (each function already owns one stage; the shared generic name was the defect, not a missing abstraction)",
+      "No fix for the pre-existing 'url' (6 scopes), 'out' (5) and 'text' (5) shotgun-surgery groups in the same file (separately ticketed in planfile) or for findings in other files - minimal scope for this ticket's reported smell only",
+      "No rename of the non-mutating 'entry' loop/comprehension bindings or the instance_status parameter (load_registry comprehension, _scan_serve_processes loop, _find_instance loop, terminals_payload comprehension, instance_status(entry) - none is a mutating scope, none can regrow the group)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local renames only, inside one module. Every function that handles an instance-related record names it after the pipeline stage it serves (registry upsert, auto-answer toggle, /proc discovery merge, model-catalog route, request-target resolution, endpoint instance lookup); the generic name 'entry' disappears from the file's mutation set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports an 'entry' mutation group of exactly 9 scopes - register_instance, set_auto_answer, discover_instances, get_available_models, _resolve_terminal_target, terminal_detail, terminal_messages, terminal_prompt, terminal_reply - matching the ticket's 'spans 9 functions'; after the rename the 'entry' group is empty, the file mutation record count is unchanged (310) and no (file, variable) group reaches the >= 5 threshold that did not already (pre-existing 'url' 6, 'out' 5, 'text' 5 remain untouched).",
+      "components": [
+        {
+          "name": "koru-opencode-terminals",
+          "paths": [
+            "src/koruapi/opencode_terminals.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named entry again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor(Config()).extract(ast.parse(<file>)) + per-variable mutation-scope grouping, original vs renamed content of src/koruapi/opencode_terminals.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports an 'entry' mutation group of 9 scopes (register_instance, set_auto_answer, discover_instances, get_available_models, _resolve_terminal_target, terminal_detail, terminal_messages, terminal_prompt, terminal_reply) - exactly matching the ticket's reported 'spans 9 functions'. Renamed content reports an 'entry' group of 0 scopes; file mutation record count unchanged at 310 (pure rename); no renamed local exceeds 4 scopes ('instance' 4, 'target' 4 including the pre-existing stop_instance and _file_part_chunk scopes); the pre-existing 'url', 'out' and 'text' groups are untouched."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_opencode_serve_scan.py tests/test_dashboard_terminals.py -q",
+          "ruff check src/koruapi/opencode_terminals.py"
+        ],
+        "evidence": "The suites that exercise the renamed paths pass unchanged - pure rename of function-internal locals - and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
