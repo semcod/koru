@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-303",
+  "summary": "Decompose _promote_todo2code_ticket in code change autonomy to reduce cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-303/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/code_change_autonomy.py",
+    "tests/test_code_change_autonomy.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e195593695e1f60d7dbb541d4bc0d7229a972338",
+    "targetBranch": "main",
+    "outcome": "Decompose _promote_todo2code_ticket in src/koru/autonomy/code_change_autonomy.py from CC 19 to <= 5 by extracting single-responsibility helper functions while maintaining 100% backward compatibility.",
+    "nonGoals": [
+      "Altering ticket promotion contract or configuration semantics",
+      "Modifying public interface of code_change_autonomy.py"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _is_promotable_ticket_status, _is_todo2code_named_or_sourced, _is_already_automatic_llm, and _filter_useful_code_paths helpers in src/koru/autonomy/code_change_autonomy.py.",
+      "components": [
+        {
+          "name": "koru-code-change-autonomy",
+          "paths": [
+            "src/koru/autonomy/code_change_autonomy.py",
+            "tests/test_code_change_autonomy.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit in src/koru/autonomy/code_change_autonomy.py"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_code_change_autonomy.py"
+        ],
+        "evidence": "All tests in test_code_change_autonomy.py pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m radon cc src/koru/autonomy/code_change_autonomy.py -s"
+        ],
+        "evidence": "_promote_todo2code_ticket cyclomatic complexity drops from 19 to <= 5."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koru/autonomy/code_change_autonomy.py tests/test_code_change_autonomy.py"
+        ],
+        "evidence": "Ruff reports zero lint or formatting errors."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
