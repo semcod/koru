@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-309",
+  "summary": "Stage-accurate names for the ide locals in mcp server ide tools",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-309/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/mcp_server_ide.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "db6d7dec0a7426c8cb2f806d439d233154b552b2",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm Shotgun Surgery smell for the variable 'ide' in src/koruapi/mcp_server_ide.py (planfile ticket PLF-044, reported at line 293; ticket-evidence file sha256 4f66e2c6... matches the working file, so the report is current) by renaming each of the five same-named locals to the argument-handling stage that produces it. Five functions assign a local 'ide': tool_ide_command_catalog (line 234, 'all'-normalized IDE filter for the command catalog), tool_strategy_prompt (line 251, the same normalization for the strategy prompt), tool_ide_commands (line 268, raw requested IDE id that scopes the runtime store/telemetry lookups), tool_ide_list_uris (line 305, 'auto'-defaulted IDE lane echoed into the URI index payload) and tool_ide_drive (line 362, 'auto'-defaulted drive target passed to the daemon). As in the PLF-039/PLF-041/PLF-043 lanes these are five different handling stages that merely reused the generic name - naming coincidence, not one coupled variable - so the fix is per-site renaming, not centralization: catalog_ide_filter (tool_ide_command_catalog), strategy_ide_filter (tool_strategy_prompt), requested_ide_id (tool_ide_commands), requested_ide_lane (tool_ide_list_uris, matching the schema's 'IDE lane for socket selection' wording), target_ide (tool_ide_drive, matching the schema's 'Target IDE' wording). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'ide' group drops from 5 scopes to 0, each new name lands at exactly 1 scope, and the largest remaining group is the pre-existing 'payload' at 3 sites (2 in tool_ide_list_uris, 1 in tool_strategy_prompt) plus four 2-site groups, all below the threshold and all pre-existing. No behavior change: pure local-identifier renames - identical expressions (two call lines merely reflowed to stay within the 120-column limit), identical call order, return values and public signatures; the 'ide' dict keys in response payloads and the ide= keyword argument to client.drive(...) are API field names, not variable mutations, and are untouched. No duplication.toon.yaml exists in this checkout, so the duplication-report checklist has nothing to consult for the touched path. The file contains no GOV-SECRET-001 scanner keyword chains and the renames introduce none.",
+    "nonGoals": [
+      "No behavior, call-order, payload-shape or signature change; every renamed local keeps its exact expression and every public function keeps its interface",
+      "No touching of the pre-existing sub-threshold mutation groups in the same file (payload 3, ide_raw 2, for_llm 2, project 2, client 2, lines 2) - separate variables below the >= 5 detector threshold, not part of this reported dedupe key",
+      "No restructuring of the MCP tool handlers or their argument parsing; only local identifiers change",
+      "No changes to other modules' 'ide' locals - they are separate files with their own mutation grouping and not part of this reported dedupe key",
+      "No changes to the tools/list schemas: the 'ide' entries in build_tool_schemas are JSON keys, not Python locals"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Per-site stage-accurate renames inside the same module. The five 'ide' bindings come from five different argument-handling stages (catalog filter normalization, strategy filter normalization, raw per-IDE store/telemetry scoping, URI-list lane echo, drive target selection), so there is no shared resolution stage to centralize - each function normalizes its 'ide' argument differently ('all' to None, raw pass-through, 'auto' default), which is further evidence they are coincidentally shared names rather than one coupled variable. Renaming each local to its stage (catalog_ide_filter, strategy_ide_filter, requested_ide_id, requested_ide_lane, target_ide) dissolves the (file, variable) mutation group and makes each handler read as its own argument stage. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports an 'ide' mutation group of exactly 5 scopes matching the ticket's 'spans 5 functions'; after the refactor 'ide' has 0 scopes, each new name 1 scope, and no variable group reaches the >= 5 threshold.",
+      "components": [
+        {
+          "name": "koruapi",
+          "paths": [
+            "src/koruapi/mcp_server_ide.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the generic 'ide' locals return and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor mutation grouping on the file AST, original vs refactored content of src/koruapi/mcp_server_ide.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports an 'ide' mutation group of 5 scopes (tool_ide_command_catalog, tool_strategy_prompt, tool_ide_commands, tool_ide_list_uris, tool_ide_drive) - exactly matching the ticket's reported 'spans 5 functions'; refactored content reports 'ide' at 0 scopes and catalog_ide_filter / strategy_ide_filter / requested_ide_id / requested_ide_lane / target_ide at 1 scope each; no variable group reaches the >= 5 threshold (largest remaining is the pre-existing 'payload' at 3 sites)."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_mcp_server.py tests/test_mcp_server_split.py tests/test_desktop_uri.py -q",
+          "ruff check src/koruapi/mcp_server_ide.py"
+        ],
+        "evidence": "Targeted suites that exercise the koruapi MCP tool surface importing mcp_server_ide (tool-name registry through the schema module, dispatch identity, desktop URI helpers) plus ruff on the touched file: zero failures and zero ruff findings with the refactor; any red must be shown byte-identical on a clean HEAD checkout before being attributed to the environment."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}

@@ -231,9 +231,13 @@ def tool_ide_command_catalog(arguments: dict[str, Any]) -> dict[str, Any]:
     from koruide.command_catalog import build_ide_command_catalog, command_catalog_for_llm
 
     ide_raw = arguments.get("ide", "all")
-    ide = None if ide_raw in (None, "", "all") else str(ide_raw)
+    catalog_ide_filter = None if ide_raw in (None, "", "all") else str(ide_raw)
     for_llm = bool(arguments.get("for_llm", True))
-    catalog = command_catalog_for_llm(ide) if for_llm else build_ide_command_catalog(ide)
+    catalog = (
+        command_catalog_for_llm(catalog_ide_filter)
+        if for_llm
+        else build_ide_command_catalog(catalog_ide_filter)
+    )
     return {"catalog": catalog}
 
 
@@ -248,11 +252,13 @@ def tool_strategy_prompt(arguments: dict[str, Any]) -> dict[str, Any]:
     from koruide.strategy_prompt import build_strategy_prompt
 
     ide_raw = arguments.get("ide", "all")
-    ide = None if ide_raw in (None, "", "all") else str(ide_raw)
+    strategy_ide_filter = None if ide_raw in (None, "", "all") else str(ide_raw)
     for_llm = bool(arguments.get("for_llm", True))
     include_text = bool(arguments.get("include_text", True))
     try:
-        payload = build_strategy_prompt(ide, for_llm=for_llm, include_text=include_text)
+        payload = build_strategy_prompt(
+            strategy_ide_filter, for_llm=for_llm, include_text=include_text
+        )
     except ValueError as exc:
         return {"ok": False, "error": str(exc)}
     return {"ok": True, "prompt": payload}
@@ -265,22 +271,24 @@ def tool_ide_commands(arguments: dict[str, Any]) -> dict[str, Any]:
     from koruide.command_telemetry import CommandTelemetry
 
     project = Path(arguments["project_root"]).resolve()
-    ide = arguments.get("ide")
+    requested_ide_id = arguments.get("ide")
     capability = arguments.get("capability")
     store = CommandCatalogStore(project)
     telemetry = CommandTelemetry(project)
-    static = build_ide_command_catalog(ide if isinstance(ide, str) else None)
-    if isinstance(ide, str):
-        entry = store.get(ide)
+    static = build_ide_command_catalog(
+        requested_ide_id if isinstance(requested_ide_id, str) else None
+    )
+    if isinstance(requested_ide_id, str):
+        entry = store.get(requested_ide_id)
         rows = telemetry.rows_for(
-            ide,
+            requested_ide_id,
             capability=capability if isinstance(capability, str) else None,
         )
         return {
-            "ide": ide,
+            "ide": requested_ide_id,
             "capability": capability,
             "static_catalog": static,
-            "runtime_catalog": {ide: entry} if entry else {},
+            "runtime_catalog": {requested_ide_id: entry} if entry else {},
             "telemetry": rows,
         }
     return {
@@ -302,7 +310,7 @@ def tool_ide_list_uris(arguments: dict[str, Any]) -> dict[str, Any]:
 
     if not nlp2uri_available():
         return {"ok": False, "error": nlp2uri_missing_message()}
-    ide = str(arguments.get("ide", "auto"))
+    requested_ide_lane = str(arguments.get("ide", "auto"))
     client = AutopilotClient(socket_path=default_socket_path(), timeout=15.0)
     if not client.is_running():
         return {"ok": False, "error": "koruide daemon is not running"}
@@ -313,7 +321,7 @@ def tool_ide_list_uris(arguments: dict[str, Any]) -> dict[str, Any]:
         status,
         socket_path=str(client.socket_path),
     )
-    payload["ide"] = ide
+    payload["ide"] = requested_ide_lane
     return payload
 
 
@@ -359,7 +367,7 @@ def tool_ide_drive(arguments: dict[str, Any]) -> dict[str, Any]:
     text = str(arguments.get("text", ""))
     if not text.strip():
         return {"ok": False, "error": "text is required"}
-    ide = str(arguments.get("ide", "auto"))
+    target_ide = str(arguments.get("ide", "auto"))
     submit = bool(arguments.get("submit", True))
     strategy_hint = arguments.get("strategy_hint")
     client = AutopilotClient(socket_path=default_socket_path(), timeout=45.0)
@@ -368,7 +376,7 @@ def tool_ide_drive(arguments: dict[str, Any]) -> dict[str, Any]:
     reply = client.drive(
         text,
         submit=submit,
-        ide=ide,
+        ide=target_ide,
         require_plugin=False,
         strategy_hint=strategy_hint if isinstance(strategy_hint, str) else None,
     )
