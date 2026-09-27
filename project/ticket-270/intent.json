@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-270",
+  "summary": "Address code smell: shotgun surgery data locals in opencode terminals",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-270/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_terminals.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "aa322b93afcb30a72775d1da2563bb0ac5537c73",
+    "targetBranch": "main",
+    "outcome": "Rename the generic local variable 'data' to stage-accurate names in each of the nine functions of src/koruapi/opencode_terminals.py that mutate it: registry_entries (load_registry, parsed registry file content), request_body (_api_request, encoded outbound request bytes), health (instance_health, health probe payload), session_payload (list_sessions), catalog_payload (list_providers, matching its provider-catalog docstring), config_payload (get_instance_config), creation_payload (create_session), message_payload (session_messages), request_payload (pending_requests, per-kind pending response). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'data' group drops from 9 scopes to 0. Each new name is a distinct local used in exactly one function, so no (file, variable) group grows. Pure rename of function-internal locals; the urllib Request data= keyword and the API envelope key \"data\" keep their names; no behavior change. The four separate pre-existing shotgun findings in the file (entry, url, out, text) are untouched by design.",
+    "nonGoals": [
+      "No behavior, API-envelope-key, endpoint or interface change",
+      "No restructuring into a response-envelope wrapper class (each local already names one endpoint's decoded response; the shared generic name was the defect, not a missing abstraction)",
+      "No rename of the urllib request data= parameter, the JSON envelope key \"data\", or locals in other files",
+      "No fix for the separate pre-existing shotgun findings in this file (entry, url, out, text) - minimal scope for this ticket's reported smell only"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local renames only, inside one module. Every function that holds a decoded endpoint response names it after the stage it serves (registry file, outbound body, health probe, per-endpoint payloads); the generic name 'data' disappears from the file's mutation set entirely. Verified with the installed code2llm ProjectAnalyzer + SmellDetector._detect_shotgun_surgery on the src/koruapi package: baseline reports 'Shotgun Surgery: data' at line 458 (9 mutating scopes, exactly matching the ticket) plus four other pre-existing findings; after the rename 'Shotgun Surgery: data' is gone, the file's mutation count is unchanged (310) and the four other findings are unchanged.",
+      "components": [
+        {
+          "name": "koruapi-opencode-terminals",
+          "paths": [
+            "src/koruapi/opencode_terminals.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named data again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm ProjectAnalyzer.analyze_project(<repo>/src/koruapi) + SmellDetector._detect_shotgun_surgery, original vs renamed content of src/koruapi/opencode_terminals.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm detector on the package directory (single-file analysis yields empty function scopes and silently misses smells, so the package dir is required). Baseline content reports 'Shotgun Surgery: data' at line 458 - matching the ticket's file, line and dedupe key exactly - driven by 9 mutating scopes (_api_request, create_session, get_instance_config, instance_health, list_providers, list_sessions, load_registry, pending_requests, session_messages). Renamed content reports no 'Shotgun Surgery: data'; file mutation count unchanged at 310 (pure rename); no new (file, variable) group reaches the >= 5 threshold. The four separate pre-existing findings (entry, url, out, text) are unchanged by design."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_dashboard_terminals.py tests/test_opencode_serve_scan.py -q",
+          "ruff check src/koruapi/opencode_terminals.py"
+        ],
+        "evidence": "Both suites covering src/koruapi/opencode_terminals.py pass unchanged (pure rename of function-internal locals; the suites exercise list_sessions, session_messages, pending_requests, get_instance_config, terminal helpers and the /proc scan through the public functions) and ruff reports zero errors on the touched file. Full-suite baseline comparison done against a clean base checkout so pre-existing environmental reds are not attributed to this change."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
