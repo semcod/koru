@@ -168,7 +168,7 @@ class TestStarterInit(unittest.TestCase):
             self.assertIn("when", data)
             self.assertEqual(
                 data["autonomy"]["strategy"]["id"],
-                "accordion_detail_to_general",
+                "in_flight_first",
             )
 
     def test_host_environment_bundle_written_by_default(self) -> None:
