@@ -15,6 +15,8 @@ from typing import Any, NamedTuple
 _LINT_CODES = frozenset({"F401", "F541", "I001", "UP017", "UP035"})
 _SIMPLE_LINT_CLIENTS = frozenset({"opencode", "claude-code"})
 _COMPLEX_LABELS = frozenset({"refactor", "code2llm", "security", "governance", "dependencies"})
+_SIMPLE_TASK_KINDS = frozenset({"small_task", "quick_fix", "simple_task", "doc_fix", "docs", "typing_fix"})
+_SMALL_COMPLEXITIES = frozenset({"XS", "S", "SMALL"})
 _IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,159}\Z")
 
 
@@ -122,11 +124,61 @@ def _is_lint_fix_request(client_id: str, routing: Mapping[str, Any]) -> bool:
     return client_id in _SIMPLE_LINT_CLIENTS and routing.get("llm_task_kind") == "lint_fix"
 
 
-def _fallback_reason(simple: str, client_id: str, routing: Mapping[str, Any]) -> str:
+def _is_small_complexity_value(val: object) -> bool:
+    return isinstance(val, str) and val.upper() in _SMALL_COMPLEXITIES
+
+
+def _is_small_task_candidate(
+    client_id: str,
+    task: Mapping[str, Any],
+    routing: Mapping[str, Any],
+) -> bool:
+    if client_id not in _SIMPLE_LINT_CLIENTS:
+        return False
+    kind = routing.get("llm_task_kind")
+    if isinstance(kind, str) and kind in _SIMPLE_TASK_KINDS:
+        return True
+    return (
+        _is_small_complexity_value(routing.get("complexity"))
+        or _is_small_complexity_value(task.get("complexity"))
+        or _is_small_complexity_value(routing.get("task_size"))
+    )
+
+
+def _is_bounded_small_scope(task: Mapping[str, Any]) -> bool:
+    files = task.get("files")
+    if not (isinstance(files, list) and len(files) == 1):
+        return False
+    if not _is_valid_file_target(files[0]):
+        return False
+    labels = _is_valid_labels(task.get("labels"))
+    return labels.valid and not bool(labels.labels.intersection(_COMPLEX_LABELS))
+
+
+def _resolve_simple_model_reason(
+    client_id: str,
+    task: Mapping[str, Any],
+    routing: Mapping[str, Any],
+) -> str | None:
+    if _is_lint_fix_request(client_id, routing) and _is_bounded_lint_fix(task, routing):
+        return "bounded_lint"
+    if _is_small_task_candidate(client_id, task, routing) and _is_bounded_small_scope(task):
+        return "bounded_small_task"
+    return None
+
+
+def _fallback_reason(
+    simple: str,
+    client_id: str,
+    task: Mapping[str, Any],
+    routing: Mapping[str, Any],
+) -> str:
     if not simple:
         return "simple_model_disabled"
     if _is_lint_fix_request(client_id, routing):
         return "unbounded_lint_scope"
+    if _is_small_task_candidate(client_id, task, routing):
+        return "unbounded_small_scope"
     return "unclassified_task"
 
 
@@ -141,9 +193,11 @@ def _select_fallback_model(
     simple = env.get("KORU_TILLM_SIMPLE_MODEL", "").strip()
     routing = _resolve_routing_mapping(view.task, view.inputs)
     # Smallness is a closed, structured contract, not a guess from prompt/title.
-    if simple and _is_lint_fix_request(client_id, routing) and _is_bounded_lint_fix(view.task, routing):
-        return {"model": simple, "reason": "bounded_lint"}
-    return {"model": default, "reason": _fallback_reason(simple, client_id, routing)}
+    if simple:
+        reason = _resolve_simple_model_reason(client_id, view.task, routing)
+        if reason is not None:
+            return {"model": simple, "reason": reason}
+    return {"model": default, "reason": _fallback_reason(simple, client_id, view.task, routing)}
 
 
 def select_task_model(
@@ -158,8 +212,9 @@ def select_task_model(
 
     Precedence: explicit request or ticket ``inputs.llm_model``, then the
     operator pin ``KORU_TILLM_FORCE_MODEL``, then the simple model for a
-    bounded single-file lint fix (opencode or claude-code), then the default model.
-    The returned ``reason`` names the branch that produced the decision.
+    bounded single-file lint fix or structured small task (opencode or
+    claude-code), then the default model. The returned ``reason`` names the
+    branch that produced the decision.
     """
     env = os.environ if environ is None else environ
     view = _coerce_task(task)

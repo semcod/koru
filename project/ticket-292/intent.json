@@ -1,0 +1,102 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-292",
+  "summary": "Support structured small task complexity in model policy routing",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-292/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/ticket.py",
+    "src/koru/task_model_policy.py",
+    "tests/test_task_model_policy.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "84889507a59af59a3d5491f0f256e3ea186ee1d6",
+    "targetBranch": "main",
+    "outcome": "Allow structured small tasks (complexity XS/S, small task kinds) with bounded scope to select the configured simple model.",
+    "nonGoals": [
+      "Permitting complex refactorings or multi-file edits to downgrade to simple model",
+      "Bypassing operator force pins or explicit model requests"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Forward complexity and task_size metadata through ticket_llm_request and recognize bounded small tasks in task_model_policy.py while keeping complex tasks on the default model.",
+      "components": [
+        {
+          "name": "queue-ticket",
+          "paths": [
+            "src/koru/queue/ticket.py"
+          ]
+        },
+        {
+          "name": "task-model-policy",
+          "paths": [
+            "src/koru/task_model_policy.py",
+            "tests/test_task_model_policy.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit to restore lint-only restriction."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_task_model_policy.py"
+        ],
+        "evidence": "All task model policy tests pass cleanly."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "ruff check src/koru/task_model_policy.py src/koru/queue/ticket.py tests/test_task_model_policy.py"
+        ],
+        "evidence": "Ruff check reports zero findings on modified files."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "radon cc src/koru/task_model_policy.py -s"
+        ],
+        "evidence": "Radon CC confirms CC <= 6 for all functions."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
