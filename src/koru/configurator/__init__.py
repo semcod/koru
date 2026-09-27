@@ -23,8 +23,17 @@ from koru.configurator.features import (
     migrate_project_config,
     toggle_feature_sections,
 )
+from koru.configurator.nl_control import (
+    ConfigMutationResult,
+    apply_nl_config_command,
+    normalize_nl_text,
+)
 from koru.configurator.prompting import ShellPrompter, configure_project
-from koru.configurator.render import render_shell_exports, render_text_summary
+from koru.configurator.render import (
+    render_config_table,
+    render_shell_exports,
+    render_text_summary,
+)
 from koru.configurator.schema import (
     CONFIG_REL_PATH,
     CONFIG_SCHEMA,
@@ -40,7 +49,9 @@ __all__ = [
     "CONFIG_SCHEMA_V1",
     "CONFIG_SCHEMA_V2",
     "ConfigureResult",
+    "ConfigMutationResult",
     "ShellPrompter",
+    "apply_nl_config_command",
     "build_configure_parser",
     "configure_main",
     "configure_project",
@@ -48,6 +59,8 @@ __all__ = [
     "load_project_config",
     "merge_v2_feature_sections",
     "migrate_project_config",
+    "normalize_nl_text",
+    "render_config_table",
     "render_shell_exports",
     "render_text_summary",
     "save_project_config",

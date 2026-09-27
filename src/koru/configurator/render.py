@@ -61,3 +61,45 @@ def render_shell_exports(config: dict[str, Any]) -> str:
     lines = [f"export {key}={shlex.quote(value)}" for key, value in values.items()]
     lines.append("# " + " ".join(shlex.quote(part) for part in _serve_command(config)))
     return "\n".join(lines)
+
+
+def render_config_table(config: dict[str, Any]) -> str:
+    """Render an ASCII/Unicode table showing current project configuration."""
+    serve = config.get("serve") if isinstance(config.get("serve"), dict) else {}
+    
+    # Feature states
+    features: list[str] = []
+    for feat in ("vision", "mesh", "browse", "sandbox"):
+        val = config.get(feat)
+        is_on = val.get("enabled", False) if isinstance(val, dict) else False
+        features.append(f"{feat}: {'ON' if is_on else 'off'}")
+    features_str = ", ".join(features)
+
+    rows = [
+        ("project", str(config.get("project") or ".")),
+        ("workspace", str(config.get("workspace") or ".")),
+        ("ide", str(config.get("ide") or "auto")),
+        ("queue", str(config.get("queue_name") or "default")),
+        ("dashboard host", str(serve.get("host") or "127.0.0.1")),
+        ("dashboard port", str(serve.get("port") or 8765)),
+        ("lan", "True" if serve.get("lan") else "False"),
+        ("auto_port", "True" if serve.get("auto_port") else "False"),
+        ("schema", str(config.get("schema") or "koru.config/v1")),
+        ("features (v2)", features_str),
+    ]
+
+    max_key_len = max(len(r[0]) for r in rows)
+    max_val_len = max(len(r[1]) for r in rows)
+    width = max(max_key_len + max_val_len + 7, 44)
+
+    border_top = "┌" + "─" * (width - 2) + "┐"
+    border_mid = "├" + "─" * (max_key_len + 2) + "┬" + "─" * (width - max_key_len - 5) + "┤"
+    border_bot = "└" + "─" * (max_key_len + 2) + "┴" + "─" * (width - max_key_len - 5) + "┘"
+    title_line = f"│ {'KORU CONFIGURATION':^{width - 4}} │"
+
+    lines = [border_top, title_line, border_mid]
+    for key, val in rows:
+        val_padded = val.ljust(width - max_key_len - 6)
+        lines.append(f"│ {key:<{max_key_len}} │ {val_padded} │")
+    lines.append(border_bot)
+    return "\n".join(lines)

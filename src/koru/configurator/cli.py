@@ -10,9 +10,11 @@ from pathlib import Path
 from koruide.ide import autopilot_ide_choices
 
 from koru.configurator.features import migrate_project_config, toggle_feature_sections
+from koru.configurator.nl_control import apply_nl_config_command
 from koru.configurator.prompting import configure_project
-from koru.configurator.render import render_shell_exports, render_text_summary
+from koru.configurator.render import render_config_table, render_shell_exports, render_text_summary
 from koru.configurator.schema import CONFIG_SCHEMA_V2, ConfigureResult, _ConfigureArgs
+from koru.configurator.store import load_project_config
 
 
 def build_configure_parser() -> argparse.ArgumentParser:
@@ -60,6 +62,12 @@ def build_configure_parser() -> argparse.ArgumentParser:
         action="append",
         default=[],
         help="Disable a v2 feature section. Repeatable.",
+    )
+    parser.add_argument(
+        "--table",
+        "-t",
+        action="store_true",
+        help="Display current configuration formatted as an ASCII/Unicode table.",
     )
     parser.add_argument("--format", choices=("text", "json", "shell"), default="text")
     return parser
@@ -112,6 +120,49 @@ def _configure_toggle(cfg: _ConfigureArgs) -> int:
     return 0
 
 
+def _configure_table(cfg: _ConfigureArgs) -> int:
+    config = load_project_config(cfg.project)
+    print(render_config_table(config))
+    return 0
+
+
+def _configure_interactive_nl(cfg: _ConfigureArgs) -> int:
+    config = load_project_config(cfg.project)
+    print(render_config_table(config))
+    print("\nKORU Interactive Configuration Shell (NL / DSL)")
+    print(
+        "Wpisz polecenie po polsku lub angielsku "
+        "(np. 'ide na cursor', 'port na 9000', 'wlacz lan', 'wlacz mesh', 'table', 'exit'):\n"
+    )
+
+    while True:
+        try:
+            line = input("koru config> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nZakończono konfigurację.")
+            break
+
+        if not line:
+            continue
+
+        res = apply_nl_config_command(config, line, cfg.project)
+        if res.message == "exit":
+            print("Zakończono konfigurację.")
+            break
+
+        if res.success:
+            print(f"✓ {res.message}")
+            if res.updated and res.config is not None:
+                config = res.config
+                print(render_config_table(config))
+            elif line.strip().lower() in {"show", "pokaz", "table", "tabela", "status", "ls"}:
+                print(render_config_table(config))
+        else:
+            print(f"✗ {res.message}")
+
+    return 0
+
+
 def _configure_write(cfg: _ConfigureArgs) -> int:
     try:
         result = configure_project(
@@ -135,8 +186,20 @@ def _configure_write(cfg: _ConfigureArgs) -> int:
 def configure_main(argv: list[str] | None = None) -> int:
     args = build_configure_parser().parse_args(argv)
     cfg = _ConfigureArgs.from_namespace(args)
+    if cfg.table:
+        return _configure_table(cfg)
     if cfg.migrate:
         return _configure_migrate(cfg)
     if cfg.enable or cfg.disable:
         return _configure_toggle(cfg)
-    return _configure_write(cfg)
+    # If explicit CLI arguments or non-interactive flag provided, do direct write/prompting
+    explicit_flags = any(
+        getattr(args, attr) is not None
+        for attr in ("ide", "queue_name", "host", "port", "lan", "auto_port", "workspace")
+    )
+    if cfg.non_interactive or explicit_flags:
+        return _configure_write(cfg)
+
+    # When invoked as `koru config` / `koru configure` without arguments interactively:
+    # launch the interactive NL table assistant
+    return _configure_interactive_nl(cfg)
