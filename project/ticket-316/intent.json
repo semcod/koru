@@ -1,0 +1,100 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-316",
+  "summary": "Preserve project history when replaying scan force",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-316/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/replay_handlers.py",
+    "src/koru/autonomy/replay_builders.py",
+    "src/koru/autonomy/replay_quick_actions.py",
+    "tests/test_replay_actions.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2c82e2055feb269399c3081ec6750e5b5ee9b7df",
+    "targetBranch": "main",
+    "outcome": "Legacy scan force executes one scanner invocation without deleting project history or driving the autonomous loop.",
+    "nonGoals": [
+      "Change admission or dependency policy",
+      "Change provider/model/hardware authority",
+      "Retroactively approve PR542 or activate its held runtime",
+      "Idle narration and operator guidance move to the dependent PLF-063 slice"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep legacy scan force DSL and labels compatible; use explicit koru scan --apply argv and remove obsolete cache-deletion metadata.",
+      "components": [
+        {
+          "name": "scan-replay",
+          "paths": [
+            "src/koru/autonomy/replay_handlers.py",
+            "src/koru/autonomy/replay_builders.py",
+            "src/koru/autonomy/replay_quick_actions.py"
+          ]
+        },
+        {
+          "name": "regressions",
+          "paths": [
+            "tests/test_replay_actions.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore prior candidate through protected publication; no data migration or deletion."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_replay_actions.py"
+        ],
+        "evidence": "Replay preserves project/Planfile sentinels and propagates scanner failure."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest tests/test_replay_actions.py"
+        ],
+        "evidence": "Legacy/new scan labels parse and unsafe cache deletion metadata is absent."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh",
+          "pytest tests/test_autonomous.py"
+        ],
+        "evidence": "Existing behavior and independent exact-head publication."
+      }
+    ]
+  }
+}

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -68,7 +69,7 @@ class ReplayCommandHandlers:
 
     def scan_force(self, action: ReplayAction, *, project: Path) -> ReplayResult:
         result = subprocess.run(
-            ["bash", "-lc", "rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto --max-cycles 1"],
+            [sys.executable, "-m", "koru", "scan", "--apply"],
             cwd=project,
             capture_output=True,
             text=True,
