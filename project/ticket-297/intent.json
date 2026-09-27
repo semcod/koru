@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-297",
+  "summary": "add-service-contract-tests-for-local-manager-and-remote-clients",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-297/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "tests/test_local_manager_client_contract.py",
+    "tests/test_remote_client_contract.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8ef876bc682a9da669af783f5a470d61079ac51e",
+    "targetBranch": "main",
+    "outcome": "Add service contract test coverage for unverified service modules local_manager_client and remote.client in semcod/koru.",
+    "nonGoals": [
+      "No breaking changes to client public interfaces",
+      "No live network dependency during test execution"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add comprehensive unit and service contract test suites for LocalManagerClient, LocalManagerSession, and KoruRemoteClient covering configuration parsing, request lifecycle, error handling, and helper methods.",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "tests/test_local_manager_client_contract.py",
+            "tests/test_remote_client_contract.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "git revert HEAD"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_local_manager_client_contract.py tests/test_remote_client_contract.py -q"
+        ],
+        "evidence": "Service contract tests for LocalManagerClient and KoruRemoteClient pass 100%."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings."
+      }
+    ]
+  }
+}
