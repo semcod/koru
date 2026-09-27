@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-266",
+  "summary": "Address code smell: shotgun surgery cycle_telemetry in cycle skip conditions",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-266/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/cycle/cycle_skip_conditions.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b652709b37a80c2adfe1678b6ed92bb2ce39d622",
+    "targetBranch": "main",
+    "outcome": "Rename the generic telemetry-dict parameter 'cycle_telemetry' to stage-accurate names in each of the seven helper functions of src/koru/autonomy/cycle/cycle_skip_conditions.py that mutate it: diagnostics_skip_telemetry (_diagnostics_fail_skip_result), llm_ready_promotion_telemetry (_autopromote_waiting_ticket_llm_ready), new_ticket_clear_telemetry (_clear_manual_send_for_new_ticket), message_sent_clear_telemetry (_clear_manual_send_for_message_sent), alt_retry_telemetry (_allow_manual_send_alt_retry), manual_send_decision_telemetry (_manual_send_required_decision), stuck_status_telemetry (_handle_stuck_status_skip_candidate). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the group drops from 8 scopes to 1. The entry point _check_autopilot_skip_conditions and the two pure pass-through helpers keep 'cycle_telemetry' because there it genuinely names the cycle-wide dict and produces no extra mutation group. Pure rename of parameters and their keyword call sites inside the module; no behavior change.",
+    "nonGoals": [
+      "No behavior, telemetry-key, decision or interface change",
+      "No restructuring into a telemetry recorder class or central writer (each stage writes disjoint keys for its own decision; the shared generic name was the defect, not a missing abstraction)",
+      "No rename of the externally keyword-called parameter of _check_autopilot_skip_conditions or of cycle_telemetry parameters in other modules"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate parameter renames only, inside one module. Every mutating helper names the telemetry view of the decision stage it records; the umbrella name cycle_telemetry remains only at the gate entry and in the pure pass-throughs (_manual_send_required_skip_result, _resolve_manual_send_follow_up), which produce no mutation records. Verified with the code2llm shotgun-surgery detector: baseline groups cycle_telemetry mutations in 8 scopes in the file (>= 5 threshold fires), after the rename the largest group in the file is 1 scope and no new (file, variable) group reaches the threshold.",
+      "components": [
+        {
+          "name": "autonomy-cycle-skip-conditions",
+          "paths": [
+            "src/koru/autonomy/cycle/cycle_skip_conditions.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the parameters are named cycle_telemetry again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "code2llm <repo-copy> -f all -o <tmp-out> --no-chunk --exclude '*.md' --exclude plugins --no-png --fast",
+          "python3 -c \"<standalone DFGExtractor + SmellDetector._detect_shotgun_surgery on cycle_skip_conditions.py, original vs renamed>\""
+        ],
+        "evidence": "Two-level verification on a plain /tmp copy of the tree. (1) Deterministic ground truth: the installed code2llm DFGExtractor plus the real SmellDetector._detect_shotgun_surgery run standalone on the single file reports 'Shotgun Surgery: cycle_telemetry' for the original content (8 mutating scopes, exactly matching the ticket) and nothing for the renamed content, with mutation count unchanged (113) and no new shotgun entry; the separate pre-existing 'Shotgun Surgery: ticket_id' finding is untouched by design. (2) End-to-end CLI cross-check with the ticket-generating invocation: original content fires both cycle_skip_conditions shotgun entries (2/2 runs), renamed content fires neither (1/1 run). Note: the CLI pipeline itself is nondeterministic for mutation-driven findings of this file (a control run on unchanged original content spontaneously dropped them once), which is why the standalone detector run is the authoritative evidence."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest tests/test_autonomous.py -q -k 'submit_unverified or idle_streak or stuck_waiting_input or llm_ready'",
+          "python -m pytest tests/test_autonomy_policy_engine.py tests/test_cycle_orchestrator.py -q",
+          "ruff check src/koru/autonomy/cycle/cycle_skip_conditions.py"
+        ],
+        "evidence": "All listed suites pass unchanged (pure rename; the renamed scopes are executed by existing tests asserting the same telemetry keys) and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree."
+      }
+    ]
+  }
+}
