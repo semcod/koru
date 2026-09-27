@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-272",
+  "summary": "Address code smell: shotgun surgery data locals in planning llm parsing",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-272/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/planning_llm_parsing.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "14eccd6181d397d4dc8ec2308ffad717cc278185",
+    "targetBranch": "main",
+    "outcome": "Rename the generic local variable 'data' to stage-accurate names in each of the seven functions of src/koru/autonomy/planning_llm_parsing.py that mutate it: decoded (parse_json_object, the raw json.loads value of any type before the dict isinstance check), evaluation (parse_evaluation, the parsed evaluation payload), prompt_payload (parse_improved_prompt, the payload carrying improved_prompt), advice (parse_action_advice, the parsed action-advice payload), reflection (parse_reflection, the parsed reflection payload), tuning (parse_strategy_tuning, the parsed strategy-tuning payload), priority_payload (parse_ticket_priority, the payload carrying the ordered ticket ids). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'data' group drops from 7 scopes to 0. Each new name lands at exactly 1 scope, so no (file, variable) group grows toward the threshold. Pure rename of function-internal locals; no signature, return shape or behavior change; no other file touched.",
+    "nonGoals": [
+      "No behavior, parsing, clamping or interface change",
+      "No restructuring into a shared response-decoding abstraction (each function already owns one decode stage; the shared generic name was the defect, not a missing abstraction)",
+      "No rename of the unrelated private _parse_json_object in src/koru/integrations/photo_vql_llm_detect.py or of locals in other files",
+      "No fix for pre-existing shotgun findings in other files - minimal scope for this ticket's reported smell only"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local renames only, inside one module. Every function that decodes an LLM JSON response names the decoded payload after the parse stage it serves (decoded raw JSON value, evaluation, prompt, advice, reflection, tuning, priority payload); the generic name 'data' disappears from the file's mutation set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports a 'data' mutation group of exactly 7 scopes - parse_json_object, parse_evaluation, parse_improved_prompt, parse_action_advice, parse_reflection, parse_strategy_tuning, parse_ticket_priority - matching the ticket's 'spans 7 functions'; after the rename the 'data' group is empty, the file mutation count is unchanged (18) and no new (file, variable) group reaches the >= 5 threshold.",
+      "components": [
+        {
+          "name": "koru-autonomy-planning",
+          "paths": [
+            "src/koru/autonomy/planning_llm_parsing.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named data again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor(Config()).extract(ast.parse(<file>)) + per-variable mutation-scope grouping, original vs renamed content of src/koru/autonomy/planning_llm_parsing.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports a 'data' mutation group of 7 scopes (parse_json_object, parse_evaluation, parse_improved_prompt, parse_action_advice, parse_reflection, parse_strategy_tuning, parse_ticket_priority) - exactly matching the ticket's reported 'spans 7 functions'. Renamed content reports a 'data' group of 0 scopes; file mutation count unchanged at 18 (pure rename); every renamed local lands at exactly 1 scope, far below the >= 5 threshold."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_planning_llm.py -q",
+          "ruff check src/koru/autonomy/planning_llm_parsing.py"
+        ],
+        "evidence": "The suite covering src/koru/autonomy/planning_llm_parsing.py through its only in-repo importer (koru.autonomy.planning_llm facade: evaluate_drive_result, generate_better_prompt, plan_next_action, reflect_on_chat, propose_strategy_tuning, prioritize_tickets) passes unchanged - pure rename of function-internal locals - and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
