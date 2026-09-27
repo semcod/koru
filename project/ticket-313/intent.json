@@ -1,0 +1,101 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-313",
+  "summary": "Wake idle queue on admitted work and reset backoff after progress",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-313/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/cycle_queue_scan.py",
+    "src/koru/autonomy/phases/sleep_phase.py",
+    "src/koru/autonomy/queue_wakeup.py",
+    "tests/test_autonomous_queue_wakeup.py",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0c694d1f9220417e48eaa9db6bbc8fd2365da09a",
+    "targetBranch": "main",
+    "outcome": "New admitted machine work wakes plain idle waits; successful drains reset stagnation.",
+    "nonGoals": [
+      "Change provider/operator waits or hardware/model authority",
+      "Change native readiness policy",
+      "Change task completion semantics"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Poll canonical queue file metadata every five seconds; on change or every sixty seconds reuse native readiness and current candidate selection with bounded CLI reads. Interrupt only plain idle waits. Reset idle streak on successful queue progress.",
+      "components": [
+        {
+          "name": "autonomy-loop",
+          "paths": [
+            "src/koru/autonomy/cycle_queue_scan.py",
+            "src/koru/autonomy/phases/sleep_phase.py",
+            "src/koru/autonomy/queue_wakeup.py"
+          ]
+        },
+        {
+          "name": "regressions",
+          "paths": [
+            "tests/test_autonomous_queue_wakeup.py",
+            "tests/test_planfile_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore prior single-service runtime override; retain operator holds and AUTODONE off."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_autonomous_queue_wakeup.py"
+        ],
+        "evidence": "Progress resets idle streak; partial failure retains backoff."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest tests/test_autonomous_queue_wakeup.py tests/test_planfile_queue.py"
+        ],
+        "evidence": "Readiness errors, operator/resource holds and native arrival canary."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest tests/test_autonomous_loop_runner.py tests/test_autonomous_cycle_config.py tests/test_autonomous.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Existing loop behavior, installed artifact and live idle-arrival pilot."
+      }
+    ]
+  }
+}

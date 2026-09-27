@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from koru.autonomy.phases.contexts import SleepBackoffContext
+from koru.autonomy.queue_wakeup import sleep_until_queue_ready
 
 
 def finish_cycle_with_sleep(
@@ -82,5 +83,7 @@ def finish_cycle_with_sleep(
         return True
 
     if effective_sleep > 0:
-        sleep(effective_sleep)
+        if sleep_until_queue_ready(context, effective_sleep, sleep=sleep):
+            stdio_info("queue wake: native Planfile admits machine work; resuming idle loop",
+                       fmt=context.args.emit_events)
     return False

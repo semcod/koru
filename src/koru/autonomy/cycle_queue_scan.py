@@ -16,7 +16,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from koru.autonomy.cycle.cycle_common import _queue_loop_waiting_ticket_label
 from koru.autonomy.phases import queue_phase as _queue_phase
 from koru.autonomy.state import AutoloopState
 from koru.queue import QueueLoopResult
@@ -311,9 +310,12 @@ def _update_stagnation_state(
     state: AutoloopState,
     queue_result: QueueLoopResult,
 ) -> None:
-    waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+    waiting = getattr(queue_result, "waiting", None) or []
+    waiting_ticket = waiting[-1] if waiting else "-"
     signature = f"{queue_result.last_status}:{waiting_ticket}"
-    if state.previous_signature and state.previous_signature == signature:
+    if getattr(queue_result, "completed", ()) and not getattr(queue_result, "failed", ()):
+        state.stagnation_streak = 0
+    elif state.previous_signature and state.previous_signature == signature:
         state.stagnation_streak += 1
     else:
         state.stagnation_streak = 0

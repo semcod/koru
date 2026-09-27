@@ -3503,3 +3503,27 @@ def test_real_queue_runs_prerequisite_before_high_priority_dependent(tmp_path, m
     assert (b.ticket_id, b.status) == (second.id, "completed")
     assert len(observed) == 2
     assert Planfile(str(tmp_path)).get_ticket(second.id).status.value == "done"
+# Native wakeup canary belongs in the protected OneDev queue suite.
+def test_native_idle_sleep_wakes_on_machine_arrival_without_claiming(tmp_path, monkeypatch):
+    from koru.autonomy.queue_wakeup import sleep_until_queue_ready
+    from tests.test_autonomous_queue_wakeup import Clock, idle_context
+    from tests.test_queue_admission import native_store, shell_ticket
+
+    store = native_store(tmp_path, monkeypatch)
+    shell_ticket(store, "missing prerequisite", blocked_by=["PLF-999"],
+                 execution={"queue": "default"})
+    store.create_ticket("operator only", executor={"kind": "human"},
+                        execution={"queue": "default"})
+    clock = Clock()
+    created = []
+
+    def arrival(seconds):
+        clock.sleep(seconds)
+        if clock.time == 5:
+            created.append(shell_ticket(store, "new ready task", execution={"queue": "default"}))
+
+    assert sleep_until_queue_ready(idle_context(tmp_path), 900, sleep=arrival, now=clock.now)
+    assert clock.time == 5
+    ticket = store.get_ticket(created[0].id)
+    assert ticket.status.value == "open"
+    assert ticket.execution.assigned_to is None
