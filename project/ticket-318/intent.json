@@ -1,0 +1,114 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-318",
+  "summary": "Report idle eligibility truthfully and remove destructive scan guidance",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-318/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/cycle/cycle_drive_retry.py",
+    "src/koru/autonomy/decision_trace.py",
+    "src/koru/autonomy/operator/operator_loop_narration.py",
+    "src/koru/autonomy/operator/operator_loop_quick_actions.py",
+    "src/koru/autonomy/operator/operator_loop_reporting.py",
+    "src/koru/autonomy/phases/scan_phase.py",
+    "tests/test_autonomous_loop_runner.py",
+    "tests/test_scan_phase.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [
+    "ticket-316"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ea7475ef986903446037cdf1dee8b1628c49b111",
+    "targetBranch": "main",
+    "outcome": "Idle reporting preserves open held-work visibility and provides non-destructive scan guidance that respects configured discovery.",
+    "nonGoals": [
+      "Change ticket admission, operator holds or dependency execution",
+      "Change wakeup timing or model/tool authority",
+      "Deploy a runtime or waive protected publication receipts"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 40,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep idle reason codes and scheduling behavior; correct prose and route quick actions to the already merged safe scan replay.",
+      "components": [
+        {
+          "name": "idle-reporting",
+          "paths": [
+            "src/koru/autonomy/cycle/cycle_drive_retry.py",
+            "src/koru/autonomy/decision_trace.py",
+            "src/koru/autonomy/operator/operator_loop_narration.py",
+            "src/koru/autonomy/operator/operator_loop_quick_actions.py",
+            "src/koru/autonomy/operator/operator_loop_reporting.py"
+          ]
+        },
+        {
+          "name": "scan-guidance",
+          "paths": [
+            "src/koru/autonomy/phases/scan_phase.py"
+          ]
+        },
+        {
+          "name": "regressions",
+          "paths": [
+            "tests/test_autonomous_loop_runner.py",
+            "tests/test_scan_phase.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore prior reporting implementation through independent publication; no persistent data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_autonomous_loop_runner.py"
+        ],
+        "evidence": "Idle reporting with five held open tickets preserves the count and emits no false all-done or empty-Planfile claim."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest tests/test_scan_phase.py tests/test_replay_actions.py"
+        ],
+        "evidence": "Enabled/disabled scan guidance and duplicate-ticket advice preserve history; safe quick actions remain replayable."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh",
+          "pytest tests/test_decision_trace.py tests/test_autonomous.py"
+        ],
+        "evidence": "Relevant regressions and independent exact-head publication."
+      }
+    ]
+  }
+}

@@ -59,11 +59,10 @@ def _hp_scan_skip_hint(result: ScanResult, _hp: Callable[..., Any]) -> None:
         _hp(
             f"  scan: all {len(result.skipped_as_duplicate)} suggestion(s) "
             "are duplicates of *active* planfile tickets (closed tickets are "
-            "ignored on purpose so regressing signals can reopen). "
+            "ignored so recurring signals can create follow-up work). "
             f"Examples: {sample}{more}. "
-            "To force fresh tickets, either reopen the matching done ticket "
-            "in the dashboard, or `rm -rf project/` + "
-            "`KORU_SCAN_FORCE_RESCAN=1 koru auto`.",
+            "Inspect the matching active tickets and their dependencies or operator holds. "
+            "Create a follow-up only for different work; preserve project history.",
         )
         return
     if result.skipped_create_failed:

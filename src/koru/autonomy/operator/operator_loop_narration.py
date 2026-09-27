@@ -73,20 +73,18 @@ def _handle_status_idle(args: Any, project: Any, sleep_text: str, **kwargs: Any)
     )
     return [
         (
-            f"1/3 wait {sleep_text}; queue is idle — all planfile tickets "
-            "are 'done' or canceled. autopilot drive is suppressed so the "
-            "user's chat input isn't clobbered with stale prompts"
+            f"1/3 wait {sleep_text}; queue is idle — no eligible work in the current queue. "
+            "Open tickets may wait for an operator, dependencies or another queue; "
+            "autopilot drive is suppressed"
         ),
         (
             "2/3 strategy detail→general: planfile ticket queue first; "
-            f"when empty, {discovery}; then code2llm whole-project discovery "
-            "can create new focused tickets"
+            f"when no work is eligible, {discovery}"
         ),
         (
             "3/3 quick links: create discovery ticket "
             f"{urls['create_project_ticket_action']} ; tickets {urls['tickets']} ; "
-            "force fresh scan command remains: "
-            "`rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`"
+            "optional signal scan: `koru scan --apply` (preserves project history)"
         ),
     ]
 

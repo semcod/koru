@@ -119,12 +119,13 @@ def test_run_autonomous_cycle_checkpoints_updates_pipeline_and_sleeps() -> None:
     assert logs[1].startswith(
         "koru autonomous: next 1/3 wait 4.5s; queue is idle"
     )
-    assert "all planfile tickets" in logs[1]
+    assert "Open tickets may wait" in logs[1]
+    assert "all planfile tickets" not in logs[1]
     assert logs[2].startswith(
         "koru autonomous: next 2/3 strategy detail→general: "
         "planfile ticket queue first"
     )
-    assert "code2llm whole-project discovery" in logs[2]
+    assert "if freshness and rate limits allow" in logs[2]
     assert logs[3].startswith("koru autonomous: next 3/3 quick links:")
     assert "/llm/action/create-ticket-for-project" in logs[3]
     assert "/?tab=tickets" in logs[3]
@@ -149,14 +150,10 @@ def test_idle_no_ticket_info_points_to_web_gui(monkeypatch) -> None:
 
     assert len(messages) == 1
     message, kwargs = messages[0]
-    assert "brak otwartych ticketów" in message
+    assert "brak zadania gotowego" in message
     assert kwargs["fmt"] == "human"
     assert "/llm/prompt/create-ticket-for-project" in str(kwargs["hint"])
     assert "lista ticketów" in str(kwargs["hint"])
-    assert "szczegół→ogół" in str(kwargs["hint"])
-    assert "workflow standaryzowany" in str(kwargs["hint"])
-    assert "Co jeszcze zostalo do wykonania?" in str(kwargs["hint"])
-    assert "goal/costs" in str(kwargs["hint"])
     assert kwargs["data"]["blocked_by"] == "idle_no_ticket"
 
 
@@ -179,7 +176,7 @@ def test_create_ticket_quick_action_is_informational(monkeypatch) -> None:
     assert len(messages) == 1
     message, kwargs = messages[0]
     assert "action [create ticket]" in message
-    assert "brak otwartych ticketów" in str(kwargs["hint"])
+    assert "brak zadania gotowego" in str(kwargs["hint"])
     assert kwargs["data"] == {"action": "create_ticket", "blocked_by": "idle_no_ticket"}
 
 
@@ -476,3 +473,55 @@ def test_operator_quick_actions_emit_replayable_control_commands(tmp_path) -> No
     assert "command_palette_sequence" in operations
     assert any("koru replay" in str(command["args"]) for command in commands)
     assert any("ticket input STARTER-277" in str(command["args"]) for command in commands)
+
+
+def test_idle_drive_guidance_preserves_open_held_work(tmp_path, monkeypatch):
+    from koru.autonomy import ide_work
+    from koru.autonomy.cycle.cycle_drive_retry import _idle_no_ticket_skip_result
+
+    monkeypatch.setattr(ide_work, "sprint_ticket_status_summary", lambda _: "planfile: open=5")
+    logs = []
+    result = _idle_no_ticket_skip_result(tmp_path, "idle_no_ticket", logs.append)
+    text = "\n".join(logs)
+    assert "planfile: open=5" in text
+    assert "no open ticket" not in text
+    assert "open work may be held" in text
+    assert "only when enabled" in text
+    assert "rm -rf" not in text
+    assert result[0]["prompt"] == ""
+    assert result[2] == "skipped(idle_no_ticket)"
+
+
+def test_idle_scan_guidance_respects_disabled_and_enabled_configuration(tmp_path):
+    from koru.autonomy.operator.operator_loop_narration import _handle_status_idle
+
+    for enabled in (False, True):
+        lines = _handle_status_idle(SimpleNamespace(scan_after_idle_queue=enabled), tmp_path, "900s")
+        text = "\n".join(lines)
+        assert "Open tickets may wait" in text
+        assert "rm -rf" not in text
+        assert ("idle scan is disabled" in text) is (not enabled)
+        assert ("if freshness and rate limits allow" in text) is enabled
+
+
+def test_idle_scan_quick_action_records_safe_replay(tmp_path):
+    logs = []
+    autonomous_loop_runner._log_operator_next_steps(
+        args=SimpleNamespace(emit_events="human", max_iterations=50, scan_after_idle_queue=False),
+        project=tmp_path,
+        queue_result=SimpleNamespace(last_status="idle"),
+        waiting_ticket="-",
+        autopilot_status="skipped(idle_no_ticket)",
+        effective_sleep=900.0,
+        loop_state=SimpleNamespace(stagnation_streak=1),
+        stop_reason=None,
+        stdio_info=lambda msg, **_kwargs: logs.append(msg),
+        autopilot_ide="vscodium",
+    )
+    rows = [json.loads(line) for line in observability_event_store_path(tmp_path).read_text().splitlines()]
+    commands = [row["payload"]["data"] for row in rows if row["event_type"] == "control.command"]
+    assert any("[scan signals]" in line for line in logs)
+    assert any("koru replay" in str(command["args"]) and "scan force" in str(command["args"])
+               for command in commands if command["surface"] == "shell_cli")
+    assert "rm -rf" not in json.dumps(commands)
+    assert "reopen done ticket" not in "\n".join(logs)
