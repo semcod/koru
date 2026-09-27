@@ -878,6 +878,23 @@ def _extract_ticket_id(text: str) -> str | None:
     return match.group(1).upper() if match else None
 
 
+def _find_ticket_in_session_messages(url: str, sid: str) -> str | None:
+    try:
+        messages = session_messages(url, sid, limit=100)
+        for msg in reversed(messages):
+            info = msg.get("info") if isinstance(msg.get("info"), dict) else {}
+            if info.get("role") != "user":
+                continue
+            for part in msg.get("parts") or []:
+                if isinstance(part, dict) and part.get("type") == "text":
+                    ticket = _extract_ticket_id(str(part.get("text") or ""))
+                    if ticket:
+                        return ticket
+    except Exception:
+        return None
+    return None
+
+
 def _session_ticket(url: str, sess: dict[str, Any]) -> str | None:
     """Most recent planfile ticket id mentioned in user prompts, cached."""
     sid = sess.get("id")
@@ -890,26 +907,61 @@ def _session_ticket(url: str, sess: dict[str, Any]) -> str | None:
     cached = _session_ticket_cache.get(key)
     if cached is not None and cached[0] == updated:
         return cached[1]
-    ticket = None
-    try:
-        messages = session_messages(url, str(sid), limit=100)
-        for msg in reversed(messages):
-            info = msg.get("info") if isinstance(msg.get("info"), dict) else {}
-            if info.get("role") != "user":
-                continue
-            for part in msg.get("parts") or []:
-                if isinstance(part, dict) and part.get("type") == "text":
-                    ticket = _extract_ticket_id(str(part.get("text") or ""))
-                    if ticket:
-                        break
-            if ticket:
-                break
-    except Exception:
-        ticket = None
+    ticket = _find_ticket_in_session_messages(url, str(sid))
     if len(_session_ticket_cache) > 500:
         _session_ticket_cache.clear()
     _session_ticket_cache[key] = (updated, ticket)
     return ticket
+
+
+def _format_session_row(sess: dict[str, Any]) -> dict[str, Any]:
+    model = sess.get("model") if isinstance(sess.get("model"), dict) else {}
+    return {
+        "id": sess.get("id"),
+        "slug": sess.get("slug"),
+        "title": sess.get("title") or sess.get("slug") or sess.get("id"),
+        "directory": _session_directory(sess),
+        "cost": sess.get("cost"),
+        "agent": sess.get("agent"),
+        "model": model.get("id") or model.get("modelID"),
+        "provider": model.get("providerID"),
+        "updated": _session_updated_ms(sess) or None,
+        "ticket": None,
+    }
+
+
+def _scan_active_ticket(
+    url: str,
+    sessions: list[dict[str, Any]],
+    srow_by_id: dict[str, dict[str, Any]],
+) -> str | None:
+    recent = sorted(sessions, key=_session_updated_ms, reverse=True)[:_TICKET_SCAN_SESSIONS]
+    active_ticket: str | None = None
+    for sess in recent:
+        srow = srow_by_id.get(str(sess.get("id") or ""))
+        if srow is None:
+            continue
+        srow["ticket"] = _session_ticket(url, sess)
+        if active_ticket is None and srow["ticket"]:
+            active_ticket = srow["ticket"]
+    return active_ticket
+
+
+def _extract_instance_models(sessions: list[dict[str, Any]]) -> list[str]:
+    return sorted(
+        {f"{s['provider']}/{s['model']}" if s.get("provider") else s["model"] for s in sessions if s.get("model")}
+    )
+
+
+def _fetch_pending_counts(url: str) -> dict[str, int]:
+    try:
+        pending = pending_requests(url)
+        return {
+            "permissions": len(pending["permissions"]),
+            "questions": len(pending["questions"]),
+        }
+    except Exception:
+        return {"permissions": 0, "questions": 0}
 
 
 def instance_status(entry: dict[str, Any]) -> dict[str, Any]:
@@ -939,48 +991,16 @@ def instance_status(entry: dict[str, Any]) -> dict[str, Any]:
         return row
     srow_by_id: dict[str, dict[str, Any]] = {}
     for sess in sessions:
-        model = sess.get("model") if isinstance(sess.get("model"), dict) else {}
-        srow = {
-            "id": sess.get("id"),
-            "slug": sess.get("slug"),
-            "title": sess.get("title") or sess.get("slug") or sess.get("id"),
-            "directory": _session_directory(sess),
-            "cost": sess.get("cost"),
-            "agent": sess.get("agent"),
-            "model": model.get("id") or model.get("modelID"),
-            "provider": model.get("providerID"),
-            "updated": _session_updated_ms(sess) or None,
-            "ticket": None,
-        }
+        srow = _format_session_row(sess)
         row["sessions"].append(srow)
         if sess.get("id"):
             srow_by_id[str(sess["id"])] = srow
-    recent = sorted(sessions, key=_session_updated_ms, reverse=True)[:_TICKET_SCAN_SESSIONS]
-    for sess in recent:
-        srow = srow_by_id.get(str(sess.get("id") or ""))
-        if srow is None:
-            continue
-        srow["ticket"] = _session_ticket(url, sess)
-        if row["active_ticket"] is None and srow["ticket"]:
-            row["active_ticket"] = srow["ticket"]
+    row["active_ticket"] = _scan_active_ticket(url, sessions, srow_by_id)
     row["project_dirs"] = sorted({s["directory"] for s in row["sessions"] if s.get("directory")})
-    row["models"] = sorted(
-        {
-            f"{s['provider']}/{s['model']}" if s.get("provider") else s["model"]
-            for s in row["sessions"]
-            if s.get("model")
-        }
-    )
+    row["models"] = _extract_instance_models(row["sessions"])
     row["providers"] = list_providers(url)
     row["exhausted_providers"] = get_exhausted_providers()
-    try:
-        pending = pending_requests(url)
-        row["pending"] = {
-            "permissions": len(pending["permissions"]),
-            "questions": len(pending["questions"]),
-        }
-    except Exception:
-        pass
+    row["pending"] = _fetch_pending_counts(url)
     return row
 
 
@@ -1096,9 +1116,7 @@ def _create_session_with_failover(
         )
     except (urllib.error.URLError, OSError, ValueError) as exc:
         if active_model:
-            retry_sess, new_model, new_meta = _retry_session_failover(
-                url, project, title, agent, active_model, exc
-            )
+            retry_sess, new_model, new_meta = _retry_session_failover(url, project, title, agent, active_model, exc)
             if retry_sess and retry_sess.get("id"):
                 sess, active_model, failover_meta = retry_sess, new_model, new_meta
         if not sess or not sess.get("id"):
@@ -1147,9 +1165,7 @@ def _send_prompt_with_failover(
         result = send_prompt(url, session_id, text, model=active_model, agent=agent)
     except (urllib.error.URLError, OSError, ValueError) as exc:
         if active_model:
-            result, retry_meta, err = _retry_prompt_failover(
-                url, session_id, text, agent, active_model, exc
-            )
+            result, retry_meta, err = _retry_prompt_failover(url, session_id, text, agent, active_model, exc)
             if err:
                 return err
             failover_meta = retry_meta
@@ -1161,9 +1177,7 @@ def _send_prompt_with_failover(
     return out
 
 
-def _parse_prompt_request(
-    body: dict[str, Any]
-) -> tuple[str, str, dict[str, Any] | None, str | None]:
+def _parse_prompt_request(body: dict[str, Any]) -> tuple[str, str, dict[str, Any] | None, str | None]:
     text = str(body.get("text") or "").strip()
     session_id = str(body.get("session_id") or "").strip()
     model = body.get("model")
@@ -1194,9 +1208,7 @@ def terminal_prompt(project: Path, body: dict[str, Any]) -> dict[str, Any]:
             return err
         assert session_id is not None
 
-    return _send_prompt_with_failover(
-        url, session_id, text, agent, active_model, failover_meta
-    )
+    return _send_prompt_with_failover(url, session_id, text, agent, active_model, failover_meta)
 
 
 def terminal_reply(project: Path, body: dict[str, Any]) -> dict[str, Any]:
