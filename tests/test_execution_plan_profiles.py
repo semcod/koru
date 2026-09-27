@@ -158,8 +158,27 @@ def test_profile_order_precedence() -> None:
     assert "cc_hotspot_refactor" in order
     assert "god_function_refactor" in order
     assert "code_smell_refactor" in order
+    assert "taskand_operational" in order
     assert "god_module_split" in order
-    # Verify god_function and code_smell are prioritized before god_module_split
+    # Verify god_function, code_smell and taskand_operational are prioritized before god_module_split
     assert order.index("god_function_refactor") < order.index("god_module_split")
     assert order.index("code_smell_refactor") < order.index("god_module_split")
+    assert order.index("taskand_operational") < order.index("god_module_split")
+
+
+def test_select_profile_taskand_operational() -> None:
+    for signal, label, name in [
+        ("taskand_operational", "taskand", "Operational: run smoke test in sandbox"),
+        ("twinerd_sandbox", "sandbox", "Taskand: proc://taskand.dev/testing/e2e/v1"),
+        ("proc_execution", "twinerd", "Run operational regression suite"),
+    ]:
+        ticket = {
+            "id": "PLF-OP-01",
+            "name": name,
+            "labels": ["koru", "ops", label],
+            "source": {"context": {"signal": signal}},
+        }
+        pid, profile = select_profile(ticket, "planfile_queue")
+        assert pid == "taskand_operational", f"Expected taskand_operational for {signal}, got {pid}"
+        assert isinstance(profile, dict)
 

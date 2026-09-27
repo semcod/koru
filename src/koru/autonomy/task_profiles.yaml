@@ -6,6 +6,7 @@ defaults:
     - cc_hotspot_refactor
     - god_function_refactor
     - code_smell_refactor
+    - taskand_operational
     - god_module_split
 profiles:
   god_module_split:
@@ -99,6 +100,29 @@ profiles:
         hint: >-
           Remediate the reported code smell by encapsulating data clumps,
           extracting abstractions, or localizing variable mutations; preserve behavior and run local tests.
+      - id: verify
+        kind: shell
+        auto: true
+        command: sh -c 'cd {repo} && koru ci run'
+
+  taskand_operational:
+    description: Execute operational and sandboxed process tasks via Taskand or Twinerd.
+    match:
+      labels_any: [operational, ops, sandbox, taskand, twinerd]
+      signals_any:
+        - taskand_operational
+        - twinerd_sandbox
+        - proc_execution
+      name_patterns: ['Operational:*', 'Taskand:*', 'Run operational*', 'Sandbox:*']
+    workflow:
+      - id: baseline
+        kind: shell
+        auto: true
+        command: sh -c 'cd {repo} && koru ci run --skip-gates'
+      - id: execute_taskand
+        kind: shell
+        auto: true
+        command: sh -c 'cd {repo} && koru --queue --once'
       - id: verify
         kind: shell
         auto: true
