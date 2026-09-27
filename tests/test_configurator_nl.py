@@ -105,3 +105,30 @@ def test_cli_table_flag(tmp_path: Path, capsys) -> None:
     out = capsys.readouterr().out
     assert "KORU CONFIGURATION" in out
     assert "windsurf" in out
+
+
+def test_config_completer_candidates() -> None:
+    from koru.configurator.shell_history import ConfigCompleter
+
+    completer = ConfigCompleter()
+    # Test base commands
+    matches_ide = completer.get_candidates("ide")
+    assert "ide na " in matches_ide
+
+    # Test IDE lane candidates
+    matches_cursor = completer.get_candidates("ide na cur")
+    assert "ide na cursor" in matches_cursor
+
+    # Test toggle candidates
+    matches_toggle = completer.get_candidates("wlacz m")
+    assert "wlacz mesh" in matches_toggle
+
+
+def test_setup_config_shell_readline(tmp_path: Path) -> None:
+    from koru.configurator.shell_history import setup_config_shell_readline
+
+    cleanup = setup_config_shell_readline(tmp_path)
+    # Even in headless/mock environments, returns a callable or None without raising
+    if cleanup is not None:
+        cleanup()
+
