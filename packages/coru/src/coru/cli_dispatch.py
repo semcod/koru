@@ -11,7 +11,23 @@ import argparse
 import os
 import sys
 from collections.abc import Callable
-from typing import Any
+from typing import Any, NamedTuple
+
+
+class ResolvedLane(NamedTuple):
+    """The ``(ide, instance)`` lane a command targets after default resolution."""
+
+    ide: str
+    instance: str
+
+
+def _resolve_lane(
+    args: argparse.Namespace,
+    default_lane: Callable[[Any, Any], tuple[str, str]],
+) -> ResolvedLane:
+    """Collapse the per-dispatcher ``default_lane`` call + unpack into one place."""
+    ide, instance = default_lane(args.ide, args.instance)
+    return ResolvedLane(ide=ide, instance=instance)
 
 
 def dispatch_lane_command(
@@ -23,17 +39,17 @@ def dispatch_lane_command(
     diagnose_lane: Callable[..., int],
 ) -> int | None:
     if args.command == "lane":
-        ide, instance = default_lane(args.ide, args.instance)
-        return lane_env(ide, instance, args.shell)
+        lane = _resolve_lane(args, default_lane)
+        return lane_env(lane.ide, lane.instance, args.shell)
     if args.command == "lane-status":
-        ide, instance = default_lane(args.ide, args.instance)
-        return lane_status(ide, instance)
+        lane = _resolve_lane(args, default_lane)
+        return lane_status(lane.ide, lane.instance)
     if args.command == "status":
-        ide, instance = default_lane(args.ide, args.instance)
-        return diagnose_lane(ide, instance, probe_drive=bool(getattr(args, "probe", False)))
+        lane = _resolve_lane(args, default_lane)
+        return diagnose_lane(lane.ide, lane.instance, probe_drive=bool(getattr(args, "probe", False)))
     if args.command == "env":
-        ide, instance = default_lane(args.ide, args.instance)
-        return lane_env(ide, instance, args.shell)
+        lane = _resolve_lane(args, default_lane)
+        return lane_env(lane.ide, lane.instance, args.shell)
     return None
 
 
@@ -46,13 +62,13 @@ def dispatch_auto_command(
 ) -> int | None:
     if args.command != "auto":
         return None
-    ide, instance = default_lane(args.ide, args.instance)
+    auto_lane = _resolve_lane(args, default_lane)
     if args.ide or args.instance:
-        remember_settings(ide, instance)
+        remember_settings(auto_lane.ide, auto_lane.instance)
     rest = list(args.rest)
     if rest and rest[0] == "--":
         rest = rest[1:]
-    return run_auto(ide, instance, rest)
+    return run_auto(auto_lane.ide, auto_lane.instance, rest)
 
 
 def dispatch_text_command(
@@ -128,15 +144,17 @@ def dispatch_calibration_command(
 ) -> int | None:
     if args.command != "calibration":
         return None
-    ide, instance = default_lane(args.ide, args.instance)
-    ide, instance = resolve_calibration_lane(
-        ide,
-        instance,
-        explicit_ide=args.ide,
+    lane = _resolve_lane(args, default_lane)
+    calibration_lane = ResolvedLane(
+        *resolve_calibration_lane(
+            lane.ide,
+            lane.instance,
+            explicit_ide=args.ide,
+        ),
     )
     return lane_calibration(
-        ide,
-        instance,
+        calibration_lane.ide,
+        calibration_lane.instance,
         probe_prompt=args.probe_prompt,
         skip_fix=args.skip_fix,
         skip_desktop=args.skip_desktop,
@@ -153,15 +171,15 @@ def dispatch_doctor_command(
 ) -> int | None:
     if args.command != "doctor":
         return None
-    ide, instance = default_lane(args.ide, args.instance)
+    doctor_lane = _resolve_lane(args, default_lane)
     if requires_system_shell(
         command="doctor",
         allow_integrated_shell=args.allow_integrated_shell,
     ):
         return 2
     return lane_doctor(
-        ide,
-        instance,
+        doctor_lane.ide,
+        doctor_lane.instance,
         fix=args.fix,
         probe=args.probe,
         probe_prompt=args.probe_prompt,
@@ -195,13 +213,15 @@ def dispatch_daemon_command(
 ) -> int | None:
     if args.command != "daemon":
         return None
-    ide, instance = default_lane(args.ide, args.instance)
+    daemon_lane = _resolve_lane(args, default_lane)
     if requires_system_shell(
         command="daemon",
         allow_integrated_shell=args.allow_integrated_shell,
     ):
         return 2
-    resolved = resolve_defaults(plan_cls(action="auto", ide=ide, instance=instance))
+    resolved = resolve_defaults(
+        plan_cls(action="auto", ide=daemon_lane.ide, instance=daemon_lane.instance),
+    )
     print(
         f"coru daemon: foreground autopilot for ide={resolved.ide} instance={resolved.instance} "
         "(Ctrl+C stops daemon)",
