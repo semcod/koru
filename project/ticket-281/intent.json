@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-281",
+  "summary": "Address code smell: Shotgun Surgery: expected_version locals in koru autopilot install checks",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-281/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autopilot/install_checks.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f7f477aa6146af1e60a1a616a4b8b78aff0f3043",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm Shotgun Surgery smell for the variable 'expected_version' in src/koru/autopilot/install_checks.py (planfile ticket PLF-056, reported at line 243) by replacing the generic local with a stage-accurate name in each of the six functions that assigned it: source_vsix_version (check_plugin_installed_version_mismatch_issue and check_plugin_version_mismatch_issue, the version the source VSIX/package declares, contrasted with the installed extension and the connected plugin - both issue messages already say 'the source VSIX/package'), expected_installed_version (check_plugin_installed_ok_but_not_connected_issue and check_plugin_socket_candidate_mismatch_issue, the version the on-disk install must match before the secondary condition applies), live_host_expected_version (check_plugin_live_host_stale_issue, the version the live extension host is judged against for the install-match gate and the stale-reconnect classification) and expected_connected_version (_plugin_live_connection_matches_expected, the normalized str-coerced/stripped version the live connection must report, pairing with connected_version as expected_build pairs with connected_build). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'expected_version' group drops from 6 scopes to 0 and the file mutation record count is unchanged at 46 (pure rename). The new names land at 2/2/1/1 scopes, all far below the threshold; the untouched 'installed_version' and '_' groups stay at 4. Private-helper parameters named expected_version (_plugin_install_matches_expected, _stale_rejected_plugins, _is_stale_rejected_plugin) are function arguments, not assignments, so the DFG mutation extractor never counted them and they keep the accurate generic name. Pure rename: no signature, return shape, dict key or behavior change; no other file touched. No duplication.toon.yaml exists in this repository, so the duplication-report checklist has nothing to consult for the touched path.",
+    "nonGoals": [
+      "No behavior, issue codes, message text semantics or interface change",
+      "No new shared version-comparison helper; the six reads differ (installed vs source VSIX, install-match gate, live-host staleness reference, normalized connection comparison) and a forced abstraction would couple independent check stages",
+      "No rename of the private-helper parameters or of locals in other files that happen to use 'expected_version' (each is an independent local in its own file scope)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local naming only, inside one module. Every check function that read plugin['expected_version'] now names exactly the piece of the version comparison its stage consumes: the two mismatch reporters name the source VSIX/package version (source_vsix_version), the two install-match gates name the version the install must match (expected_installed_version), the live-host staleness check names the version the live host is judged against (live_host_expected_version) and the normalized connection comparison names its required connected version (expected_connected_version). The generic name 'expected_version' disappears from the file's assignment set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports an 'expected_version' mutation group of exactly 6 scopes - check_plugin_installed_version_mismatch_issue, check_plugin_installed_ok_but_not_connected_issue, check_plugin_live_host_stale_issue, _plugin_live_connection_matches_expected, check_plugin_socket_candidate_mismatch_issue, check_plugin_version_mismatch_issue - matching the ticket's 'spans 6 functions'; after the rename the 'expected_version' group is empty, the file mutation record count is unchanged at 46 (pure rename), and no (file, variable) group reaches the >= 5 threshold.",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "src/koru/autopilot/install_checks.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named expected_version again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor mutation grouping on the file AST, original vs renamed content of src/koru/autopilot/install_checks.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports an 'expected_version' mutation group of 6 scopes (check_plugin_installed_version_mismatch_issue, check_plugin_installed_ok_but_not_connected_issue, check_plugin_live_host_stale_issue, _plugin_live_connection_matches_expected, check_plugin_socket_candidate_mismatch_issue, check_plugin_version_mismatch_issue) - exactly matching the ticket's reported 'spans 6 functions'; renamed content reports an 'expected_version' group of 0 scopes; file mutation record count unchanged at 46 (pure rename); every new local lands below the threshold (source_vsix_version 2, expected_installed_version 2, live_host_expected_version 1, expected_connected_version 1); the untouched 'installed_version' and '_' groups stay at 4 scopes."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_install_checks.py tests/test_autopilot_commands_manage.py -q",
+          "ruff check src/koru/autopilot/install_checks.py"
+        ],
+        "evidence": "The suites that exercise the renamed issue-check paths (unit tests for install_checks plus the manage-command suite that drives the install manager issue chain) pass unchanged - pure rename of function-internal locals - and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
