@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-288",
+  "summary": "Decompose ticket_scaffold in todo2code_tickets to reduce cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-288/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/todo2code_tickets.py",
+    "tests/test_todo2code_modules.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f1cc5296f6eb29396bd33fc1cc43f130ae783e14",
+    "targetBranch": "main",
+    "outcome": "Decompose _ticket_scaffold in src/koru/autonomy/todo2code_tickets.py to reduce cyclomatic complexity from 20 to <=5 while maintaining 100% backward compatibility and test coverage.",
+    "nonGoals": [
+      "Changing ticket scaffolding shape or evidence generation",
+      "Modifying public interface of todo2code_tickets"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _build_ticket_inputs, _build_source_context_evidence, and _build_source_context helpers from _ticket_scaffold in src/koru/autonomy/todo2code_tickets.py.",
+      "components": [
+        {
+          "name": "koru-todo2code-tickets",
+          "paths": [
+            "src/koru/autonomy/todo2code_tickets.py",
+            "tests/test_todo2code_modules.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit in src/koru/autonomy/todo2code_tickets.py"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_todo2code_modules.py"
+        ],
+        "evidence": "All tests in test_todo2code_modules.py pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m radon cc src/koru/autonomy/todo2code_tickets.py -s"
+        ],
+        "evidence": "_ticket_scaffold cyclomatic complexity drops from 20 to <=5."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koru/autonomy/todo2code_tickets.py tests/test_todo2code_modules.py"
+        ],
+        "evidence": "Ruff reports zero lint or formatting errors."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
