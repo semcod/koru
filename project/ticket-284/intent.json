@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-284",
+  "summary": "Address code smell: Shotgun Surgery: fh locals in vdisplay portal input",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-284/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay/portal_input.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2dd75fdd490853220afc0ee0375256afd433da32",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm Shotgun Surgery smell for the variable 'fh' in src/koru/integrations/vdisplay/portal_input.py (planfile ticket PLF-058, reported at line 403) by replacing the generic local with a stage-accurate name in each of the seven functions that assigned it: guard_h (_focus_ring_appeared, the height of the decoded before/after RGB array that scales the stream-space target into frame pixels and clamps the focus-guard's blue-sampling window), frame_rows (_blue_ring_center, the decoded frame's row count sizing the blue-row bincount histogram that locates the lowest wide ring band), calib_h (calibrate_input_from_focus, the calibration frame's height mapping the detected ring center into stream coords), panel_h (_pending_action_present, the frame height gating a 'backspace' OCR box into the chat-panel region above the terminal strip), anchor_h (_stream_target_from_ocr, the frame height mapping the OCR anchor - placeholder or landmark fallback - into stream coords), precise_h (_precise_stream_xy, the frame height mapping the precise placeholder anchor into stream coords, pairing with the existing precise_fx local), and reanchor_h (_clear_and_reanchor_stream_xy, the frame height mapping the post-clear re-anchor position into stream coords). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'fh' group drops from 7 scopes to 0 and the file mutation record count is unchanged at 201 (pure rename). Each new name lands at exactly 1 scope. The 'fw' group (6 scopes) keeps its generic name in this lane - it is a separate open planfile ticket with its own dedupe key - as are the already-distinct 'aw'/'ah' (_focused_near) and 'fw0'/'fh0' (_maybe_autoremember_focused_input) pairs, which are different variable names and were never counted. Pure rename: no signature, return shape, env var or behavior change; no other file touched. No duplication.toon.yaml exists in this repository, so the duplication-report checklist has nothing to consult for the touched path.",
+    "nonGoals": [
+      "No behavior, coordinate-math, gating-threshold or interface change",
+      "No rename of 'fw' - it is a separate open planfile ticket (dedupe key code2llm:smell:shotgun_surgery:src/koru/integrations/vdisplay/portal_input.py:403:Shotgun Surgery: fw) and keeps its own lane",
+      "No new shared frame-geometry helper; the seven heights sit at distinct stages (focus-guard window scaling, ring-row histogram, calibration mapping, panel-region gating, OCR anchor mapping, precise-anchor mapping, post-clear re-anchor mapping) and a forced abstraction would couple independent coordinate stages",
+      "No rename of the keyword arguments frame_w=/frame_h= accepted by frame_to_stream (call-site arguments, not locals, and part of the portal session contract)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local naming only, inside one module. Every function that bound the generic name 'fh' now names exactly the coordinate stage it consumes: the focus-diff guard names its sampling-window frame height (guard_h), the ring locator names its histogram row count (frame_rows), calibration names its mapping height (calib_h), the pending-action detector names its panel-region bound (panel_h), the OCR anchor mapper names its anchor mapping height (anchor_h), the precise-anchor mapper names its precise mapping height (precise_h), and the two-pass clear names its post-clear re-anchor mapping height (reanchor_h). The generic name 'fh' disappears from the file's assignment set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports an 'fh' mutation group of exactly 7 scopes - _focus_ring_appeared, _blue_ring_center, calibrate_input_from_focus, _pending_action_present, _stream_target_from_ocr, _precise_stream_xy, _clear_and_reanchor_stream_xy - matching the ticket's 'spans 7 functions'; after the rename the 'fh' group is empty, the file mutation record count is unchanged at 201 (pure rename), and every new name lands at exactly 1 scope. The 'fw' group stays at 6 scopes (own open ticket); no other group reaches the >= 5 threshold.",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "src/koru/integrations/vdisplay/portal_input.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named fh again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor mutation grouping on the file AST, original vs renamed content of src/koru/integrations/vdisplay/portal_input.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports an 'fh' mutation group of 7 scopes (_focus_ring_appeared, _blue_ring_center, calibrate_input_from_focus, _pending_action_present, _stream_target_from_ocr, _precise_stream_xy, _clear_and_reanchor_stream_xy) - exactly matching the ticket's reported 'spans 7 functions'; renamed content reports an 'fh' group of 0 scopes; file mutation record count unchanged at 201 (pure rename); each new local (guard_h, frame_rows, calib_h, panel_h, anchor_h, precise_h, reanchor_h) lands at exactly 1 scope, far below the >= 5 threshold; the untouched 'fw' group stays at 6 scopes for its own open ticket."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_portal_input.py tests/test_vdisplay_coordinate_contract.py tests/test_autonomous_vdisplay_defaults.py tests/test_vdisplay_module_split.py -q",
+          "ruff check src/koru/integrations/vdisplay/portal_input.py"
+        ],
+        "evidence": "The suites that exercise the renamed frame-geometry paths (portal input unit tests including the two-pass clear flow, the vdisplay coordinate contract, the autonomous vdisplay defaults and the module split) pass unchanged - pure rename of function-internal locals - and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
