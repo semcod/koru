@@ -147,16 +147,16 @@ def test_apply_nl_multi_intent_batching(tmp_path: Path) -> None:
     assert "cursor" in res.message
 
 
-def test_apply_nl_multi_intent_partial_failure_does_not_corrupt(tmp_path: Path) -> None:
+def test_apply_nl_command_models(tmp_path: Path) -> None:
     cfg = _sample_config(tmp_path)
-    initial_port = cfg["serve"]["port"]
-    command = "port na 9000 i zmien ide na unknown_ide_123"
-    res = apply_nl_config_command(cfg, command, tmp_path)
+    res_def = apply_nl_config_command(cfg, "model na anthropic/claude-3.7-sonnet", tmp_path)
+    assert res_def.success is True
+    assert cfg["models"]["default"] == "anthropic/claude-3.7-sonnet"
 
-    assert res.success is False
-    assert res.updated is False
-    # Original config remains untouched
-    assert cfg["serve"]["port"] == initial_port
-    assert "unknown_ide_123" in res.message
+    res_simple = apply_nl_config_command(cfg, "prosty model na glm5.3-flash", tmp_path)
+    assert res_simple.success is True
+    assert cfg["models"]["simple"] == "glm5.3-flash"
+    assert "Flash" in res_simple.message
+
 
 

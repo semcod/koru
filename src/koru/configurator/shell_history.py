@@ -22,6 +22,8 @@ _DEFAULT_COMMANDS = (
     "port na ",
     "zmien port na ",
     "host na ",
+    "model na ",
+    "prosty model na ",
     "kolejka na ",
     "wlacz lan",
     "wylacz lan",

@@ -190,7 +190,7 @@ def _select_fallback_model(
     env: Mapping[str, str],
 ) -> dict[str, str]:
     default = default_model or env.get("KORU_TILLM_MODEL", "").strip()
-    simple = env.get("KORU_TILLM_SIMPLE_MODEL", "").strip()
+    simple = env.get("KORU_TILLM_SIMPLE_MODEL", "").strip() or env.get("KORU_MODEL_SIMPLE", "").strip()
     routing = _resolve_routing_mapping(view.task, view.inputs)
     # Smallness is a closed, structured contract, not a guess from prompt/title.
     if simple:

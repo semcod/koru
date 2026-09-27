@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-321",
+  "summary": "Tiered model selection with glm5 3 flash default for small tasks",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-321/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/task_model_policy.py",
+    "src/koru/configurator/**",
+    "tests/test_task_model_policy.py",
+    "tests/test_configurator*.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1d103d7a370421a6507142a26b990f59748f381e",
+    "targetBranch": "main",
+    "outcome": "Default simple tasks to glm5.3-flash, allow configuring model tiers in koru config via NL, and refine small task heuristics.",
+    "nonGoals": [
+      "Do not remove ability to pin models or override via explicit task inputs",
+      "Do not break existing model resolution tests"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 6,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Configure GLM-5.3-Flash / Flash tier default for simple tasks and integrate model preferences into koru config.",
+      "components": [
+        {
+          "name": "model-policy",
+          "paths": [
+            "src/koru/task_model_policy.py",
+            "tests/test_task_model_policy.py"
+          ]
+        },
+        {
+          "name": "koru-configurator",
+          "paths": [
+            "src/koru/configurator/**",
+            "tests/test_configurator*.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit in ticket-321."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_task_model_policy.py tests/test_configurator_nl.py"
+        ],
+        "evidence": "Tests confirm glm5.3-flash is selected as simple tier and configurator supports model preference setting."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}

@@ -75,10 +75,16 @@ def render_config_table(config: dict[str, Any]) -> str:
         features.append(f"{feat}: {'ON' if is_on else 'off'}")
     features_str = ", ".join(features)
 
+    models = config.get("models") if isinstance(config.get("models"), dict) else {}
+    model_default = str(models.get("default") or "auto")
+    model_simple = str(models.get("simple") or "glm5.3-flash")
+
     rows = [
         ("project", str(config.get("project") or ".")),
         ("workspace", str(config.get("workspace") or ".")),
         ("ide", str(config.get("ide") or "auto")),
+        ("llm default", model_default),
+        ("llm simple (flash)", model_simple),
         ("queue", str(config.get("queue_name") or "default")),
         ("dashboard host", str(serve.get("host") or "127.0.0.1")),
         ("dashboard port", str(serve.get("port") or 8765)),
