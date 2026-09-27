@@ -172,14 +172,14 @@ def parse_next_ticket(
 
 def _is_human_executor(ticket: dict) -> bool:
     """Mirror ``_resolve_executor_kind``: a missing or empty kind is human."""
-    executor = ticket.get("executor")
-    kind = executor.get("kind") if isinstance(executor, dict) else None
+    declared_executor = ticket.get("executor")
+    kind = declared_executor.get("kind") if isinstance(declared_executor, dict) else None
     return kind is None or str(kind).strip().lower() in {"", "human"}
 
 
 def _should_skip_deferred_human(ticket: dict) -> bool:
-    executor = ticket.get("executor") or {}
-    if str(executor.get("kind") or "").lower() != "human":
+    executor_kind = str((ticket.get("executor") or {}).get("kind") or "").lower()
+    if executor_kind != "human":
         return False
     execution = ticket.get("execution") if isinstance(ticket.get("execution"), dict) else {}
     queue = str(execution.get("queue") or "default").lower()
@@ -190,8 +190,8 @@ def _should_skip_deferred_human(ticket: dict) -> bool:
 def ticket_command(ticket: dict) -> str | None:
     """Extract the command/script from a ticket."""
     inputs = ticket.get("inputs") or {}
-    executor = ticket.get("executor") or {}
-    return inputs.get("script") or executor.get("handler")
+    handler = (ticket.get("executor") or {}).get("handler")
+    return inputs.get("script") or handler
 
 
 def ticket_llm_request(ticket: dict) -> dict[str, Any] | None:
@@ -246,8 +246,8 @@ def ticket_llm_request(ticket: dict) -> dict[str, Any] | None:
 def ticket_api_request(ticket: dict) -> dict[str, Any] | None:
     """Translate an executor.kind=api ticket into an HTTP call spec."""
     inputs = ticket.get("inputs") or {}
-    executor = ticket.get("executor") or {}
-    endpoint = inputs.get("api_endpoint") or executor.get("handler")
+    handler = (ticket.get("executor") or {}).get("handler")
+    endpoint = inputs.get("api_endpoint") or handler
     if not endpoint:
         return None
 
@@ -267,13 +267,13 @@ def ticket_taskand_request(ticket: dict) -> dict[str, Any] | None:
     so the queue runner can block the ticket with a descriptive reason.
     """
     inputs = ticket.get("inputs") or {}
-    executor = ticket.get("executor") or {}
+    handler = (ticket.get("executor") or {}).get("handler")
 
     uri = (
         inputs.get("taskand_uri")
         or inputs.get("process_uri")
         or inputs.get("uri")
-        or executor.get("handler")
+        or handler
     )
     plan = inputs.get("plan") or inputs.get("dag") or inputs.get("blueprint")
     if not uri and not plan:
