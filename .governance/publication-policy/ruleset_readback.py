@@ -125,22 +125,37 @@ def compare_rulesets(observed: dict, desired_body: dict) -> list[dict]:
         add(f"pull_request.{field}", params[field], observed_params.get(field))
 
     desired_checks_rule = next(
-        rule for rule in desired_body["rules"] if rule["type"] == "required_status_checks"
+        (
+            rule
+            for rule in desired_body["rules"]
+            if rule["type"] == "required_status_checks"
+        ),
+        None,
     )
     observed_checks = rule_of_type(observed, "required_status_checks") or {}
-    add(
-        "required_status_checks.strict",
-        desired_checks_rule["parameters"]["strict_required_status_checks_policy"],
-        observed_checks.get("parameters", {}).get("strict_required_status_checks_policy"),
-    )
-    add(
-        "required_status_checks.contexts",
-        sorted(
-            entry["context"]
-            for entry in desired_checks_rule["parameters"]["required_status_checks"]
-        ),
-        check_contexts(observed_checks),
-    )
+    if desired_checks_rule is None:
+        # Fork-sandbox variant: the sandbox cannot produce the protected check
+        # contexts, so the profile drops the rule and the readback must confirm
+        # the deployed sandbox ruleset drops it with it.
+        add(
+            "required_status_checks.absent",
+            True,
+            rule_of_type(observed, "required_status_checks") is None,
+        )
+    else:
+        add(
+            "required_status_checks.strict",
+            desired_checks_rule["parameters"]["strict_required_status_checks_policy"],
+            observed_checks.get("parameters", {}).get("strict_required_status_checks_policy"),
+        )
+        add(
+            "required_status_checks.contexts",
+            sorted(
+                entry["context"]
+                for entry in desired_checks_rule["parameters"]["required_status_checks"]
+            ),
+            check_contexts(observed_checks),
+        )
     add(
         "bypass_actors",
         bypass_signature(desired_body["bypass_actors"]),
@@ -187,8 +202,8 @@ def validate_canary(record: dict, trusted_app_login: str | None) -> list[str]:
         if outcome != "rejected":
             errors.append("outcome must be rejected")
         status = evidence.get("httpStatus")
-        if status not in (403, 422):
-            errors.append("httpStatus must be 403 or 422")
+        if status not in (403, 405, 422):
+            errors.append("httpStatus must be 403, 405 or 422")
         message = evidence.get("message")
         if not isinstance(message, str) or not REVIEW_REQUIRED_PATTERN.search(message):
             errors.append("message must state a required approving review")
@@ -311,6 +326,21 @@ class SelfTest(unittest.TestCase):
     def test_desired_body_is_conformant_roundtrip(self):
         self.assertEqual(self.gaps(self.observed_from_desired()), [])
 
+    def test_fork_variant_roundtrip_without_checks_rule(self):
+        observed = self.observed_from_desired()
+        observed["rules"] = [
+            rule
+            for rule in observed["rules"]
+            if rule["type"] != "required_status_checks"
+        ]
+        variant = json.loads(json.dumps(self.desired["desired"]))
+        variant["rules"] = [
+            rule
+            for rule in variant["rules"]
+            if rule["type"] != "required_status_checks"
+        ]
+        self.assertEqual([r for r in compare_rulesets(observed, variant) if not r["ok"]], [])
+
     def test_missing_required_check_is_a_gap(self):
         observed = self.observed_from_desired()
         checks = next(
@@ -344,6 +374,13 @@ class SelfTest(unittest.TestCase):
 
     def test_negative_canary_passes(self):
         self.assertEqual(validate_canary(self.negative_record(), None), [])
+        observed = self.negative_record()
+        observed["evidence"]["httpStatus"] = 405
+        observed["evidence"]["message"] = (
+            "Repository rule violations found: New changes require approval "
+            "from someone other than the last pusher."
+        )
+        self.assertEqual(validate_canary(observed, None), [])
 
     def test_negative_canary_rejects_merge_success(self):
         record = self.negative_record()
