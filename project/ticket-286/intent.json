@@ -1,0 +1,86 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-286",
+  "summary": "normalize-taskand-orchestrator-plan-and-evidence-logging",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-286/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/runners.py",
+    "src/koru/queue/runner.py",
+    "src/koru/queue/shell_evidence.py",
+    "tests/test_queue_runners.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "71854dc96b05a9dcccb7f6bdde57cff118258aee",
+    "targetBranch": "main",
+    "outcome": "Normalize Taskand orchestrator DAG plans in src/koru/queue/runners.py so that steps with uri, inputs/input, or string id conform cleanly to Taskand Orchestrator contract. Ensure src/koru/queue/runner.py persists taskand/process and api execution outputs as evidence notes on planfile tickets.",
+    "nonGoals": [
+      "No change to external Taskand package code",
+      "No direct Python imports between koru and taskand",
+      "No alteration to shell or llm queue execution semantics"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add _normalize_step and normalize_taskand_plan in src/koru/queue/runners.py and use them in _taskand_gateway_target. Add TASKAND_RUN_NOTE_TAG and API_RUN_NOTE_TAG in src/koru/queue/shell_evidence.py and append run evidence notes in _finalize_ticket within src/koru/queue/runner.py.",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "src/koru/queue/runners.py",
+            "src/koru/queue/runner.py",
+            "src/koru/queue/shell_evidence.py",
+            "tests/test_queue_runners.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "git revert HEAD"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_queue_runners.py -q"
+        ],
+        "evidence": "All unit tests in tests/test_queue_runners.py pass 100%, covering normalize_taskand_plan and evidence recording."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree."
+      }
+    ]
+  }
+}

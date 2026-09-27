@@ -16,6 +16,8 @@ import json
 
 SHELL_RUN_NOTE_TAG = "KORU-SHELL-RUN"
 LLM_RUN_NOTE_TAG = "KORU-LLM-RUN"
+TASKAND_RUN_NOTE_TAG = "KORU-TASKAND-RUN"
+API_RUN_NOTE_TAG = "KORU-API-RUN"
 """Marker prefix on the first line of every shell-evidence note."""
 
 
