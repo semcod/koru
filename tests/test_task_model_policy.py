@@ -61,7 +61,8 @@ def test_labels_titles_and_priority_alone_cannot_downgrade():
 def test_opt_in_client_and_explicit_pins():
     task = lint_task()
     assert select_task_model(task, client_id="opencode", environ={"KORU_TILLM_MODEL": "base"})["model"] == "base"
-    assert select_task_model(task, client_id="claude-code", environ=ENV)["model"] == "zai/glm-5.3"
+    assert select_task_model(task, client_id="claude-code", environ=ENV)["model"] == "zai/glm-5.3-flash"
+    assert select_task_model(task, client_id="unknown-client", environ=ENV)["model"] == "zai/glm-5.3"
     assert choose(task, explicit_model="operator/model")["reason"] == "explicit_request"
     assert choose({**task, "inputs": {**task["inputs"], "llm_model": "ticket/model"}})["model"] == "ticket/model"
     assert (
@@ -89,6 +90,22 @@ def test_real_queue_adapter_passes_flash_and_writes_honest_receipt(tmp_path, mon
     assert [x["status"] for x in rows] == ["started", "cli_success"]
     assert all(x["ticket"] == "TEST-1" for x in rows)
     assert "sensitive" not in text and "observed_model" not in text
+
+
+def test_claude_code_adapter_passes_flash(tmp_path, monkeypatch):
+    from koru.queue.runners import run_shell_llm_request
+    from koru.queue.ticket import ticket_llm_request
+
+    for k, v in ENV.items():
+        monkeypatch.setenv(k, v)
+    monkeypatch.delenv("KORU_TILLM_FORCE_MODEL", raising=False)
+    drive = Mock(return_value={"ok": True, "exit_code": 0, "stdout": "sensitive response"})
+    monkeypatch.setattr("koru.tillm_bridge.drive_shell_chat", drive)
+    result = run_shell_llm_request(
+        ticket_llm_request({**lint_task(), "description": "sensitive prompt"}), tmp_path, "claude-code"
+    )
+    assert drive.call_args.kwargs["model"] == "zai/glm-5.3-flash"
+    assert result.model == "zai/glm-5.3-flash"
 
 
 def test_autonomous_shell_adapter_uses_same_policy(tmp_path, monkeypatch):

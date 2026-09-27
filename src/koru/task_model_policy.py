@@ -13,6 +13,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any, NamedTuple
 
 _LINT_CODES = frozenset({"F401", "F541", "I001", "UP017", "UP035"})
+_SIMPLE_LINT_CLIENTS = frozenset({"opencode", "claude-code"})
 _COMPLEX_LABELS = frozenset({"refactor", "code2llm", "security", "governance", "dependencies"})
 _IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,159}\Z")
 
@@ -118,7 +119,7 @@ def _is_bounded_lint_fix(
 
 
 def _is_lint_fix_request(client_id: str, routing: Mapping[str, Any]) -> bool:
-    return client_id == "opencode" and routing.get("llm_task_kind") == "lint_fix"
+    return client_id in _SIMPLE_LINT_CLIENTS and routing.get("llm_task_kind") == "lint_fix"
 
 
 def _fallback_reason(simple: str, client_id: str, routing: Mapping[str, Any]) -> str:
@@ -157,7 +158,7 @@ def select_task_model(
 
     Precedence: explicit request or ticket ``inputs.llm_model``, then the
     operator pin ``KORU_TILLM_FORCE_MODEL``, then the simple model for a
-    bounded single-file lint fix (opencode only), then the default model.
+    bounded single-file lint fix (opencode or claude-code), then the default model.
     The returned ``reason`` names the branch that produced the decision.
     """
     env = os.environ if environ is None else environ
