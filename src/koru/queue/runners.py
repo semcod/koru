@@ -511,6 +511,56 @@ def _find_taskand_cli(project: Path) -> Path | None:
     return None
 
 
+def _find_twinerd_cli() -> Path | None:
+    """Find a usable twinerd CLI binary."""
+    env_bin = os.getenv("TWINERD_BIN")
+    if env_bin:
+        p = Path(env_bin)
+        if p.is_file() and os.access(p, os.X_OK):
+            return p
+    which_bin = shutil.which("twinerd")
+    if which_bin:
+        return Path(which_bin)
+    candidate = Path("/home/tom/.local/bin/twinerd")
+    if candidate.is_file() and os.access(candidate, os.X_OK):
+        return candidate
+    return None
+
+
+def create_twinerd_sandbox(
+    source_project: Path,
+    name: str = "twin-sandbox",
+    target_base: Path | None = None,
+    cli_bin: Path | None = None,
+) -> dict[str, Any] | None:
+    """Create a zero-copy digital twin sandbox via Twinerd."""
+    binary = cli_bin or _find_twinerd_cli()
+    if not binary:
+        return None
+    target_dir = target_base or Path("/tmp/twinerd-sandboxes")
+    cmd = [
+        str(binary),
+        "create",
+        "--name",
+        name,
+        "--source",
+        str(source_project),
+        "--target",
+        str(target_dir),
+        "--driver",
+        "auto",
+        "--json",
+    ]
+    proc = _run_captured_subprocess(cmd, cwd=source_project)
+    if proc.returncode != 0:
+        return None
+    try:
+        data = json.loads(proc.stdout)
+        return data if isinstance(data, dict) and data.get("status") == "ok" else None
+    except json.JSONDecodeError:
+        return None
+
+
 class _TaskandGatewayConfig(NamedTuple):
     """Resolved gateway endpoint settings for a Taskand call."""
 
@@ -798,8 +848,24 @@ def _run_taskand_cli_call(
         )
 
 
+def _resolve_sandbox_project(
+    project: Path,
+    request: dict[str, Any],
+) -> tuple[Path, dict[str, Any] | None]:
+    """Resolve project directory inside a Twinerd sandbox if requested."""
+    sandbox_kind = str(request.get("sandbox") or "").strip().lower()
+    if sandbox_kind != "twinerd":
+        return project, None
+    twin_name = str(request.get("twin_name") or f"twin-{project.name}")
+    twin_info = create_twinerd_sandbox(project, name=twin_name)
+    if twin_info and twin_info.get("mount_point"):
+        return Path(str(twin_info["mount_point"])), twin_info
+    return project, twin_info
+
+
 def run_taskand_request(request: dict[str, Any], project: Path) -> TaskandRunResult:
     """Execute a task using Taskand process framework (via Gateway HTTP or local CLI)."""
+    target_project, _twin_info = _resolve_sandbox_project(project, request)
     config = _taskand_gateway_config(request)
     uri = request.get("uri")
     data = request.get("data") or {}
@@ -817,9 +883,9 @@ def run_taskand_request(request: dict[str, Any], project: Path) -> TaskandRunRes
         return _post_taskand_gateway(target.endpoint, target.body, config.headers, config.timeout_seconds, uri)
 
     # Fallback to local CLI invocation
-    cli_bin = _find_taskand_cli(project)
+    cli_bin = _find_taskand_cli(target_project)
     if cli_bin and uri:
-        return _run_taskand_cli_call(cli_bin, uri, data, project)
+        return _run_taskand_cli_call(cli_bin, uri, data, target_project)
 
     return TaskandRunResult(
         returncode=1,

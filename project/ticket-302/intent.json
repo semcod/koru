@@ -1,0 +1,99 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-302",
+  "summary": "integrate-taskand-operational-profile-and-twinerd-sandbox-in-koru",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-302/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/execution_plan_profiles.py",
+    "src/koru/autonomy/task_profiles.yaml",
+    "src/koru/queue/runners.py",
+    "tests/test_execution_plan_profiles.py",
+    "tests/test_taskand_operational_profile.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e195593695e1f60d7dbb541d4bc0d7229a972338",
+    "targetBranch": "main",
+    "outcome": "Add taskand_operational task profile in task_profiles.yaml and execution_plan_profiles.py, and integrate Twinerd digital twin sandbox support in queue runners.",
+    "nonGoals": [
+      "No breaking changes to existing taskand runner gateway contract",
+      "No mandatory requirement for twinerd binary if sandbox flag is omitted"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Define taskand_operational profile in task_profiles.yaml, add to default profile_order in execution_plan_profiles.py, and add create_twinerd_sandbox and sandbox execution in queue/runners.py with CC <= 6.",
+      "components": [
+        {
+          "name": "autonomy-task-profiles",
+          "paths": [
+            "src/koru/autonomy/task_profiles.yaml",
+            "src/koru/autonomy/execution_plan_profiles.py",
+            "tests/test_execution_plan_profiles.py"
+          ]
+        },
+        {
+          "name": "queue-runners",
+          "paths": [
+            "src/koru/queue/runners.py",
+            "tests/test_taskand_operational_profile.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "git revert HEAD"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_execution_plan_profiles.py tests/test_taskand_operational_profile.py -q"
+        ],
+        "evidence": "All task profile and Twinerd/Taskand operational unit tests pass 100%."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "ruff check src/koru/autonomy/execution_plan_profiles.py src/koru/queue/runners.py tests/test_execution_plan_profiles.py tests/test_taskand_operational_profile.py"
+        ],
+        "evidence": "Ruff check reports 0 findings."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings."
+      }
+    ]
+  }
+}

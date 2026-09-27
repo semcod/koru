@@ -88,6 +88,7 @@ def profile_order(profiles_doc: dict[str, Any]) -> tuple[str, ...]:
         "cc_hotspot_refactor",
         "god_function_refactor",
         "code_smell_refactor",
+        "taskand_operational",
         "god_module_split",
     )
 
