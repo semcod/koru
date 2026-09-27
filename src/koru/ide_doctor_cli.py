@@ -405,22 +405,22 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def action_ide_doctor(args: argparse.Namespace) -> int:
-    ide = _resolve_ide(args.ide)
-    if ide is None:
+    target_ide = _resolve_ide(args.ide)
+    if target_ide is None:
         print(
             "koru ide doctor: could not resolve IDE (pass --ide cursor|vscode|...)",
             file=sys.stderr,
         )
         return 2
-    if get_adapter(ide) is None:
-        print(f"koru ide doctor: no adapter for ide={ide}", file=sys.stderr)
+    if get_adapter(target_ide) is None:
+        print(f"koru ide doctor: no adapter for ide={target_ide}", file=sys.stderr)
         return 2
     project = args.project.expanduser().resolve()
-    socket_path = _resolve_socket(args, ide)
+    socket_path = _resolve_socket(args, target_ide)
     removed: list[str] = []
     if args.gc_sockets:
         removed = gc_stale_sockets_for_lane(socket_path)
-    status = evaluate_bridge(ide=ide, socket_path=socket_path, project=project)
+    status = evaluate_bridge(ide=target_ide, socket_path=socket_path, project=project)
     status = apply_bridge_fixes(status, project=project, fix=args.fix)
     if removed:
         status.fixes_applied = [
@@ -467,14 +467,14 @@ def action_ide_doctor(args: argparse.Namespace) -> int:
 
 def action_ide_history(args: argparse.Namespace) -> int:
     project = args.project.expanduser().resolve()
-    ide = None if args.ide == "all" else _resolve_ide(args.ide)
-    if args.ide != "all" and ide is None:
+    subject_ide = None if args.ide == "all" else _resolve_ide(args.ide)
+    if args.ide != "all" and subject_ide is None:
         print(
             "koru ide history: could not resolve IDE (pass --ide all|cursor|vscode|...)",
             file=sys.stderr,
         )
         return 2
-    subject = None if ide is None else _bridge_subject(ide, project)
+    subject = None if subject_ide is None else _bridge_subject(subject_ide, project)
     runtime = runtime_for_project(project)
     history = RepairQueryService(runtime).history(
         LoadRepairHistoryQuery(subject=subject, limit=args.limit)
@@ -502,23 +502,23 @@ def action_ide_reload(args: argparse.Namespace) -> int:
         try_reload_vscode_family_ide,
     )
 
-    ide = _resolve_ide(args.ide) or args.ide
+    reload_ide = _resolve_ide(args.ide) or args.ide
     project = args.project.expanduser().resolve()
     if args.detached:
         outcome = spawn_detached_ide_reload(
-            ide,
+            reload_ide,
             project=project,
             connect_only=args.connect_only,
         )
     else:
         outcome = try_reload_vscode_family_ide(
-            ide,
+            reload_ide,
             project=project,
             dry_run=args.dry_run,
             connect_only=args.connect_only,
         )
     payload = {
-        "ide": ide,
+        "ide": reload_ide,
         "attempted": outcome.attempted,
         "ok": outcome.ok,
         "method": outcome.method,
@@ -670,9 +670,9 @@ def action_ide_commands(args: argparse.Namespace) -> int:
         format_command_catalog_text,
     )
 
-    ide = None if args.ide == "all" else args.ide
+    catalog_ide = None if args.ide == "all" else args.ide
     try:
-        payload = command_catalog_for_llm(ide) if args.for_llm else build_ide_command_catalog(ide)
+        payload = command_catalog_for_llm(catalog_ide) if args.for_llm else build_ide_command_catalog(catalog_ide)
     except ValueError as exc:
         print(f"koru ide commands: {exc}", file=sys.stderr)
         return 2
@@ -681,7 +681,7 @@ def action_ide_commands(args: argparse.Namespace) -> int:
     elif args.output_format == "yaml":
         print(yaml.safe_dump(payload, sort_keys=False, allow_unicode=True))
     else:
-        print(format_command_catalog_text(ide, for_llm=args.for_llm))
+        print(format_command_catalog_text(catalog_ide, for_llm=args.for_llm))
     return 0
 
 
@@ -700,9 +700,9 @@ def action_ide_scenario_schema(args: argparse.Namespace) -> int:
 def action_ide_scenario_prompt(args: argparse.Namespace) -> int:
     from koruide.command_scenario import llm_scenario_prompt
 
-    ide = None if args.ide == "all" else args.ide
+    scenario_ide = None if args.ide == "all" else args.ide
     try:
-        print(llm_scenario_prompt(ide))
+        print(llm_scenario_prompt(scenario_ide))
     except ValueError as exc:
         print(f"koru ide scenario-prompt: {exc}", file=sys.stderr)
         return 2
