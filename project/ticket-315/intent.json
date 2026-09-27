@@ -1,0 +1,93 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-315",
+  "summary": "Update Koru documentation for v0.1.461 and wellmanifest standards",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-315/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "docs/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2c82e2055feb269399c3081ec6750e5b5ee9b7df",
+    "targetBranch": "main",
+    "outcome": "Update Koru documentation to version 0.1.461 conforming to wellmanifest/docs Compact Profile v2, logs v0.5.0, errors, wellman, and worktrees v5 standards.",
+    "nonGoals": [
+      "No breaking changes to runtime application code or CLI signatures"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add compact v2 documentation files under docs/SERVICE, docs/FEATURE, and docs/INFORMATION, and update docs/README.md index",
+      "components": [
+        {
+          "name": "documentation",
+          "paths": [
+            "docs/SERVICE/AUTONOMOUS_FLEET_MANAGEMENT.md",
+            "docs/FEATURE/TASK_MODEL_POLICY.md",
+            "docs/FEATURE/PLANFILE_OUTBOUND_SYNC.md",
+            "docs/FEATURE/VOICE_AND_NL_CONTROL_BRIDGE.md",
+            "docs/INFORMATION/WELLMANIFEST_WORKTREES_INTEGRATION.md",
+            "docs/INFORMATION/LOGS_AND_ERROR_CONTRACTS.md",
+            "docs/README.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "revert commit"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 .governance/worktree_path_check.py --root .",
+          "python3 .governance/standard_pack_check.py"
+        ],
+        "evidence": "worktrees layout and standard pack evidence pass conformance gates"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh",
+          "git diff --check"
+        ],
+        "evidence": "repository governance gate and whitespace checks pass with exit code 0"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest tests/test_context.py -q"
+        ],
+        "evidence": "project unit test suite executes cleanly without regressions"
+      }
+    ]
+  }
+}
