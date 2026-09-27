@@ -189,15 +189,15 @@ def check_plugin_installed_version_mismatch_issue(
   plugin: dict[str, Any], ide: str
 ) -> list[ManagerIssue]:
   installed_version = plugin.get("installed_version")
-  expected_version = plugin.get("expected_version")
-  if installed_version and expected_version and installed_version != expected_version:
+  source_vsix_version = plugin.get("expected_version")
+  if installed_version and source_vsix_version and installed_version != source_vsix_version:
     return [
       ManagerIssue(
         "plugin_installed_version_mismatch",
         "error",
         (
           f"Installed {ide} extension is {installed_version}, "
-          f"but the source VSIX/package is {expected_version}."
+          f"but the source VSIX/package is {source_vsix_version}."
         ),
         f"Run `koru autopilot manage --ide {ide} --fix`.",
       ),
@@ -211,9 +211,11 @@ def check_plugin_installed_ok_but_not_connected_issue(
   if plugin.get("connected"):
     return []
   installed_version = plugin.get("installed_version")
-  expected_version = plugin.get("expected_version")
+  expected_installed_version = plugin.get("expected_version")
   installed_matches_expected = (
-    bool(installed_version) and bool(expected_version) and installed_version == expected_version
+    bool(installed_version)
+    and bool(expected_installed_version)
+    and installed_version == expected_installed_version
   )
   if not installed_matches_expected:
     return []
@@ -244,12 +246,12 @@ def check_plugin_live_host_stale_issue(
   daemon: dict[str, Any], plugin: dict[str, Any], ide: str
 ) -> list[ManagerIssue]:
   installed_version = plugin.get("installed_version")
-  expected_version = plugin.get("expected_version")
-  if not _plugin_install_matches_expected(daemon, installed_version, expected_version):
+  live_host_expected_version = plugin.get("expected_version")
+  if not _plugin_install_matches_expected(daemon, installed_version, live_host_expected_version):
     return []
   if _plugin_live_connection_matches_expected(plugin):
     return []
-  rejected = _stale_rejected_plugins(daemon, ide, expected_version)
+  rejected = _stale_rejected_plugins(daemon, ide, live_host_expected_version)
   if not rejected:
     return []
   return [_plugin_live_host_stale_issue(ide, str(installed_version), rejected)]
@@ -265,8 +267,12 @@ def _plugin_install_matches_expected(
 
 def _plugin_live_connection_matches_expected(plugin: dict[str, Any]) -> bool:
   connected_version = str(plugin.get("connected_version") or "").strip()
-  expected_version = str(plugin.get("expected_version") or "").strip()
-  if not connected_version or not expected_version or connected_version != expected_version:
+  expected_connected_version = str(plugin.get("expected_version") or "").strip()
+  if (
+    not connected_version
+    or not expected_connected_version
+    or connected_version != expected_connected_version
+  ):
     return False
   expected_build = str(plugin.get("expected_build_sha") or "").strip()
   if not expected_build:
@@ -366,8 +372,8 @@ def check_plugin_socket_candidate_mismatch_issue(
   if not daemon.get("running") or plugin.get("connected"):
     return []
   installed_version = plugin.get("installed_version")
-  expected_version = plugin.get("expected_version")
-  if not installed_version or installed_version != expected_version:
+  expected_installed_version = plugin.get("expected_version")
+  if not installed_version or installed_version != expected_installed_version:
     return []
 
   mismatch = recent_socket_candidate_mismatch(ide, socket_path)
@@ -398,13 +404,13 @@ def check_plugin_version_mismatch_issue(
   daemon: dict[str, Any], plugin: dict[str, Any], ide: str
 ) -> list[ManagerIssue]:
   connected_version = plugin.get("connected_version")
-  expected_version = plugin.get("expected_version")
+  source_vsix_version = plugin.get("expected_version")
   if (
     daemon.get("running")
     and plugin.get("connected")
     and connected_version
-    and expected_version
-    and connected_version != expected_version
+    and source_vsix_version
+    and connected_version != source_vsix_version
   ):
     if os.environ.get("KORU_AUTOPILOT_ALLOW_PLUGIN_VERSION_MISMATCH", "").strip().lower() in (
       "1", "true", "yes",
@@ -415,7 +421,7 @@ def check_plugin_version_mismatch_issue(
           "warning",
           (
             f"Connected {ide} plugin is {connected_version}, "
-            f"but the source VSIX/package is {expected_version}."
+            f"but the source VSIX/package is {source_vsix_version}."
           ),
           "Mismatch allowed by KORU_AUTOPILOT_ALLOW_PLUGIN_VERSION_MISMATCH=1.",
         ),
@@ -426,7 +432,7 @@ def check_plugin_version_mismatch_issue(
         "error",
         (
           f"Connected {ide} plugin is {connected_version}, "
-          f"but the source VSIX/package is {expected_version}."
+          f"but the source VSIX/package is {source_vsix_version}."
         ),
         (
           f"Run `koru autopilot manage --ide {ide} --fix`, fully reload the IDE "
