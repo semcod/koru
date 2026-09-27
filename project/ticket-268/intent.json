@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-268",
+  "summary": "Shotgun surgery cycle_telemetry in scan phase",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-268/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/phases/scan_phase.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "89a8a2c6bda40024c809557fa9acf09dfcba6068",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm Shotgun Surgery: cycle_telemetry smell (planfile ticket PLF-043, dedupe key code2llm:smell:shotgun_surgery:src/koru/autonomy/phases/scan_phase.py:595) by renaming the generic telemetry-dict parameter 'cycle_telemetry' to stage-accurate names in each of the nine functions in src/koru/autonomy/phases/scan_phase.py that mutate it: rate_limit_skip_telemetry (_skip_scan_after_idle_for_rate_limit), create_failed_cooldown_skip_telemetry (_skip_scan_after_idle_for_create_failed_cooldown), duplicate_cooldown_skip_telemetry (_skip_scan_after_idle_for_duplicate_cooldown), idle_scan_result_telemetry (_record_scan_after_idle_result), code2llm_discovery_telemetry (_record_code2llm_discovery_telemetry), monag_discovery_telemetry (_record_monag_discovery_telemetry), nxdo_discovery_telemetry (_record_nxdo_discovery_telemetry), todo2code_discovery_telemetry (_record_todo2code_discovery_telemetry), code_change_autonomy_telemetry (_record_code_change_autonomy_telemetry). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the group drops from 9 scopes to 0. The umbrella name cycle_telemetry stays in the four non-mutating pass-through scopes (handle_backlog_promotion_after_idle, handle_scan_after_idle, _run_idle_discovery_fallbacks, _run_scan_after_idle), which produce no mutation records and where it genuinely names the cycle-wide dict. Pure rename of parameters and their in-module call references; all call sites are positional, no behavior change.",
+    "nonGoals": [
+      "No behavior, telemetry-key, decision or interface change",
+      "No restructuring into a telemetry recorder class or central writer (each stage writes disjoint keys for its own decision; the shared generic name was the defect, not a missing abstraction)",
+      "No rename of cycle_telemetry parameters in other modules or of the public entry-point parameters"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate parameter renames only, inside one module, following the accepted ticket-266 precedent for the identical smell class in cycle_skip_conditions.py. Every mutating helper names the telemetry view of the scan/idle stage it records; the umbrella name cycle_telemetry remains only in the four pass-through scopes, which produce no mutation records. Verified with the code2llm shotgun-surgery detector: baseline groups cycle_telemetry mutations in 9 scopes in the file (>= 5 threshold fires), after the rename no scope in the file mutates the name and no new (file, variable) group reaches the threshold.",
+      "components": [
+        {
+          "name": "autonomy-scan-phase",
+          "paths": [
+            "src/koru/autonomy/phases/scan_phase.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the parameters are named cycle_telemetry again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor + SmellDetector on plain /tmp copies of scan_phase.py, original vs renamed>\""
+        ],
+        "evidence": "Deterministic ground truth on plain /tmp copies (never inside the registered worktree): the installed code2llm DFGExtractor plus the real SmellDetector run standalone on the single file reports 'Shotgun Surgery: cycle_telemetry' for the original content with exactly the 9 mutating scopes named in the ticket, and 0 mutating scopes for the renamed content, with the file's total mutation count unchanged (128) and no new shotgun entry; the separate pre-existing payload/outcome/state.telemetry_scan_after_idle_tickets_applied groups are untouched by design (minimal scope)."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_scan_phase.py tests/test_cycle_backlog_promotion.py -q",
+          "python3 -m pytest tests/test_autonomous.py -q -k 'scan_after_idle or backlog'",
+          "ruff check src/koru/autonomy/phases/scan_phase.py"
+        ],
+        "evidence": "All listed suites pass unchanged in the ticket worktree (pure rename; every renamed scope is executed by existing tests asserting the same telemetry keys), and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree."
+      }
+    ]
+  }
+}
