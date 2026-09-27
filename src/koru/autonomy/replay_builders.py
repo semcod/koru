@@ -87,12 +87,11 @@ def ticket_open(ticket_id: str, base_url: str = "http://127.0.0.1:8765") -> Repl
 
 
 def scan_force() -> ReplayAction:
-    """Force a fresh koru scan (clear project cache first)."""
+    """Run one signal scan, preserving project history (legacy DSL verb)."""
     return ReplayAction(
         domain="scan",
         verb="force",
-        label="Force fresh project scan",
-        validate_cmd="ls -d project/ 2>/dev/null && echo 'project dir exists' || echo 'clean'",
+        label="Scan signals without deleting project history",
     )
 
 

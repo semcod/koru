@@ -91,3 +91,48 @@ def test_replay_command_handlers_ticket_input_requires_ticket_id(tmp_path) -> No
 
     assert result.ok is False
     assert "ticket_id required" in result.output
+
+
+def test_scan_replay_preserves_history_and_only_invokes_scanner(tmp_path, monkeypatch):
+    import json
+    import sys
+
+    sentinels = [tmp_path / "project/ticket-001/README.md", tmp_path / ".planfile/sprints/current.yaml"]
+    for path in sentinels:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"existing durable history\n")
+    scanner = tmp_path / "fake_scanner.py"
+    scanner.write_text(
+        "import json,sys; from pathlib import Path; "
+        "Path('scan-args.json').write_text(json.dumps(sys.argv[1:]))"
+    )
+    original_run = subprocess.run
+
+    def invoke(argv, **kwargs):
+        # A replay must not wrap deletion or an autonomous loop in a shell.
+        assert argv[:3] == [sys.executable, "-m", "koru"] and "auto" not in argv
+        assert kwargs.get("shell", False) is False
+        return original_run([sys.executable, str(scanner), *argv[3:]], **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", invoke)
+    result = execute_replay_action(parse_replay_dsl("scan force"), project=tmp_path)
+    assert result.ok
+    assert json.loads((tmp_path / "scan-args.json").read_text()) == ["scan", "--apply"]
+    assert all(path.read_bytes() == b"existing durable history\n" for path in sentinels)
+
+
+def test_scan_quick_action_keeps_legacy_labels_and_safe_metadata():
+    for label in ("scan signals", "force fresh scan", "force scan"):
+        action = quick_action_to_replay(f"[{label}] `koru scan --apply`")
+        assert action is not None
+        assert action.to_dsl() == "scan force"
+        assert "preserving" in action.label or "without deleting" in action.label
+        assert "rm " not in action.to_shell()
+        assert action.validate_cmd is None
+
+
+def test_scan_replay_propagates_scanner_failure(tmp_path, monkeypatch):
+    monkeypatch.setattr(subprocess, "run", lambda *a, **kw: subprocess.CompletedProcess(a[0], 7, "failed scan", ""))
+    result = execute_replay_action(parse_replay_dsl("scan force"), project=tmp_path)
+    assert result.ok is False
+    assert result.returncode == 7

@@ -50,7 +50,7 @@ def _quick_static_action(
     if label_lower == "reconnect plugin":
         ide = autopilot_ide or "auto"
         return ide_connect_plugin(ide)
-    if label_lower in ("force fresh scan", "force scan"):
+    if label_lower in ("scan signals", "force fresh scan", "force scan"):
         return scan_force()
     if label_lower == "show wup track":
         return wup_show_health()
