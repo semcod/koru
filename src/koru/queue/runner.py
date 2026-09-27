@@ -897,6 +897,7 @@ def _run_next_planfile_task_impl(
             return QueueRunResult(
                 status="waiting_input", ticket_id=ticket_id,
                 executor_kind=executor_kind, message=gap,
+                autopilot_blocked=True,
             )
 
         resolved_action, action_result = _resolve_action_or_result(

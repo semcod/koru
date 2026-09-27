@@ -25,6 +25,7 @@ class QueueRunResult:
     exit_code: int | None = None
     stdout: str = ""
     stderr: str = ""
+    autopilot_blocked: bool = False
 
 
 @dataclass(frozen=True)
@@ -38,6 +39,7 @@ class QueueLoopResult:
     last_status: str
     last_message: str = ""
     last_ticket_id: str | None = None
+    autopilot_blocked: bool = False
 
     @property
     def ticket_id(self) -> str | None:
