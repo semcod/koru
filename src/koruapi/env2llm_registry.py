@@ -125,7 +125,7 @@ def env2llm_get_registry(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service, descriptor = _get_service(
+        service, registry_descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
@@ -135,7 +135,7 @@ def env2llm_get_registry(
             "ok": True,
             "project_id": service.project_id,
             "registry": registry,
-            "service_descriptor": descriptor,
+            "service_descriptor": registry_descriptor,
         }
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
@@ -153,7 +153,7 @@ def env2llm_render_registry(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service, descriptor = _get_service(
+        service, render_descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
@@ -164,7 +164,7 @@ def env2llm_render_registry(
             "project_id": service.project_id,
             "format": fmt,
             "content": content,
-            "service_descriptor": descriptor,
+            "service_descriptor": render_descriptor,
         }
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
@@ -183,7 +183,7 @@ def env2llm_refresh_registry(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service, descriptor = _get_service(
+        service, refresh_descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
@@ -201,7 +201,7 @@ def env2llm_refresh_registry(
             "example_id": ir.example_id,
             "path": str(path) if path else None,
             "command_count": len(ir.commands),
-            "service_descriptor": descriptor,
+            "service_descriptor": refresh_descriptor,
         }
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
@@ -217,7 +217,7 @@ def env2llm_sync_after_calibration(
     if not _ensure_env2llm(label="koru calibrate"):
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service, descriptor = _get_service(
+        service, sync_descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
@@ -239,7 +239,7 @@ def env2llm_sync_after_calibration(
             "registry_path": str(registry_path) if registry_path else None,
             "ide_calibration_count": len(calibrations),
             "ide_calibrations": calibrations,
-            "service_descriptor": descriptor,
+            "service_descriptor": sync_descriptor,
         }
         if not validation.get("ok", True):
             result["validation"] = validation
@@ -259,7 +259,7 @@ def env2llm_get_desktop(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service, descriptor = _get_service(
+        service, desktop_descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
@@ -268,7 +268,7 @@ def env2llm_get_desktop(
             "ok": True,
             "project_id": service.project_id,
             "desktop": service.desktop_payload(refresh=refresh),
-            "service_descriptor": descriptor,
+            "service_descriptor": desktop_descriptor,
         }
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
@@ -293,7 +293,7 @@ def env2llm_validate_calibration(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service, descriptor = _get_service(
+        service, validation_descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
@@ -304,7 +304,7 @@ def env2llm_validate_calibration(
 
         result = validate_calibrations(desktop, ide_filter=ide)
         result["project_id"] = service.project_id
-        result["service_descriptor"] = descriptor
+        result["service_descriptor"] = validation_descriptor
         return result
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
@@ -321,7 +321,7 @@ def env2llm_list_commands(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service, descriptor = _get_service(
+        service, commands_descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
@@ -330,7 +330,7 @@ def env2llm_list_commands(
             "ok": True,
             "project_id": service.project_id,
             "commands": service.commands_payload(refresh=refresh),
-            "service_descriptor": descriptor,
+            "service_descriptor": commands_descriptor,
         }
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
@@ -347,14 +347,14 @@ def env2llm_list_uris(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service, descriptor = _get_service(
+        service, uris_descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
         )
         payload = service.uris_payload(refresh=refresh)
         payload.setdefault("project_id", service.project_id)
-        payload["service_descriptor"] = descriptor
+        payload["service_descriptor"] = uris_descriptor
         return payload
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
@@ -370,7 +370,7 @@ def env2llm_mqtt_status(
     if not _ENV2LLM_AVAILABLE:
         return {"ok": False, "error": env2llm_missing_message()}
     try:
-        service, descriptor = _get_service(
+        service, mqtt_descriptor = _get_service(
             project_dir=project_dir,
             project_root=project_root,
             project_id=project_id,
@@ -378,7 +378,7 @@ def env2llm_mqtt_status(
         return {
             "ok": True,
             **service.mqtt_status(),
-            "service_descriptor": descriptor,
+            "service_descriptor": mqtt_descriptor,
         }
     except Exception as exc:
         return {"ok": False, "error": str(exc)}

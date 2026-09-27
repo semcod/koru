@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-275",
+  "summary": "Address code smell: shotgun surgery descriptor locals in env2llm registry",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-275/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/env2llm_registry.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "4a5d4593232432c3723a45050043fba8c83c069e",
+    "targetBranch": "main",
+    "outcome": "Rename the generic local variable 'descriptor' to stage-accurate names in each of the nine wrapper functions of src/koruapi/env2llm_registry.py that tuple-unpack it from _get_service and embed it in their response under the 'service_descriptor' key: registry_descriptor (env2llm_get_registry, live registry snapshot response), render_descriptor (env2llm_render_registry, rendered-document response), refresh_descriptor (env2llm_refresh_registry, regenerate/persist result), sync_descriptor (env2llm_sync_after_calibration, post-calibration sync result), desktop_descriptor (env2llm_get_desktop, desktop probe slice), validation_descriptor (env2llm_validate_calibration, calibration validation result), commands_descriptor (env2llm_list_commands, command-schema listing), uris_descriptor (env2llm_list_uris, URI index payload), mqtt_descriptor (env2llm_mqtt_status, MQTT bridge status). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'descriptor' group drops from 9 scopes to 0. Each new name lands at 1 scope, so no (file, variable) group grows toward the threshold. Pure rename of function-internal locals; no signature, return shape (the response key stays 'service_descriptor') or behavior change; no other file touched.",
+    "nonGoals": [
+      "No behavior, payload shape or interface change (every response still carries the 'service_descriptor' key)",
+      "No restructuring of _get_service's tuple return into a handle object (that would also dissolve the pre-existing 'service' group; minimal scope for this ticket's reported variable only)",
+      "No fix for the pre-existing 'service' shotgun-surgery group in the same file (9 scopes, same tuple-unpack double-counting; separately ticketed in planfile) or for findings in other files",
+      "No rename of locals in other files that happen to use 'descriptor' (each is an independent local in its own file scope)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local renames only, inside one module. Every wrapper that unpacks the built service's descriptor names it after the response stage it annotates (registry snapshot, rendered document, refresh result, post-calibration sync, desktop probe, calibration validation, command listing, URI index, MQTT status); the generic name 'descriptor' disappears from the file's mutation set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports a 'descriptor' mutation group of exactly 9 scopes - env2llm_get_registry, env2llm_render_registry, env2llm_refresh_registry, env2llm_sync_after_calibration, env2llm_get_desktop, env2llm_validate_calibration, env2llm_list_commands, env2llm_list_uris, env2llm_mqtt_status - matching the ticket's 'spans 9 functions'; after the rename the 'descriptor' group is empty, the file mutation record count is unchanged (67) and no new (file, variable) group reaches the >= 5 threshold (the pre-existing 'service' group at 9 scopes remains untouched).",
+      "components": [
+        {
+          "name": "koru-env2llm-bridge",
+          "paths": [
+            "src/koruapi/env2llm_registry.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named descriptor again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor(Config()).extract(ast.parse(<file>)) + per-variable mutation-scope grouping, original vs renamed content of src/koruapi/env2llm_registry.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports a 'descriptor' mutation group of 9 scopes (the nine wrapper functions listed in the outcome) - exactly matching the ticket's reported 'spans 9 functions'. Renamed content reports a 'descriptor' group of 0 scopes; file mutation record count unchanged at 67 (pure rename); every renamed local lands at 1 scope, far below the >= 5 threshold."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_env2llm_registry.py tests/test_mcp_server_split.py tests/test_mcp_server.py tests/test_deps_autorepair.py -q",
+          "ruff check src/koruapi/env2llm_registry.py"
+        ],
+        "evidence": "The suites that exercise the renamed paths pass unchanged - pure rename of function-internal locals - and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
