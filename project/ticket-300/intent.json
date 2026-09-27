@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-300",
+  "summary": "Decompose ticket-response parsing to clear god-function smell in context",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-300/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/context.py",
+    "tests/test_context.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "50103a8f1699a1a0da6f8dcfe18debd5d1d6ec91",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm God Function smell for the reported lineage of src/koru/context.py:462 (planfile PLF-031, reported as 'build_context' CC=9/fan-out=20/mutations=23). The evidence snapshot predates ticket-213 (120509a0) and ticket-244 (84318d61): build_context itself is already under every threshold at HEAD, but ticket-213's extraction moved the reported 23-mutation block verbatim into the helper _parse_ticket_response (lines 423-467, containing the cited line 462), which is still flagged (CC=10, fan-out=10, mutations=23). Fix: _process_list_payload and _process_dict_payload return the existing _TicketFetch NamedTuple instead of bare tuples (tuple-unpack targets are double-counted by the mutation metric - 10 of the 23 records); _parse_ticket_response returns _TicketFetch with one direct return per response shape (idle banner/empty/JSON-null, non-JSON garbage, list payload, dict payload with follow-up history fetch, scalar-JSON fall-through) instead of mutating four accumulator locals; the idle-output probe is extracted to _is_idle_planfile_output; _fetch_ticket_data (sole caller) drops the tuple re-pack. Behavior-preserving. _process_list_payload keeps its pre-existing mutations=8 - a separate unreported dedupe key at :339, out of scope. No duplication report exists in this repository (no project/duplication.toon.yaml), so the duplication checklist has nothing to consult for the touched path.",
+    "nonGoals": [
+      "No behavior, message, schema or public-interface change",
+      "No restructuring of _process_list_payload internals (its mutations=8 is a separate smell instance with its own future dedupe key at :339)",
+      "No changes outside src/koru/context.py and tests/test_context.py"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep the ticket-fetch pipeline shape; replace bare-tuple contracts between _parse_ticket_response and its two payload helpers with the existing _TicketFetch NamedTuple and make each response shape return directly.",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "src/koru/context.py",
+            "tests/test_context.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "git revert HEAD"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm FileAnalyzer on src/koru/context.py, base vs head content>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm FileAnalyzer on the file AST. Base reports _parse_ticket_response CC=10, mutations=23 (matches the ticket's reported mutation count at the cited line region); head reports CC<=6, mutations<=3 - under every god threshold (fan-out>10, mutations>6, CC>12). New helper _is_idle_planfile_output lands at CC<=4, mutations=1. build_context stays CC=4, mutations=6. No other function in the file newly crosses a threshold."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_context.py -q",
+          "ruff check src/koru/context.py"
+        ],
+        "evidence": "Full context suite (idle, JSON-null, list, dict, fixture filtering, error paths, rendering) green, including the new scalar-JSON fall-through pin; ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
