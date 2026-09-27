@@ -232,58 +232,68 @@ def _write_json(path: Path, data: dict[str, Any], *, dry_run: bool = False) -> s
 # ---------------------------------------------------------------------------
 
 
+def _upsert_koru_server(
+    config_path: Path,
+    server_key: str,
+    entry: dict[str, Any],
+    *,
+    ide: str,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """Add the koru entry to an MCP config document, or upgrade it in place.
+
+    Single owner of the read → upsert → write flow the per-IDE provisioners
+    share; *server_key* is ``mcpServers`` everywhere except Zed's
+    ``context_servers``.
+    """
+    config = _read_json(config_path)
+    servers = config.setdefault(server_key, {})
+
+    if "koru" in servers:
+        if _maybe_upgrade_koru_command(servers):
+            written = _write_json(config_path, config, dry_run=dry_run)
+            return {"ide": ide, "action": "updated", "path": written, "dry_run": dry_run}
+        return {"ide": ide, "action": "already_configured", "path": str(config_path)}
+
+    servers["koru"] = entry
+    written = _write_json(config_path, config, dry_run=dry_run)
+    return {"ide": ide, "action": "added", "path": written, "dry_run": dry_run}
+
+
 def provision_windsurf(project: Path, *, dry_run: bool = False) -> dict[str, Any]:
     """Add koru MCP server to Windsurf config."""
     # Prefer per-project config if .windsurf/ exists; else global
     project_cfg = _windsurf_project_config(project)
     config_path = project_cfg if project_cfg.parent.exists() else _windsurf_global_config()
-
-    config = _read_json(config_path)
-    servers = config.setdefault("mcpServers", {})
-
-    if "koru" in servers:
-        if _maybe_upgrade_koru_command(servers):
-            written = _write_json(config_path, config, dry_run=dry_run)
-            return {"ide": "windsurf", "action": "updated", "path": written, "dry_run": dry_run}
-        return {"ide": "windsurf", "action": "already_configured", "path": str(config_path)}
-
-    servers["koru"] = _koru_mcp_entry(project)
-    written = _write_json(config_path, config, dry_run=dry_run)
-    return {"ide": "windsurf", "action": "added", "path": written, "dry_run": dry_run}
+    return _upsert_koru_server(
+        config_path,
+        "mcpServers",
+        _koru_mcp_entry(project),
+        ide="windsurf",
+        dry_run=dry_run,
+    )
 
 
 def provision_cursor(project: Path, *, dry_run: bool = False) -> dict[str, Any]:
     """Add koru MCP server to Cursor per-project config."""
-    config_path = _cursor_project_config(project)
-    config = _read_json(config_path)
-    servers = config.setdefault("mcpServers", {})
-
-    if "koru" in servers:
-        if _maybe_upgrade_koru_command(servers):
-            written = _write_json(config_path, config, dry_run=dry_run)
-            return {"ide": "cursor", "action": "updated", "path": written, "dry_run": dry_run}
-        return {"ide": "cursor", "action": "already_configured", "path": str(config_path)}
-
-    servers["koru"] = _koru_mcp_entry_cursor(project)
-    written = _write_json(config_path, config, dry_run=dry_run)
-    return {"ide": "cursor", "action": "added", "path": written, "dry_run": dry_run}
+    return _upsert_koru_server(
+        _cursor_project_config(project),
+        "mcpServers",
+        _koru_mcp_entry_cursor(project),
+        ide="cursor",
+        dry_run=dry_run,
+    )
 
 
 def provision_vscode(project: Path, *, dry_run: bool = False) -> dict[str, Any]:
     """Add koru MCP server to VS Code per-project config."""
-    config_path = _vscode_project_config(project)
-    config = _read_json(config_path)
-    servers = config.setdefault("mcpServers", {})
-
-    if "koru" in servers:
-        if _maybe_upgrade_koru_command(servers):
-            written = _write_json(config_path, config, dry_run=dry_run)
-            return {"ide": "vscode", "action": "updated", "path": written, "dry_run": dry_run}
-        return {"ide": "vscode", "action": "already_configured", "path": str(config_path)}
-
-    servers["koru"] = _koru_mcp_entry(project)
-    written = _write_json(config_path, config, dry_run=dry_run)
-    return {"ide": "vscode", "action": "added", "path": written, "dry_run": dry_run}
+    return _upsert_koru_server(
+        _vscode_project_config(project),
+        "mcpServers",
+        _koru_mcp_entry(project),
+        ide="vscode",
+        dry_run=dry_run,
+    )
 
 
 def provision_vscodium(project: Path, *, dry_run: bool = False) -> dict[str, Any]:
@@ -295,19 +305,13 @@ def provision_vscodium(project: Path, *, dry_run: bool = False) -> dict[str, Any
 
 def provision_zed(project: Path, *, dry_run: bool = False) -> dict[str, Any]:
     """Add koru MCP server to Zed per-project settings."""
-    config_path = _zed_project_settings(project)
-    config = _read_json(config_path)
-    servers = config.setdefault("context_servers", {})
-
-    if "koru" in servers:
-        if _maybe_upgrade_koru_command(servers):
-            written = _write_json(config_path, config, dry_run=dry_run)
-            return {"ide": "zed", "action": "updated", "path": written, "dry_run": dry_run}
-        return {"ide": "zed", "action": "already_configured", "path": str(config_path)}
-
-    servers["koru"] = _koru_mcp_entry(project)
-    written = _write_json(config_path, config, dry_run=dry_run)
-    return {"ide": "zed", "action": "added", "path": written, "dry_run": dry_run}
+    return _upsert_koru_server(
+        _zed_project_settings(project),
+        "context_servers",
+        _koru_mcp_entry(project),
+        ide="zed",
+        dry_run=dry_run,
+    )
 
 
 def remove_from_config(

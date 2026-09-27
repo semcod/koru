@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-263",
+  "summary": "Address code smell: shotgun surgery config in mcp provision",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-263/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/mcp_provision.py",
+    "tests/test_mcp_provision.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "483179868b9adb42da3d7704544839f666f3cd6d",
+    "targetBranch": "main",
+    "outcome": "Remove the code2llm 'Shotgun Surgery' reports for src/koru/mcp_provision.py (PLF-040) by consolidating the four copy-pasted per-IDE provisioner bodies (provision_windsurf, provision_cursor, provision_vscode, provision_zed) into one _upsert_koru_server helper that single-handedly owns the read -> upsert -> write flow; each provisioner keeps only its config-path resolution and koru-entry builder and delegates with its server key (mcpServers, or context_servers for Zed) and ide id. The generic locals 'config' and 'servers' stop being assigned/mutated in every function: same-file mutator scopes drop from 6 to 3 for 'config' and from 7 to 4 for 'servers', below the detector's >=5 threshold, with no renames needed in remove_from_config, ensure_koru_mcp_not_disabled or koru_mcp_configured. Behavior is byte-identical (same action strings, paths, dry-run semantics, Windsurf per-project/global selection and _maybe_upgrade_koru_command upgrade path). tests/test_mcp_provision.py adds test_provision_windsurf_falls_back_to_global_config pinning the previously untested Windsurf global-config fallback branch.",
+    "nonGoals": [
+      "Changing any provisioner's public signature, result dict shape, action strings or dry-run semantics",
+      "Renaming locals in remove_from_config, ensure_koru_mcp_not_disabled or koru_mcp_configured (already below threshold)",
+      "Extracting a module or moving provisioners (no new patch targets, facade late-binding untouched)",
+      "Touching koru_mcp_configured candidates logic or other src/koru smell reports"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add _upsert_koru_server(config_path, server_key, entry, *, ide, dry_run) in src/koru/mcp_provision.py as the single owner of the shared read -> setdefault -> upgrade-or-add -> write flow; provision_windsurf, provision_cursor, provision_vscode and provision_zed become thin wrappers resolving their config path and building their koru entry (vscodium still delegates to provision_vscode).",
+      "components": [
+        {
+          "name": "koru-mcp-provision",
+          "paths": [
+            "src/koru/mcp_provision.py",
+            "tests/test_mcp_provision.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket-263 commit in src/koru/mcp_provision.py and tests/test_mcp_provision.py"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q tests/test_mcp_provision.py tests/test_ide_map_consolidation.py tests/test_autonomy_environment.py tests/test_autonomous_operator.py"
+        ],
+        "evidence": "All existing and newly added mcp_provision suites pass, including test_provision_windsurf_falls_back_to_global_config."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -c \"from code2llm import ProjectAnalyzer, Config; r = ProjectAnalyzer(Config()).analyze_project('src/koru'); assert not [s for s in r.smells if s.type == 'shotgun_surgery' and s.file.endswith('mcp_provision.py')]\""
+        ],
+        "evidence": "code2llm reports no Shotgun Surgery smell for mcp_provision.py: 'config' mutators drop from 6 functions to 3 and 'servers' from 7 to 4, both below the >=5 threshold."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koru/mcp_provision.py tests/test_mcp_provision.py"
+        ],
+        "evidence": "Ruff reports zero lint errors for the touched files."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
