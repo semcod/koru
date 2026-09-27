@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-285",
+  "summary": "Address code smell: Shotgun Surgery: files locals in koru scan artifacts",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-285/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/scan_artifacts.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5a30a44997d89bfd1892166cace23a92fef4c1c9",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm Shotgun Surgery smell for the variable 'files' in src/koru/scan_artifacts.py (planfile ticket PLF-039, reported at line 493) by replacing the generic local with a stage-accurate name in each of the six functions that mutate it: ticket_files (_location_from_cc_ticket, the files field of a planfile code2llm_cc ticket whose first entry anchors the located symbol string; also _should_skip_code2llm_dup_ticket, the files field of a planfile code2llm_dup ticket checked for byte drift, matching the pre-existing ticket_files local in _parse_layer_hotspot_suggestions), group_files (_planfile_dup_groups_are_extern_mirrors, one code2llm_dup ticket's file group collected into groups, with the trailing comprehension target renamed to group for in-function consistency), located_files (_parse_high_cc_suggestions, the file parts of the located file:line entries attached to a high-CC suggestion, falling back to the artifact path), and failed_paths (_count_pfix_diagnose_issues and _scan_pfix_report, the normalized paths of failed pfix diagnose issues, returned by the counter and unpacked by the scanner for the affected-paths hint). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'files' group drops from 6 scopes to 0 and the file mutation record count is unchanged at 247 (pure rename). Each new name lands below the threshold: ticket_files 3 scopes (two renamed plus the pre-existing _parse_layer_hotspot_suggestions binding), failed_paths 2, group_files 1, located_files 1. Pure rename: no signature, return shape, keyword argument or behavior change; the Suggestion(files=...) call-site keyword arguments and the read-only parameters of _is_extern_mirror_file_group/_files_byte_identical keep their names (they are not mutations and the detector does not count them). No other file touched. No duplication.toon.yaml exists in this repository, so the duplication-report checklist has nothing to consult for the touched path.",
+    "nonGoals": [
+      "No behavior, parsing, filtering or interface change",
+      "No rename of other over-threshold candidates in the file (path, out, suggestions, rel, found, priority, payload, count, text, total, module each already have their own spread); this lane only clears the reported 'files' group of the cited dedupe key",
+      "No new shared ticket-file extraction helper; the six bindings sit at distinct stages (located-symbol anchor, dup-group mirror test, dup-drift check, CC suggestion attachment, diagnose failure counting, diagnose hint rendering) and a forced abstraction would couple independent scan stages",
+      "No rename of the Suggestion(files=...) keyword arguments or the parameter named files in _is_extern_mirror_file_group/_files_byte_identical (call-site arguments and read-only parameters, not counted as mutations by the detector)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local naming only, inside one module. Every function that mutated the generic name 'files' now names exactly the scan stage it consumes: the CC-ticket locator names the ticket's file list (ticket_files), the extern-mirror predicate names one dup ticket's file group (group_files, comprehension target group), the skip rule names the dup ticket's file list (ticket_files), the high-CC parser names the located-entry file parts (located_files), and the pfix pair names the failed diagnose issue paths (failed_paths, produced by the counter and unpacked by the scanner). The generic name 'files' disappears from the file's mutation set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports a 'files' mutation group of exactly 6 scopes - _location_from_cc_ticket, _planfile_dup_groups_are_extern_mirrors, _should_skip_code2llm_dup_ticket, _parse_high_cc_suggestions, _count_pfix_diagnose_issues, _scan_pfix_report - matching the ticket's 'spans 6 functions'; after the rename the 'files' group is empty, the file mutation record count is unchanged at 247 (pure rename), and every renamed local lands below the >= 5 threshold (ticket_files 3, failed_paths 2, group_files 1, located_files 1); no other group newly reaches the threshold.",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "src/koru/scan_artifacts.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named files again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor mutation grouping on the file AST, original vs renamed content of src/koru/scan_artifacts.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports a 'files' mutation group of 6 scopes (_location_from_cc_ticket, _planfile_dup_groups_are_extern_mirrors, _should_skip_code2llm_dup_ticket, _parse_high_cc_suggestions, _count_pfix_diagnose_issues, _scan_pfix_report) - exactly matching the ticket's reported 'spans 6 functions'; renamed content reports a 'files' group of 0 scopes; file mutation record count unchanged at 247 (pure rename); each renamed local lands below the >= 5 threshold (ticket_files 3 scopes including the pre-existing _parse_layer_hotspot_suggestions binding, failed_paths 2, group_files 1, located_files 1); no other variable group newly reaches the threshold."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_scan_artifacts.py tests/test_scan_split.py tests/test_scan.py -q",
+          "ruff check src/koru/scan_artifacts.py"
+        ],
+        "evidence": "The suites that exercise the renamed scan paths (the scan_artifacts unit tests including the CC-location, dup-mirror skip and pfix diagnose flows, the module-split contract, and the scan facade) pass unchanged - pure rename of function-internal locals - and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}

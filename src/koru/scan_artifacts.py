@@ -112,11 +112,11 @@ def _add_location(locations: dict[str, list[str]], alias: str, located: str) -> 
 def _location_from_cc_ticket(ticket: object) -> tuple[str, str] | None:
     if not isinstance(ticket, dict) or ticket.get("signal") != "code2llm_cc":
         return None
-    files = [str(f) for f in (ticket.get("files") or []) if f]
-    if not files:
+    ticket_files = [str(f) for f in (ticket.get("files") or []) if f]
+    if not ticket_files:
         return None
     match = _CC_LOCATION_RE.search(str(ticket.get("description") or ""))
-    located = f"{files[0]}:{match.group('line')}" if match else files[0]
+    located = f"{ticket_files[0]}:{match.group('line')}" if match else ticket_files[0]
     key = str(ticket.get("dedupe_key") or "").rsplit(":", 1)[-1].strip()
     if not key:
         return None
@@ -343,12 +343,12 @@ def _planfile_dup_groups_are_extern_mirrors(project: Path) -> bool | None:
     for ticket in payload.get("tickets") or []:
         if not isinstance(ticket, dict) or ticket.get("signal") != "code2llm_dup":
             continue
-        files = tuple(str(f) for f in (ticket.get("files") or []) if f)
-        if files:
-            groups.append(files)
+        group_files = tuple(str(f) for f in (ticket.get("files") or []) if f)
+        if group_files:
+            groups.append(group_files)
     if not groups:
         return None
-    return all(_is_extern_mirror_file_group(files) for files in groups)
+    return all(_is_extern_mirror_file_group(group) for group in groups)
 
 
 def _files_byte_identical(project: Path, files: Sequence[str]) -> bool:
@@ -380,8 +380,8 @@ def _should_skip_code2llm_dup_ticket(
             for ticket in (payload or {}).get("tickets") or []:
                 if not isinstance(ticket, dict) or ticket.get("signal") != "code2llm_dup":
                     continue
-                files = [str(f) for f in (ticket.get("files") or []) if f]
-                if files and not _files_byte_identical(project, files):
+                ticket_files = [str(f) for f in (ticket.get("files") or []) if f]
+                if ticket_files and not _files_byte_identical(project, ticket_files):
                     return False
             return True
         if plan is False:
@@ -511,7 +511,7 @@ def _parse_high_cc_suggestions(
             continue
 
         found = (locations or {}).get(func) or []
-        files = tuple(entry.split(":", 1)[0] for entry in found) or (rel,)
+        located_files = tuple(entry.split(":", 1)[0] for entry in found) or (rel,)
         if len(found) == 1:
             where = f"`{found[0]}`"
         elif found:
@@ -531,7 +531,7 @@ def _parse_high_cc_suggestions(
                     ),
                     priority="normal",
                     labels=("code2llm", "complexity", "refactor", "scan"),
-                    files=files,
+                    files=located_files,
                 ),
                 source_context,
             ),
@@ -1070,7 +1070,7 @@ def _count_pfix_diagnose_issues(data: object) -> tuple[int, tuple[str, ...]]:
     if not isinstance(data, list):
         return 0, ()
     count = 0
-    files: list[str] = []
+    failed_paths: list[str] = []
     for item in data:
         if not isinstance(item, dict):
             continue
@@ -1080,8 +1080,8 @@ def _count_pfix_diagnose_issues(data: object) -> tuple[int, tuple[str, ...]]:
         count += 1
         path = str(item.get("abs_path") or item.get("file") or "").strip()
         if path:
-            files.append(path.replace("\\", "/"))
-    return count, tuple(dict.fromkeys(files))
+            failed_paths.append(path.replace("\\", "/"))
+    return count, tuple(dict.fromkeys(failed_paths))
 
 
 def _scan_pfix_report(project: Path) -> list[Suggestion]:
@@ -1099,7 +1099,7 @@ def _scan_pfix_report(project: Path) -> list[Suggestion]:
     artifact = _load_structured_artifact(path)
     if artifact is None:
         return []
-    count, files = _count_pfix_diagnose_issues(artifact)
+    count, failed_paths = _count_pfix_diagnose_issues(artifact)
     if count <= 0:
         count = _sum_structured_counts(
             artifact,
@@ -1118,7 +1118,7 @@ def _scan_pfix_report(project: Path) -> list[Suggestion]:
     if count <= 0:
         return []
     priority = "high" if count >= 3 else "normal"
-    file_hint = f" Affected paths: {', '.join(files[:5])}." if files else ""
+    file_hint = f" Affected paths: {', '.join(failed_paths[:5])}." if failed_paths else ""
     return [
         Suggestion(
             signal="pfix_diagnose",
@@ -1131,7 +1131,7 @@ def _scan_pfix_report(project: Path) -> list[Suggestion]:
             ),
             priority=priority,
             labels=("pfix", "diagnostics", "scan"),
-            files=((rel, *files[:8]) if files else (rel,)),
+            files=((rel, *failed_paths[:8]) if failed_paths else (rel,)),
         ),
     ]
 
