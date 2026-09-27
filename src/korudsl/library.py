@@ -30,29 +30,24 @@ def _handle_func(line: str, goal: dict[str, Any] | None, library: dict[str, Any]
         library["functions"][func_name] = {"type": "function", "code": line}
 
 
-def _handle_set(line: str, goal: dict[str, Any] | None) -> None:
-    if goal is not None:
-        goal["steps"].append({"type": "set", "instruction": line})
+def _parse_set(line: str) -> dict[str, Any]:
+    return {"type": "set", "instruction": line}
 
 
-def _handle_wait(line: str, goal: dict[str, Any] | None) -> None:
-    if goal is not None:
-        goal["steps"].append({"type": "wait", "duration": line[5:].strip()})
+def _parse_wait(line: str) -> dict[str, Any]:
+    return {"type": "wait", "duration": line[5:].strip()}
 
 
-def _handle_get(line: str, goal: dict[str, Any] | None) -> None:
-    if goal is not None:
-        goal["steps"].append({"type": "get", "variable": line[4:].strip()})
+def _parse_get(line: str) -> dict[str, Any]:
+    return {"type": "get", "variable": line[4:].strip()}
 
 
-def _handle_save(line: str, goal: dict[str, Any] | None) -> None:
-    if goal is not None:
-        goal["steps"].append({"type": "save", "key": line[5:].strip()})
+def _parse_save(line: str) -> dict[str, Any]:
+    return {"type": "save", "key": line[5:].strip()}
 
 
-def _handle_if(line: str, goal: dict[str, Any] | None) -> None:
-    if goal is not None:
-        goal["steps"].append({"type": "if", "condition": line[3:].strip()})
+def _parse_if(line: str) -> dict[str, Any]:
+    return {"type": "if", "condition": line[3:].strip()}
 
 
 def _handle_error(line: str, goal: dict[str, Any] | None) -> None:
@@ -69,15 +64,12 @@ def _handle_correct(line: str, goal: dict[str, Any] | None) -> None:
         )
 
 
-_PREFIX_HANDLERS: tuple[tuple[str, Any], ...] = (
-    ("FUNC:", _handle_func),
-    ("SET ", _handle_set),
-    ("WAIT ", _handle_wait),
-    ("GET ", _handle_get),
-    ("SAVE ", _handle_save),
-    ("IF ", _handle_if),
-    ("ERROR ", _handle_error),
-    ("CORRECT ", _handle_correct),
+_STEP_PARSERS: tuple[tuple[str, Any], ...] = (
+    ("SET ", _parse_set),
+    ("WAIT ", _parse_wait),
+    ("GET ", _parse_get),
+    ("SAVE ", _parse_save),
+    ("IF ", _parse_if),
 )
 
 
@@ -86,14 +78,20 @@ def _apply_prefixed_line(
     goal: dict[str, Any] | None,
     library: dict[str, Any],
 ) -> bool:
-    for prefix, handler in _PREFIX_HANDLERS:
-        if not line.startswith(prefix):
-            continue
-        if prefix == "FUNC:":
-            _handle_func(line, goal, library)
-        else:
-            handler(line, goal)
+    if line.startswith("FUNC:"):
+        _handle_func(line, goal, library)
         return True
+    if line.startswith("ERROR "):
+        _handle_error(line, goal)
+        return True
+    if line.startswith("CORRECT "):
+        _handle_correct(line, goal)
+        return True
+    for prefix, parse_step in _STEP_PARSERS:
+        if line.startswith(prefix):
+            if goal is not None:
+                goal["steps"].append(parse_step(line))
+            return True
     return False
 
 
