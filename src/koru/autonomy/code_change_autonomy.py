@@ -131,8 +131,7 @@ def apply_ready_source_patches(
             skipped.append(f"{patch_id}: instruction-only (no unifiedDiff)")
             continue
         skipped.append(
-            f"{patch_id}: direct apply disabled; submit through the "
-            "Planfile manifest transaction after approval"
+            f"{patch_id}: direct apply disabled; submit through the Planfile manifest transaction after approval"
         )
     return applied, skipped
 
@@ -160,20 +159,56 @@ def _configure_todo2code_executor(ticket: dict[str, Any], files: list[str], cont
     ticket["labels"] = labels
 
 
+_TERMINAL_TICKET_STATUSES = frozenset({"done", "closed", "cancelled", "canceled", "failed"})
+
+
+def _is_promotable_ticket_status(ticket: dict[str, Any]) -> bool:
+    status = str(ticket.get("status") or "").strip().lower()
+    return status not in _TERMINAL_TICKET_STATUSES
+
+
+def _is_todo2code_named_or_sourced(ticket: dict[str, Any]) -> bool:
+    name = str(ticket.get("name") or "")
+    if name.startswith("[todo2code]"):
+        return True
+    source = ticket.get("source")
+    if isinstance(source, dict):
+        return "todo2code" in str(source.get("tool") or "")
+    return False
+
+
+def _is_already_automatic_llm(ticket: dict[str, Any]) -> bool:
+    executor = ticket.get("executor")
+    if not isinstance(executor, dict):
+        return False
+    kind = str(executor.get("kind") or "human").lower()
+    mode = str(executor.get("mode") or "").lower()
+    return kind == "llm" and mode == "automatic"
+
+
+def _clean_ticket_files(ticket: dict[str, Any]) -> list[str]:
+    return [str(f) for f in (ticket.get("files") or []) if str(f).strip()]
+
+
+def _extract_useful_ticket_files(ticket: dict[str, Any], project: Path) -> list[str] | None:
+    files = _clean_ticket_files(ticket)
+    if not files:
+        return None
+    if all(is_useful_code_change_path(path, project=project) for path in files):
+        return files
+    return None
+
+
 def _promote_todo2code_ticket(ticket: dict[str, Any], *, project: Path, contract: str) -> bool:
     """Apply the explicit executor, contract, and path policy to one ticket."""
-    status = str(ticket.get("status") or "").strip().lower()
-    if status in {"done", "closed", "cancelled", "canceled", "failed"}:
+    if not _is_promotable_ticket_status(ticket):
         return False
-    name = str(ticket.get("name") or "")
-    source = ticket.get("source") if isinstance(ticket.get("source"), dict) else {}
-    if not (name.startswith("[todo2code]") or "todo2code" in str(source.get("tool") or "")):
+    if not _is_todo2code_named_or_sourced(ticket):
         return False
-    executor = ticket.get("executor") if isinstance(ticket.get("executor"), dict) else {}
-    if str(executor.get("kind") or "human").lower() == "llm" and str(executor.get("mode") or "").lower() == "automatic":
+    if _is_already_automatic_llm(ticket):
         return False
-    files = [str(f) for f in (ticket.get("files") or []) if str(f).strip()]
-    if not files or not all(is_useful_code_change_path(path, project=project) for path in files):
+    files = _extract_useful_ticket_files(ticket, project)
+    if files is None:
         return False
     _configure_todo2code_executor(ticket, files, contract)
     return True
@@ -187,6 +222,7 @@ def _promote_todo2code_tickets_to_llm(project: Path, *, sprint: str = "current")
         return 0
     try:
         import yaml
+
         path = project / ".planfile" / "sprints" / f"{sprint}.yaml"
         data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     except Exception:  # noqa: BLE001
@@ -195,8 +231,11 @@ def _promote_todo2code_tickets_to_llm(project: Path, *, sprint: str = "current")
     tickets = sprint_data.get("tickets") if isinstance(sprint_data, dict) else None
     if not isinstance(tickets, dict):
         return 0
-    changed = sum(_promote_todo2code_ticket(ticket, project=project, contract=contract)
-                  for ticket in tickets.values() if isinstance(ticket, dict))
+    changed = sum(
+        _promote_todo2code_ticket(ticket, project=project, contract=contract)
+        for ticket in tickets.values()
+        if isinstance(ticket, dict)
+    )
     if changed:
         try:
             path.write_text(
