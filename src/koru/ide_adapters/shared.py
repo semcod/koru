@@ -74,8 +74,8 @@ def _read_json_object(path: Path) -> dict | None:
         raw = path.read_text(encoding="utf-8").strip()
         if not raw:
             return {}
-        data = json.loads(raw)
-        return data if isinstance(data, dict) else None
+        parsed = json.loads(raw)
+        return parsed if isinstance(parsed, dict) else None
     except (OSError, json.JSONDecodeError):
         return None
 
@@ -83,10 +83,10 @@ def _read_json_object(path: Path) -> dict | None:
 def read_socket_from_settings(path: Path | None) -> str | None:
     if path is None or not path.is_file():
         return None
-    data = _read_json_object(path)
-    if not data:
+    settings = _read_json_object(path)
+    if not settings:
         return None
-    value = data.get(SOCKET_SETTING_KEY)
+    value = settings.get(SOCKET_SETTING_KEY)
     return str(value).strip() if isinstance(value, str) and value.strip() else None
 
 
@@ -128,17 +128,17 @@ def fix_workspace_socket(*, project: Path, ide: str, expected_socket: str) -> Pa
         path = project / ".vscode" / "settings.json"
     else:
         return None
-    data = _read_json_object(path) or {}
+    workspace_settings = _read_json_object(path) or {}
     # Use expanduser to handle ~, but don't resolve() which would follow symlinks
     wanted = str(Path(expected_socket).expanduser())
-    current = data.get(SOCKET_SETTING_KEY)
+    current = workspace_settings.get(SOCKET_SETTING_KEY)
     if current == wanted:
         return path if path.is_file() else None
-    data[SOCKET_SETTING_KEY] = wanted
-    if "koruAutopilot.autoConnect" not in data:
-        data["koruAutopilot.autoConnect"] = True
+    workspace_settings[SOCKET_SETTING_KEY] = wanted
+    if "koruAutopilot.autoConnect" not in workspace_settings:
+        workspace_settings["koruAutopilot.autoConnect"] = True
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(workspace_settings, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return path
 
 
@@ -146,17 +146,17 @@ def fix_user_socket(*, ide: str, expected_socket: str) -> Path | None:
     path = user_settings_path(ide)
     if path is None:
         return None
-    data = _read_json_object(path) or {}
+    user_settings = _read_json_object(path) or {}
     # Use expanduser to handle ~, but don't resolve() which would follow symlinks
     wanted = str(Path(expected_socket).expanduser())
-    current = data.get(SOCKET_SETTING_KEY)
+    current = user_settings.get(SOCKET_SETTING_KEY)
     if current == wanted:
         return path if path.is_file() else None
-    data[SOCKET_SETTING_KEY] = wanted
-    if "koruAutopilot.autoConnect" not in data:
-        data["koruAutopilot.autoConnect"] = True
+    user_settings[SOCKET_SETTING_KEY] = wanted
+    if "koruAutopilot.autoConnect" not in user_settings:
+        user_settings["koruAutopilot.autoConnect"] = True
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(user_settings, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return path
 
 
@@ -218,8 +218,8 @@ def vscode_core_version(ide: str) -> str | None:
         if not candidate.is_file():
             continue
         try:
-            data = json.loads(candidate.read_text(encoding="utf-8"))
-            version = data.get("vscodeVersion") if isinstance(data, dict) else None
+            product_info = json.loads(candidate.read_text(encoding="utf-8"))
+            version = product_info.get("vscodeVersion") if isinstance(product_info, dict) else None
             if version:
                 return str(version)
         except (OSError, json.JSONDecodeError):
@@ -339,13 +339,13 @@ def extension_listed_in_extensions_json(ide: str) -> bool:
     if not ext_json.is_file():
         return False
     try:
-        data = json.loads(ext_json.read_text(encoding="utf-8"))
+        entries = json.loads(ext_json.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return False
-    if not isinstance(data, list):
+    if not isinstance(entries, list):
         return False
     ext_id = extension_id_for_ide(ide)
-    for entry in data:
+    for entry in entries:
         if not isinstance(entry, dict):
             continue
         ident = entry.get("identifier")

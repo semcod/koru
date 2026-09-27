@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-274",
+  "summary": "Address code smell: shotgun surgery data locals in ide adapters shared",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-274/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/ide_adapters/shared.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "33e3943f50a8fd16bd142364953e680013b5a57d",
+    "targetBranch": "main",
+    "outcome": "Rename the generic local variable 'data' to stage-accurate names in each of the six functions of src/koru/ide_adapters/shared.py that mutate it: parsed (_read_json_object, the decoded JSON value being validated as a dict), settings (read_socket_from_settings, the parsed settings.json object), workspace_settings (fix_workspace_socket) and user_settings (fix_user_socket, the two settings documents the socket fixers read and rewrite), product_info (vscode_core_version, the parsed product.json core manifest; 'product' is already bound to the config-home Path in that function), entries (extension_listed_in_extensions_json, the parsed extensions.json entry list). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'data' group drops from 6 scopes to 0. Each new name lands at 1 scope, so no (file, variable) group grows toward the threshold. Pure rename of function-internal locals; no signature, return shape or behavior change; no other file touched.",
+    "nonGoals": [
+      "No behavior, parsing, validation or interface change",
+      "No restructuring into a shared document-decoding abstraction (each function already owns one decode stage; the shared generic name was the defect, not a missing abstraction)",
+      "No fix for the pre-existing 'strategy' shotgun-surgery group in the same file (5 scopes, separately ticketed in planfile) or for findings in other files - minimal scope for this ticket's reported smell only",
+      "No rename of locals in other files that happen to use 'data' (each is an independent local in its own file scope)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local renames only, inside one module. Every function that decodes a document names the decoded payload after the parse stage it serves (parsed JSON validation target, settings.json object, workspace/user settings documents, product.json core manifest, extensions.json entry list); the generic name 'data' disappears from the file's mutation set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports a 'data' mutation group of exactly 6 scopes - _read_json_object, read_socket_from_settings, fix_workspace_socket, fix_user_socket, vscode_core_version, extension_listed_in_extensions_json - matching the ticket's 'spans 6 functions'; after the rename the 'data' group is empty, the file mutation record count is unchanged (94) and no new (file, variable) group reaches the >= 5 threshold (the pre-existing 'strategy' group at 5 scopes and 'trusted' at 4 remain untouched).",
+      "components": [
+        {
+          "name": "koru-ide-adapters",
+          "paths": [
+            "src/koru/ide_adapters/shared.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named data again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor(Config()).extract(ast.parse(<file>)) + per-variable mutation-scope grouping, original vs renamed content of src/koru/ide_adapters/shared.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports a 'data' mutation group of 6 scopes (_read_json_object, read_socket_from_settings, fix_workspace_socket, fix_user_socket, vscode_core_version, extension_listed_in_extensions_json) - exactly matching the ticket's reported 'spans 6 functions'. Renamed content reports a 'data' group of 0 scopes; file mutation record count unchanged at 94 (pure rename); every renamed local lands at 1 scope, far below the >= 5 threshold; the only remaining textual 'data' token is the unrelated '--user-data-dir' IDE flag inside a docstring."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_ide_adapters.py tests/test_ide_doctor_cli.py tests/ides/test_all_ide_strategies.py tests/ides/test_cursor_strategy.py -q",
+          "ruff check src/koru/ide_adapters/shared.py"
+        ],
+        "evidence": "The suites that exercise the renamed paths pass unchanged - pure rename of function-internal locals - and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
