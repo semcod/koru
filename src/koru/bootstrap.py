@@ -98,17 +98,17 @@ def load_flat_pipeline(path: str | Path) -> tuple[dict[str, Any], list[dict[str,
 
 def _validate_id(task: dict[str, Any], seen_ids: set[str]) -> list[ValidationError]:
     """Validate task id field."""
-    errors: list[ValidationError] = []
+    id_errors: list[ValidationError] = []
     tid = str(task.get("id") or "<missing-id>")
 
     if "id" not in task:
-        errors.append(ValidationError(tid, "id", "missing"))
-        return errors
+        id_errors.append(ValidationError(tid, "id", "missing"))
+        return id_errors
     if tid in seen_ids:
-        errors.append(ValidationError(tid, "id", "duplicate"))
-        return errors
+        id_errors.append(ValidationError(tid, "id", "duplicate"))
+        return id_errors
 
-    return errors
+    return id_errors
 
 
 def _validate_name(task: dict[str, Any]) -> list[ValidationError]:
@@ -140,7 +140,7 @@ def _validate_priority(task: dict[str, Any]) -> list[ValidationError]:
 def _validate_executor(task: dict[str, Any]) -> list[ValidationError]:
     """Validate task executor field."""
     tid = str(task.get("id") or "<missing-id>")
-    errors: list[ValidationError] = []
+    executor_errors: list[ValidationError] = []
     executor = task.get("executor")
 
     if not isinstance(executor, dict):
@@ -148,7 +148,7 @@ def _validate_executor(task: dict[str, Any]) -> list[ValidationError]:
 
     kind = executor.get("kind")
     if kind not in VALID_EXECUTOR_KINDS:
-        errors.append(
+        executor_errors.append(
             ValidationError(
                 tid, "executor.kind", f"{kind!r} not in {sorted(VALID_EXECUTOR_KINDS)}"
             ),
@@ -156,13 +156,13 @@ def _validate_executor(task: dict[str, Any]) -> list[ValidationError]:
 
     mode = executor.get("mode", "automatic")
     if mode not in VALID_EXECUTOR_MODES:
-        errors.append(
+        executor_errors.append(
             ValidationError(
                 tid, "executor.mode", f"{mode!r} not in {sorted(VALID_EXECUTOR_MODES)}"
             ),
         )
 
-    return errors
+    return executor_errors
 
 
 def _validate_execution_state(task: dict[str, Any]) -> list[ValidationError]:
@@ -184,7 +184,7 @@ def _validate_execution_state(task: dict[str, Any]) -> list[ValidationError]:
 def _validate_blocked_by(task: dict[str, Any]) -> list[ValidationError]:
     """Validate task blocked_by field."""
     tid = str(task.get("id") or "<missing-id>")
-    errors: list[ValidationError] = []
+    blocked_by_errors: list[ValidationError] = []
     blocked_by = task.get("blocked_by", []) or []
 
     if not isinstance(blocked_by, list):
@@ -192,62 +192,62 @@ def _validate_blocked_by(task: dict[str, Any]) -> list[ValidationError]:
 
     for dep in blocked_by:
         if not isinstance(dep, str):
-            errors.append(ValidationError(tid, "blocked_by", f"non-string entry: {dep!r}"))
+            blocked_by_errors.append(ValidationError(tid, "blocked_by", f"non-string entry: {dep!r}"))
 
-    return errors
+    return blocked_by_errors
 
 
 def _validate_task(task: dict[str, Any], seen_ids: set[str]) -> list[ValidationError]:
     """Validate a single task. Returns a list of errors."""
-    errors: list[ValidationError] = []
+    task_violations: list[ValidationError] = []
 
-    errors.extend(_validate_id(task, seen_ids))
+    task_violations.extend(_validate_id(task, seen_ids))
 
     # Early return if id is missing or duplicate
-    if any(e.field == "id" for e in errors):
-        return errors
+    if any(e.field == "id" for e in task_violations):
+        return task_violations
 
-    errors.extend(_validate_name(task))
-    errors.extend(_validate_status(task))
-    errors.extend(_validate_priority(task))
-    errors.extend(_validate_executor(task))
-    errors.extend(_validate_execution_state(task))
-    errors.extend(_validate_blocked_by(task))
+    task_violations.extend(_validate_name(task))
+    task_violations.extend(_validate_status(task))
+    task_violations.extend(_validate_priority(task))
+    task_violations.extend(_validate_executor(task))
+    task_violations.extend(_validate_execution_state(task))
+    task_violations.extend(_validate_blocked_by(task))
 
-    return errors
+    return task_violations
 
 
 def _validate_cross_task_dependencies(tasks: list[dict[str, Any]]) -> list[ValidationError]:
     """Validate cross-task dependencies (blocked_by references and cycles)."""
-    errors: list[ValidationError] = []
+    dependency_errors: list[ValidationError] = []
     ids = {str(t.get("id")) for t in tasks if t.get("id")}
     for task in tasks:
         tid = str(task.get("id") or "")
         for dep in task.get("blocked_by") or []:
             if isinstance(dep, str) and dep not in ids:
-                errors.append(ValidationError(tid, "blocked_by", f"unknown task id {dep!r}"))
+                dependency_errors.append(ValidationError(tid, "blocked_by", f"unknown task id {dep!r}"))
     cycle = _detect_cycle(tasks)
     if cycle:
-        errors.append(
+        dependency_errors.append(
             ValidationError(cycle[0], "blocked_by", f"cycle detected: {' → '.join(cycle)}"),
         )
-    return errors
+    return dependency_errors
 
 
 def validate_flat_pipeline(tasks: list[dict[str, Any]]) -> list[ValidationError]:
     """Validate a flat pipeline. Returns a list of errors (empty == valid)."""
-    errors: list[ValidationError] = []
+    pipeline_errors: list[ValidationError] = []
     seen_ids: set[str] = set()
 
     for task in tasks:
         task_errors = _validate_task(task, seen_ids)
-        errors.extend(task_errors)
+        pipeline_errors.extend(task_errors)
         if task.get("id"):
             seen_ids.add(str(task.get("id")))
 
     # Cross-task validation: all blocked_by references resolve, no cycles
-    errors.extend(_validate_cross_task_dependencies(tasks))
-    return errors
+    pipeline_errors.extend(_validate_cross_task_dependencies(tasks))
+    return pipeline_errors
 
 
 def _dependency_graph(tasks: list[dict[str, Any]]) -> dict[str, list[str]]:
@@ -449,9 +449,9 @@ def import_flat_pipeline(
     if not tasks:
         raise ValueError(f"{flat_path}: no tasks found")
 
-    errors = validate_flat_pipeline(tasks)
-    if errors:
-        joined = "\n".join(f"  - {e}" for e in errors)
+    validation_errors = validate_flat_pipeline(tasks)
+    if validation_errors:
+        joined = "\n".join(f"  - {e}" for e in validation_errors)
         raise ValueError(f"{flat_path}: validation failed\n{joined}")
 
     sprint_name = str(header.get("description") or header.get("project") or "Imported pipeline")

@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-278",
+  "summary": "Address code smell: Shotgun Surgery: errors locals in koru bootstrap validation",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-278/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/bootstrap.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "af082f7476fd0f3b7622b06f26ab6a9e77655912",
+    "targetBranch": "main",
+    "outcome": "Rename the generic error-list local 'errors' to stage-accurate names in each of the seven functions of src/koru/bootstrap.py that mutate it: id_errors (_validate_id, missing/duplicate id findings), executor_errors (_validate_executor, executor.kind/executor.mode findings), blocked_by_errors (_validate_blocked_by, non-string blocked_by entry findings), task_violations (_validate_task, the per-task accumulator across all field validators), dependency_errors (_validate_cross_task_dependencies, unknown blocked_by references and the dependency cycle), pipeline_errors (validate_flat_pipeline, the whole-pipeline aggregation) and validation_errors (import_flat_pipeline, the validation gate before materialisation). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'errors' group drops from 7 scopes to 0. Each new name lands at 1 scope, so no (file, variable) group grows toward the threshold. Pure rename of function-internal locals; no signature, return shape or behavior change; no other file touched.",
+    "nonGoals": [
+      "No behavior, validation semantics or interface change",
+      "No restructuring into a returned-findings (pure) validator chain; each helper already owns one validation stage, the shared generic name was the defect, not a missing abstraction",
+      "No rename of locals in other files that happen to use 'errors' (each is an independent local in its own file scope)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local renames only, inside one module. Every function that appends validation findings names its error channel after the validation stage it serves (id, executor, blocked_by entries, per-task aggregation, cross-task dependencies, whole-pipeline aggregation, import-time validation gate); the generic name 'errors' disappears from the file's mutation set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports an 'errors' mutation group of exactly 7 scopes - _validate_id, _validate_executor, _validate_blocked_by, _validate_task, _validate_cross_task_dependencies, validate_flat_pipeline, import_flat_pipeline - matching the ticket's 'spans 7 functions'; after the rename the 'errors' group is empty and no new (file, variable) group reaches the >= 5 threshold.",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "src/koru/bootstrap.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named errors again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor mutation grouping on the file AST, original vs renamed content of src/koru/bootstrap.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports an 'errors' mutation group of 7 scopes (_validate_id, _validate_executor, _validate_blocked_by, _validate_task, _validate_cross_task_dependencies, validate_flat_pipeline, import_flat_pipeline; 17 records) - exactly matching the ticket's reported 'spans 7 functions'. Renamed content reports an 'errors' group of 0 scopes; file mutation record count unchanged at 115 (pure rename); every renamed local lands at 1 scope, far below the >= 5 threshold."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_bootstrap.py -q",
+          "ruff check src/koru/bootstrap.py"
+        ],
+        "evidence": "The suite that exercises the renamed validation paths passes unchanged - pure rename of function-internal locals - and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
