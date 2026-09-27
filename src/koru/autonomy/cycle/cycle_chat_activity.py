@@ -243,7 +243,7 @@ def _upsert_reflection_needs_input_ticket(
     state: AutoloopState,
     summary: str,
     reflection_events: list[Any],
-    cycle_telemetry: dict[str, Any],
+    reflection_needs_input_telemetry: dict[str, Any],
     report_progress: Any,
 ) -> None:
     """Upsert an operator ticket when reflection indicates needs_input and not done."""
@@ -258,7 +258,7 @@ def _upsert_reflection_needs_input_ticket(
         report_progress=report_progress,
     )
     if operator_ticket:
-        cycle_telemetry["autopilot_llx_operator_ticket"] = operator_ticket
+        reflection_needs_input_telemetry["autopilot_llx_operator_ticket"] = operator_ticket
 
 
 def _apply_llx_chat_reflection(
@@ -302,7 +302,7 @@ def _apply_llx_chat_reflection(
         project=project,
         queue_result=queue_result,
         state=state,
-        cycle_telemetry=cycle_telemetry,
+        llx_reflection_telemetry=cycle_telemetry,
         reflection_events=reflection_events,
         report_progress=report_progress,
     )
@@ -375,11 +375,11 @@ def _record_llx_chat_reflection(
     project: Path,
     queue_result: QueueLoopResult,
     state: AutoloopState,
-    cycle_telemetry: dict[str, Any],
+    llx_reflection_telemetry: dict[str, Any],
     reflection_events: list[Any],
     report_progress: Any,
 ) -> tuple[bool, bool]:
-    cycle_telemetry["autopilot_llx_reflection"] = {
+    llx_reflection_telemetry["autopilot_llx_reflection"] = {
         "done": reflection.done,
         "needs_input": reflection.needs_input,
         "summary": reflection.summary,
@@ -400,7 +400,7 @@ def _record_llx_chat_reflection(
         state=state,
         summary=summary,
         reflection_events=reflection_events,
-        cycle_telemetry=cycle_telemetry,
+        reflection_needs_input_telemetry=llx_reflection_telemetry,
         report_progress=report_progress,
     )
     return True, bool(reflection.done)
@@ -411,7 +411,7 @@ def _apply_needs_input_heuristic(
     project: Path,
     queue_result: QueueLoopResult,
     state: AutoloopState,
-    cycle_telemetry: dict[str, Any],
+    needs_input_heuristic_telemetry: dict[str, Any],
     reflection_events: list[Any],
     report_progress: Any,
 ) -> None:
@@ -429,8 +429,8 @@ def _apply_needs_input_heuristic(
         report_progress=report_progress,
     )
     if operator_ticket:
-        cycle_telemetry["autopilot_needs_input_heuristic"] = True
-        cycle_telemetry["autopilot_llx_operator_ticket"] = operator_ticket
+        needs_input_heuristic_telemetry["autopilot_needs_input_heuristic"] = True
+        needs_input_heuristic_telemetry["autopilot_llx_operator_ticket"] = operator_ticket
     report_progress(f"- needs_input heuristic: question={question!r}")
 
 
@@ -440,7 +440,7 @@ def _check_recent_drive_ack_skip(
     waiting_ticket: str,
     ide: str | None,
     recent_events: list[dict[str, Any]],
-    cycle_telemetry: dict[str, Any],
+    recent_drive_ack_skip_telemetry: dict[str, Any],
     report_progress: Any,
 ) -> bool:
     drive_ack_age = _last_successful_drive_ack_age(
@@ -458,12 +458,12 @@ def _check_recent_drive_ack_skip(
                 reason="recent_drive_ack had no_change verdict and no message.received",
                 age_label=drive_ack_age_label,
             ):
-                cycle_telemetry["autopilot_recent_drive_ack_weak_no_response"] = True
+                recent_drive_ack_skip_telemetry["autopilot_recent_drive_ack_weak_no_response"] = True
                 return False
-            cycle_telemetry["autopilot_skipped_no_response_redrive_limit"] = True
+            recent_drive_ack_skip_telemetry["autopilot_skipped_no_response_redrive_limit"] = True
             return True
-        cycle_telemetry["autopilot_skipped_chat_activity"] = True
-        cycle_telemetry["autopilot_chat_activity_last_event"] = "drive.ack"
+        recent_drive_ack_skip_telemetry["autopilot_skipped_chat_activity"] = True
+        recent_drive_ack_skip_telemetry["autopilot_chat_activity_last_event"] = "drive.ack"
         report_progress(
             "- autopilot skipped (recent_drive_ack "
             f"last=drive.ack age={drive_ack_age_label} cooldown={cooldown:.0f}s "
@@ -480,7 +480,7 @@ def _check_chat_intake_skip(
     queue_result: QueueLoopResult,
     state: AutoloopState,
     recent_events: list[dict[str, Any]],
-    cycle_telemetry: dict[str, Any],
+    chat_intake_skip_telemetry: dict[str, Any],
     report_progress: Any,
 ) -> bool:
     intake_ticket = _upsert_chat_intake_operator_ticket(
@@ -488,11 +488,11 @@ def _check_chat_intake_skip(
         queue_result=queue_result,
         state=state,
         recent_events=recent_events,
-        cycle_telemetry=cycle_telemetry,
+        cycle_telemetry=chat_intake_skip_telemetry,
         report_progress=report_progress,
     )
     if decide_intake_ticket(intake_ticket):
-        cycle_telemetry["autopilot_skipped_chat_intake"] = True
+        chat_intake_skip_telemetry["autopilot_skipped_chat_intake"] = True
         return True
     return False
 
@@ -502,7 +502,7 @@ def _check_recent_self_drive_skip(
     cooldown: float,
     waiting_ticket: str,
     recent_events: list[dict[str, Any]],
-    cycle_telemetry: dict[str, Any],
+    recent_self_drive_skip_telemetry: dict[str, Any],
     report_progress: Any,
 ) -> bool:
     has_received = any(str(ev.get("type") or "") == "message.received" for ev in recent_events)
@@ -522,12 +522,12 @@ def _check_recent_self_drive_skip(
                 reason="recent_self_drive had no_change verdict and no message.received",
                 age_label=self_drive_age_label,
             ):
-                cycle_telemetry["autopilot_recent_drive_ack_weak_no_response"] = True
+                recent_self_drive_skip_telemetry["autopilot_recent_drive_ack_weak_no_response"] = True
                 return False
-            cycle_telemetry["autopilot_skipped_no_response_redrive_limit"] = True
+            recent_self_drive_skip_telemetry["autopilot_skipped_no_response_redrive_limit"] = True
             return True
-        cycle_telemetry["autopilot_skipped_chat_activity"] = True
-        cycle_telemetry["autopilot_chat_activity_last_event"] = "message.sent"
+        recent_self_drive_skip_telemetry["autopilot_skipped_chat_activity"] = True
+        recent_self_drive_skip_telemetry["autopilot_chat_activity_last_event"] = "message.sent"
         report_progress(
             "- autopilot skipped (recent_self_drive "
             f"last=message.sent age={self_drive_age_label} cooldown={cooldown:.0f}s "
@@ -542,7 +542,7 @@ def _apply_chat_activity_skip_decision(
     project: Path,
     queue_result: QueueLoopResult,
     state: AutoloopState,
-    cycle_telemetry: dict[str, Any],
+    chat_activity_skip_telemetry: dict[str, Any],
     waiting_ticket: str,
     ide: str | None,
     reflection_events: list[Any],
@@ -560,22 +560,22 @@ def _apply_chat_activity_skip_decision(
     if not bool(decision["should_skip"]):
         return False
 
-    cycle_telemetry["autopilot_skipped_chat_activity"] = True
-    cycle_telemetry["autopilot_chat_activity_last_event"] = last_type
-    cycle_telemetry["autopilot_skipped_chat_activity_because"] = explain_skip(decision)
+    chat_activity_skip_telemetry["autopilot_skipped_chat_activity"] = True
+    chat_activity_skip_telemetry["autopilot_chat_activity_last_event"] = last_type
+    chat_activity_skip_telemetry["autopilot_skipped_chat_activity_because"] = explain_skip(decision)
     report_progress(f"- autopilot skipped ({explain_skip(decision)})")
     reflection_policy = decide_chat_reflection(
         enabled=_chat_reflection_enabled(),
         last_type=last_type,
         reflection_events=reflection_events,
     )
-    cycle_telemetry["autopilot_llx_reflection_policy"] = reflection_policy.to_dict()
+    chat_activity_skip_telemetry["autopilot_llx_reflection_policy"] = reflection_policy.to_dict()
     if reflection_policy.should_reflect:
         reflection_resolved, reflection_done = _apply_llx_chat_reflection(
             project=project,
             queue_result=queue_result,
             state=state,
-            cycle_telemetry=cycle_telemetry,
+            cycle_telemetry=chat_activity_skip_telemetry,
             waiting_ticket=waiting_ticket,
             ide=ide,
             reflection_events=reflection_events,
@@ -592,7 +592,7 @@ def _apply_chat_activity_skip_decision(
             project=project,
             queue_result=queue_result,
             state=state,
-            cycle_telemetry=cycle_telemetry,
+            needs_input_heuristic_telemetry=chat_activity_skip_telemetry,
             reflection_events=reflection_events,
             report_progress=report_progress,
         )
@@ -652,7 +652,7 @@ def _evaluate_chat_activity_skip(
     project: Path,
     queue_result: QueueLoopResult,
     state: AutoloopState,
-    cycle_telemetry: dict[str, Any],
+    chat_activity_eval_telemetry: dict[str, Any],
     cooldown: float,
     report_progress: Any,
     ctx: _ChatActivityContext,
@@ -668,7 +668,7 @@ def _evaluate_chat_activity_skip(
         ctx.waiting_ticket,
         ctx.ide,
         ctx.recent_events,
-        cycle_telemetry,
+        chat_activity_eval_telemetry,
         report_progress,
     ):
         return True
@@ -678,7 +678,7 @@ def _evaluate_chat_activity_skip(
         queue_result,
         state,
         ctx.recent_events,
-        cycle_telemetry,
+        chat_activity_eval_telemetry,
         report_progress,
     ):
         return True
@@ -688,7 +688,7 @@ def _evaluate_chat_activity_skip(
         cooldown,
         ctx.waiting_ticket,
         ctx.recent_events,
-        cycle_telemetry,
+        chat_activity_eval_telemetry,
         report_progress,
     ):
         return True
@@ -713,9 +713,9 @@ def _evaluate_chat_activity_skip(
             reason="no_change after drive; no message.received",
             age_label=status.age_label,
         ):
-            cycle_telemetry["autopilot_recent_drive_ack_weak_no_response"] = True
+            chat_activity_eval_telemetry["autopilot_recent_drive_ack_weak_no_response"] = True
             return False
-        cycle_telemetry["autopilot_skipped_no_response_redrive_limit"] = True
+        chat_activity_eval_telemetry["autopilot_skipped_no_response_redrive_limit"] = True
         return True
 
     if ctx.recent_events and _recent_message_sent_allows_redrive(
@@ -734,7 +734,7 @@ def _evaluate_chat_activity_skip(
         project=project,
         queue_result=queue_result,
         state=state,
-        cycle_telemetry=cycle_telemetry,
+        chat_activity_skip_telemetry=chat_activity_eval_telemetry,
         waiting_ticket=ctx.waiting_ticket,
         ide=ctx.ide,
         reflection_events=status.reflection_events,
@@ -783,7 +783,7 @@ def _skip_due_to_recent_chat_activity(
         project=project,
         queue_result=queue_result,
         state=state,
-        cycle_telemetry=cycle_telemetry,
+        chat_activity_eval_telemetry=cycle_telemetry,
         cooldown=cooldown,
         report_progress=report_progress,
         ctx=ctx,
