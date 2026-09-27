@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-311",
+  "summary": "Stage-accurate names for the ide locals in ide doctor CLI",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-311/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/ide_doctor_cli.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9e23f3b868d5bd862664fcdb18f306ad86ad51be",
+    "targetBranch": "main",
+    "outcome": "Rename the generic local variable 'ide' to stage-accurate names in each of the five functions of src/koru/ide_doctor_cli.py that mutate it: target_ide (action_ide_doctor, the single resolved IDE under diagnosis, fed to adapter lookup, socket resolution and bridge evaluation), subject_ide (action_ide_history, the optional IDE selecting which bridge subject's repair history to load, None meaning all IDEs), reload_ide (action_ide_reload, the canonical IDE with raw-argument fallback passed to the reload driver and echoed in the outcome payload), catalog_ide (action_ide_commands, the command-catalog scope selector, None meaning all), scenario_ide (action_ide_scenario_prompt, the IDE the LLM scenario prompt targets, None meaning all). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'ide' group drops from 5 scopes to 0. Each new name is a distinct local used in exactly one function, so no (file, variable) group grows. Pure rename of function-internal locals; the args.ide attribute, the evaluate_bridge ide= keyword, the payload key \"ide\" and the helper parameter names keep their names; no behavior change.",
+    "nonGoals": [
+      "No behavior, CLI-flag, payload-key or interface change",
+      "No shared _resolve_ide-style selection helper (the five call sites keep three deliberately different selection semantics: required resolve, optional all-means-None filter, and raw-argument fallback)",
+      "No rename of args.ide, helper parameter names (_resolve_ide, _resolve_socket, _bridge_subject, _instance_from_socket_path, _infer_instance_from_settings), or locals in other files",
+      "No fix for the separate pre-existing same-file mutation groups (payload, outcome, sub, parser, project) - minimal scope for this ticket's reported smell only"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local renames only, inside one module. Every action function that selects an IDE names it after the stage it serves (diagnosis target, history subject, reload target, catalog scope, scenario prompt target); the generic name 'ide' disappears from the file's mutation set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on src/koru/ide_doctor_cli.py standalone: baseline groups variable 'ide' across exactly the five reported functions (action_ide_commands, action_ide_doctor, action_ide_history, action_ide_reload, action_ide_scenario_prompt); after the rename the 'ide' group is gone and no other group changes.",
+      "components": [
+        {
+          "name": "koru-ide-doctor-cli",
+          "paths": [
+            "src/koru/ide_doctor_cli.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named ide again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor mutation grouping, original vs renamed content of <repo>/src/koru/ide_doctor_cli.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm detector on the file standalone. Baseline content groups variable 'ide' across exactly the five ticket-reported functions; renamed content reports no 'ide' mutation group and leaves every other (file, variable) group unchanged (pure rename)."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_ide_doctor_cli.py tests/test_ide_command_catalog.py -q",
+          "ruff check src/koru/ide_doctor_cli.py"
+        ],
+        "evidence": "Both suites covering the ide doctor CLI and its command/scenario actions pass unchanged (pure rename of function-internal locals) and ruff reports zero errors on the touched file. Full-suite baseline comparison is done against the accepted base so pre-existing environmental reds are not attributed to this change."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
