@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-299",
+  "summary": "Decompose _normalize_step in runners to reduce cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-299/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/runners.py",
+    "tests/test_queue_runners.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "105770a785b8d414c0916ad53fb9554e54d0bdaf",
+    "targetBranch": "main",
+    "outcome": "Decompose _normalize_step in src/koru/queue/runners.py from CC 23 to <= 5 by extracting single-responsibility helpers for step id, name, process, deps, and params while maintaining 100% backward compatibility.",
+    "nonGoals": [
+      "Altering DAG normalization dictionary shape or Taskand orchestrator contracts",
+      "Modifying public interface of runners.py"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _normalize_step_id, _normalize_step_name, _normalize_step_process, _normalize_step_deps, and _normalize_step_params helpers in src/koru/queue/runners.py.",
+      "components": [
+        {
+          "name": "koru-queue-runners",
+          "paths": [
+            "src/koru/queue/runners.py",
+            "tests/test_queue_runners.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit in src/koru/queue/runners.py"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_queue_runners.py"
+        ],
+        "evidence": "All tests in test_queue_runners.py pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m radon cc src/koru/queue/runners.py -s"
+        ],
+        "evidence": "_normalize_step cyclomatic complexity drops from 23 to <= 5."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koru/queue/runners.py tests/test_queue_runners.py"
+        ],
+        "evidence": "Ruff reports zero lint or formatting errors."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}

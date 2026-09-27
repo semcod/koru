@@ -1,6 +1,5 @@
 """Process execution runners for different executor types."""
 
-
 import codecs
 import json
 import locale
@@ -344,7 +343,8 @@ def run_shell_llm_request(
     prompt, model, profile, timeout = _resolve_shell_llm_call_args(request)
     try:
         reply = drive_with_model_policy(
-            drive_shell_chat, task=request.get("task"),
+            drive_shell_chat,
+            task=request.get("task"),
             explicit_model=str(request.get("model") or ""),
             client_id=client_id,
             project=project,
@@ -381,9 +381,7 @@ def _build_llm_messages(request: dict[str, Any]) -> list[dict[str, str]]:
             shown_chars = len(context_text)
             meta_lines.append(f"[Context truncated: showing {shown_chars} of {total} chars]")
         meta_note = ("\n" + "\n".join(meta_lines)) if meta_lines else ""
-        context_block = (
-            f"<project_context>{meta_note}\n\n{context_text}\n</project_context>"
-        )
+        context_block = f"<project_context>{meta_note}\n\n{context_text}\n</project_context>"
         messages.append({"role": "user", "content": context_block})
 
     messages.append({"role": "user", "content": str(request["prompt"])})
@@ -432,9 +430,7 @@ def _parse_llm_response(
     )
 
 
-def _handle_llm_error(
-    exc: urllib.error.HTTPError | urllib.error.URLError, model: str
-) -> LlmRunResult:
+def _handle_llm_error(exc: urllib.error.HTTPError | urllib.error.URLError, model: str) -> LlmRunResult:
     """Handle LLM API errors."""
     if isinstance(exc, urllib.error.HTTPError):
         text = exc.read().decode("utf-8", errors="replace")
@@ -570,41 +566,63 @@ def _probe_taskand_gateway(gateway_url: str) -> bool:
         return False
 
 
+def _normalize_step_id(s: dict[str, Any], idx: int) -> int:
+    val = s.get("id")
+    if isinstance(val, int):
+        return val
+    try:
+        return int(val if val is not None else idx)
+    except (ValueError, TypeError):
+        return idx
+
+
+def _normalize_step_name(s: dict[str, Any], step_id: int) -> str:
+    name = s.get("name")
+    return str(name) if name else f"step_{step_id}"
+
+
+def _resolve_step_process(s: dict[str, Any]) -> str | None:
+    if "process" not in s and "uri" in s:
+        return str(s["uri"])
+    if "process" in s and s["process"]:
+        return str(s["process"])
+    return None
+
+
+def _normalize_step_deps(s: dict[str, Any]) -> list[Any]:
+    if "deps" in s and isinstance(s["deps"], list):
+        return s["deps"]
+    raw_deps = s.get("deps")
+    if isinstance(raw_deps, (list, tuple)):
+        return [str(d) for d in raw_deps]
+    if raw_deps:
+        return [str(raw_deps)]
+    return []
+
+
+def _normalize_step_params(s: dict[str, Any]) -> dict[str, Any]:
+    if "params" in s:
+        return s["params"]
+    for key in ("input", "inputs", "data"):
+        val = s.get(key)
+        if isinstance(val, dict):
+            return val
+    return {}
+
+
 def _normalize_step(step: Any, idx: int) -> dict[str, Any] | None:
     """Normalize a single DAG step dictionary to Taskand orchestrator contract."""
     if not isinstance(step, dict):
         return None
     s = dict(step)
-    if "id" not in s or not isinstance(s["id"], int):
-        try:
-            s["id"] = int(s.get("id", idx))
-        except (ValueError, TypeError):
-            s["id"] = idx
-    if "name" not in s or not s["name"]:
-        s["name"] = f"step_{s['id']}"
-    else:
-        s["name"] = str(s["name"])
-    if "process" not in s and "uri" in s:
-        s["process"] = str(s["uri"])
-    elif "process" in s and s["process"]:
-        s["process"] = str(s["process"])
-    if "deps" not in s or not isinstance(s["deps"], list):
-        raw_deps = s.get("deps")
-        if isinstance(raw_deps, (list, tuple)):
-            s["deps"] = [str(d) for d in raw_deps]
-        elif raw_deps:
-            s["deps"] = [str(raw_deps)]
-        else:
-            s["deps"] = []
-    if "params" not in s:
-        if "input" in s and isinstance(s["input"], dict):
-            s["params"] = s["input"]
-        elif "inputs" in s and isinstance(s["inputs"], dict):
-            s["params"] = s["inputs"]
-        elif "data" in s and isinstance(s["data"], dict):
-            s["params"] = s["data"]
-        else:
-            s["params"] = {}
+    step_id = _normalize_step_id(s, idx)
+    s["id"] = step_id
+    s["name"] = _normalize_step_name(s, step_id)
+    proc = _resolve_step_process(s)
+    if proc is not None:
+        s["process"] = proc
+    s["deps"] = _normalize_step_deps(s)
+    s["params"] = _normalize_step_params(s)
     return s
 
 
@@ -796,9 +814,7 @@ def run_taskand_request(request: dict[str, Any], project: Path) -> TaskandRunRes
                 status_code=400,
                 uri="",
             )
-        return _post_taskand_gateway(
-            target.endpoint, target.body, config.headers, config.timeout_seconds, uri
-        )
+        return _post_taskand_gateway(target.endpoint, target.body, config.headers, config.timeout_seconds, uri)
 
     # Fallback to local CLI invocation
     cli_bin = _find_taskand_cli(project)
