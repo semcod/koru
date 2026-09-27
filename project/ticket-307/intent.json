@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-307",
+  "summary": "Rename generic ide lane locals to stage-accurate resolved-lane names in cli_dispatch",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-307/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/coru/src/coru/cli_dispatch.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9fd85f20b08a1aeca52bb3c50d0bb5af9d3f664d",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm Shotgun Surgery smell for the variable 'ide' in packages/coru/src/coru/cli_dispatch.py (planfile ticket PLF-042, reported at line 186) by removing the generic 'ide, instance = default_lane(args.ide, args.instance)' unpack that was copy-pasted into all five lane-resolving dispatchers. Unlike the PLF-039 portal-input case, where the same generic name meant six different frames, here all five bindings are the same stage (resolve the targeted lane from CLI args plus configured defaults), so the fix is centralization, not per-site renaming: a new module-local _resolve_lane(args, default_lane) helper owns the single unpack and returns the NamedTuple ResolvedLane(ide, instance), and each dispatcher binds one stage-accurate lane local - lane (dispatch_lane_command, per matched branch exactly as before; also the stage-1 local in dispatch_calibration_command), auto_lane (dispatch_auto_command), calibration_lane (dispatch_calibration_command, the ResolvedLane(*resolve_calibration_lane(...)) re-target for calibration), doctor_lane (dispatch_doctor_command), daemon_lane (dispatch_daemon_command) - reading .ide/.instance attribute access, which the detector does not count as a variable mutation. The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'ide' group drops from 5 scopes to 1 (_resolve_lane) and 'instance' likewise from 5 to 1. No behavior change: the same default_lane call happens on the same matched branches in the same order (no resolution hoisted ahead of a command match or a requires_system_shell check), the calibration two-stage resolution keeps its call and argument order, and every injected handler receives the same positional arguments. The injected default_lane callable in coru.cli keeps returning a plain tuple; only this module wraps it. No duplication.toon.yaml exists in this checkout, so the duplication-report checklist has nothing to consult for the touched path.",
+    "nonGoals": [
+      "No behavior, dispatch order, or handler-interface change; the injected callables keep their existing signatures and plain-tuple default_lane return",
+      "No touching of the other 'ide, instance = _default_lane(...)' sites in coru/cli.py or other modules - they are separate files with their own mutation grouping and are not part of this reported dedupe key",
+      "No restructure of dispatch_lane_command's per-branch shape into a guard clause with one resolution; the per-branch resolution order is preserved verbatim",
+      "No renaming of other same-file mutation groups; the largest remaining group 'rc' sits at 3 scopes (below the >= 5 threshold, pre-existing)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Centralize the repeated lane resolution into one NamedTuple-returning helper inside the same module. Five dispatchers each mutated a bare 'ide' (and 'instance') local via the identical tuple unpack of the injected default_lane callable, which both trips the (file, variable) mutation grouping and duplicates the lane-resolution stage five times - the genuine coupling the smell names. _resolve_lane is the single remaining mutating scope, and ResolvedLane's attribute access (lane.ide / lane.instance) is how the dispatchers read the resolved values, so adding or changing a dispatcher no longer re-copies the unpack. Stage-accurate local names per dispatcher (auto_lane, calibration_lane, doctor_lane, daemon_lane, lane) keep every mutation group in the file at <= 2 scopes, well under the threshold. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports an 'ide' mutation group of exactly 5 scopes - dispatch_lane_command, dispatch_auto_command, dispatch_calibration_command, dispatch_daemon_command, dispatch_doctor_command - matching the ticket's 'spans 5 functions'; after the refactor 'ide' and 'instance' sit at 1 scope each (_resolve_lane), 'lane' at 2, the four stage-named lane locals at 1 each, and no group reaches the >= 5 threshold.",
+      "components": [
+        {
+          "name": "coru",
+          "paths": [
+            "packages/coru/src/coru/cli_dispatch.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the per-dispatcher unpacks return and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor mutation grouping on the file AST, original vs refactored content of packages/coru/src/coru/cli_dispatch.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports an 'ide' mutation group of 5 scopes (dispatch_lane_command, dispatch_auto_command, dispatch_calibration_command, dispatch_daemon_command, dispatch_doctor_command) - exactly matching the ticket's reported 'spans 5 functions'; refactored content reports 'ide' at 1 scope (_resolve_lane) and 'instance' at 1 scope; 'lane' at 2 scopes; auto_lane, calibration_lane, doctor_lane, daemon_lane at 1 scope each; the largest remaining group is the pre-existing 'rc' at 3 scopes; no variable group newly reaches the >= 5 threshold."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest packages/coru/tests/test_coru_cli.py -q",
+          "ruff check packages/coru/src/coru/cli_dispatch.py"
+        ],
+        "evidence": "The suite that drives the coru CLI end-to-end (patching coru.cli._default_lane and exercising the lane/env/status/auto/calibration/doctor/daemon dispatch paths through the injected handlers): 117 passed with the refactor and the failure set is byte-identical to the branch base (13 pre-existing environmental reds on HEAD content - maybe_reexec/terminal-hint/stale-env/chat-daemon tests - verified by swapping HEAD content of packages/coru/src/coru/cli_dispatch.py in and diffing the sorted FAILED lists), so the refactor introduces zero new failures and keeps every handler call and its argument order identical. ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
