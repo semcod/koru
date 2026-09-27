@@ -228,3 +228,66 @@ def test_planfile_context_contract_survives_input_projection(tmp_path, monkeypat
     monkeypatch.setattr("koru.tillm_bridge.drive_shell_chat", drive)
     run_shell_llm_request(ticket_llm_request(task), tmp_path, "opencode")
     assert drive.call_args.kwargs["model"] == "zai/glm-5.3-flash"
+
+
+def test_bounded_small_task_uses_simple_model():
+    small_task = {
+        "id": "SMALL-1",
+        "files": ["src/small_fix.py"],
+        "labels": ["chore"],
+        "inputs": {"complexity": "XS"},
+    }
+    decision = choose(small_task)
+    assert decision == {"model": "zai/glm-5.3-flash", "reason": "bounded_small_task"}
+
+
+def test_bounded_small_task_kinds_and_complexity():
+    for val in ("XS", "S", "small", "SMALL"):
+        task = {"files": ["src/a.py"], "labels": ["docs"], "inputs": {"complexity": val}}
+        assert choose(task) == {"model": "zai/glm-5.3-flash", "reason": "bounded_small_task"}
+    for kind in ("small_task", "quick_fix", "simple_task", "doc_fix", "typing_fix"):
+        task = {"files": ["src/a.py"], "labels": [], "inputs": {"llm_task_kind": kind}}
+        assert choose(task) == {"model": "zai/glm-5.3-flash", "reason": "bounded_small_task"}
+
+
+def test_small_task_with_complex_labels_or_files_stays_on_default():
+    for complex_label in ("refactor", "code2llm", "security", "governance", "dependencies"):
+        task = {
+            "files": ["src/a.py"],
+            "labels": [complex_label],
+            "inputs": {"complexity": "XS"},
+        }
+        res = choose(task)
+        assert res["model"] == "zai/glm-5.3"
+        assert res["reason"] == "unbounded_small_scope"
+
+    multi_file_task = {
+        "files": ["src/a.py", "src/b.py"],
+        "labels": [],
+        "inputs": {"complexity": "XS"},
+    }
+    res = choose(multi_file_task)
+    assert res["model"] == "zai/glm-5.3"
+    assert res["reason"] == "unbounded_small_scope"
+
+
+def test_small_task_claude_code_adapter(tmp_path, monkeypatch):
+    from koru.queue.runners import run_shell_llm_request
+    from koru.queue.ticket import ticket_llm_request
+
+    for k, v in ENV.items():
+        monkeypatch.setenv(k, v)
+    monkeypatch.delenv("KORU_TILLM_FORCE_MODEL", raising=False)
+    drive = Mock(return_value={"ok": True, "exit_code": 0, "stdout": "ok"})
+    monkeypatch.setattr("koru.tillm_bridge.drive_shell_chat", drive)
+    small_task = {
+        "id": "SMALL-2",
+        "files": ["src/fix.py"],
+        "labels": ["chore"],
+        "inputs": {"complexity": "XS"},
+        "description": "simple fix",
+    }
+    result = run_shell_llm_request(ticket_llm_request(small_task), tmp_path, "claude-code")
+    assert drive.call_args.kwargs["model"] == "zai/glm-5.3-flash"
+    assert result.model == "zai/glm-5.3-flash"
+
