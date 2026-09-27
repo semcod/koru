@@ -1,0 +1,103 @@
+{
+  "records": [
+    {
+      "schema": "new-project.ruleset-canary/v1",
+      "kind": "ruleset_roundtrip",
+      "repository": "tom-sapletta-com/koru",
+      "rulesetId": 24085473,
+      "ticket": "ticket-325",
+      "actor": "tom-sapletta-com",
+      "observedAt": "2026-09-27T21:16:40Z",
+      "outcome": "conformant",
+      "note": "Desired body (fork variant: required_status_checks dropped, bypass empty) accepted by POST /rulesets and read back conformant via verify --desired fork-variant.",
+      "evidence": {
+        "observedRuleset": {
+          "id": 24085473,
+          "name": "protected exact-head delivery",
+          "target": "branch",
+          "source_type": "Repository",
+          "source": "tom-sapletta-com/koru",
+          "enforcement": "active",
+          "conditions": {
+            "ref_name": {
+              "exclude": [],
+              "include": [
+                "refs/heads/main"
+              ]
+            }
+          },
+          "rules": [
+            {
+              "type": "deletion"
+            },
+            {
+              "type": "non_fast_forward"
+            },
+            {
+              "type": "pull_request",
+              "parameters": {
+                "required_approving_review_count": 1,
+                "dismiss_stale_reviews_on_push": true,
+                "required_reviewers": [],
+                "require_code_owner_review": false,
+                "require_last_push_approval": true,
+                "required_review_thread_resolution": true,
+                "require_extra_approval_for_unattributed_changes": true,
+                "allowed_merge_methods": [
+                  "merge"
+                ]
+              }
+            }
+          ],
+          "node_id": "RRS_lACqUmVwb3NpdG9yec5S70hzzgFvg-E",
+          "created_at": "2026-09-27T23:17:57.426+02:00",
+          "updated_at": "2026-09-27T23:17:57.459+02:00",
+          "bypass_actors": [],
+          "current_user_can_bypass": "never",
+          "_links": {
+            "self": {
+              "href": "https://api.github.com/repos/tom-sapletta-com/koru/rulesets/24085473"
+            },
+            "html": {
+              "href": "https://github.com/tom-sapletta-com/koru/rules/24085473"
+            }
+          }
+        }
+      }
+    },
+    {
+      "schema": "new-project.ruleset-canary/v1",
+      "kind": "negative_author_merge_rejected",
+      "repository": "tom-sapletta-com/koru",
+      "pullRequest": 1,
+      "headSha": "00c6268483c876d53f4e0cc0d182d38d257f7d22",
+      "rulesetId": 24085473,
+      "ticket": "ticket-325",
+      "actor": "tom-sapletta-com",
+      "observedAt": "2026-09-27T21:18:12Z",
+      "outcome": "rejected",
+      "note": "Pull request author and operator account attempted PUT pulls/1/merge (method=merge) with zero reviews; GitHub rejected it under the fork-deployed desired ruleset.",
+      "evidence": {
+        "httpStatus": 405,
+        "message": "Repository rule violations found: New changes require approval from someone other than the last pusher.",
+        "merged": false,
+        "mergeableState": "blocked"
+      }
+    },
+    {
+      "schema": "new-project.ruleset-canary/v1",
+      "kind": "recovery_ruleset_removed",
+      "repository": "tom-sapletta-com/koru",
+      "rulesetId": 24085473,
+      "ticket": "ticket-325",
+      "actor": "tom-sapletta-com",
+      "observedAt": "2026-09-27T21:19:20Z",
+      "outcome": "absent",
+      "note": "DELETE /rulesets/24085473 succeeded; ruleset list readback shows no remaining rulesets. Exercises the owner-level ruleset removal used by emergency rollback.",
+      "evidence": {
+        "rulesetId": 24085473,
+        "remainingRulesetIds": []
+      }
+    }
+  ]
+}
