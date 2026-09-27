@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-295",
+  "summary": "Rename generic fix locals to stage-accurate names in readiness checks",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-295/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/readiness/readiness.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "25405f56cea0ed0a5a6c0f9e634ad9f8a846996f",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm Shotgun Surgery smell for the variable 'fix' in src/koru/autonomy/readiness/readiness.py (planfile ticket PLF-040, reported at line 890) by replacing the generic local with a stage-accurate name in two of the five functions that mutate it and removing the other three mutations as redundant selections: planfile_install_cmd (_planfile_availability_issue, the pip command that installs planfile - venv pip when present, plain pip fallback - used by all three planfile_unavailable issue variants) and bit_fix_command (_koru_runtime_identity_issue, the fix=-annotated command extracted from the koru path/version diagnostic bits). check_daemon_client_alignment keeps no local: its 'issues[0].fix_command if issues else None' is behavior-identical to passing primary_fix=None because _build_readiness_result already defaults a None primary_fix to _first_fix_command(issues), which returns the same value in every reachable case (a set issues[0].fix_command is by definition the first non-None fix command; a None one meant the old code also passed None and took the same default). check_workspace_socket_ownership keeps no local: its 'next((i.fix_command for i in issues if i.fix_command), None)' IS _first_fix_command(issues), exactly the builder default. check_lane_terminal_socket_alignment inlines its fallback into the pure selection 'primary_fix or _first_fix_command(issues)' (the helper is side-effect-free, so lazy or-evaluation is equivalent). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'fix' group drops from 5 scopes to 0 and the file mutation record count drops from 148 to 145 (the three removed records are the two deleted redundant selections and the inlined lane-alignment fallback). Each new name lands at exactly 1 scope. No behavior change: same issues, same primary_fix selection in every reachable case, same ReadinessResult shape, function signatures untouched. No other file touched. No duplication.toon.yaml exists in this repository, so the duplication-report checklist has nothing to consult for the touched path.",
+    "nonGoals": [
+      "No behavior, policy, message or interface change",
+      "No rename of other same-file mutation groups (issues 10, meta 3, candidate 3 etc. each already below the >= 5 threshold or a separate unreported dedupe key); this lane only clears the reported 'fix' group of the cited dedupe key",
+      "No new shared helper; the two surviving bindings compute unrelated values (a pip install command vs a bit-extracted fix annotation) and forcing an abstraction would couple independent readiness stages",
+      "No rename of the issues parameters or _build_readiness_result/_first_fix_command themselves (read-only parameters and the shared builder are not counted as mutations by the detector)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local naming plus pure selection inside one module. Every function that mutated the generic name 'fix' either names exactly the readiness stage it computes or no longer needs a local: the planfile availability probe names the pip command installing planfile (planfile_install_cmd), the runtime identity check names the fix command extracted from its diagnostic bits (bit_fix_command), the daemon-client alignment and workspace-socket-ownership checks drop their locals entirely because their selections are exactly the _build_readiness_result default (primary_fix=None defers to _first_fix_command(issues)), and the lane/terminal/socket alignment check keeps its explicit stage fix but inlines the fallback selection primary_fix or _first_fix_command(issues). The generic name 'fix' disappears from the file's mutation set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports a 'fix' mutation group of exactly 5 scopes - _planfile_availability_issue, _koru_runtime_identity_issue, check_daemon_client_alignment, check_workspace_socket_ownership, check_lane_terminal_socket_alignment - matching the ticket's 'spans 5 functions'; after the change the 'fix' group is empty, the file mutation record count drops from 148 to 145, each renamed local lands at exactly 1 scope, and no other group newly reaches the threshold (next highest pre-existing: issues at 10, a separate unreported dedupe key; meta/candidate at 3).",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "src/koru/autonomy/readiness/readiness.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named fix again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor mutation grouping on the file AST, original vs renamed content of src/koru/autonomy/readiness/readiness.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports a 'fix' mutation group of 5 scopes (_planfile_availability_issue, _koru_runtime_identity_issue, check_daemon_client_alignment, check_workspace_socket_ownership, check_lane_terminal_socket_alignment) - exactly matching the ticket's reported 'spans 5 functions'; renamed content reports a 'fix' group of 0 scopes; file mutation record count drops from 148 to 145 (the three removed records are the two deleted redundant selections and the inlined lane-alignment fallback); each renamed local lands at exactly 1 scope (planfile_install_cmd, bit_fix_command); no other variable group newly reaches the >= 5 threshold."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_autonomous_readiness.py -q",
+          "ruff check src/koru/autonomy/readiness/readiness.py"
+        ],
+        "evidence": "The readiness suite covering all five touched functions (planfile availability probing, runtime identity, daemon client alignment, workspace socket ownership, lane terminal socket alignment) passes unchanged - pure rename of function-internal locals plus redundant-selection removal whose values equal the _build_readiness_result default - and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}

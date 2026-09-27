@@ -178,7 +178,7 @@ def _planfile_availability_issue(project: Path, *, strict: bool) -> ReadinessIss
 
     cmd = resolve_planfile_base_command(project)
     pip = project / ".venv" / "bin" / "pip"
-    fix = (
+    planfile_install_cmd = (
         f"{pip} install planfile"
         if pip.is_file()
         else "pip install planfile  # or: pip install 'koru[planfile]'"
@@ -192,7 +192,7 @@ def _planfile_availability_issue(project: Path, *, strict: bool) -> ReadinessIss
             code="planfile_unavailable",
             severity=_runtime_issue_severity(strict),
             message=f"planfile command not runnable ({' '.join(cmd)}): {output}",
-            fix_command=fix,
+            fix_command=planfile_install_cmd,
         )
     if planfile_module_missing(output):
         return ReadinessIssue(
@@ -202,7 +202,7 @@ def _planfile_availability_issue(project: Path, *, strict: bool) -> ReadinessIss
                 f"planfile module missing for resolved command ({' '.join(cmd)}); "
                 "the queue would fail every cycle with planfile_error"
             ),
-            fix_command=fix,
+            fix_command=planfile_install_cmd,
         )
     return ReadinessIssue(
         code="planfile_unavailable",
@@ -211,7 +211,7 @@ def _planfile_availability_issue(project: Path, *, strict: bool) -> ReadinessIss
             f"planfile probe exited {returncode} ({' '.join(cmd)}): "
             f"{output.strip().splitlines()[-1] if output.strip() else 'no output'}"
         ),
-        fix_command=fix,
+        fix_command=planfile_install_cmd,
     )
 
 
@@ -251,7 +251,9 @@ def _koru_runtime_identity_issue(
     )
     if status == "pass":
         return None
-    fix = next((bit.removeprefix("fix=") for bit in bits if bit.startswith("fix=")), None)
+    bit_fix_command = next(
+        (bit.removeprefix("fix=") for bit in bits if bit.startswith("fix=")), None
+    )
     return ReadinessIssue(
         code="koru_runtime_identity",
         severity=_runtime_issue_severity(strict),
@@ -263,7 +265,7 @@ def _koru_runtime_identity_issue(
                 *bits,
             ]
         ),
-        fix_command=fix,
+        fix_command=bit_fix_command,
     )
 
 
@@ -446,8 +448,7 @@ def check_daemon_client_alignment(
     if project is not None and socket_path is not None:
         issues.extend(_check_daemon_meta_project_python_issues(status, project, socket_path))
 
-    fix = issues[0].fix_command if issues else None
-    return _build_readiness_result(issues, primary_fix=fix)
+    return _build_readiness_result(issues)
 
 
 def _pid_alive(pid: int) -> bool:
@@ -676,8 +677,7 @@ def check_workspace_socket_ownership(
     )
     issues.extend(_check_plugin_workspace_issues(status, autopilot_ide, project))
 
-    fix = next((i.fix_command for i in issues if i.fix_command), None)
-    return _build_readiness_result(issues, primary_fix=fix)
+    return _build_readiness_result(issues)
 
 
 def apply_socket_ownership_repairs(
@@ -918,8 +918,9 @@ def check_lane_terminal_socket_alignment(
     _append_issue(issues, _lane_ide_mismatch_issue(ctx))
     _append_issue(issues, _socket_lane_mismatch_issue(socket_path, ctx))
 
-    fix = next((i.fix_command for i in issues if i.fix_command), None)
-    return _build_readiness_result(issues, primary_fix=primary_fix or fix)
+    return _build_readiness_result(
+        issues, primary_fix=primary_fix or _first_fix_command(issues)
+    )
 
 
 def check_queue_runner_contention(project: Path) -> ReadinessResult:
