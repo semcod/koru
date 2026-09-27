@@ -146,11 +146,11 @@ def _env_enabled(name: str) -> bool:
 
 def _sanitize_antigravity_focus_open(commands: list[str]) -> list[str]:
     rejected = {"antigravity.openAgent", "aichat.newchataction"}
-    filtered = [cmd for cmd in commands if cmd not in rejected]
+    non_rejected = [cmd for cmd in commands if cmd not in rejected]
     # Seed the side panel ahead of generic chat commands even when the plugin
     # omitted it from focus_open. Neither command opens a new agent window.
     preferred = ["antigravity.agentSidePanel.open", "antigravity.agentSidePanel.focus"]
-    return preferred + [cmd for cmd in filtered if cmd not in preferred]
+    return preferred + [cmd for cmd in non_rejected if cmd not in preferred]
 
 
 def _is_vscodium_focus_open_candidate(command: str) -> bool:
@@ -167,8 +167,8 @@ def _prefer_commands(commands: list[str], preferred: tuple[str, ...]) -> list[st
 def _sanitize_vscodium_focus_open(commands: list[str]) -> list[str]:
     if not _env_enabled("KORU_VSCODIUM_COMMAND_ORDER_FOCUS_OPEN"):
         return []
-    filtered = [command for command in commands if _is_vscodium_focus_open_candidate(command)]
-    return _prefer_commands(filtered, _VSCODIUM_FOCUS_OPEN_PREFERRED)
+    allowed = [command for command in commands if _is_vscodium_focus_open_candidate(command)]
+    return _prefer_commands(allowed, _VSCODIUM_FOCUS_OPEN_PREFERRED)
 
 
 def _is_cursor_submit_candidate(command: str) -> bool:
@@ -180,9 +180,9 @@ def _is_cursor_submit_candidate(command: str) -> bool:
 
 
 def _sanitize_cursor_submit(commands: list[str]) -> list[str]:
-    filtered = [command for command in commands if _is_cursor_submit_candidate(command)]
-    if filtered:
-        return filtered
+    submit_candidates = [command for command in commands if _is_cursor_submit_candidate(command)]
+    if submit_candidates:
+        return submit_candidates
     return ["composer.sendToAgent", "workbench.action.chat.submit"]
 
 
@@ -193,9 +193,9 @@ def _is_cursor_paste_candidate(command: str) -> bool:
 
 
 def _sanitize_cursor_paste(commands: list[str]) -> list[str]:
-    filtered = [command for command in commands if _is_cursor_paste_candidate(command)]
-    if filtered:
-        return filtered
+    paste_candidates = [command for command in commands if _is_cursor_paste_candidate(command)]
+    if paste_candidates:
+        return paste_candidates
     return [
         "workbench.action.chat.typeText",
         "workbench.action.chat.insertText",
@@ -209,8 +209,7 @@ def _is_cursor_focus_open_candidate(command: str) -> bool:
 
 
 def _sanitize_cursor_focus_open(commands: list[str]) -> list[str]:
-    filtered = [command for command in commands if _is_cursor_focus_open_candidate(command)]
-    return filtered
+    return [command for command in commands if _is_cursor_focus_open_candidate(command)]
 
 
 def _sanitize_windsurf_focus_open(commands: list[str]) -> list[str]:
