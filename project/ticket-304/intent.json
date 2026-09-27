@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-304",
+  "summary": "Address code smell: Shotgun Surgery: fw locals in portal input",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-304/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay/portal_input.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "899a2f0907fefbd1f02d07900091533aca800703",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm Shotgun Surgery smell for the variable 'fw' in src/koru/integrations/vdisplay/portal_input.py (planfile ticket PLF-039, reported at line 270) by replacing the generic frame-width local with the stage-accurate name paired to each function's already stage-named height sibling: guard_w (_focus_ring_appeared, pixel-array width of the focus-guard before/after frames, drives the stream-to-frame window scaling, sibling guard_h), calib_w (calibrate_input_from_focus, PNG width of the manual-calibration frame passed to frame_to_stream, sibling calib_h), panel_w (_pending_action_present, PNG width of the chat-panel frame driving the right-half region test, sibling panel_h), anchor_w (_stream_target_from_ocr, PNG width of the OCR-anchor frame, sibling anchor_h), precise_w (_precise_stream_xy, PNG width of the precise-placeholder frame, sibling precise_h), reanchor_w (_clear_and_reanchor_stream_xy, PNG width of the post-clear re-anchor frame, sibling reanchor_h). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'fw' group drops from 6 scopes to 0 and the file mutation record count stays 201 (pure rename - every fw is read after its binding, so nothing is inlined or removed). Each new name lands at exactly 1 scope. No behavior change: same PNG-header parses, same scaling arithmetic, same region thresholds, same frame_to_stream calls. fw0 in _maybe_autoremember_focused_input is a distinct name and stays; the separate 'p' group (6 scopes, pre-existing) has its own planfile ticket and is out of scope. No other file touched. No duplication.toon.yaml exists in this repository, so the duplication-report checklist has nothing to consult for the touched path.",
+    "nonGoals": [
+      "No behavior, coordinate-math, threshold or interface change",
+      "No rename of other same-file mutation groups; the pre-existing 'p' group (6 scopes) has its own planfile ticket and this lane only clears the reported 'fw' group of the cited dedupe key",
+      "No new shared width-parsing helper; the six bindings sit at distinct pipeline stages (guard scaling, manual calibration, pending-action panel region, OCR anchor, precise placeholder, post-clear re-anchor) and a forced abstraction would couple independent frame stages",
+      "No rename of the frame parameters or the fw0 local in _maybe_autoremember_focused_input (read-only data flow / distinct name, not counted in the group)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local naming inside one module. Every function that mutated the generic name 'fw' already binds a stage-accurate height sibling (guard_h, calib_h, panel_h, anchor_h, precise_h, reanchor_h); the width now carries the same stage name, so each frame dimension pair reads as one stage. The generic name 'fw' disappears from the file's mutation set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports a 'fw' mutation group of exactly 6 scopes - _focus_ring_appeared, calibrate_input_from_focus, _pending_action_present, _stream_target_from_ocr, _precise_stream_xy, _clear_and_reanchor_stream_xy - matching the ticket's 'spans 6 functions'; after the rename the 'fw' group is empty, the file mutation record count stays 201 (pure rename), each renamed local lands at exactly 1 scope, and no other group newly reaches the threshold ('p' stays at 6 scopes, pre-existing with its own planfile ticket).",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "src/koru/integrations/vdisplay/portal_input.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named fw again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor mutation grouping on the file AST, original vs renamed content of src/koru/integrations/vdisplay/portal_input.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports a 'fw' mutation group of 6 scopes (_focus_ring_appeared, calibrate_input_from_focus, _pending_action_present, _stream_target_from_ocr, _precise_stream_xy, _clear_and_reanchor_stream_xy) - exactly matching the ticket's reported 'spans 6 functions'; renamed content reports a 'fw' group of 0 scopes; file mutation record count stays 201 (pure rename); each renamed local lands at exactly 1 scope (guard_w, calib_w, panel_w, anchor_w, precise_w, reanchor_w); no other variable group newly reaches the >= 5 threshold."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_portal_input.py -q",
+          "ruff check src/koru/integrations/vdisplay/portal_input.py"
+        ],
+        "evidence": "The suite that exercises the renamed portal-input paths (PNG size parsing, landmark OCR fallback, and the two-pass clear branch through _stream_target_from_ocr/_precise_stream_xy/_clear_and_reanchor_stream_xy) passes unchanged - pure rename of function-internal locals - and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}

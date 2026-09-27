@@ -302,4 +302,6 @@ project analysis or human-owned ticket inputs.
 | **ticket-299** | [`README.md`](./ticket-299/README.md) | - | - | - | - | - |
 | **ticket-300** | [`README.md`](./ticket-300/README.md) | - | - | - | - | - |
 | **ticket-301** | [`README.md`](./ticket-301/README.md) | - | - | - | - | - |
+| **ticket-302** | [`README.md`](./ticket-302/README.md) | - | - | - | - | - |
+| **ticket-303** | [`README.md`](./ticket-303/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->
