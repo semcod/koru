@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-279",
+  "summary": "Address code smell: Shotgun Surgery: event locals in koru observability emit helpers",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-279/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/observability_events.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a7f6203e43707ad0ab7c403f950403c4aaf0ea72",
+    "targetBranch": "main",
+    "outcome": "Rename the generic event local 'event' to stage-accurate names in each of the eight emit helpers of src/koru/observability_events.py that assign it: intent_event (emit_intent, the autopilot.intent record), decision_event (emit_decision, the autopilot.route.decision record), action_event (emit_action, the autopilot.drive.requested record), phase_event (emit_phase, the autopilot.drive.phase record), verified_event (emit_verify, the autopilot.drive.verified record), failure_event (emit_failure, the error-severity autopilot.drive.failed record), blocker_event (emit_blocker, the autonomy.blocker record) and next_event (emit_next, the autonomy.next record). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'event' group drops from 8 scopes to 0. Each new name lands at 1 scope, so no (file, variable) group grows toward the threshold. The record_obs_event parameter stays 'event' (single scope, never part of the mutation group). Pure rename of function-internal locals; no signature, return shape or behavior change; no other file touched.",
+    "nonGoals": [
+      "No behavior, emission semantics or interface change",
+      "No restructuring into a shared private emit helper; each emit_* already owns exactly one stage (one event kind), the shared generic name was the defect, not a missing abstraction",
+      "No rename of locals in other files that happen to use 'event' (each is an independent local in its own file scope)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local renames only, inside one module. Every emit helper names its local after the event kind it builds, records and returns (intent, route decision, drive request, drive phase, drive verification, drive failure, autonomy blocker, autonomy next); the generic name 'event' disappears from the file's mutation set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports an 'event' mutation group of exactly 8 scopes - emit_intent, emit_decision, emit_action, emit_phase, emit_verify, emit_failure, emit_blocker, emit_next - matching the ticket's 'spans 8 functions'; after the rename the 'event' group is empty and no new (file, variable) group reaches the >= 5 threshold.",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "src/koru/observability_events.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named event again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor mutation grouping on the file AST, original vs renamed content of src/koru/observability_events.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports an 'event' mutation group of 8 scopes (emit_intent, emit_decision, emit_action, emit_phase, emit_verify, emit_failure, emit_blocker, emit_next; 8 records) - exactly matching the ticket's reported 'spans 8 functions'. Renamed content reports an 'event' group of 0 scopes; file mutation record count unchanged at 9 (pure rename); every renamed local lands at 1 scope, far below the >= 5 threshold."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_koruide_daemon_handlers_ack.py tests/test_koruide_standalone_import.py tests/test_koruide_daemon_handlers_drive.py -q",
+          "ruff check src/koru/observability_events.py"
+        ],
+        "evidence": "The suites that exercise the renamed emit paths pass unchanged - pure rename of function-internal locals - and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
