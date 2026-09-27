@@ -142,7 +142,13 @@ _START_ARGS: tuple[_ArgSpec, ...] = (
 )
 
 _FINISH_ARGS: tuple[_ArgSpec, ...] = (
-    ("--ticket", {"required": True}),
+    (
+        "--ticket",
+        {
+            "default": None,
+            "help": "Planfile or tracking ticket id (inferred from branch/PR if omitted).",
+        },
+    ),
     ("--base", {"default": "main"}),
     ("--skip-ci", {"action": "store_true"}),
     (

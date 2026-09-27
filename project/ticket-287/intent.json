@@ -1,0 +1,94 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-287",
+  "summary": "Enable auto-runnable finish steps and infer ticket id for autonomous merge",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-287/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/execution_plan_steps.py",
+    "src/koru/autonomy/task_profiles.yaml",
+    "src/koru/cli_work.py",
+    "src/koru/work/lifecycle.py",
+    "tests/test_cli_work.py",
+    "tests/test_execution_plan.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "f1cc5296f6eb29396bd33fc1cc43f130ae783e14",
+    "targetBranch": "main",
+    "outcome": "Enable auto-runnable execution for finish_pr, finish_worktree, and profile publish steps under green tests. Allow koru work finish to infer ticket_id from current branch or PR when omitted.",
+    "nonGoals": [
+      "No bypass of verification gates or CI checks",
+      "No disruption to manual finish commands"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 35,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Mark finish_pr and finish_worktree auto_runnable=True in execution_plan_steps.py, make task_profiles.yaml publish step auto: true, make --ticket optional in cli_work.py by inferring ticket_id in finish_work.",
+      "components": [
+        {
+          "name": "koru-autonomy",
+          "paths": [
+            "src/koru/autonomy/execution_plan_steps.py",
+            "src/koru/autonomy/task_profiles.yaml",
+            "tests/test_execution_plan.py"
+          ]
+        },
+        {
+          "name": "koru-work",
+          "paths": [
+            "src/koru/cli_work.py",
+            "src/koru/work/lifecycle.py",
+            "tests/test_cli_work.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "git revert HEAD"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_execution_plan.py tests/test_cli_work.py"
+        ],
+        "evidence": "All execution plan and cli_work unit tests pass cleanly."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
