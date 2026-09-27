@@ -227,21 +227,7 @@ def _ticket_text(plan: dict[str, Any], *, plans_rel: str) -> str:
     return "\n".join(lines)
 
 
-def _ticket_scaffold(
-    plan: dict[str, Any],
-    *,
-    project: Path,
-    plans_path: Path,
-    source: str,
-) -> dict[str, Any]:
-    paths = _plan_paths(plan)
-    evidence = plan.get("evidence") if isinstance(plan.get("evidence"), dict) else {}
-    risk = plan.get("risk") if isinstance(plan.get("risk"), dict) else {}
-    # A model may execute only inside an explicit project-owned capability
-    # contract. The default remains human review so discovery cannot grant its
-    # own authority merely by creating a ticket.
-    contract = _config_value("KORU_TODO2CODE_CONTRACT", project)
-    use_llm = _env_flag("KORU_TODO2CODE_LLM_EXECUTOR", False, project) and bool(contract)
+def _build_ticket_inputs(paths: list[str], contract: str | None) -> dict[str, Any]:
     inputs: dict[str, Any] = {
         # Preserved for older Planfile readers; hydration and ticket request
         # translation remove this metadata before the Cursor SDK call.
@@ -258,42 +244,76 @@ def _ticket_scaffold(
     }
     if contract:
         inputs["contract"] = contract
+    return inputs
+
+
+def _build_source_context_evidence(
+    project: Path,
+    plans_path: Path,
+    paths: list[str],
+) -> dict[str, Any]:
+    return {
+        "schema": "koru.ticket_evidence.v1",
+        "kind": "todo2code_discovery",
+        "artifact": _file_evidence(project, plans_path),
+        "files": [item for path in paths if (item := _file_evidence(project, project / path))],
+        "regenerate_command": (
+            "t2c pipeline . --nl-mode deterministic "
+            f"--markdown-mode deterministic --no-docs-llm --no-summary-llm "
+            "--communication-mode deterministic --project-dir project "
+            f"--out {_out_dir(project).relative_to(project)}"
+        ),
+        "staleness_check": (
+            "Regenerate code-change-plans.json and compare planHash / "
+            "artifact.sha256 before assuming this ticket is still current."
+        ),
+    }
+
+
+def _build_source_context(
+    plan: dict[str, Any],
+    *,
+    project: Path,
+    plans_path: Path,
+    paths: list[str],
+) -> dict[str, Any]:
+    evidence = plan.get("evidence") if isinstance(plan.get("evidence"), dict) else {}
+    risk = plan.get("risk") if isinstance(plan.get("risk"), dict) else {}
+    return {
+        "signal": "todo2code_code_change_plan",
+        "dedupe_key": _plan_dedupe_key(plan),
+        "plan_id": str(plan.get("id") or "").strip() or None,
+        "plan_hash": str(plan.get("planHash") or "").strip() or None,
+        "priority": str(plan.get("priority") or "").strip() or None,
+        "risk_level": str(risk.get("level") or "").strip() or None,
+        "diagnostic_ids": _string_list(evidence.get("diagnosticIds")),
+        "record_ids": _string_list(evidence.get("recordIds")),
+        "graph_fingerprint": str(evidence.get("graphFingerprint") or "").strip() or None,
+        "evidence": _build_source_context_evidence(project, plans_path, paths),
+    }
+
+
+def _ticket_scaffold(
+    plan: dict[str, Any],
+    *,
+    project: Path,
+    plans_path: Path,
+    source: str,
+) -> dict[str, Any]:
+    paths = _plan_paths(plan)
+    # A model may execute only inside an explicit project-owned capability
+    # contract. The default remains human review so discovery cannot grant its
+    # own authority merely by creating a ticket.
+    contract = _config_value("KORU_TODO2CODE_CONTRACT", project)
+    use_llm = _env_flag("KORU_TODO2CODE_LLM_EXECUTOR", False, project) and bool(contract)
+    inputs = _build_ticket_inputs(paths, contract)
+    source_context = _build_source_context(plan, project=project, plans_path=plans_path, paths=paths)
     return {
         "title": _ticket_title(plan),
         "labels": ["todo2code", "code-change", "discovery", "autonomous"],
         "files": paths,
         "source_tool": source,
-        "source_context": {
-            "signal": "todo2code_code_change_plan",
-            "dedupe_key": _plan_dedupe_key(plan),
-            "plan_id": str(plan.get("id") or "").strip() or None,
-            "plan_hash": str(plan.get("planHash") or "").strip() or None,
-            "priority": str(plan.get("priority") or "").strip() or None,
-            "risk_level": str(risk.get("level") or "").strip() or None,
-            "diagnostic_ids": _string_list(evidence.get("diagnosticIds")),
-            "record_ids": _string_list(evidence.get("recordIds")),
-            "graph_fingerprint": str(evidence.get("graphFingerprint") or "").strip() or None,
-            "evidence": {
-                "schema": "koru.ticket_evidence.v1",
-                "kind": "todo2code_discovery",
-                "artifact": _file_evidence(project, plans_path),
-                "files": [
-                    item
-                    for path in paths
-                    if (item := _file_evidence(project, project / path))
-                ],
-                "regenerate_command": (
-                    "t2c pipeline . --nl-mode deterministic "
-                    f"--markdown-mode deterministic --no-docs-llm --no-summary-llm "
-                    "--communication-mode deterministic --project-dir project "
-                    f"--out {_out_dir(project).relative_to(project)}"
-                ),
-                "staleness_check": (
-                    "Regenerate code-change-plans.json and compare planHash / "
-                    "artifact.sha256 before assuming this ticket is still current."
-                ),
-            },
-        },
+        "source_context": source_context,
         "executor_kind": "llm" if use_llm else "human",
         "executor_mode": "automatic" if use_llm else "interactive",
         "max_attempts": 3 if use_llm else 1,
@@ -315,15 +335,15 @@ class _RankedPlans(NamedTuple):
 
 
 def _rank_useful_plans(
-    project: Path, plan_set: dict[str, Any], min_usefulness: float,
+    project: Path,
+    plan_set: dict[str, Any],
+    min_usefulness: float,
 ) -> _RankedPlans:
     raw_plans = [p for p in (plan_set.get("plans") or []) if isinstance(p, dict)]
     useful: list[dict[str, Any]] = []
     filtered_out = 0
     for plan in raw_plans:
-        if not _plan_paths(plan) or not is_useful_plan(
-            plan, project=project, min_score=min_usefulness
-        ):
+        if not _plan_paths(plan) or not is_useful_plan(plan, project=project, min_score=min_usefulness):
             filtered_out += 1
             continue
         useful.append(plan)
@@ -366,9 +386,7 @@ def _resolve_plan_priority(plan: dict[str, Any]) -> str:
 def _enrich_plan_scaffold(scaffold: dict[str, Any], plan: dict[str, Any], project: Path) -> None:
     score = plan_usefulness_score(plan, project=project)
     scaffold["source_context"]["usefulness_score"] = round(score, 2)
-    scaffold["labels"] = list(
-        dict.fromkeys([*scaffold.get("labels", []), "useful-code-change"])
-    )
+    scaffold["labels"] = list(dict.fromkeys([*scaffold.get("labels", []), "useful-code-change"]))
 
 
 class _PlanDispatch(NamedTuple):
