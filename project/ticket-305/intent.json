@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-305",
+  "summary": "Pure step parsers in korudsl library to clear shotgun surgery",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-305/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/korudsl/library.py",
+    "tests/test_korudsl.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2d2a77fbc6ea57fd3caa67e6069280a85739a677",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm Shotgun Surgery smell for the variable 'goal['steps']' in src/korudsl/library.py (planfile ticket PLF-040, reported at line 38) by converting the five in-place step-line handlers (_handle_set, _handle_wait, _handle_get, _handle_save, _handle_if) into pure line->step-record parsers (_parse_set, _parse_wait, _parse_get, _parse_save, _parse_if) that no longer receive the goal; _apply_prefixed_line becomes the only scope that appends to goal['steps']. The mixed _PREFIX_HANDLERS table, which needed a 'FUNC:' special case for its one 3-argument handler, is replaced by a _STEP_PARSERS table plus explicit FUNC:/ERROR /CORRECT  dispatch - behavior-identical because no prefix is a prefix of another. The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'goal['steps']' group drops from 5 scopes to 1 (_apply_prefixed_line). Staleness verified before work: the discovery evidence files[0].sha256 83155a62... matches the current file byte-for-byte, and the two merged commits citing a PLF-040 id (ticket-263, ticket-295) carry different dedupe keys (planfile sprint rolls reuse ids), so this dedupe key was outstanding. No behavior change: same prefix set, same emitted step records (set keeps the whole line as instruction, wait/get/save/if keep their offset-stripped operands), step lines with no open goal remain consumed no-ops, FUNC registration stays goal-gated, public API unchanged.",
+    "nonGoals": [
+      "No behavior, DSL grammar, record-shape or public-interface change; the four public functions re-exported by korudsl.__init__ are untouched",
+      "No conversion of _handle_error/_handle_correct to parsers: the 'goal['objectives']' group is 2 scopes, far below the >= 5 threshold, and this lane only clears the reported 'goal['steps']' group",
+      "No change to the emit path (library_to_dsl and _emit_* functions, the 'lines' group at 4 scopes)",
+      "No change outside src/korudsl/library.py; transform.py and the korudsl CLI are callers of unchanged public functions"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Pure selection inside one module. The smell is not a shared name (unlike the ticket-304 'fw' lane) but a genuinely shared mutation: five handler functions each append to goal['steps'] guarded by the same goal-is-not-None check, so adding a step prefix means editing handler bodies in five places. Each handler's body is a pure function of the DSL line except for the append, so the smallest smell-removing move is to make them literally pure - return the step record, drop the goal parameter - and append once in the dispatcher that already owns prefix dispatch. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports a 'goal['steps']' group of exactly 5 scopes - _handle_set, _handle_wait, _handle_get, _handle_save, _handle_if - matching the ticket's 'spans 5 functions' with representative line 38 (_handle_wait); after the refactor the group is 1 scope (_apply_prefixed_line) and no other group newly reaches the >= 5 threshold ('lines' stays at 4, 'library' at 3, 'goal['objectives']' at 2).",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "src/korudsl/library.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the five handlers append to goal['steps'] again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor mutation grouping on the file AST, baseline vs refactored content of src/korudsl/library.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports a 'goal['steps']' group of 5 scopes (_handle_set, _handle_wait, _handle_get, _handle_save, _handle_if) - exactly matching the ticket's reported 'spans 5 functions'; refactored content reports the group at 1 scope (_apply_prefixed_line); no variable group newly reaches the >= 5 threshold ('lines' 4, 'library' 3, 'goal['objectives']' 2)."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_korudsl.py -q",
+          "ruff check src/korudsl/library.py"
+        ],
+        "evidence": "The korudsl suite (normalize/roundtrip, objective emission, CLI --version) passes unchanged and ruff reports zero errors on the touched file - pure internal restructuring with identical step records and identical goal-None handling."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
