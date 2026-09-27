@@ -162,7 +162,7 @@ def pr_steps(project: Path, pr: PendingPR) -> list[ExecutionStep]:
             commands=[f"koru work finish --pr {pr.number} --merge --project {project.resolve()}"],
             hint=f"Merge PR #{pr.number} via validator-agent when checks pass",
             repo=str(project.resolve()),
-            auto_runnable=False,
+            auto_runnable=True,
         ),
     ]
 
@@ -196,7 +196,7 @@ def worktree_steps(project: Path, wt: PendingWorktree) -> list[ExecutionStep]:
             commands=[f"sh -c 'cd {wt.path} && koru work finish --ticket {tid} --open-pr'"],
             hint=f"Finish work in {wt.path} and open PR",
             repo=wt.path,
-            auto_runnable=False,
+            auto_runnable=True,
         ),
     ]
 

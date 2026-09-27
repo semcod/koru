@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 from pathlib import Path
@@ -222,10 +223,39 @@ def start_work(
     }
 
 
+def _infer_ticket_id(project: Path, branch: str, pr_number: int | None = None) -> str:
+    """Infer ticket identifier from branch name, project worktree, or PR."""
+    m = re.search(r"ticket[/-](\d+)", branch, re.IGNORECASE)
+    if m:
+        return f"ticket-{m.group(1)}"
+    m = re.search(r"ticket[/-](\d+)", project.name, re.IGNORECASE)
+    if m:
+        return f"ticket-{m.group(1)}"
+    if pr_number is not None:
+        try:
+            proc = subprocess.run(
+                ["gh", "pr", "view", str(pr_number), "--json", "title,headRefName"],
+                cwd=str(project),
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if proc.returncode == 0:
+                data = json.loads(proc.stdout or "{}")
+                for key in ("headRefName", "title"):
+                    val = str(data.get(key) or "")
+                    m = re.search(r"ticket[/-](\d+)", val, re.IGNORECASE)
+                    if m:
+                        return f"ticket-{m.group(1)}"
+        except Exception:
+            pass
+    return "ticket-unknown"
+
+
 def finish_work(
     project: Path,
     *,
-    ticket_id: str,
+    ticket_id: str | None = None,
     base_branch: str = _DEFAULT_BASE,
     run_ci: bool = True,
     open_pr: bool = False,
@@ -240,6 +270,8 @@ def finish_work(
     branch = _current_branch(project)
     stages: list[dict[str, Any]] = []
 
+    resolved_ticket_id = ticket_id or _infer_ticket_id(project, branch, pr_number)
+
     if run_ci:
         ci_result = run_local_ci(project)
         stages.append({"stage": "ci", **ci_result})
@@ -247,7 +279,7 @@ def finish_work(
             return {
                 "status": "blocked",
                 "reason": "ci_failed",
-                "ticket_id": ticket_id,
+                "ticket_id": resolved_ticket_id,
                 "branch": branch,
                 "stages": stages,
             }
@@ -255,14 +287,14 @@ def finish_work(
     resolved_pr = pr_number
     if open_pr and resolved_pr is None:
         try:
-            resolved_pr = _open_pr_if_needed(project, branch, f"{ticket_id}: koru work", base_branch)
+            resolved_pr = _open_pr_if_needed(project, branch, f"{resolved_ticket_id}: koru work", base_branch)
             stages.append({"stage": "pr", "status": "ready", "pr": resolved_pr})
         except Exception as exc:
             stages.append({"stage": "pr", "status": "error", "error": str(exc)})
             return {
                 "status": "blocked",
                 "reason": "pr_failed",
-                "ticket_id": ticket_id,
+                "ticket_id": resolved_ticket_id,
                 "branch": branch,
                 "stages": stages,
             }
@@ -276,14 +308,14 @@ def finish_work(
             return {
                 "status": "blocked",
                 "reason": "missing_pr",
-                "ticket_id": ticket_id,
+                "ticket_id": resolved_ticket_id,
                 "branch": branch,
                 "stages": stages,
                 "hint": "Pass --pr N, use --open-pr, or open a PR for the current branch.",
             }
         pub = dispatch_validator_merge(
             project,
-            ticket_id=ticket_id,
+            ticket_id=resolved_ticket_id,
             pr_number=resolved_pr,
             dry_run=dry_run,
             merge=merge,
@@ -293,14 +325,14 @@ def finish_work(
             return {
                 "status": "blocked",
                 "reason": "publish_failed",
-                "ticket_id": ticket_id,
+                "ticket_id": resolved_ticket_id,
                 "branch": branch,
                 "stages": stages,
             }
 
     return {
         "status": "finished" if not dry_run else "dry_run",
-        "ticket_id": ticket_id,
+        "ticket_id": resolved_ticket_id,
         "branch": branch,
         "pr": resolved_pr,
         "stages": stages,

@@ -29,7 +29,7 @@ profiles:
         command: sh -c 'cd {repo} && koru ci run'
       - id: publish
         kind: shell
-        auto: false
+        auto: true
         command: koru work finish --ticket {ticket_id} --no-publish --project {repo}
 
   cc_hotspot_refactor:

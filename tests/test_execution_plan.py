@@ -261,3 +261,27 @@ def test_select_issue_or_discovery_falls_to_discovery_when_empty(
     result = execution_plan_module._select_issue_or_discovery(tmp_path, strategy, [])
     assert result is not None
     assert result.phase == "idle_scan"
+
+
+def test_pr_steps_and_worktree_steps_are_auto_runnable(tmp_path: Path) -> None:
+    from koru.autonomy.execution_plan_steps import pr_steps, worktree_steps
+    from koru.autonomy.task_strategies import PendingPR, PendingWorktree
+
+    pr = PendingPR(number=101, title="Test PR", head_branch="ticket/101-feat")
+    steps = pr_steps(tmp_path, pr)
+    finish_pr = next(s for s in steps if s.id == "finish_pr")
+    assert finish_pr.auto_runnable is True
+
+    wt = PendingWorktree(
+        path=str(tmp_path / ".worktrees" / "ticket-102--test"),
+        branch="ticket/102-test",
+        ticket_id="102",
+        head_sha="abc1234",
+        is_dirty=False,
+        commits_ahead=1,
+        is_merged=False,
+    )
+    wt_steps = worktree_steps(tmp_path, wt)
+    finish_wt = next(s for s in wt_steps if s.id == "finish_worktree")
+    assert finish_wt.auto_runnable is True
+
