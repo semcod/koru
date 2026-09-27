@@ -97,14 +97,19 @@ def register_instance(
     auto_answer: bool = True,
 ) -> dict[str, Any]:
     entries = load_registry(project)
-    for entry in entries:
-        if entry.get("url") == url:
-            entry.update(
-                {"label": label or entry.get("label", ""), "pid": pid, "managed": managed, "auto_answer": auto_answer}
+    for existing in entries:
+        if existing.get("url") == url:
+            existing.update(
+                {
+                    "label": label or existing.get("label", ""),
+                    "pid": pid,
+                    "managed": managed,
+                    "auto_answer": auto_answer,
+                }
             )
             save_registry(project, entries)
-            return entry
-    entry = {
+            return existing
+    new_record = {
         "id": f"oc{int(time.time() * 1000) % 10**8:x}",
         "url": url.rstrip("/"),
         "label": label or url,
@@ -114,9 +119,9 @@ def register_instance(
         "project": str(project),
         "registered_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
-    entries.append(entry)
+    entries.append(new_record)
     save_registry(project, entries)
-    return entry
+    return new_record
 
 
 def unregister_instance(project: Path, instance_id: str) -> bool:
@@ -130,11 +135,11 @@ def unregister_instance(project: Path, instance_id: str) -> bool:
 
 def set_auto_answer(project: Path, instance_id: str, enabled: bool) -> dict[str, Any] | None:
     entries = load_registry(project)
-    for entry in entries:
-        if entry.get("id") == instance_id:
-            entry["auto_answer"] = bool(enabled)
+    for registered in entries:
+        if registered.get("id") == instance_id:
+            registered["auto_answer"] = bool(enabled)
             save_registry(project, entries)
-            return entry
+            return registered
     for found in _scan_serve_processes():
         if found.get("id") == instance_id:
             return register_instance(
@@ -471,10 +476,10 @@ def get_available_models(url: str) -> list[dict[str, str]]:
     models: list[dict[str, str]] = []
     cfg = get_instance_config(url)
     default_model_str = cfg.get("model")
-    default_entry: dict[str, str] | None = None
+    default_route: dict[str, str] | None = None
     if isinstance(default_model_str, str) and "/" in default_model_str:
         p, m = default_model_str.split("/", 1)
-        default_entry = {"providerID": p.strip(), "modelID": m.strip()}
+        default_route = {"providerID": p.strip(), "modelID": m.strip()}
 
     providers = cfg.get("provider") if isinstance(cfg.get("provider"), dict) else {}
     for pid, pdata in providers.items():
@@ -482,13 +487,13 @@ def get_available_models(url: str) -> list[dict[str, str]]:
             continue
         pmodels = pdata.get("models") if isinstance(pdata.get("models"), dict) else {}
         for mid in pmodels.keys():
-            entry = {"providerID": str(pid), "modelID": str(mid)}
-            if default_entry and entry == default_entry:
+            model_route = {"providerID": str(pid), "modelID": str(mid)}
+            if default_route and model_route == default_route:
                 continue
-            models.append(entry)
+            models.append(model_route)
 
-    if default_entry:
-        models.insert(0, default_entry)
+    if default_route:
+        models.insert(0, default_route)
 
     if not models:
         for p in list_providers(url):
@@ -751,24 +756,24 @@ def reply_question(url: str, session_id: str, request_id: str, answers: list[lis
 def discover_instances(project: Path, *, probe: bool = True) -> list[dict[str, Any]]:
     """Registry entries merged with ``opencode serve`` processes from /proc."""
     merged: dict[str, dict[str, Any]] = {}
-    for entry in _scan_serve_processes():
-        merged[entry["url"]] = entry
-    for entry in load_registry(project):
-        url = str(entry.get("url", "")).rstrip("/")
+    for scanned in _scan_serve_processes():
+        merged[scanned["url"]] = scanned
+    for instance in load_registry(project):
+        url = str(instance.get("url", "")).rstrip("/")
         if not url:
             continue
         base = merged.pop(url, None)
         if base:
-            base.update(entry)
-            entry = base
-        if entry.get("managed") and not _pid_alive(entry.get("pid")):
+            base.update(instance)
+            instance = base
+        if instance.get("managed") and not _pid_alive(instance.get("pid")):
             # Managed but the pid is gone — drop instead of showing dead rows.
             continue
-        merged[url] = entry
+        merged[url] = instance
     instances = list(merged.values())
     if probe:
-        for entry in instances:
-            entry["healthy"] = instance_health(str(entry["url"]))
+        for instance in instances:
+            instance["healthy"] = instance_health(str(instance["url"]))
     return instances
 
 
@@ -993,11 +998,11 @@ def terminals_payload(project: Path) -> dict[str, Any]:
 
 
 def terminal_detail(project: Path, instance_id: str) -> dict[str, Any]:
-    entry = _find_instance(project, instance_id)
-    if entry is None:
+    instance = _find_instance(project, instance_id)
+    if instance is None:
         return {"error": f"unknown instance {instance_id!r}"}
-    url = str(entry["url"])
-    detail = instance_status({**entry, "healthy": instance_health(url)})
+    url = str(instance["url"])
+    detail = instance_status({**instance, "healthy": instance_health(url)})
     if detail["healthy"]:
         pending = pending_requests(url)
         detail["pending_requests"] = pending
@@ -1006,11 +1011,11 @@ def terminal_detail(project: Path, instance_id: str) -> dict[str, Any]:
 
 
 def terminal_messages(project: Path, instance_id: str, session_id: str, *, limit: int = 60) -> dict[str, Any]:
-    entry = _find_instance(project, instance_id)
-    if entry is None:
+    instance = _find_instance(project, instance_id)
+    if instance is None:
         return {"error": f"unknown instance {instance_id!r}"}
     try:
-        messages = session_messages(str(entry["url"]), session_id, limit=limit)
+        messages = session_messages(str(instance["url"]), session_id, limit=limit)
     except Exception as exc:
         return {"error": str(exc), "messages": []}
     return {
@@ -1033,10 +1038,10 @@ def _resolve_terminal_target(
     text = str(body.get("text") or "").strip()
     if not instance_id or not text:
         return None, {"error": "iid and text are required"}
-    entry = _find_instance(project, instance_id)
-    if entry is None:
+    target = _find_instance(project, instance_id)
+    if target is None:
         return None, {"error": f"unknown instance {instance_id!r}"}
-    return entry, None
+    return target, None
 
 
 def _retry_session_failover(
@@ -1168,11 +1173,11 @@ def _parse_prompt_request(
 
 
 def terminal_prompt(project: Path, body: dict[str, Any]) -> dict[str, Any]:
-    entry, err = _resolve_terminal_target(project, body)
+    target, err = _resolve_terminal_target(project, body)
     if err:
         return err
-    assert entry is not None
-    url = str(entry["url"])
+    assert target is not None
+    url = str(target["url"])
     text, session_id, model, agent = _parse_prompt_request(body)
 
     # Refresh provider exhaustion from recent log
@@ -1201,10 +1206,10 @@ def terminal_reply(project: Path, body: dict[str, Any]) -> dict[str, Any]:
     kind = str(body.get("kind") or "").strip()
     if not all([instance_id, session_id, request_id, kind]):
         return {"error": "iid, session_id, request_id and kind are required"}
-    entry = _find_instance(project, instance_id)
-    if entry is None:
+    instance = _find_instance(project, instance_id)
+    if instance is None:
         return {"error": f"unknown instance {instance_id!r}"}
-    url = str(entry["url"])
+    url = str(instance["url"])
     try:
         if kind == "permission":
             result = reply_permission(url, session_id, request_id, str(body.get("reply") or "once"))
