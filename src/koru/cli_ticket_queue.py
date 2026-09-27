@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -12,9 +13,89 @@ from pathlib import Path
 def _find_project_root(start: Path) -> Path:
     current = start.resolve()
     for directory in [current, *current.parents]:
+        if directory in {Path("/tmp"), Path("/")}:
+            continue
         if (directory / ".planfile").exists() or (directory / "koru.yaml").exists():
             return directory
     return current
+
+
+def format_next_ticket(ticket: dict | None, fmt: str = "text") -> str:
+    """Format the next runnable ticket for terminal or programmatic consumption."""
+    if ticket is None:
+        if fmt == "json":
+            return json.dumps({"status": "idle", "ticket": None}, indent=2)
+        if fmt == "brief":
+            return "(no runnable ticket)"
+        if fmt == "markdown":
+            return "*No runnable ticket found in queue (queue is idle).*"
+        return "ℹ️  No runnable ticket found in queue (queue is idle)."
+
+    ticket_id = ticket.get("id") or "UNKNOWN"
+    title = ticket.get("name") or ticket.get("title") or ""
+    status = ticket.get("status") or "open"
+    priority = ticket.get("priority") or "normal"
+    executor = ticket.get("executor")
+    executor_kind = executor.get("kind") if isinstance(executor, dict) else (executor or "human")
+    execution = ticket.get("execution") if isinstance(ticket.get("execution"), dict) else {}
+    queue = execution.get("queue") or "default"
+    labels = ", ".join(ticket.get("labels") or []) or "none"
+    files = ", ".join(ticket.get("files") or []) or "none"
+    description = (ticket.get("description") or "").strip()
+    if len(description) > 300:
+        description = description[:297] + "..."
+
+    if fmt == "brief":
+        return f"{ticket_id}: {title}" if title else ticket_id
+
+    if fmt == "json":
+        return json.dumps(ticket, indent=2)
+
+    if fmt == "markdown":
+        lines = [
+            f"### Next Ticket: {ticket_id} — {title}",
+            f"- **Status**: `{status}`",
+            f"- **Priority**: `{priority}`",
+            f"- **Executor**: `{executor_kind}`",
+            f"- **Queue**: `{queue}`",
+            f"- **Labels**: {labels}",
+            f"- **Files**: `{files}`",
+        ]
+        if description:
+            lines.extend(["", "#### Description", description])
+        lines.extend([
+            "",
+            "#### Quick Actions",
+            f"- Run: `koru ticket auto {ticket_id}`",
+            f"- Agent brief: `koru --context --ticket {ticket_id}`",
+            f"- Mark done: `planfile ticket done {ticket_id}`",
+        ])
+        return "\n".join(lines)
+
+    # default: text format
+    box_lines = [
+        "Next runnable ticket in queue:",
+        "┌─────────────────────────────────────────────────────────────",
+        f"│ ID:          {ticket_id}",
+        f"│ Title:       {title}",
+        f"│ Priority:    {priority}",
+        f"│ Status:      {status}",
+        f"│ Executor:    {executor_kind}",
+        f"│ Queue:       {queue}",
+        f"│ Labels:      {labels}",
+        f"│ Files:       {files}",
+        "└─────────────────────────────────────────────────────────────",
+    ]
+    if description:
+        box_lines.extend(["Description:", f"  {description}"])
+    box_lines.extend([
+        "",
+        "Quick actions:",
+        f"  • Run ticket:       koru ticket auto {ticket_id}",
+        f"  • Agent brief:      koru --context --ticket {ticket_id}",
+        f"  • Mark done:        planfile ticket done {ticket_id}",
+    ])
+    return "\n".join(box_lines)
 
 
 def _sync_github(project: Path, timeout: int = 60) -> bool:
@@ -88,6 +169,26 @@ def build_ticket_parser() -> argparse.ArgumentParser:
     list_p.add_argument("--project", type=Path, default=None)
     list_p.add_argument("--status", default="open")
 
+    next_p = sub.add_parser(
+        "next",
+        help="Show the next runnable Planfile ticket for this project.",
+        description="Inspects the Planfile queue and displays the next runnable ticket without modifying state.",
+    )
+    next_p.add_argument("--project", type=Path, default=None, help="Project directory (default: auto-detected).")
+    next_p.add_argument("--queue", "-q", dest="queue_name", default=None, help="Queue name (default: auto).")
+    next_p.add_argument("--sprint", "-s", default="current", help="Sprint name (default: current).")
+    next_p.add_argument(
+        "--format",
+        choices=["text", "json", "markdown", "brief"],
+        default="text",
+        help="Output format (default: text).",
+    )
+    next_p.add_argument(
+        "--brief",
+        action="store_true",
+        help="Shorthand for --format brief.",
+    )
+
     return parser
 
 
@@ -109,6 +210,25 @@ def ticket_main(argv: list[str]) -> int:
         return subprocess.run(
             [py, "-m", "planfile.cli", "ticket", "list", "--status", args.status], cwd=project
         ).returncode
+
+    if args.action == "next":
+        fmt = "brief" if getattr(args, "brief", False) else getattr(args, "format", "text")
+        from koru.queue.runner import _next_ticket_or_result
+        from koru.queue import run_process as _queue_run_process
+
+        queue_name = args.queue_name or os.environ.get("KORU_QUEUE_NAME") or "default"
+        ticket, early_result = _next_ticket_or_result(
+            project,
+            _queue_run_process,
+            queue_name=queue_name,
+        )
+        if early_result and early_result.status == "planfile_error":
+            print(f"koru ticket next: error: {early_result.message}", file=sys.stderr)
+            return early_result.exit_code or 1
+
+        output = format_next_ticket(ticket, fmt=fmt)
+        print(output)
+        return 0
 
     if args.action == "auto":
         if args.ticket_id and ("/" in args.ticket_id or ":" in args.ticket_id):
