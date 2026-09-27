@@ -85,19 +85,18 @@ _CALLS_ARTIFACT_PATHS = ("project/calls.yaml", "calls.yaml")
 
 def _find_analysis_file(project: Path) -> tuple[Path | None, str]:
     """Find the code2llm analysis file and return (path, relative_path)."""
-    found = _first_existing_artifact(project, _ANALYSIS_ARTIFACT_PATHS)
-    return found if found is not None else (None, "")
+    return _first_existing_artifact(project, _ANALYSIS_ARTIFACT_PATHS) or (None, "")
 
 
 _CC_LOCATION_RE = re.compile(r"at `(?P<file>[^`:]+):(?P<line>\d+)`")
 
 
 def _load_yaml_mapping(project: Path, rel_paths: tuple[str, ...]) -> dict | None:
-    found = _first_existing_artifact(project, rel_paths)
-    if found is None:
+    yaml_artifact = _first_existing_artifact(project, rel_paths)
+    if yaml_artifact is None:
         return None
     try:
-        payload = yaml.safe_load(found[0].read_text(encoding="utf-8", errors="ignore"))
+        payload = yaml.safe_load(yaml_artifact[0].read_text(encoding="utf-8", errors="ignore"))
     except (OSError, yaml.YAMLError):
         return None
     return payload if isinstance(payload, dict) else None
@@ -510,12 +509,12 @@ def _parse_high_cc_suggestions(
         if _is_noise_cc_symbol(func):
             continue
 
-        found = (locations or {}).get(func) or []
-        located_files = tuple(entry.split(":", 1)[0] for entry in found) or (rel,)
-        if len(found) == 1:
-            where = f"`{found[0]}`"
-        elif found:
-            where = "one of " + ", ".join(f"`{entry}`" for entry in found)
+        func_locations = (locations or {}).get(func) or []
+        located_files = tuple(entry.split(":", 1)[0] for entry in func_locations) or (rel,)
+        if len(func_locations) == 1:
+            where = f"`{func_locations[0]}`"
+        elif func_locations:
+            where = "one of " + ", ".join(f"`{entry}`" for entry in func_locations)
         else:
             where = f"a location not recorded in `{rel}`"
         suggestions.append(
@@ -867,7 +866,7 @@ def _sum_structured_counts(data: object, keys: frozenset[str]) -> int:
 
 
 def _scan_vallm_validation(project: Path) -> list[Suggestion]:
-    found = _first_existing_artifact(
+    validation_artifact = _first_existing_artifact(
         project,
         (
             "validation.toon.yaml",
@@ -877,9 +876,9 @@ def _scan_vallm_validation(project: Path) -> list[Suggestion]:
             ".vallm/report.yaml",
         ),
     )
-    if found is None:
+    if validation_artifact is None:
         return []
-    path, rel = found
+    path, rel = validation_artifact
     try:
         text = path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
@@ -922,10 +921,10 @@ def _scan_structured_semcod_report(
     keys: frozenset[str],
     high_threshold: int = 10,
 ) -> list[Suggestion]:
-    found = _first_existing_artifact(project, candidates)
-    if found is None:
+    report_artifact = _first_existing_artifact(project, candidates)
+    if report_artifact is None:
         return []
-    path, rel = found
+    path, rel = report_artifact
     artifact = _load_structured_artifact(path)
     if artifact is None:
         return []
@@ -1085,7 +1084,7 @@ def _count_pfix_diagnose_issues(data: object) -> tuple[int, tuple[str, ...]]:
 
 
 def _scan_pfix_report(project: Path) -> list[Suggestion]:
-    found = _first_existing_artifact(
+    diagnose_artifact = _first_existing_artifact(
         project,
         (
             ".pfix/diagnose.json",
@@ -1093,9 +1092,9 @@ def _scan_pfix_report(project: Path) -> list[Suggestion]:
             "diag_report.json",
         ),
     )
-    if found is None:
+    if diagnose_artifact is None:
         return []
-    path, rel = found
+    path, rel = diagnose_artifact
     artifact = _load_structured_artifact(path)
     if artifact is None:
         return []
@@ -1137,7 +1136,7 @@ def _scan_pfix_report(project: Path) -> list[Suggestion]:
 
 
 def _scan_metrun_report(project: Path) -> list[Suggestion]:
-    found = _first_existing_artifact(
+    metrun_artifact = _first_existing_artifact(
         project,
         (
             "project/metrun.toon.yaml",
@@ -1145,9 +1144,9 @@ def _scan_metrun_report(project: Path) -> list[Suggestion]:
             ".metrun/metrun.toon.yaml",
         ),
     )
-    if found is None:
+    if metrun_artifact is None:
         return []
-    path, rel = found
+    path, rel = metrun_artifact
     try:
         text = path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
