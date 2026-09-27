@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-290",
+  "summary": "fix-test-init-autonomy-strategy-expectation",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-290/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "tests/test_init.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "06339f4972943298109cfcd49358768f7e84d6aa",
+    "targetBranch": "main",
+    "outcome": "Update test_writes_koru_yaml_on_first_init in tests/test_init.py to assert in_flight_first as the default autonomy strategy, aligning with the default introduced in ticket-258.",
+    "nonGoals": [
+      "Do not modify core autonomy strategy configuration or defaults",
+      "Do not alter other unrelated tests"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Update expected autonomy strategy in tests/test_init.py:169 to in_flight_first.",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "tests/test_init.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "git revert HEAD"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_init.py -q"
+        ],
+        "evidence": "All 29 tests in tests/test_init.py pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings."
+      }
+    ]
+  }
+}
