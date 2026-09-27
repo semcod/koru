@@ -1,0 +1,94 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-323",
+  "summary": "Hold unscoped duplication refactors before model execution",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-323/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/runner.py",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "97173f5313ad7a5d4fc35ce8ce87ec6237ec725d",
+    "targetBranch": "main",
+    "outcome": "Unscoped duplication refactors wait for an explicit edit/source contract instead of closing on prose.",
+    "nonGoals": [
+      "Change model providers or deploy c2004",
+      "Rewrite or claim existing production tickets",
+      "Change general answer-only task semantics"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Pre-execution admission check for structured duplication scan labels; reuse waiting-input and native block lifecycle.",
+      "components": [
+        {
+          "name": "queue",
+          "paths": [
+            "src/koru/queue/runner.py"
+          ]
+        },
+        {
+          "name": "regressions",
+          "paths": [
+            "tests/test_planfile_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert admission check through protected delivery; no migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_planfile_queue.py"
+        ],
+        "evidence": "Real queue path never calls model/claim/done for missing duplication contract."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest tests/test_planfile_queue.py"
+        ],
+        "evidence": "Report-only denial, explicit analytical opt-out and valid scoped edit path."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Local gates and independent exact-head publication."
+      }
+    ]
+  }
+}

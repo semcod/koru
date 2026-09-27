@@ -1705,6 +1705,56 @@ class TestQueueEditVerification(unittest.TestCase):
         ticket.update(overrides)
         return ticket
 
+    def test_duplication_scan_requires_source_edit_contract_before_execution(self) -> None:
+        variants = [
+            (["jscpd", "duplication", "llm-ready"], [".jscpd/jscpd-report.json"]),
+            (["jscpd", "duplication", "refactor"], [".jscpd/jscpd-report.json"]),
+            (["jscpd", "duplication", "refactor"], []),
+            (["jscpd", "duplication", "refactor"], ["src/router.mjs", "jscpd-report.json"]),
+        ]
+        for labels, files in variants:
+            for dry_run in (False, True):
+                with self.subTest(labels=labels, files=files, dry_run=dry_run), tempfile.TemporaryDirectory() as tmp:
+                    project = Path(tmp)
+                    ticket = self._ticket(
+                        labels=labels, files=files,
+                        executor={"kind": "llm", "mode": "interactive"},
+                    )
+                    calls: list[list[str]] = []
+
+                    @runnable_fixture_report
+                    def planfile_runner(command, _project, *, calls=calls, ticket=ticket):
+                        calls.append(_ticket_args(command))
+                        if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
+                            return _ok(json.dumps(ticket))
+                        return _ok()
+
+                    with patch("koru.queue.runner.preflight_llm_request") as probe, patch(
+                        "koru.queue.runner._claim_and_start",
+                    ) as claim:
+                        result = run_next_planfile_task(
+                            project=project, planfile_runner=planfile_runner, dry_run=dry_run,
+                        )
+                    self.assertEqual(result.status, "waiting_input")
+                    probe.assert_not_called()
+                    claim.assert_not_called()
+                    self.assertFalse(any(cmd[:2] == ["ticket", "done"] for cmd in calls))
+                    self.assertEqual(any(cmd[:2] == ["ticket", "block"] for cmd in calls), not dry_run)
+
+    def test_duplication_scope_preserves_explicit_analysis_and_scoped_edits(self) -> None:
+        from koru.queue.runner import _duplication_scope_gap
+
+        labels = ["jscpd", "duplication"]
+        self.assertIsNone(_duplication_scope_gap(self._ticket(
+            labels=labels, inputs={"expect_files_changed": False},
+            files=[".jscpd/jscpd-report.json"],
+        )))
+        self.assertIsNone(_duplication_scope_gap(self._ticket(labels=[*labels, "refactor"])))
+        self.assertIsNone(_duplication_scope_gap(self._ticket(
+            labels=labels, executor={"kind": "llm", "mode": "patch"},
+        )))
+        self.assertIsNone(_duplication_scope_gap(self._ticket(labels=["analysis"])))
+
     def test_refactor_ticket_expects_edits_by_default(self) -> None:
         from koru.queue.runner import _ticket_expects_edits
 

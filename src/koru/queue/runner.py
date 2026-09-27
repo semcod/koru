@@ -380,6 +380,23 @@ def _ticket_expects_edits(ticket: dict) -> bool:
     return bool(labels & {"refactor", "todo2code", "code-change"})
 
 
+def _duplication_scope_gap(ticket: dict) -> str | None:
+    """A duplication report is input, not a source-edit completion contract."""
+    labels = {str(label).lower() for label in (ticket.get("labels") or [])}
+    if not {"jscpd", "duplication"} <= labels:
+        return None
+    if (ticket.get("inputs") or {}).get("expect_files_changed") is False:
+        return None  # An explicitly analytical ticket may deliver an answer.
+    if not _ticket_expects_edits(ticket):
+        return "Duplication refactoring needs an explicit code-change/refactor or patch contract."
+    files = [Path(str(path).replace("\\", "/")) for path in ticket.get("files") or []]
+    if not files or any(
+        ".jscpd" in path.parts or path.name.startswith("jscpd-report") for path in files
+    ):
+        return "Scope the source files to refactor; keep the jscpd report as diagnostic input."
+    return None
+
+
 def _snapshot_declared_files(project: Path, ticket: dict) -> dict[str, str]:
     """Hash the ticket's declared files so edits can be detected afterwards."""
     snapshot: dict[str, str] = {}
@@ -868,6 +885,18 @@ def _run_next_planfile_task_impl(
                 actor,
                 planfile_runner,
                 prompt_runner,
+            )
+
+        if executor_kind == "llm" and (gap := _duplication_scope_gap(ticket)):
+            if not dry_run:
+                planfile_lifecycle_command(
+                    project,
+                    ["ticket", "block", ticket_id, "--reason", gap],
+                    runner=planfile_runner,
+                )
+            return QueueRunResult(
+                status="waiting_input", ticket_id=ticket_id,
+                executor_kind=executor_kind, message=gap,
             )
 
         resolved_action, action_result = _resolve_action_or_result(
