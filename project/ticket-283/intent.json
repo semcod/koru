@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-283",
+  "summary": "Enable claude-code client in simple model routing for bounded ruff tasks",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-283/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/task_model_policy.py",
+    "tests/test_task_model_policy.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2dd75fdd490853220afc0ee0375256afd433da32",
+    "targetBranch": "main",
+    "outcome": "Allow the claude-code autopilot client to select the configured simple model (e.g. zai/glm-5.3-flash) for bounded lint tasks.",
+    "nonGoals": [
+      "Changing complexity thresholds or bounded ruff code definitions",
+      "Bypassing task validation or test gates"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 5,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add claude-code to the allowed clients in _is_lint_fix_request in task_model_policy.py so that headless autopilot lanes running claude-code can leverage the configured simple model for bounded lint fixes.",
+      "components": [
+        {
+          "name": "task-model-policy",
+          "paths": [
+            "src/koru/task_model_policy.py",
+            "tests/test_task_model_policy.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit to restore opencode-only restriction."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_task_model_policy.py"
+        ],
+        "evidence": "All task model policy tests pass cleanly."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "ruff check src/koru/task_model_policy.py tests/test_task_model_policy.py"
+        ],
+        "evidence": "Ruff check reports zero findings on modified files."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
