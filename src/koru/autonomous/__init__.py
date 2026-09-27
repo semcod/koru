@@ -29,7 +29,7 @@ import sys
 import threading
 import time
 import uuid
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -906,6 +906,42 @@ def _restore_autonomous_env_vars(snapshot: dict[str, tuple[bool, str | None]]) -
     _autonomous_runtime.restore_autonomous_env_vars(snapshot)
 
 
+def check_storage_limits(
+    project: Path,
+    *,
+    threshold_gb: float = 10.0,
+    stdio_info: Callable[[str], None] | None = None,
+) -> dict[str, Any]:
+    """Check available disk space against Wellmanifest NoLimits standard (LIM-STORAGE-001)."""
+    import shutil
+
+    try:
+        usage = shutil.disk_usage(project)
+        free_gb = usage.free / (1024**3)
+        total_gb = usage.total / (1024**3)
+        is_low = free_gb < threshold_gb
+        result: dict[str, Any] = {
+            "status": "warning" if is_low else "ok",
+            "limit_id": "LIM-STORAGE-001",
+            "free_gb": round(free_gb, 2),
+            "total_gb": round(total_gb, 2),
+            "threshold_gb": threshold_gb,
+            "remediation": "fixos cleanup --threshold-gb 10 && fixos quick" if is_low else None,
+        }
+        if is_low and stdio_info:
+            stdio_info(
+                f"[nolimits] LIM-STORAGE-001: Low available disk space ({free_gb:.1f} GB < {threshold_gb:.1f} GB). "
+                "Remediation: fixos cleanup --threshold-gb 10 && fixos quick"
+            )
+        return result
+    except Exception as exc:
+        return {
+            "status": "error",
+            "limit_id": "LIM-STORAGE-001",
+            "error": str(exc),
+        }
+
+
 def _run_autonomous_pre_checks(
     args: argparse.Namespace,
     project: Path,
@@ -915,7 +951,8 @@ def _run_autonomous_pre_checks(
     client: object,
     correlation_id: str,
 ) -> tuple[bool, bool]:
-    """Run pre-checks before autonomous loop: MCP provision and plugin setup."""
+    """Run pre-checks before autonomous loop: storage limit check, MCP provision and plugin setup."""
+    check_storage_limits(project, stdio_info=lambda msg: _stdio_info(msg, fmt=args.emit_events))
     mcp_provision_ran = _run_mcp_provision(project, args.emit_events, autopilot_ide)
     plugin_connected = _setup_autopilot_plugin(args, autopilot_ide, socket_path, client)
     _run_operator_pipeline(args, project, startup_probe, plugin_connected, mcp_provision_ran, correlation_id)
@@ -1064,5 +1101,7 @@ __all__ = [
     "_read_wup_health",
     "_wup_watch_command",
     "autonomous_main",
+    "check_storage_limits",
     "stop_prior_autonomous_for_auto_start",
 ]
+
