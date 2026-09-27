@@ -70,12 +70,12 @@ def registry_path(project: Path) -> Path:
 def load_registry(project: Path) -> list[dict[str, Any]]:
     path = registry_path(project)
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        registry_entries = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
-    if not isinstance(data, list):
+    if not isinstance(registry_entries, list):
         return []
-    return [entry for entry in data if isinstance(entry, dict) and entry.get("url")]
+    return [entry for entry in registry_entries if isinstance(entry, dict) and entry.get("url")]
 
 
 def save_registry(project: Path, entries: list[dict[str, Any]]) -> Path:
@@ -233,12 +233,12 @@ def _api_request(
     body: dict[str, Any] | None = None,
     timeout: float = _REQUEST_TIMEOUT,
 ) -> Any:
-    data = None
+    request_body = None
     headers = {"Accept": "application/json"}
     if body is not None:
-        data = json.dumps(body).encode("utf-8")
+        request_body = json.dumps(body).encode("utf-8")
         headers["Content-Type"] = "application/json"
-    req = urllib.request.Request(url.rstrip("/") + path, data=data, headers=headers, method=method)
+    req = urllib.request.Request(url.rstrip("/") + path, data=request_body, headers=headers, method=method)
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         raw = resp.read()
     if not raw:
@@ -248,27 +248,27 @@ def _api_request(
 
 def instance_health(url: str) -> bool:
     try:
-        data = _api_request(url, "/api/health", timeout=1.0)
+        health = _api_request(url, "/api/health", timeout=1.0)
     except Exception:
         return False
-    if isinstance(data, dict) and data.get("healthy") is False:
+    if isinstance(health, dict) and health.get("healthy") is False:
         return False
     return True
 
 
 def list_sessions(url: str) -> list[dict[str, Any]]:
-    data = _api_request(url, "/api/session")
-    items = data.get("data", data) if isinstance(data, dict) else data
+    session_payload = _api_request(url, "/api/session")
+    items = session_payload.get("data", session_payload) if isinstance(session_payload, dict) else session_payload
     return items if isinstance(items, list) else []
 
 
 def list_providers(url: str) -> list[dict[str, Any]]:
     """Sanitized provider catalog — never exposes request bodies or keys."""
     try:
-        data = _api_request(url, "/api/provider", timeout=1.5)
+        catalog_payload = _api_request(url, "/api/provider", timeout=1.5)
     except Exception:
         return []
-    items = data.get("data", data) if isinstance(data, dict) else data
+    items = catalog_payload.get("data", catalog_payload) if isinstance(catalog_payload, dict) else catalog_payload
     if not isinstance(items, list):
         return []
     out: list[dict[str, Any]] = []
@@ -458,8 +458,8 @@ def scan_opencode_log_for_exhaustion(
 def get_instance_config(url: str) -> dict[str, Any]:
     """Fetch instance /config without raising exceptions."""
     try:
-        data = _api_request(url, "/config", timeout=1.5)
-        return data if isinstance(data, dict) else {}
+        config_payload = _api_request(url, "/config", timeout=1.5)
+        return config_payload if isinstance(config_payload, dict) else {}
     except Exception:
         return {}
 
@@ -571,16 +571,16 @@ def create_session(
         body["model"] = normalized
     if directory:
         body["location"] = {"directory": directory}
-    data = _api_request(url, "/api/session", method="POST", body=body)
-    item = data.get("data", data) if isinstance(data, dict) else data
+    creation_payload = _api_request(url, "/api/session", method="POST", body=body)
+    item = creation_payload.get("data", creation_payload) if isinstance(creation_payload, dict) else creation_payload
     return item if isinstance(item, dict) else None
 
 
 def session_messages(url: str, session_id: str, *, limit: int = 60) -> list[dict[str, Any]]:
     # The unprefixed route returns conversation messages (info+parts); the
     # /api variant serves a different event projection (e.g. agent-switched).
-    data = _api_request(url, f"/session/{session_id}/message")
-    items = data.get("data", data) if isinstance(data, dict) else data
+    message_payload = _api_request(url, f"/session/{session_id}/message")
+    items = message_payload.get("data", message_payload) if isinstance(message_payload, dict) else message_payload
     if not isinstance(items, list):
         return []
     return items[-limit:]
@@ -719,10 +719,10 @@ def pending_requests(url: str) -> dict[str, list[dict[str, Any]]]:
         ("questions", "/api/question/request"),
     ):
         try:
-            data = _api_request(url, path, timeout=1.5)
+            request_payload = _api_request(url, path, timeout=1.5)
         except Exception:
             continue
-        items = data.get("data", data) if isinstance(data, dict) else data
+        items = request_payload.get("data", request_payload) if isinstance(request_payload, dict) else request_payload
         if isinstance(items, list):
             out[kind] = [i for i in items if isinstance(i, dict)]
     return out

@@ -267,4 +267,7 @@ project analysis or human-owned ticket inputs.
 | **ticket-264** | [`README.md`](./ticket-264/README.md) | - | - | - | - | - |
 | **ticket-265** | [`README.md`](./ticket-265/README.md) | - | - | - | - | - |
 | **ticket-266** | [`README.md`](./ticket-266/README.md) | - | - | - | - | - |
+| **ticket-267** | [`README.md`](./ticket-267/README.md) | - | - | - | - | - |
+| **ticket-268** | [`README.md`](./ticket-268/README.md) | - | - | - | - | - |
+| **ticket-269** | [`README.md`](./ticket-269/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->
