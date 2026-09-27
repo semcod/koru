@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-289",
+  "summary": "add-smoke-tests-for-wizard-api-endpoints",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-289/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "tests/test_wizard_api_smoke.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "06339f4972943298109cfcd49358768f7e84d6aa",
+    "targetBranch": "main",
+    "outcome": "Add dedicated smoke test suite covering all /wizard HTTP and API endpoints (GET /wizard, GET /wizard/api/state, POST /wizard/api/ide, POST /wizard/api/project, POST /wizard/api/strategy, POST /wizard/api/confirm, POST /wizard/done, static assets, and CSRF protection) as identified by testless diagnostic.",
+    "nonGoals": [
+      "No change to wizard production logic",
+      "No external network dependencies"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Implement tests/test_wizard_api_smoke.py using Starlette TestClient against create_app with mocked background tasks and IDE discovery.",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "tests/test_wizard_api_smoke.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "git revert HEAD"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_wizard_api_smoke.py -q"
+        ],
+        "evidence": "All 9 smoke tests in tests/test_wizard_api_smoke.py pass 100%."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings."
+      }
+    ]
+  }
+}
