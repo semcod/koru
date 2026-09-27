@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-319",
+  "summary": "NL shell autocomplete and command history for koru config",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-319/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/configurator/**",
+    "tests/test_configurator*.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "109bffd9c34524cdbb1679d807e6c4bcb8913384",
+    "targetBranch": "main",
+    "outcome": "Equip the interactive koru config shell with readline-based persistent history and tab completion for commands, keys, IDE lanes and feature sections.",
+    "nonGoals": [
+      "Do not break non-interactive usage or headless environments where readline is unavailable",
+      "Do not add heavy external TUI dependencies"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Introduce a readline completion and history manager in koru.configurator.shell_history and connect it to _configure_interactive_nl.",
+      "components": [
+        {
+          "name": "koru-configurator",
+          "paths": [
+            "src/koru/configurator/**",
+            "tests/test_configurator*.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit in ticket-319."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_configurator_nl.py"
+        ],
+        "evidence": "Configurator tests verify tab completion generator and history setup without regressions."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}

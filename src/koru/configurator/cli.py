@@ -127,6 +127,9 @@ def _configure_table(cfg: _ConfigureArgs) -> int:
 
 
 def _configure_interactive_nl(cfg: _ConfigureArgs) -> int:
+    from koru.configurator.shell_history import setup_config_shell_readline
+
+    save_history = setup_config_shell_readline(cfg.project)
     config = load_project_config(cfg.project)
     print(render_config_table(config))
     print("\nKORU Interactive Configuration Shell (NL / DSL)")
@@ -135,30 +138,34 @@ def _configure_interactive_nl(cfg: _ConfigureArgs) -> int:
         "(np. 'ide na cursor', 'port na 9000', 'wlacz lan', 'wlacz mesh', 'table', 'exit'):\n"
     )
 
-    while True:
-        try:
-            line = input("koru config> ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print("\nZakończono konfigurację.")
-            break
+    try:
+        while True:
+            try:
+                line = input("koru config> ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print("\nZakończono konfigurację.")
+                break
 
-        if not line:
-            continue
+            if not line:
+                continue
 
-        res = apply_nl_config_command(config, line, cfg.project)
-        if res.message == "exit":
-            print("Zakończono konfigurację.")
-            break
+            res = apply_nl_config_command(config, line, cfg.project)
+            if res.message == "exit":
+                print("Zakończono konfigurację.")
+                break
 
-        if res.success:
-            print(f"✓ {res.message}")
-            if res.updated and res.config is not None:
-                config = res.config
-                print(render_config_table(config))
-            elif line.strip().lower() in {"show", "pokaz", "table", "tabela", "status", "ls"}:
-                print(render_config_table(config))
-        else:
-            print(f"✗ {res.message}")
+            if res.success:
+                print(f"✓ {res.message}")
+                if res.updated and res.config is not None:
+                    config = res.config
+                    print(render_config_table(config))
+                elif line.strip().lower() in {"show", "pokaz", "table", "tabela", "status", "ls"}:
+                    print(render_config_table(config))
+            else:
+                print(f"✗ {res.message}")
+    finally:
+        if save_history is not None:
+            save_history()
 
     return 0
 
