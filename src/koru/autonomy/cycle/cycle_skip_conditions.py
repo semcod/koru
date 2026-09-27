@@ -282,7 +282,7 @@ def _autopromote_waiting_ticket_llm_ready(
     project: Path,
     queue_result: QueueLoopResult,
     *,
-    cycle_telemetry: dict[str, Any],
+    llm_ready_promotion_telemetry: dict[str, Any],
     _hp: callable,
 ) -> bool:
     """Add ``llm-ready`` to the waiting ticket so autopilot can do the work.
@@ -301,12 +301,12 @@ def _autopromote_waiting_ticket_llm_ready(
         return True
     if not _add_waiting_ticket_label(project, queue_result, "llm-ready"):
         text = "ticket not found or sprint file is not writable"
-        cycle_telemetry["autopilot_auto_llm_ready_failed"] = True
-        cycle_telemetry["autopilot_auto_llm_ready_error"] = text
+        llm_ready_promotion_telemetry["autopilot_auto_llm_ready_failed"] = True
+        llm_ready_promotion_telemetry["autopilot_auto_llm_ready_error"] = text
         _hp(f"- autopilot auto llm-ready failed ({ticket_id}: {text})")
         return False
-    cycle_telemetry["autopilot_auto_llm_ready"] = True
-    cycle_telemetry["autopilot_auto_llm_ready_ticket"] = ticket_id
+    llm_ready_promotion_telemetry["autopilot_auto_llm_ready"] = True
+    llm_ready_promotion_telemetry["autopilot_auto_llm_ready_ticket"] = ticket_id
     _hp(f"- autopilot auto llm-ready: added label to {ticket_id}")
     return True
 
@@ -315,16 +315,16 @@ def _diagnostics_fail_skip_result(
     *,
     enabled: bool,
     diag_result: DiagnosticResult,
-    cycle_telemetry: dict[str, Any],
+    diagnostics_skip_telemetry: dict[str, Any],
     _hp: callable,
 ) -> AutopilotPolicyDecision | None:
     if not enabled or diag_result.status != "failed":
         return None
     _hp("- autopilot skipped (diagnostics_fail)")
-    cycle_telemetry["autopilot_skipped_diagnostics_fail"] = True
+    diagnostics_skip_telemetry["autopilot_skipped_diagnostics_fail"] = True
     failed = list(getattr(diag_result, "failed", []) or [])
     if failed:
-        cycle_telemetry["autopilot_skipped_diagnostics_failed_services"] = failed
+        diagnostics_skip_telemetry["autopilot_skipped_diagnostics_failed_services"] = failed
     return AutopilotPolicyDecision.skip(
         "diagnostics_fail",
         because="pre-drive diagnostics failed and skip-on-fail is enabled",
@@ -379,7 +379,7 @@ def _check_autopilot_skip_conditions(
     diagnostics_skip = _diagnostics_fail_skip_result(
         enabled=autopilot_skip_on_diagnostics_fail,
         diag_result=diag_result,
-        cycle_telemetry=cycle_telemetry,
+        diagnostics_skip_telemetry=cycle_telemetry,
         _hp=_hp,
     )
     if diagnostics_skip is not None:
@@ -436,7 +436,7 @@ def _check_autopilot_skip_conditions(
         if _autopromote_waiting_ticket_llm_ready(
             project,
             queue_result,
-            cycle_telemetry=cycle_telemetry,
+            llm_ready_promotion_telemetry=cycle_telemetry,
             _hp=_hp,
         ):
             _hp(
@@ -448,7 +448,7 @@ def _check_autopilot_skip_conditions(
             project=project,
             queue_result=queue_result,
             state=state,
-            cycle_telemetry=cycle_telemetry,
+            stuck_status_telemetry=cycle_telemetry,
             _hp=_hp,
         )
 
@@ -551,20 +551,20 @@ def _resolve_manual_send_follow_up(
         state=state,
         waiting_ticket=waiting_ticket,
         previous_ticket=previous_ticket,
-        cycle_telemetry=cycle_telemetry,
+        new_ticket_clear_telemetry=cycle_telemetry,
     ):
         return None
     if _clear_manual_send_for_message_sent(
         state=state,
         waiting_ticket=waiting_ticket,
-        cycle_telemetry=cycle_telemetry,
+        message_sent_clear_telemetry=cycle_telemetry,
     ):
         return None
-    if _allow_manual_send_alt_retry(state=state, cycle_telemetry=cycle_telemetry, _hp=_hp):
+    if _allow_manual_send_alt_retry(state=state, alt_retry_telemetry=cycle_telemetry, _hp=_hp):
         return None
     return _manual_send_required_decision(
         waiting_ticket=waiting_ticket,
-        cycle_telemetry=cycle_telemetry,
+        manual_send_decision_telemetry=cycle_telemetry,
         _hp=_hp,
     )
 
@@ -574,13 +574,13 @@ def _clear_manual_send_for_new_ticket(
     state: AutoloopState,
     waiting_ticket: str,
     previous_ticket: str,
-    cycle_telemetry: dict[str, Any],
+    new_ticket_clear_telemetry: dict[str, Any],
 ) -> bool:
     if waiting_ticket and waiting_ticket == previous_ticket:
         return False
-    cycle_telemetry["autopilot_submit_unverified_cleared_for_new_ticket"] = True
-    cycle_telemetry["autopilot_submit_unverified_previous_ticket"] = previous_ticket
-    cycle_telemetry["autopilot_submit_unverified_current_ticket"] = waiting_ticket
+    new_ticket_clear_telemetry["autopilot_submit_unverified_cleared_for_new_ticket"] = True
+    new_ticket_clear_telemetry["autopilot_submit_unverified_previous_ticket"] = previous_ticket
+    new_ticket_clear_telemetry["autopilot_submit_unverified_current_ticket"] = waiting_ticket
     _clear_submit_unverified_state(state)
     return True
 
@@ -589,15 +589,15 @@ def _clear_manual_send_for_message_sent(
     *,
     state: AutoloopState,
     waiting_ticket: str,
-    cycle_telemetry: dict[str, Any],
+    message_sent_clear_telemetry: dict[str, Any],
 ) -> bool:
     if not _manual_send_can_be_cleared_by_message_sent(
         state=state,
         waiting_ticket=waiting_ticket,
     ):
         return False
-    cycle_telemetry["autopilot_submit_unverified_cleared_by_message_sent"] = True
-    cycle_telemetry["autopilot_submit_unverified_current_ticket"] = waiting_ticket
+    message_sent_clear_telemetry["autopilot_submit_unverified_cleared_by_message_sent"] = True
+    message_sent_clear_telemetry["autopilot_submit_unverified_current_ticket"] = waiting_ticket
     _clear_submit_unverified_state(state)
     return True
 
@@ -605,7 +605,7 @@ def _clear_manual_send_for_message_sent(
 def _allow_manual_send_alt_retry(
     *,
     state: AutoloopState,
-    cycle_telemetry: dict[str, Any],
+    alt_retry_telemetry: dict[str, Any],
     _hp: callable,
 ) -> bool:
     if should_block_manual_send(state):
@@ -616,15 +616,15 @@ def _allow_manual_send_alt_retry(
         "- autopilot: retrying drive with alternate submit strategy "
         f"(streak={streak}/{submit_alt_attempt_limit()}, hint={hint or 'pending'})",
     )
-    cycle_telemetry["autopilot_submit_alt_retry_allowed"] = True
-    cycle_telemetry["autopilot_submit_unverified_streak"] = streak
+    alt_retry_telemetry["autopilot_submit_alt_retry_allowed"] = True
+    alt_retry_telemetry["autopilot_submit_unverified_streak"] = streak
     return True
 
 
 def _manual_send_required_decision(
     *,
     waiting_ticket: str,
-    cycle_telemetry: dict[str, Any],
+    manual_send_decision_telemetry: dict[str, Any],
     _hp: callable,
 ) -> AutopilotPolicyDecision:
     _hp("- autopilot skipped (manual_send_required after submit_unverified)")
@@ -633,9 +633,9 @@ def _manual_send_required_decision(
         manual_send_operator_steps(autopilot_ide, ticket_id=waiting_ticket),
         title=f"Operator — manual send in {ide_label(autopilot_ide)}",
     )
-    cycle_telemetry["autopilot_submit_unverified"] = True
-    cycle_telemetry["autopilot_skipped_manual_send_required"] = True
-    cycle_telemetry["autopilot_submit_unverified_reason"] = (
+    manual_send_decision_telemetry["autopilot_submit_unverified"] = True
+    manual_send_decision_telemetry["autopilot_skipped_manual_send_required"] = True
+    manual_send_decision_telemetry["autopilot_submit_unverified_reason"] = (
         _MANUAL_SEND_REQUIRED_TELEMETRY_REASON
     )
     return AutopilotPolicyDecision.skip(
@@ -656,7 +656,7 @@ def _handle_stuck_status_skip_candidate(
     project: Path,
     queue_result: QueueLoopResult,
     state: AutoloopState,
-    cycle_telemetry: dict[str, Any],
+    stuck_status_telemetry: dict[str, Any],
     _hp: callable,
 ) -> tuple[bool, str]:
     if parse_autopilot_status(getattr(state, "last_autopilot_status", "") or "").failed:
@@ -677,11 +677,11 @@ def _handle_stuck_status_skip_candidate(
         "- autopilot skipped "
         f"(stuck_{queue_result.last_status}_streak_{state.stagnation_streak})",
     )
-    cycle_telemetry["autopilot_skipped_stuck_status"] = True
-    cycle_telemetry["autopilot_skipped_stuck_status_queue"] = str(
+    stuck_status_telemetry["autopilot_skipped_stuck_status"] = True
+    stuck_status_telemetry["autopilot_skipped_stuck_status_queue"] = str(
         queue_result.last_status or ""
     )
-    cycle_telemetry["autopilot_skipped_stuck_status_streak"] = int(
+    stuck_status_telemetry["autopilot_skipped_stuck_status_streak"] = int(
         state.stagnation_streak or 0
     )
     return AutopilotPolicyDecision.skip(
