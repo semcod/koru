@@ -297,4 +297,6 @@ project analysis or human-owned ticket inputs.
 | **ticket-294** | [`README.md`](./ticket-294/README.md) | - | - | - | - | - |
 | **ticket-295** | [`README.md`](./ticket-295/README.md) | - | - | - | - | - |
 | **ticket-296** | [`README.md`](./ticket-296/README.md) | - | - | - | - | - |
+| **ticket-297** | [`README.md`](./ticket-297/README.md) | - | - | - | - | - |
+| **ticket-298** | [`README.md`](./ticket-298/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->

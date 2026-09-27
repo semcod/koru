@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-298",
+  "summary": "Classify god function and code smells in task profiles",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-298/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/execution_plan_profiles.py",
+    "src/koru/autonomy/task_profiles.yaml",
+    "tests/test_execution_plan_profiles.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "50103a8f1699a1a0da6f8dcfe18debd5d1d6ec91",
+    "targetBranch": "main",
+    "outcome": "Classify god function, structural code smells, and CC hotspot tickets into dedicated task profiles with appropriate refactoring hints.",
+    "nonGoals": [
+      "Modifying core workflow step execution mechanics outside profile matching",
+      "Altering unrelated autonomy phases"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Define god_function_refactor and code_smell_refactor profiles in task_profiles.yaml, add code2llm_cc to cc_hotspot_refactor, and prioritize profile_order in execution_plan_profiles.py.",
+      "components": [
+        {
+          "name": "autonomy-task-profiles",
+          "paths": [
+            "src/koru/autonomy/task_profiles.yaml",
+            "src/koru/autonomy/execution_plan_profiles.py",
+            "tests/test_execution_plan_profiles.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit to restore prior task profiles."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q tests/test_execution_plan_profiles.py tests/test_execution_plan.py"
+        ],
+        "evidence": "All execution plan tests pass cleanly."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "ruff check src/koru/autonomy/execution_plan_profiles.py tests/test_execution_plan_profiles.py"
+        ],
+        "evidence": "Ruff check reports zero findings on modified files."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "radon cc src/koru/autonomy/execution_plan_profiles.py -s"
+        ],
+        "evidence": "Radon CC confirms CC <= 6 for all functions."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
