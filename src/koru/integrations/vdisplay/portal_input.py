@@ -130,13 +130,13 @@ def _focus_ring_appeared(before: bytes, after: bytes, sx: int, sy: int, *, radiu
         return True
     if b.shape != a.shape:
         return True
-    fh, fw = a.shape[:2]
+    guard_h, fw = a.shape[:2]
     # map stream coord -> frame pixel (frame buffer can be larger than stream)
-    sw, sh = _session.stream_size if _session is not None else (fw, fh)
+    sw, sh = _session.stream_size if _session is not None else (fw, guard_h)
     fx = int(sx * fw / sw) if sw else sx
-    fy = int(sy * fh / sh) if sh else sy
+    fy = int(sy * guard_h / sh) if sh else sy
     r = int(radius * fw / sw) if sw else radius
-    y0, y1 = max(0, fy - r), min(fh, fy + r)
+    y0, y1 = max(0, fy - r), min(guard_h, fy + r)
     x0, x1 = max(0, fx - r), min(fw, fx + r)
 
     def blue_count(img):
@@ -234,8 +234,8 @@ def _blue_ring_center(frame: bytes) -> tuple[int, int, int] | None:
     # shows other blue elements higher up (links, a 'Run Ctrl+Enter' button, a
     # generating spinner). Pick the LOWEST wide blue band (a real input focus
     # ring spans much of the panel width) so those don't mislead us.
-    fh = a.shape[0]
-    rows = np.bincount(ys, minlength=fh)
+    frame_rows = a.shape[0]
+    rows = np.bincount(ys, minlength=frame_rows)
     wide = np.where(rows >= 120)[0]  # rows with a wide blue span = ring borders
     if wide.size == 0:
         return None
@@ -256,12 +256,12 @@ def calibrate_input_from_focus(*, ide: str = "jetbrains") -> dict[str, Any]:
     if p is None:
         return {"ok": False, "error": "portal unavailable"}
     frame = p.grab_frame()
-    fw, fh = _png_size(frame)
+    fw, calib_h = _png_size(frame)
     hit = _blue_ring_center(frame)
     if hit is None:
         return {"ok": False, "error": "no focus ring found — click inside the Qoder input first"}
     fx, fy, n = hit
-    sx, sy = p.frame_to_stream(fx, fy, frame_w=fw, frame_h=fh)
+    sx, sy = p.frame_to_stream(fx, fy, frame_w=fw, frame_h=calib_h)
     _cache_input_xy(ide, (sx, sy))
     logger.info("PORTAL_CALIBRATED ide=%s frame=(%d,%d) stream=(%d,%d) ring_px=%d", ide, fx, fy, sx, sy, n)
     return {"ok": True, "ide": ide, "stream_xy": [sx, sy], "frame_xy": [fx, fy], "ring_px": n}
@@ -284,14 +284,14 @@ def _pending_action_present(frame: bytes) -> bool:
         boxes = ocr_png(frame, min_confidence=35.0)
     except Exception:
         return False
-    fw, fh = _png_size(frame)
+    fw, panel_h = _png_size(frame)
     for b in boxes:
         t = (b.text or "").strip().lower()
         # 'Backspace' appears only in the 'Cancel Ctrl+Backspace' confirm button;
         # match it alone (OCR often misreads 'Ctrl' as 'ctri', l->i).
         if "backspace" in t:
             # inside the chat panel (right side, not the bottom terminal strip)
-            if b.bounds.x > fw * 0.45 and b.bounds.y < fh * 0.62:
+            if b.bounds.x > fw * 0.45 and b.bounds.y < panel_h * 0.62:
                 return True
     return False
 
@@ -401,11 +401,11 @@ def _maybe_autoremember_focused_input(p: Any, ide: str) -> None:
 
 
 def _stream_target_from_ocr(p: Any, frame: bytes, ide: str) -> tuple[int, int] | None:
-    fw, fh = _png_size(frame)
+    fw, anchor_h = _png_size(frame)
     xy = _ocr_anchor_xy(frame, ide)  # placeholder anchor, then landmark
     if xy is None:
         return None
-    return p.frame_to_stream(xy[0], xy[1], frame_w=fw, frame_h=fh)
+    return p.frame_to_stream(xy[0], xy[1], frame_w=fw, frame_h=anchor_h)
 
 
 def _type_at_stream_coords(
@@ -448,8 +448,8 @@ def _precise_stream_xy(p: Any, frame: bytes, ide: str) -> tuple[int, int] | None
     precise_fx = _anchor_precise(frame, ide)
     if precise_fx is None:
         return None
-    fw, fh = _png_size(frame)
-    return p.frame_to_stream(precise_fx[0], precise_fx[1], frame_w=fw, frame_h=fh)
+    fw, precise_h = _png_size(frame)
+    return p.frame_to_stream(precise_fx[0], precise_fx[1], frame_w=fw, frame_h=precise_h)
 
 
 def _clear_and_reanchor_stream_xy(
@@ -481,8 +481,8 @@ def _clear_and_reanchor_stream_xy(
     frame = p.grab_frame()  # placeholder should be back now
     re = _anchor_precise(frame, ide)
     if re is not None:
-        fw, fh = _png_size(frame)
-        return p.frame_to_stream(re[0], re[1], frame_w=fw, frame_h=fh), None
+        fw, reanchor_h = _png_size(frame)
+        return p.frame_to_stream(re[0], re[1], frame_w=fw, frame_h=reanchor_h), None
     return _cached_input_xy(ide), None
 
 
