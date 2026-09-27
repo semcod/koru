@@ -84,7 +84,12 @@ def profile_order(profiles_doc: dict[str, Any]) -> tuple[str, ...]:
         order = defaults.get("profile_order")
         if isinstance(order, list):
             return tuple(str(item).strip() for item in order if str(item).strip())
-    return ("cc_hotspot_refactor", "god_module_split")
+    return (
+        "cc_hotspot_refactor",
+        "god_function_refactor",
+        "code_smell_refactor",
+        "god_module_split",
+    )
 
 
 def fallback_profile_id(profiles_doc: dict[str, Any]) -> str:

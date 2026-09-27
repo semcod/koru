@@ -4,6 +4,8 @@ defaults:
   fallback_profile: god_module_split
   profile_order:
     - cc_hotspot_refactor
+    - god_function_refactor
+    - code_smell_refactor
     - god_module_split
 profiles:
   god_module_split:
@@ -35,8 +37,8 @@ profiles:
   cc_hotspot_refactor:
     description: Reduce cyclomatic complexity via dispatch maps / extraction.
     match:
-      labels_any: [cyclomatic, refactor, regix]
-      signals_any: [regix_cc, cyclomatic_complexity]
+      labels_any: [cyclomatic, complexity, refactor, regix]
+      signals_any: [regix_cc, cyclomatic_complexity, code2llm_cc]
       name_patterns: ['Reduce cyclomatic complexity*']
     workflow:
       - id: baseline
@@ -49,6 +51,54 @@ profiles:
         hint: >-
           Extract helpers or dispatch tables until CC is below the gate limit;
           avoid behavior changes.
+      - id: verify
+        kind: shell
+        auto: true
+        command: sh -c 'cd {repo} && koru ci run'
+
+  god_function_refactor:
+    description: Decompose oversized god function into focused helper functions.
+    match:
+      labels_any: [god-function, code-smell]
+      signals_any: [code2llm_smell_god_function]
+      name_patterns: ['Address code smell: God Function*']
+    workflow:
+      - id: baseline
+        kind: shell
+        auto: true
+        command: sh -c 'cd {repo} && koru ci run --skip-gates'
+      - id: refactor
+        kind: ide_work
+        auto: false
+        hint: >-
+          Decompose the oversized function into small, focused helper functions;
+          reduce cyclomatic complexity and mutations; preserve behavior and run local tests.
+      - id: verify
+        kind: shell
+        auto: true
+        command: sh -c 'cd {repo} && koru ci run'
+
+  code_smell_refactor:
+    description: Remediate structural code smells (shotgun surgery, data clump, feature envy).
+    match:
+      labels_any: [code-smell, smell, shotgun-surgery, data-clump, feature-envy]
+      signals_any:
+        - code2llm_smell_data_clump
+        - code2llm_smell_shotgun_surgery
+        - code2llm_smell_feature_envy
+        - code2llm_refactor
+      name_patterns: ['Address code smell*']
+    workflow:
+      - id: baseline
+        kind: shell
+        auto: true
+        command: sh -c 'cd {repo} && koru ci run --skip-gates'
+      - id: refactor
+        kind: ide_work
+        auto: false
+        hint: >-
+          Remediate the reported code smell by encapsulating data clumps,
+          extracting abstractions, or localizing variable mutations; preserve behavior and run local tests.
       - id: verify
         kind: shell
         auto: true
