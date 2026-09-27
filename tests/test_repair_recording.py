@@ -14,6 +14,7 @@ from types import SimpleNamespace
 
 from koru.repair_runs.sqlite_store import SqliteRepairRunStore, default_store_path
 from tests import _repolab
+from tests._planfile_readiness import runnable_fixture_report
 
 _GOOD_REPLY = (
     "```diff\n"
@@ -66,6 +67,7 @@ class TestRepairRecording(unittest.TestCase):
 
         replies = list(llm_replies)
 
+        @runnable_fixture_report
         def planfile_runner(command, _project):
             args = _ticket_args(command)
             if args[:4] == ["ticket", "list", "--status", "open"]:

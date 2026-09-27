@@ -20,6 +20,7 @@ from koru.queue.ticket import (
     planfile_command,
 )
 from tests import _repolab
+from tests._planfile_readiness import runnable_fixture_report
 
 
 def _ok(stdout: str = "") -> SimpleNamespace:
@@ -389,6 +390,7 @@ class TestPlanfileQueue(unittest.TestCase):
             ]
             planfile_calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 planfile_calls.append(command)
                 if _ticket_args(command)[:5] == [
@@ -430,6 +432,7 @@ class TestPlanfileQueue(unittest.TestCase):
             planfile_calls: list[list[str]] = []
             shell_calls: list[str] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 planfile_calls.append(command)
                 return _ok(json.dumps([ticket]))
@@ -462,6 +465,7 @@ class TestPlanfileQueue(unittest.TestCase):
             }
             planfile_calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 planfile_calls.append(command)
                 return _ok(json.dumps([ticket]))
@@ -495,6 +499,7 @@ class TestPlanfileQueue(unittest.TestCase):
             }
             planfile_calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 planfile_calls.append(command)
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -556,6 +561,7 @@ class TestPlanfileQueue(unittest.TestCase):
                 "execution": {"state": "ready"},
             }
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 ta = _ticket_args(command)
                 if ta[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -585,6 +591,7 @@ class TestPlanfileQueue(unittest.TestCase):
             }
             planfile_calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 planfile_calls.append(command)
                 ta = _ticket_args(command)
@@ -642,6 +649,7 @@ class TestPlanfileQueue(unittest.TestCase):
             }
             planfile_calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 planfile_calls.append(command)
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -675,6 +683,7 @@ class TestPlanfileQueue(unittest.TestCase):
                 "inputs": {"prompt": "Provide OPENROUTER_API_KEY"},
             }
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 self.assertEqual(
                     _ticket_args(command),
@@ -711,6 +720,7 @@ class TestPlanfileQueue(unittest.TestCase):
                 },
             ]
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(tickets))
@@ -745,6 +755,7 @@ class TestPlanfileQueue(unittest.TestCase):
                 }
             ]
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(tickets))
@@ -811,6 +822,7 @@ class TestPlanfileQueue(unittest.TestCase):
                 "inputs": {"prompt": "Work this ticket manually"},
             }
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 self.assertEqual(
                     _ticket_args(command),
@@ -835,6 +847,7 @@ class TestPlanfileQueue(unittest.TestCase):
             }
             planfile_calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 planfile_calls.append(command)
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -872,6 +885,7 @@ class TestPlanfileQueue(unittest.TestCase):
             }
             calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 calls.append(command)
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -905,6 +919,7 @@ class TestPlanfileQueue(unittest.TestCase):
             }
             calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 calls.append(command)
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -942,6 +957,7 @@ class TestPlanfileQueue(unittest.TestCase):
             }
             planfile_calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 planfile_calls.append(command)
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -995,6 +1011,7 @@ class TestPlanfileQueue(unittest.TestCase):
             }
             planfile_calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 planfile_calls.append(command)
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -1031,6 +1048,7 @@ class TestPlanfileQueue(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)
 
+            @runnable_fixture_report
             def planfile_runner(_command: list[str], _project: Path) -> SimpleNamespace:
                 return _ok("No runnable ticket found")
 
@@ -1043,6 +1061,7 @@ class TestPlanfileQueue(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)
 
+            @runnable_fixture_report
             def planfile_runner(_command: list[str], _project: Path) -> SimpleNamespace:
                 return SimpleNamespace(returncode=2, stdout="", stderr="planfile broken")
 
@@ -1061,6 +1080,7 @@ def test_run_next_planfile_task_persists_queue_event(tmp_path: Path) -> None:
         "execution": {"state": "ready"},
     }
 
+    @runnable_fixture_report
     def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
         if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
             return _ok(json.dumps(ticket))
@@ -1093,6 +1113,7 @@ def test_run_next_planfile_task_persists_queue_event(tmp_path: Path) -> None:
             }
             shell_calls: list[str] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
@@ -1122,6 +1143,7 @@ def test_run_next_planfile_task_persists_queue_event(tmp_path: Path) -> None:
                 "executor": {"kind": "mcp", "mode": "automatic"},
             }
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
@@ -1143,6 +1165,7 @@ def test_run_next_planfile_task_persists_queue_event(tmp_path: Path) -> None:
             }
             calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 calls.append(command)
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -1168,6 +1191,7 @@ def test_run_next_planfile_task_persists_queue_event(tmp_path: Path) -> None:
                 "source": {"tool": "koru-scan"},
             }
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
@@ -1190,6 +1214,7 @@ def test_run_next_planfile_task_persists_queue_event(tmp_path: Path) -> None:
             }
             calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 calls.append(command)
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -1219,6 +1244,7 @@ def test_run_next_planfile_task_persists_queue_event(tmp_path: Path) -> None:
             }
             calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 calls.append(command)
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -1278,6 +1304,7 @@ def test_run_next_planfile_task_persists_queue_event(tmp_path: Path) -> None:
             }
             calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 calls.append(command)
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -1311,6 +1338,7 @@ def test_run_next_planfile_task_persists_queue_event(tmp_path: Path) -> None:
                 "inputs": {"prompt": "Confirm?"},
             }
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
@@ -1358,6 +1386,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             ticket = self._llm_ticket()
             calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command, _project) -> SimpleNamespace:
                 calls.append(command)
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -1419,6 +1448,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             ticket = self._llm_ticket()
             calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command, _project) -> SimpleNamespace:
                 calls.append(command)
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -1463,6 +1493,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             ticket = self._llm_ticket()
             calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command, _project) -> SimpleNamespace:
                 calls.append(command)
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -1506,6 +1537,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             }
             calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command, _project) -> SimpleNamespace:
                 calls.append(command)
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -1536,6 +1568,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             project = Path(tmp_dir)
             ticket = self._llm_ticket()
 
+            @runnable_fixture_report
             def planfile_runner(command, _project) -> SimpleNamespace:
                 if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                     return _ok(json.dumps(ticket))
@@ -3018,6 +3051,7 @@ class TestPlanfileQueueLoop(unittest.TestCase):
         next_calls = {"i": 0}
         all_calls: list[list[str]] = []
 
+        @runnable_fixture_report
         def planfile_runner(command: list[str], _project) -> SimpleNamespace:
             all_calls.append(command)
             if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
@@ -3313,6 +3347,7 @@ class TestPlanfileQueueLoop(unittest.TestCase):
     def test_loop_validates_max_iterations(self) -> None:
         from koru.queue import run_planfile_queue_loop
 
+        @runnable_fixture_report
         def planfile_runner(_cmd, _proj) -> SimpleNamespace:
             return SimpleNamespace(returncode=0, stdout="", stderr="")
 
@@ -3350,6 +3385,7 @@ class TestAppendShellEvidenceNote(unittest.TestCase):
             project = Path(tmp_dir)
             calls: list[list[str]] = []
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _p: Path) -> SimpleNamespace:
                 calls.append(command)
                 ta = _ticket_args(command)
@@ -3386,6 +3422,7 @@ class TestAppendShellEvidenceNote(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)
 
+            @runnable_fixture_report
             def planfile_runner(command: list[str], _p: Path) -> SimpleNamespace:
                 ta = _ticket_args(command)
                 if len(ta) >= 5 and ta[:3] == ["ticket", "update", "PLF-Y"]:
@@ -3428,6 +3465,7 @@ def test_planfile_error_message_actionable_on_module_missing(tmp_path: Path) -> 
 
     from koru.queue.runner import run_next_planfile_task
 
+    @runnable_fixture_report
     def planfile_runner(_command: list[str], _project: Path) -> SimpleNamespace:
         return SimpleNamespace(
             returncode=1,
@@ -3439,3 +3477,29 @@ def test_planfile_error_message_actionable_on_module_missing(tmp_path: Path) -> 
 
     assert result.status == "planfile_error"
     assert "pip install planfile" in result.message
+
+
+def test_real_queue_runs_prerequisite_before_high_priority_dependent(tmp_path, monkeypatch):
+    from planfile import Planfile
+
+    from tests.test_queue_admission import native_store, shell_ticket
+
+    store = native_store(tmp_path, monkeypatch)
+    first = shell_ticket(store, "prerequisite", priority="low")
+    second = shell_ticket(store, "dependent", priority="high", blocked_by=[first.id])
+    observed = []
+
+    def execute(command, project):
+        # Lifecycle readback is real: a later task may run only after A is done.
+        current = Planfile(str(project))
+        if observed:
+            assert current.get_ticket(first.id).status.value == "done"
+        observed.append(command)
+        return SimpleNamespace(returncode=0, stdout="pilot-ok", stderr="")
+
+    a = run_next_planfile_task(project=tmp_path, shell_runner=execute)
+    b = run_next_planfile_task(project=tmp_path, shell_runner=execute)
+    assert (a.ticket_id, a.status) == (first.id, "completed")
+    assert (b.ticket_id, b.status) == (second.id, "completed")
+    assert len(observed) == 2
+    assert Planfile(str(tmp_path)).get_ticket(second.id).status.value == "done"

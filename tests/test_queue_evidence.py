@@ -22,6 +22,7 @@ from koru.queue.evidence import (
 )
 from koru.queue.patch_retry import apply_patch_with_retry
 from tests import _repolab
+from tests._planfile_readiness import runnable_fixture_report
 
 _GOOD_REPLY = (
     "```diff\n"
@@ -262,6 +263,7 @@ class TestRunnerCompletionGate(_RepoCase):
         ticket = self._ticket()
         calls: list[list[str]] = []
 
+        @runnable_fixture_report
         def planfile_runner(command, _project):
             args = _ticket_args(command)
             calls.append(args)

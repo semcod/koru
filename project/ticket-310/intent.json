@@ -1,0 +1,117 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-310",
+  "summary": "Use native Planfile readiness before claiming queued work",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-310/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/runner.py",
+    "src/koru/queue/admission.py",
+    "tests/test_queue_admission.py",
+    "tests/_planfile_readiness.py",
+    "tests/test_planfile_queue.py",
+    "tests/test_repair_router.py",
+    "tests/test_taskand_runner.py",
+    "tests/test_llm_context.py",
+    "tests/test_post_run_verify.py",
+    "tests/test_context.py",
+    "tests/test_queue_evidence.py",
+    "tests/test_repair_recording.py",
+    "tests/test_cqrs_planfile_queue_context.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "db6d7dec0a7426c8cb2f806d439d233154b552b2",
+    "targetBranch": "main",
+    "outcome": "Koru claims only tickets admitted by native Planfile readiness, preserving priority among runnable tasks.",
+    "nonGoals": [
+      "Change native Planfile dependency policy",
+      "Expand model tools or hardware authority",
+      "Change Taskand or shell-drive completion policy"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 14,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Query the configured Planfile ticket next --debug JSON report before queue claim/start, filter current candidates by native servable IDs, and fail closed for unavailable or invalid reports. Preserve Koru queue and priority policy.",
+      "components": [
+        {
+          "name": "queue-admission",
+          "paths": [
+            "src/koru/queue/runner.py",
+            "src/koru/queue/admission.py"
+          ]
+        },
+        {
+          "name": "queue-tests",
+          "paths": [
+            "tests/test_queue_admission.py",
+            "tests/_planfile_readiness.py",
+            "tests/test_planfile_queue.py",
+            "tests/test_repair_router.py",
+            "tests/test_taskand_runner.py",
+            "tests/test_llm_context.py",
+            "tests/test_post_run_verify.py",
+            "tests/test_context.py",
+            "tests/test_queue_evidence.py",
+            "tests/test_repair_recording.py",
+            "tests/test_cqrs_planfile_queue_context.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert this slice and retain operator holds; do not re-enable shell-drive AUTODONE."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_queue_admission.py tests/test_planfile_queue.py"
+        ],
+        "evidence": "Unit admission boundaries and real native Planfile dependency execution."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest tests/test_queue_admission.py"
+        ],
+        "evidence": "Bad/unsupported readiness reports produce no claim, start or executor effects."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "pytest tests/test_queue_admission.py tests/test_cqrs_planfile_queue_context.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Native two-task dependency pilot plus existing queue selection/lifecycle regressions and governance."
+      }
+    ]
+  }
+}

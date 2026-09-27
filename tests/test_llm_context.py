@@ -26,6 +26,7 @@ from koru.queue.context import (
 )
 from koru.queue.runners import _build_llm_messages
 from koru.queue.ticket import ticket_llm_request
+from tests._planfile_readiness import runnable_fixture_report
 
 # ---------------------------------------------------------------------------
 # Helpers shared across tests
@@ -480,6 +481,7 @@ class TestLlmContextEndToEnd(unittest.TestCase):
         """Run a planfile task and return (captured_request, run_result)."""
         captured: dict = {}
 
+        @runnable_fixture_report
         def planfile_runner(command, _project) -> SimpleNamespace:
             if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
                 return _ok(json.dumps(ticket))
