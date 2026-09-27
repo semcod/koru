@@ -684,5 +684,29 @@ class TestSetupRequired(unittest.TestCase):
             self.assertIn("koru autonomous up --project . --max-cycles 1", md)
 
 
+class TestParseTicketResponse(unittest.TestCase):
+    """Pin the response-shape contract of the refactored parser."""
+
+    def test_scalar_json_passthrough(self) -> None:
+        """A bare JSON scalar is neither idle nor an error — it passes through."""
+        from koru.context import _parse_ticket_response
+
+        fetch = _parse_ticket_response(_ok("5"), None, None, Path("/tmp"), None)
+
+        self.assertEqual(fetch.data, 5)
+        self.assertIsNone(fetch.error)
+        self.assertEqual(fetch.open_tickets, [])
+        self.assertEqual(fetch.history, [])
+
+    def test_unparseable_output_is_not_idle(self) -> None:
+        from koru.context import _parse_ticket_response
+
+        fetch = _parse_ticket_response(_ok("<<boom>>"), None, None, Path("/tmp"), None)
+
+        self.assertIsNone(fetch.data)
+        self.assertEqual(fetch.error, "planfile output was not JSON")
+        self.assertEqual(fetch.history, [])
+
+
 if __name__ == "__main__":
     unittest.main()

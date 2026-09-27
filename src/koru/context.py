@@ -336,14 +336,23 @@ def _try_fallback_ticket_list(
     )
 
 
+class _TicketFetch(NamedTuple):
+    """Raw planfile ticket query result."""
+
+    data: dict[str, Any] | None
+    error: str | None
+    open_tickets: list[dict[str, Any]]
+    history: list[dict[str, Any]]
+
+
 def _process_list_payload(
     ticket_data: list[dict[str, Any]],
     include_fixtures: bool | None,
-) -> tuple[dict[str, Any] | None, list[dict[str, Any]], list[dict[str, Any]], str | None]:
+) -> _TicketFetch:
     """Process ticket list payload from planfile.
 
     Returns:
-        Tuple of (active_ticket, open_tickets, ticket_history, error)
+        A ``_TicketFetch`` with the active ticket, open slice and history.
     """
     raw_list = [t for t in ticket_data if isinstance(t, dict)]
     open_tickets = [t for t in raw_list if t.get("status") in (None, "open", "ready", "todo")]
@@ -356,23 +365,24 @@ def _process_list_payload(
 
     active_ticket = open_tickets[0] if open_tickets else None
     error = "queue is idle" if active_ticket is None else None
-    return active_ticket, open_tickets, ticket_history, error
+    return _TicketFetch(active_ticket, error, open_tickets, ticket_history)
 
 
 def _process_dict_payload(
     ticket_data: dict[str, Any],
     ticket_id: str | None,
     include_fixtures: bool | None,
-) -> tuple[dict[str, Any] | None, list[dict[str, Any]], str | None]:
+) -> _TicketFetch:
     """Process single ticket dict payload from planfile.
 
     Returns:
-        Tuple of (ticket_data, open_tickets, error)
+        A ``_TicketFetch``; the history is filled in by the caller
+        when a ticket was accepted.
     """
     if not _resolve_include_fixtures(include_fixtures) and not ticket_id and _is_fixture_ticket(ticket_data):
-        return None, [], "queue has only fixture tickets"
+        return _TicketFetch(None, "queue has only fixture tickets", [], [])
     else:
-        return ticket_data, [ticket_data], None
+        return _TicketFetch(ticket_data, None, [ticket_data], [])
 
 
 def _extract_error_from_stderr(stderr: str) -> str:
@@ -420,60 +430,57 @@ def _handle_idle_queue(
     )
 
 
+def _is_idle_planfile_output(stdout: str | None) -> bool:
+    """Match the outputs planfile emits when no ticket is runnable.
+
+    Covers empty stdout, the human-readable "No runnable ticket"
+    banner, and a bare JSON ``null``.
+    """
+    stripped = (stdout or "").strip()
+    if not stripped or "No runnable ticket" in stripped:
+        return True
+    with contextlib.suppress(TypeError, ValueError):
+        return json.loads(stripped) is None
+    return False
+
+
 def _parse_ticket_response(
     ticket_proc: subprocess.CompletedProcess,
     ticket_id: str | None,
     include_fixtures: bool | None,
     project: Path,
     planfile_runner: Callable | None,
-) -> tuple[dict[str, Any] | None, str | None, list[dict[str, Any]], list[dict[str, Any]]]:
-    """Parse ticket response from planfile."""
-    ticket_data: dict[str, Any] | None = None
-    ticket_error: str | None = None
-    open_tickets: list[dict[str, Any]] = []
-    ticket_history: list[dict[str, Any]] = []
+) -> _TicketFetch:
+    """Parse ticket response from planfile.
 
+    Each response shape — idle output, unparseable output, a ticket
+    list, a single ticket object, or a bare JSON scalar — returns its
+    own ``_TicketFetch`` directly.
+    """
     ticket_data = _safe_json(ticket_proc.stdout)
     if ticket_data is None:
-        stripped = (ticket_proc.stdout or "").strip()
-        json_null_idle = False
-        if stripped:
-            with contextlib.suppress(TypeError, ValueError):
-                json_null_idle = json.loads(stripped) is None
-        if "No runnable ticket" in stripped or not stripped or json_null_idle:
-            ticket_data = None
-            ticket_error = "queue is idle"
-            ticket_history = _handle_idle_queue(project, planfile_runner, include_fixtures)
-        else:
-            ticket_error = "planfile output was not JSON"
-    elif isinstance(ticket_data, list):
-        ticket_data, open_tickets, ticket_history, ticket_error = _process_list_payload(
-            ticket_data,
-            include_fixtures,
-        )
-    elif isinstance(ticket_data, dict):
-        ticket_data, open_tickets, ticket_error = _process_dict_payload(
-            ticket_data,
-            ticket_id,
-            include_fixtures,
-        )
-        if ticket_data is not None:
-            ticket_history = _fetch_all_tickets(
+        if _is_idle_planfile_output(ticket_proc.stdout):
+            return _TicketFetch(
+                None,
+                "queue is idle",
+                [],
+                _handle_idle_queue(project, planfile_runner, include_fixtures),
+            )
+        return _TicketFetch(None, "planfile output was not JSON", [], [])
+    if isinstance(ticket_data, list):
+        return _process_list_payload(ticket_data, include_fixtures)
+    if isinstance(ticket_data, dict):
+        fetch = _process_dict_payload(ticket_data, ticket_id, include_fixtures)
+        if fetch.data is None:
+            return fetch
+        return fetch._replace(
+            history=_fetch_all_tickets(
                 project,
                 runner=planfile_runner,
                 include_fixtures=_resolve_include_fixtures(include_fixtures),
             )
-
-    return ticket_data, ticket_error, open_tickets, ticket_history
-
-
-class _TicketFetch(NamedTuple):
-    """Raw planfile ticket query result."""
-
-    data: dict[str, Any] | None
-    error: str | None
-    open_tickets: list[dict[str, Any]]
-    history: list[dict[str, Any]]
+        )
+    return _TicketFetch(ticket_data, None, [], [])
 
 
 def _fetch_ticket_data(
@@ -487,9 +494,7 @@ def _fetch_ticket_data(
     """Fetch ticket data from planfile.
 
     Returns:
-        A ``_TicketFetch`` NamedTuple; its field order mirrors the
-        ``(ticket_data, ticket_error, open_tickets, ticket_history)``
-        tuple produced by ``_parse_ticket_response``.
+        A ``_TicketFetch`` NamedTuple from ``_parse_ticket_response``.
     """
     if not planfile_present:
         return _TicketFetch(None, "project not initialised", [], [])
@@ -497,14 +502,12 @@ def _fetch_ticket_data(
     ticket_proc = _execute_ticket_query(project, ticket_id, queue_name, planfile_runner)
 
     if ticket_proc.returncode == 0:
-        return _TicketFetch(
-            *_parse_ticket_response(
-                ticket_proc,
-                ticket_id,
-                include_fixtures,
-                project,
-                planfile_runner,
-            )
+        return _parse_ticket_response(
+            ticket_proc,
+            ticket_id,
+            include_fixtures,
+            project,
+            planfile_runner,
         )
     else:
         ticket_error = _extract_error_from_stderr(ticket_proc.stderr or "planfile error")
