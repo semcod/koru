@@ -132,3 +132,31 @@ def test_setup_config_shell_readline(tmp_path: Path) -> None:
     if cleanup is not None:
         cleanup()
 
+
+def test_apply_nl_multi_intent_batching(tmp_path: Path) -> None:
+    cfg = _sample_config(tmp_path)
+    command = "port na 9000 i ide na cursor i wlacz lan"
+    res = apply_nl_config_command(cfg, command, tmp_path)
+
+    assert res.success is True
+    assert res.updated is True
+    assert cfg["serve"]["port"] == 9000
+    assert cfg["ide"] == "cursor"
+    assert cfg["serve"]["lan"] is True
+    assert "9000" in res.message
+    assert "cursor" in res.message
+
+
+def test_apply_nl_multi_intent_partial_failure_does_not_corrupt(tmp_path: Path) -> None:
+    cfg = _sample_config(tmp_path)
+    initial_port = cfg["serve"]["port"]
+    command = "port na 9000 i zmien ide na unknown_ide_123"
+    res = apply_nl_config_command(cfg, command, tmp_path)
+
+    assert res.success is False
+    assert res.updated is False
+    # Original config remains untouched
+    assert cfg["serve"]["port"] == initial_port
+    assert "unknown_ide_123" in res.message
+
+
