@@ -1,0 +1,83 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-293",
+  "summary": "integrate-nolimits-storage-check-in-autonomous-prechecks",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-293/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomous/__init__.py",
+    "src/koru/autonomy/operator/operator_up.py",
+    "tests/test_autonomous_pre_checks.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "84889507a59af59a3d5491f0f256e3ea186ee1d6",
+    "targetBranch": "main",
+    "outcome": "Integrate wellmanifest/nolimits pre-flight storage check (LIM-STORAGE-001) into koru autonomous pre-checks, ensuring low disk space (< 10 GB) is detected and reported with fixos remediation advice or trigger.",
+    "nonGoals": [
+      "No breaking changes to autonomous loop CLI interface",
+      "No destructive cleanup without user authorization"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add _check_storage_limits in autonomous pre-checks invoking shutil.disk_usage and checking < 10 GB threshold per LIM-STORAGE-001.",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "src/koru/autonomous/__init__.py",
+            "src/koru/autonomy/operator/operator_up.py",
+            "tests/test_autonomous_pre_checks.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "git revert HEAD"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_autonomous_pre_checks.py -q"
+        ],
+        "evidence": "Storage pre-flight check unit tests pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings."
+      }
+    ]
+  }
+}
