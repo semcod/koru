@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-282",
+  "summary": "Address code smell: Shotgun Surgery: explicit locals in koru autonomy config startup",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-282/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/configuration/config_startup.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "373fedccf679655960502c7c2e02a958eac25f86",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm Shotgun Surgery smell for the variable 'explicit' in src/koru/autonomy/configuration/config_startup.py (planfile ticket PLF-057, reported at line 85) by replacing the generic local with a stage-accurate name in each of the five functions that assigned it: ide_env_lane (_terminal_agent_lane_from_env, the lane declared by the KORU_AUTOPILOT_IDE env var, consulted only as a fallback when the terminal host IDE could not be detected - a different env var from the instance selection), instance_lane (_explicit_agent_lane_from_env, the normalized KORU_AUTOPILOT_INSTANCE selection the producer returns, and with instance_source in resolve_agent_lane, the legacy entry that reads the pair straight from the facade), and explicit_lane / explicit_lane_source (_runtime_lane_hints and resolve_agent_lane_id, the explicit-selection hint pair gathered with the focused/terminal/running runtime hints and forwarded to _resolve_lane_from_runtime_hints). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'explicit' group drops from 5 scopes to 0 and the file mutation record count is unchanged at 118 (pure rename). The new names land at 2/2/2/1/1 scopes (instance_lane in _explicit_agent_lane_from_env and resolve_agent_lane; explicit_lane and explicit_lane_source in _runtime_lane_hints and resolve_agent_lane_id; instance_source in resolve_agent_lane; ide_env_lane in _terminal_agent_lane_from_env), all far below the threshold; the untouched 'focused' and 'picked' groups stay at 4 scopes. Function parameters named explicit / explicit_source (_resolve_lane_from_runtime_hints, _try_focused_lane, _try_runtime_lanes, _resolve_lane_from_explicit, _should_terminal_override_explicit, _should_running_override_explicit) are function arguments, not assignments, so the DFG mutation extractor never counted them and they keep the accurate domain name for the explicit selection flowing through the resolution chain. Pure rename: no signature, return shape, env var or behavior change; no other file touched. No duplication.toon.yaml exists in this repository, so the duplication-report checklist has nothing to consult for the touched path.",
+    "nonGoals": [
+      "No behavior, routing precedence, source-label or interface change",
+      "No new shared lane-hint helper; the five assignments sit at distinct stages (env-var fallback, instance producer, hint gathering, agent-lane CLI resolution, legacy resolve_agent_lane entry) and a forced abstraction would couple independent resolution stages",
+      "No rename of the resolution-helper parameters or of locals in other files that happen to use 'explicit' (each is an independent local in its own file scope)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local naming only, inside one module. Every function that bound the generic name 'explicit' now names exactly the selection stage it consumes: the terminal-env fallback names the KORU_AUTOPILOT_IDE lane (ide_env_lane), the producer and the legacy resolver name the KORU_AUTOPILOT_INSTANCE selection (instance_lane / instance_source), and the runtime-hint gatherer and the agent-lane resolver name the forwarded explicit-selection hint pair (explicit_lane / explicit_lane_source). The generic name 'explicit' disappears from the file's assignment set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports an 'explicit' mutation group of exactly 5 scopes - _terminal_agent_lane_from_env, _explicit_agent_lane_from_env, _runtime_lane_hints, resolve_agent_lane, resolve_agent_lane_id - matching the ticket's 'spans 5 functions'; after the rename the 'explicit' group is empty, the file mutation record count is unchanged at 118 (pure rename), and no (file, variable) group reaches the >= 5 threshold (largest remaining groups are 'focused' and 'picked' at 4).",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "src/koru/autonomy/configuration/config_startup.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named explicit again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor mutation grouping on the file AST, original vs renamed content of src/koru/autonomy/configuration/config_startup.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports an 'explicit' mutation group of 5 scopes (_terminal_agent_lane_from_env, _explicit_agent_lane_from_env, _runtime_lane_hints, resolve_agent_lane, resolve_agent_lane_id) - exactly matching the ticket's reported 'spans 5 functions'; renamed content reports an 'explicit' group of 0 scopes; file mutation record count unchanged at 118 (pure rename); every new local lands below the threshold (instance_lane 2, explicit_lane 2, explicit_lane_source 2, instance_source 1, ide_env_lane 1); the untouched 'focused' and 'picked' groups stay at 4 scopes."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_autonomous_startup.py tests/test_autonomous.py tests/test_autonomous_cycle_config.py tests/test_autonomous_runtime.py tests/test_operator_pipeline.py -q",
+          "ruff check src/koru/autonomy/configuration/config_startup.py"
+        ],
+        "evidence": "The suites that exercise the renamed lane-resolution paths (startup probe/banner tests, autonomous up tests, cycle config and runtime, operator pipeline) pass unchanged - pure rename of function-internal locals - and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}

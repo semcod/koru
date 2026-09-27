@@ -86,9 +86,9 @@ def _terminal_agent_lane_from_env() -> str | None:
     host = normalize_ide_id(detect_terminal_host_ide_id())
     if host:
         return host
-    explicit = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_IDE"))
-    if explicit and explicit != "auto":
-        return explicit
+    ide_env_lane = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_IDE"))
+    if ide_env_lane and ide_env_lane != "auto":
+        return ide_env_lane
     return None
 
 
@@ -101,9 +101,9 @@ def _focused_agent_lane_from_desktop() -> str | None:
 
 
 def _explicit_agent_lane_from_env() -> tuple[str | None, str]:
-    explicit = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_INSTANCE"))
-    if explicit and explicit != "auto":
-        return explicit, "env:KORU_AUTOPILOT_INSTANCE"
+    instance_lane = normalize_ide_id(os.environ.get("KORU_AUTOPILOT_INSTANCE"))
+    if instance_lane and instance_lane != "auto":
+        return instance_lane, "env:KORU_AUTOPILOT_INSTANCE"
     return None, ""
 
 
@@ -264,9 +264,9 @@ def _runtime_lane_hints() -> tuple[str | None, str | None, str | None, str, Sequ
     _facade = _startup_facade()
     focused = _facade._focused_agent_lane_from_desktop()
     terminal = _facade._terminal_agent_lane_from_env()
-    explicit, explicit_source = _facade._explicit_agent_lane_from_env()
+    explicit_lane, explicit_lane_source = _facade._explicit_agent_lane_from_env()
     running = _facade.detect_running_ides()
-    return focused, terminal, explicit, explicit_source, running
+    return focused, terminal, explicit_lane, explicit_lane_source, running
 
 
 def _resolve_lane_from_runtime_hints(
@@ -339,13 +339,13 @@ def resolve_agent_lane_id(
     if cli_result:
         return cli_result
 
-    focused, terminal, explicit, explicit_source, running = _runtime_lane_hints()
+    focused, terminal, explicit_lane, explicit_lane_source, running = _runtime_lane_hints()
     runtime_result = _resolve_lane_from_runtime_hints(
         project,
         focused=focused,
         terminal=terminal,
-        explicit=explicit,
-        explicit_source=explicit_source,
+        explicit=explicit_lane,
+        explicit_source=explicit_lane_source,
         running=running,
         resolve_project_lane=resolve_project_lane,
     )
@@ -418,13 +418,13 @@ def resolve_agent_lane(
     running = list(running_ides) if running_ides is not None else _startup_facade().detect_running_ides()
     _facade = _startup_facade()
     focused = _facade._focused_agent_lane_from_desktop()
-    explicit, explicit_source = _facade._explicit_agent_lane_from_env()
+    instance_lane, instance_source = _facade._explicit_agent_lane_from_env()
 
-    focused_result = _try_focused_lane(focused, running, explicit, terminal)
+    focused_result = _try_focused_lane(focused, running, instance_lane, terminal)
     if focused_result is not None:
         return focused_result
 
-    runtime_result = _try_runtime_lanes(explicit, explicit_source, terminal, running)
+    runtime_result = _try_runtime_lanes(instance_lane, instance_source, terminal, running)
     if runtime_result is not None:
         return runtime_result
 
