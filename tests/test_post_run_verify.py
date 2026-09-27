@@ -19,6 +19,7 @@ from koru.autonomy.post_run_verify import (
     verify_after_ide_work,
     verify_completed_tickets,
 )
+from tests._planfile_readiness import runnable_fixture_report
 
 
 @dataclass
@@ -65,6 +66,7 @@ queue:
             def shell_runner(_cmd: str, _proj: Path) -> SimpleNamespace:
                 return _fail("pytest failed")
 
+            @runnable_fixture_report
             def planfile_runner(cmd, _proj: Path) -> SimpleNamespace:
                 calls.append(list(cmd))
                 if cmd[2] == "show":
@@ -106,6 +108,7 @@ queue:
             def shell_runner(_cmd: str, _proj: Path) -> SimpleNamespace:
                 return _fail("pytest failed")
 
+            @runnable_fixture_report
             def planfile_runner(cmd, _proj: Path) -> SimpleNamespace:
                 calls.append(list(cmd))
                 if cmd[:3] == ["planfile", "ticket", "show"]:
@@ -147,6 +150,7 @@ queue:
             def shell_runner(_cmd: str, _proj: Path) -> SimpleNamespace:
                 return _fail("pytest failed")
 
+            @runnable_fixture_report
             def planfile_runner(cmd, _proj: Path) -> SimpleNamespace:
                 calls.append(list(cmd))
                 if cmd[:3] == ["planfile", "ticket", "show"]:
@@ -188,6 +192,7 @@ queue:
             def shell_runner(_cmd: str, _proj: Path) -> SimpleNamespace:
                 return _fail("pytest failed")
 
+            @runnable_fixture_report
             def planfile_runner(cmd, _proj: Path) -> SimpleNamespace:
                 if cmd[:3] == ["planfile", "ticket", "show"]:
                     return _ok(
@@ -240,6 +245,7 @@ queue:
             def shell_runner(_cmd: str, _proj: Path) -> SimpleNamespace:
                 return _ok()
 
+            @runnable_fixture_report
             def planfile_runner(cmd, _proj: Path) -> SimpleNamespace:
                 if cmd[:4] == ["planfile", "ticket", "show", "PLF-9"]:
                     return _ok('{"id": "PLF-9", "status": "done"}')

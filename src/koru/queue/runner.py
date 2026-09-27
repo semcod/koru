@@ -9,6 +9,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from koru.queue.admission import admitted_payload
 from koru.queue.context import build_project_context
 from koru.queue.evidence import completion_gap
 from koru.queue.human import default_human_prompt
@@ -633,9 +634,21 @@ def _next_ticket_or_result(
         ticket_id=target_ticket_id,
         interactive=interactive,
     )
+    if ticket is not None:
+        try:
+            payload = admitted_payload(
+                project, next_result.stdout, runner=planfile_runner, queue_name=queue_name
+            )
+        except ValueError as exc:
+            return None, QueueRunResult(
+                status="planfile_error", message=str(exc), exit_code=1, stderr=str(exc)
+            )
+        ticket = parse_next_ticket(
+            payload, queue_name=queue_name, ticket_id=target_ticket_id, interactive=interactive
+        )
     if ticket is None:
         if target_ticket_id is not None:
-            message = f"Requested ticket {target_ticket_id} is not open in the selected queue"
+            message = f"Requested ticket {target_ticket_id} is not runnable in the selected queue"
             return None, QueueRunResult(
                 status="target_not_runnable",
                 ticket_id=target_ticket_id,

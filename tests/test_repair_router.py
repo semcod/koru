@@ -30,6 +30,7 @@ from koru.repair_runs.router import (
 )
 from koru.repair_runs.sqlite_store import SqliteRepairRunStore, default_store_path
 from tests import _repolab
+from tests._planfile_readiness import runnable_fixture_report
 
 _GOOD_REPLY = (
     "```diff\n"
@@ -159,6 +160,7 @@ class _QueueLab(unittest.TestCase):
         ticket = self._ticket()
         lifecycle: list[str] = []
 
+        @runnable_fixture_report
         def planfile_runner(command, _project):
             args = [str(part) for part in command]
             args = args[args.index("ticket"):] if "ticket" in args else args

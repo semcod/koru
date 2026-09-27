@@ -11,6 +11,7 @@ from koru.bounded_contexts.planfile_queue.commands import RunNextPlanfileTaskCom
 from koru.cqrs import EventSourcingRuntime
 from koru.queue.runner import _execute_action, _resolve_ticket_action, run_next_planfile_task
 from koru.queue.types import TaskandRunResult
+from tests._planfile_readiness import runnable_fixture_report
 
 
 def _ticket_args(command: list[str]) -> list[str]:
@@ -108,6 +109,7 @@ def test_run_next_planfile_task_executes_taskand_ticket_successfully(tmp_path: P
     executed_taskand = []
     planfile_commands = []
 
+    @runnable_fixture_report
     def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
         args = _ticket_args(command)
         planfile_commands.append(args)
@@ -154,6 +156,7 @@ def test_run_next_planfile_task_handles_taskand_failure(tmp_path: Path) -> None:
 
     planfile_commands = []
 
+    @runnable_fixture_report
     def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
         args = _ticket_args(command)
         planfile_commands.append(args)
@@ -195,6 +198,7 @@ def test_cqrs_command_service_taskand_execution(tmp_path: Path) -> None:
         "execution": {"state": "ready"},
     }
 
+    @runnable_fixture_report
     def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
         args = _ticket_args(command)
         if args[:5] == ["ticket", "list", "--status", "open", "--format"]:
