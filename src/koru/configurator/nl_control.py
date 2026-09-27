@@ -26,7 +26,7 @@ def normalize_nl_text(text: str) -> str:
     text = text.strip().lower().replace("ł", "l")
     decomposed = unicodedata.normalize("NFKD", text)
     stripped = "".join(c for c in decomposed if not unicodedata.combining(c))
-    cleaned = re.sub(r"[^\w\s\.-]", " ", stripped)
+    cleaned = re.sub(r"[^\w\s\.\-/:_]", " ", stripped)
     cleaned = re.sub(r"\.{2,}", " ", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
     return cleaned.rstrip(".")
@@ -115,7 +115,37 @@ def _apply_single_nl_command(
             config=config,
         )
 
-    # 4. Queue change: "kolejka na ops", "queue to default", "zmien queue na background"
+    # 4. Model change: "model na sonnet", "zmien model na glm-5.3", "prosty model na glm5.3-flash"
+    m_simple_model = re.search(
+        r"(?:zmien\s+)?(?:prosty|maly|tani|simple|small|flash)\s+model(?:\s+(?:na|to|=))?\s+([a-z0-9_.:/-]+)",
+        text,
+    )
+    if m_simple_model:
+        model_name = m_simple_model.group(1).strip()
+        models = config.setdefault("models", {})
+        models["simple"] = model_name
+        save_project_config(project_path, config)
+        return ConfigMutationResult(
+            success=True,
+            message=f"Zmieniono prosty/szybki model (tier Flash) na: {model_name}",
+            updated=True,
+            config=config,
+        )
+
+    m_model = re.search(r"(?:zmien\s+)?(?:glowny\s+)?model(?:\s+(?:na|to|=))?\s+([a-z0-9_.:/-]+)", text)
+    if m_model and not text.startswith("ide"):
+        model_name = m_model.group(1).strip()
+        models = config.setdefault("models", {})
+        models["default"] = model_name
+        save_project_config(project_path, config)
+        return ConfigMutationResult(
+            success=True,
+            message=f"Zmieniono domyślny model LLM na: {model_name}",
+            updated=True,
+            config=config,
+        )
+
+    # 5. Queue change: "kolejka na ops", "queue to default", "zmien queue na background"
     m_queue = re.search(r"(?:zmien\s+)?(?:kolejka|queue|kolejke)(?:\s+(?:na|to|=))?\s+([a-z0-9_-]+)", text)
     if m_queue:
         q_name = m_queue.group(1).strip()
