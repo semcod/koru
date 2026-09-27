@@ -324,8 +324,8 @@ def _windsurf_terminal_marker() -> bool:
 
 def _terminal_ide_hint() -> str | None:
     """Best-effort IDE owning this shell."""
-    ide, _source, _integrated = _terminal_shell_context()
-    return ide
+    shell_ide, _source, _integrated = _terminal_shell_context()
+    return shell_ide
 
 
 def _terminal_shell_context() -> tuple[str | None, str, bool]:
@@ -429,7 +429,7 @@ def _execute_plans(
 
 
 def _cmd_repair_history(args: argparse.Namespace) -> int:
-    ide, instance = _default_lane(args.ide, args.instance)
+    lane_ide, instance = _default_lane(args.ide, args.instance)
     root = _repo_root()
     if root is None:
         print("[coru] repair history: no repo root; run from a git project", file=sys.stderr)
@@ -439,15 +439,15 @@ def _cmd_repair_history(args: argparse.Namespace) -> int:
         print(query.format_json(limit=args.limit, code=args.code))
     else:
         print(query.format_llm(limit=args.limit, code=args.code))
-    print(f"[coru] repair: lane filter ide={ide} instance={instance}", file=sys.stderr)
+    print(f"[coru] repair: lane filter ide={lane_ide} instance={instance}", file=sys.stderr)
     print(f"[coru] repair: event log → {query.store_path}", file=sys.stderr)
     return 0
 
 
 def _cmd_repair_run(args: argparse.Namespace) -> int:
-    ide, instance = _default_lane(args.ide, args.instance)
-    payload = _koru_autopilot_env_payload(ide, instance)
-    plan = _run_lane_repair(ide, instance, payload=payload, trigger="coru.repair.run")
+    lane_ide, instance = _default_lane(args.ide, args.instance)
+    payload = _koru_autopilot_env_payload(lane_ide, instance)
+    plan = _run_lane_repair(lane_ide, instance, payload=payload, trigger="coru.repair.run")
     return 0 if plan.resolved else 1
 
 
@@ -459,8 +459,8 @@ def _cmd_sync(args: argparse.Namespace) -> int:
         print("error: coru sync requires a koru git checkout", file=sys.stderr)
         return 2
 
-    ide, instance = _default_lane(args.ide, args.instance)
-    resolved = _resolve_defaults(Plan(action="sync", ide=ide, instance=instance))
+    lane_ide, instance = _default_lane(args.ide, args.instance)
+    resolved = _resolve_defaults(Plan(action="sync", ide=lane_ide, instance=instance))
 
     def _koru_runner(target_ide: str, koru_args: Sequence[str]) -> int:
         lane_instance = _instance_for_ide_choice(target_ide)
@@ -522,10 +522,10 @@ def _maybe_rewrite_ide_auto_shorthand(
         return None
     if raw_argv[0] in known_commands or raw_argv[0].startswith("-"):
         return None
-    ide = raw_argv[0].strip().lower()
-    if ide not in _VALID_AUTOPILOT_IDES or raw_argv[1].strip().lower() != "auto":
+    shorthand_ide = raw_argv[0].strip().lower()
+    if shorthand_ide not in _VALID_AUTOPILOT_IDES or raw_argv[1].strip().lower() != "auto":
         return None
-    return ["auto", ide, *raw_argv[2:]]
+    return ["auto", shorthand_ide, *raw_argv[2:]]
 
 
 def _is_text_shorthand(raw_argv: Sequence[str], known_commands: set[str]) -> bool:

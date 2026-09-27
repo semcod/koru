@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-306",
+  "summary": "Rename the generic ide locals in coru cli to stage-accurate names",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-306/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/coru/src/coru/cli.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "49cef18d9aef9c01ddbb801f82e703735fa240fb",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm Shotgun Surgery smell for the variable 'ide' in packages/coru/src/coru/cli.py (planfile ticket PLF-041, reported at line 447, the def line of _cmd_repair_run) by replacing the generic local with a stage-accurate name per binding site: shell_ide (_terminal_ide_hint, the IDE owning this shell, first element of the _terminal_shell_context() unpack whose docstring already names the stage), lane_ide (_cmd_repair_history, _cmd_repair_run and _cmd_sync, the lane IDE resolved from _default_lane(args.ide, args.instance) - one shared name because all three bind the identical resolved-lane value, landing at 3 scopes below the >= 5 threshold), shorthand_ide (_maybe_rewrite_ide_auto_shorthand, the lane-hint IDE token recognized in raw argv for the 'coru cursor auto' -> 'coru auto cursor' rewrite). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'ide' group drops from 5 scopes to 0 and the file mutation record count stays 92 (pure rename - every ide is read after its binding, so nothing is inlined or removed). No behavior change: same _terminal_shell_context call, same lane-filter log text, same _koru_autopilot_env_payload/_run_lane_repair/Plan seeding arguments, same shorthand rewrite result. Function parameters and the Plan/SessionContext/AutoReadiness dataclass fields named 'ide' are not counted by the detector (body-only visit, AnnAssign unhandled) and stay unchanged; target_ide and term_ide are already stage-accurate at 1 scope each and stay. No other file touched. No duplication.toon.yaml exists in this repository, so the duplication-report checklist has nothing to consult for the touched path.",
+    "nonGoals": [
+      "No behavior, log-text, argument or interface change",
+      "No rename of the ide parameter of _project_for_lane, the Plan/SessionContext/AutoReadiness dataclass fields, or attribute reads like args.ide/resolved.ide/bootstrap.ide (not counted by the detector: parameters and class scope)",
+      "No rename of target_ide or term_ide (already stage-accurate, 1 scope each)",
+      "No new shared lane-resolution helper; the three _default_lane unpacks stay per-command so each command keeps its own resolution stage",
+      "No import-block reordering: the 2 pre-existing I001 findings on the coru.cli facade import block are the verified origin/main baseline (A/B on the unmodified file) and the facade import order is deliberately preserved"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local naming inside one module, no extraction. Each function that mutated the generic name 'ide' gets the name of its own pipeline stage: shell_ide for the shell-context detection hint, lane_ide for the command-resolved default lane (shared by the three commands that unpack the identical _default_lane value), shorthand_ide for the argv lane-hint token. The generic name 'ide' disappears from the file's mutation set entirely while the coru.cli facade surface (imports, dataclasses, function signatures) is untouched, matching the koru facade late-binding constraint that cli.py patch targets must stay stable. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports an 'ide' mutation group of exactly 5 scopes - _terminal_ide_hint, _cmd_repair_history, _cmd_repair_run, _cmd_sync, _maybe_rewrite_ide_auto_shorthand - matching the ticket's 'spans 5 functions'; after the rename the 'ide' group is empty, the file mutation record count stays 92 (pure rename), lane_ide lands at 3 scopes, shell_ide and shorthand_ide at exactly 1 scope, and no other group newly reaches the threshold (the previous runner-up 'instance' stays at 3 scopes).",
+      "components": [
+        {
+          "name": "coru",
+          "paths": [
+            "packages/coru/src/coru/cli.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named ide again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor mutation grouping on the file AST, baseline vs renamed content of packages/coru/src/coru/cli.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports an 'ide' mutation group of 5 scopes (_terminal_ide_hint, _cmd_repair_history, _cmd_repair_run, _cmd_sync, _maybe_rewrite_ide_auto_shorthand) - exactly matching the ticket's reported 'spans 5 functions'; renamed content reports an 'ide' group of 0 scopes; file mutation record count stays 92 (pure rename); lane_ide lands at 3 scopes, shell_ide and shorthand_ide at exactly 1 scope; no other variable group reaches the >= 5 threshold."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest packages/coru/tests/test_coru_cli.py -q",
+          "ruff check packages/coru/src/coru/cli.py"
+        ],
+        "evidence": "The coru cli test module exercising the renamed paths (test_coru_cli.py covers the ide auto shorthand rewrite, sync command lane seeding, repair history/run lane resolution and the terminal ide hint) passes unchanged - pure rename of function-internal locals - and ruff reports no new findings on the touched file (the 2 pre-existing I001 import-order findings are the verified origin/main baseline via A/B on the unmodified file)."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
