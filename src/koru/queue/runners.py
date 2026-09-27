@@ -570,6 +570,61 @@ def _probe_taskand_gateway(gateway_url: str) -> bool:
         return False
 
 
+def _normalize_step(step: Any, idx: int) -> dict[str, Any] | None:
+    """Normalize a single DAG step dictionary to Taskand orchestrator contract."""
+    if not isinstance(step, dict):
+        return None
+    s = dict(step)
+    if "id" not in s or not isinstance(s["id"], int):
+        try:
+            s["id"] = int(s.get("id", idx))
+        except (ValueError, TypeError):
+            s["id"] = idx
+    if "name" not in s or not s["name"]:
+        s["name"] = f"step_{s['id']}"
+    else:
+        s["name"] = str(s["name"])
+    if "process" not in s and "uri" in s:
+        s["process"] = str(s["uri"])
+    elif "process" in s and s["process"]:
+        s["process"] = str(s["process"])
+    if "deps" not in s or not isinstance(s["deps"], list):
+        raw_deps = s.get("deps")
+        if isinstance(raw_deps, (list, tuple)):
+            s["deps"] = [str(d) for d in raw_deps]
+        elif raw_deps:
+            s["deps"] = [str(raw_deps)]
+        else:
+            s["deps"] = []
+    if "params" not in s:
+        if "input" in s and isinstance(s["input"], dict):
+            s["params"] = s["input"]
+        elif "inputs" in s and isinstance(s["inputs"], dict):
+            s["params"] = s["inputs"]
+        elif "data" in s and isinstance(s["data"], dict):
+            s["params"] = s["data"]
+        else:
+            s["params"] = {}
+    return s
+
+
+def normalize_taskand_plan(plan: Any) -> dict[str, Any]:
+    """Normalize a DAG plan to match Taskand orchestrator/validator expectations."""
+    if not isinstance(plan, dict):
+        return {"steps": []}
+    steps = plan.get("steps")
+    if not isinstance(steps, list):
+        return plan
+    normalized_steps: list[dict[str, Any]] = []
+    for idx, raw_step in enumerate(steps, start=1):
+        norm = _normalize_step(raw_step, idx)
+        if norm is not None:
+            normalized_steps.append(norm)
+    res = dict(plan)
+    res["steps"] = normalized_steps
+    return res
+
+
 def _taskand_gateway_target(
     request: dict[str, Any],
     gateway_url: str,
@@ -583,7 +638,7 @@ def _taskand_gateway_target(
     """
     plan = request.get("plan")
     if plan:
-        body: dict[str, Any] = {"plan": plan}
+        body: dict[str, Any] = {"plan": normalize_taskand_plan(plan)}
         if request.get("run_id"):
             body["runId"] = request["run_id"]
         return _TaskandGatewayTarget(f"{gateway_url}/api/orchestrator", body)

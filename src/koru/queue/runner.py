@@ -41,7 +41,13 @@ from koru.queue.runners import (
     run_shell_command,
     run_taskand_request,
 )
-from koru.queue.shell_evidence import LLM_RUN_NOTE_TAG, SHELL_RUN_NOTE_TAG, format_shell_run_note
+from koru.queue.shell_evidence import (
+    API_RUN_NOTE_TAG,
+    LLM_RUN_NOTE_TAG,
+    SHELL_RUN_NOTE_TAG,
+    TASKAND_RUN_NOTE_TAG,
+    format_shell_run_note,
+)
 from koru.queue.ticket import (
     parse_next_ticket,
     planfile_command,
@@ -536,6 +542,14 @@ def _finalize_ticket(
             # instead of discarding stdout the way pre-0.1.373 releases did.
             _append_shell_evidence(
                 project, ticket_id, result, planfile_runner, tag=LLM_RUN_NOTE_TAG
+            )
+        elif executor_kind in ("taskand", "process"):
+            _append_shell_evidence(
+                project, ticket_id, result, planfile_runner, tag=TASKAND_RUN_NOTE_TAG
+            )
+        elif executor_kind == "api":
+            _append_shell_evidence(
+                project, ticket_id, result, planfile_runner, tag=API_RUN_NOTE_TAG
             )
         planfile_lifecycle_command(
             project,
