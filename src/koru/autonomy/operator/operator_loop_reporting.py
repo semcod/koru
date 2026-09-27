@@ -26,16 +26,12 @@ def _should_warn_idle_no_ticket(
 
 def _idle_no_ticket_warning(project: Any | None) -> tuple[str, str, dict[str, Any]]:
     urls = _safe_dashboard_action_urls(project)
-    message = "autonomia nie wykonuje zadania: brak otwartych ticketów w planfile"
+    message = "autonomia nie wykonuje zadania: brak zadania gotowego w bieżącej kolejce"
     hint = (
-        "plan: szczegół→ogół — najpierw planfile queue, potem idle scan/code2llm; "
-        "workflow standaryzowany: gdy po scan/code2llm brak pracy, system "
-        "auto-tworzy/reuzywa ticket discovery dla IDE LLM; "
-        "jezeli nadal brak ruchu, zlec IDE LLM pytanie: "
-        "'Co jeszcze zostalo do wykonania? zrob z tego nastepne tickety do planfile.' "
-        "i zamien odpowiedz na tickety; "
-        "goal/costs są advisory; metrun/prefact/pfix czytane z artefaktów przez koru scan. "
-        f"Napisz ticket w Web GUI: {urls['create_project_ticket']} ; "
+        "Otwarte zadania mogą czekać na operatora, zależności albo inną kolejkę. "
+        "Sprawdź przyczynę oczekiwania w Planfile; skan i discovery zależą od "
+        "konfiguracji lub jawnego polecenia operatora. "
+        f"Nowe zadanie dla nowej pracy: {urls['create_project_ticket']} ; "
         f"lista ticketów: {urls['tickets']}"
     )
     data = {

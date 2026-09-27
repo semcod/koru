@@ -34,7 +34,7 @@ and ``autonomous_cycle_chat_activity``):
     belongs to a different family.
 
 ``idle_no_ticket``
-    Queue is idle AND there is no open ticket in the planfile to drive.
+    No eligible ticket in the current queue can be driven; open work may be held.
 
 ``waiting_ticket_closed``
     Queue says ``waiting_input`` but the referenced ticket is already
@@ -124,7 +124,7 @@ SKIP_CODE_DESCRIPTIONS: dict[str, str] = {
         "running in the foreground."
     ),
     "idle_no_ticket": (
-        "Queue is idle AND no open ticket exists in the planfile. Drive "
+        "No eligible ticket in the current queue can be driven; open work may be held. Drive "
         "is suppressed so the user's chat input isn't clobbered with stale "
         "prompts."
     ),

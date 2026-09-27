@@ -67,9 +67,9 @@ def _queue_quick_action_lines(
     queue_actions: list[str] = []
     if "idle_no_ticket" in status or queue_status == "idle":
         queue_actions.append(f"[create ticket] {urls['create_project_ticket_action']}")
-        queue_actions.append(f"[reopen done ticket] {urls['tickets']}")
+        queue_actions.append(f"[inspect tickets] {urls['tickets']}")
         queue_actions.append(
-            "[force fresh scan] `rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`"
+            "[scan signals] `koru scan --apply`"
         )
     if queue_status == "waiting_input" and waiting_ticket and waiting_ticket != "-":
         if "stuck_waiting_input" in status:
@@ -385,8 +385,8 @@ def _emit_quick_action_line(*, args: Any, action: str, stdio_info: Any) -> None:
         activity_info(
             line,
             hint=(
-                "ważne: queue jest idle i planfile zgłasza brak otwartych ticketów; "
-                "utwórz ticket, żeby autonomia miała zadanie do wykonania"
+                "brak zadania gotowego w bieżącej kolejce; sprawdź zależności "
+                "i zadania operatora, a nowe zadanie utwórz dla nowej pracy"
             ),
             fmt=args.emit_events,
             data={"action": "create_ticket", "blocked_by": "idle_no_ticket"},

@@ -444,3 +444,14 @@ def test_backlog_promotion_runs_only_for_idle_queue(monkeypatch, tmp_path, last_
         assert state.telemetry_scan_after_idle_tickets_applied == 1
     else:
         assert calls == [] and result is None and telemetry == {}
+
+
+def test_duplicate_guidance_preserves_active_ticket_history():
+    logs = []
+    scan_phase._hp_scan_skip_hint(_duplicate_only_result(), logs.append)
+    text = "\n".join(logs)
+    assert "active tickets" in text
+    assert "operator holds" in text
+    assert "preserve project history" in text
+    assert "rm -rf" not in text
+    assert "reopen the matching done" not in text

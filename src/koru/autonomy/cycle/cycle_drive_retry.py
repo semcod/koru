@@ -765,36 +765,31 @@ def _idle_no_ticket_skip_result(
 
     decision = AutopilotPolicyDecision.skip(
         "idle_no_ticket",
-        because="queue idle and no open ticket in planfile",
+        because="no eligible ticket for IDE drive in the current queue",
         action_hint="run scan/discovery or create ticket",
     )
     urls = _dashboard_action_urls(project)
     _hp(
         "- autopilot skipped (idle_no_ticket): "
-        "queue empty AND no open ticket in planfile → nothing to paste "
+        "no eligible ticket in the current queue; open work may be held → nothing to paste "
         "into the IDE chat. Drive is suppressed to avoid clobbering the "
         "user's input with stale prompts.",
     )
     _hp(f"  planfile snapshot: {sprint_ticket_status_summary(project)}")
     _hp(
-        "  what koru auto will try next: "
-        "(1) wait the configured sleep; (2) when queue stays idle, "
-        "rerun `koru scan --apply` to look for new signals; "
-        "(3) if scan finds signals already present as done tickets, "
-        "they will be skipped as duplicates; use the quick action below "
-        "to create a fresh discovery ticket immediately.",
+        "  next cycle rechecks the configured queue; scan/discovery runs only "
+        "when enabled. Inspect operator holds and dependencies before creating more work.",
     )
     _hp(
         "  quick actions: create discovery ticket "
         f"{urls['create_project_ticket_action']} ; tickets {urls['tickets']} ; "
-        "force fresh scan command remains: "
-        "`rm -rf project/ && KORU_SCAN_FORCE_RESCAN=1 koru auto`.",
+        "optional signal scan: `koru scan --apply` (preserves project history).",
     )
     return (
         {
             "ok": False,
             "backend": None,
-            "message": "queue idle and no open ticket",
+            "message": "no eligible ticket in the current queue",
             "prompt": "",
         },
         False,
