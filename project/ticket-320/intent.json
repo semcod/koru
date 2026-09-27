@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-320",
+  "summary": "NL shell multi-intent batching and tillm fallback for koru config",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-320/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/configurator/**",
+    "tests/test_configurator*.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3d40924e786c51cd5b5a34356b0b3f1bb3cc4670",
+    "targetBranch": "main",
+    "outcome": "Allow chaining multiple natural language and DSL config commands in a single prompt line (e.g. 'port 9000 i ide cursor i wlacz lan') and provide Layer 3 tillm/LLM fallback when deterministic patterns do not match.",
+    "nonGoals": [
+      "Do not require an active network or mandatory LLM installation for basic single or batch commands",
+      "Do not break existing deterministic parsing semantics"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add multi-intent segment splitter and sequential mutation accumulator in nl_control.py with optional fallback to koru tillm bridge when available.",
+      "components": [
+        {
+          "name": "koru-configurator",
+          "paths": [
+            "src/koru/configurator/**",
+            "tests/test_configurator*.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit in ticket-320."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_configurator_nl.py"
+        ],
+        "evidence": "Tests confirm multi-intent conjunction splitting ('i', 'and', ',', ';') applies multiple mutations in one step."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}

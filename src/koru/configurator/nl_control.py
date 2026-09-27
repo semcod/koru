@@ -2,12 +2,13 @@
 
 Adopts the tripartite NL-DSL-LLM pattern from wellmanifest/nl-dsl-llm:
   Layer 1: Deterministic regex and fuzzy matching in Polish and English
-  Layer 2: Canonical config property mutations and schema validation
-  Layer 3: Optional model translation fallback for complex requests
+  Layer 2: Canonical config property mutations, multi-intent batching and schema validation
+  Layer 3: Optional model translation fallback (tillm) for complex requests
 """
 
 from __future__ import annotations
 
+import copy
 import re
 import unicodedata
 from dataclasses import dataclass
@@ -39,12 +40,22 @@ class ConfigMutationResult:
     config: dict[str, Any] | None = None
 
 
-def apply_nl_config_command(
+def _split_multi_intent_segments(raw_input: str) -> list[str]:
+    """Split input on conjunctions (i, oraz, and, ;, ,) unless inside words."""
+    # Replace semicolons and commas with ' and '
+    preprocessed = re.sub(r"[,;]+", " and ", raw_input)
+    # Split on word boundaries for 'i', 'oraz', 'and'
+    tokens = re.split(r"\b(?:i|oraz|and)\b", preprocessed, flags=re.IGNORECASE)
+    segments = [seg.strip() for seg in tokens if seg.strip()]
+    return segments or [raw_input.strip()]
+
+
+def _apply_single_nl_command(
     config: dict[str, Any],
     raw_input: str,
     project_path: Any,
 ) -> ConfigMutationResult:
-    """Parse a single NL or DSL command and apply mutations to project config."""
+    """Parse and apply a single deterministic command."""
     text = normalize_nl_text(raw_input)
     if not text:
         return ConfigMutationResult(success=True, message="Pusta komenda / Empty command", updated=False)
@@ -198,4 +209,46 @@ def apply_nl_config_command(
             "  - exit / wyjdz"
         ),
         updated=False,
+    )
+
+
+def apply_nl_config_command(
+    config: dict[str, Any],
+    raw_input: str,
+    project_path: Any,
+) -> ConfigMutationResult:
+    """Parse single or multi-intent commands and apply mutations atomically."""
+    segments = _split_multi_intent_segments(raw_input)
+    if len(segments) <= 1:
+        return _apply_single_nl_command(config, raw_input, project_path)
+
+    # Multi-intent batch transaction
+    working_config = copy.deepcopy(config)
+    messages: list[str] = []
+    any_updated = False
+
+    for segment in segments:
+        sub_res = _apply_single_nl_command(working_config, segment, project_path)
+        if not sub_res.success:
+            return ConfigMutationResult(
+                success=False,
+                message=f"Błąd w poleceniu podrzędnym '{segment}': {sub_res.message}",
+                updated=False,
+                config=config,
+            )
+        if sub_res.updated and sub_res.config is not None:
+            working_config = sub_res.config
+            any_updated = True
+        messages.append(sub_res.message)
+
+    if any_updated:
+        config.clear()
+        config.update(working_config)
+        save_project_config(project_path, working_config)
+
+    return ConfigMutationResult(
+        success=True,
+        message="; ".join(messages),
+        updated=any_updated,
+        config=working_config,
     )
