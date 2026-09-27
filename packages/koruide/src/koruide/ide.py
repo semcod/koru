@@ -114,19 +114,19 @@ def ide_window_name(ide: str) -> str:
 
 def normalize_ide_id(raw: str | None) -> str | None:
     """Return Koru's canonical IDE id for common executable/config aliases."""
-    token = (raw or "").strip().lower()
-    if not token:
+    alias = (raw or "").strip().lower()
+    if not alias:
         return None
-    token = token.rsplit("/", 1)[-1]
-    if token.endswith(".desktop"):
-        token = token[: -len(".desktop")]
-    token = " ".join(token.replace("_", "-").split())
-    candidates = (token, token.replace(" - ", "-").replace(" ", "-"))
+    alias = alias.rsplit("/", 1)[-1]
+    if alias.endswith(".desktop"):
+        alias = alias[: -len(".desktop")]
+    alias = " ".join(alias.replace("_", "-").split())
+    candidates = (alias, alias.replace(" - ", "-").replace(" ", "-"))
     for candidate in candidates:
         normalized = _IDE_ALIASES.get(candidate)
         if normalized is not None:
             return normalized
-    return token
+    return alias
 
 
 def supported_autopilot_ide_ids() -> frozenset[str]:
@@ -451,10 +451,10 @@ def detect_focused_ide_id(
         if _log:
             _log("focused_ide: no active window detected")
         return None
-    ide = _ide_id_from_process(pid)
+    focused_ide_id = _ide_id_from_process(pid)
     if _log:
-        _log(f"focused_ide: detected={ide or 'none'} (pid={pid})")
-    return ide
+        _log(f"focused_ide: detected={focused_ide_id or 'none'} (pid={pid})")
+    return focused_ide_id
 
 
 _VSCODE_FAMILY_ENV_KEYS = (
@@ -647,9 +647,9 @@ def _terminal_ide_from_env_with_source() -> tuple[str | None, str | None]:
         return "jetbrains", "env:TERMINAL_EMULATOR"
 
     if term_program in {"vscode", "code"}:
-        ide, source = _vscode_family_terminal_ide(chrome_ide)
-        if ide is not None:
-            return ide, source
+        family_ide, source = _vscode_family_terminal_ide(chrome_ide)
+        if family_ide is not None:
+            return family_ide, source
 
     if "antigravity" in os.environ.get("GIO_LAUNCHED_DESKTOP_FILE", "").lower():
         return "antigravity", "env:GIO_LAUNCHED_DESKTOP_FILE"
@@ -672,8 +672,8 @@ def _terminal_ide_from_env_with_source() -> tuple[str | None, str | None]:
 
 
 def _terminal_ide_from_env() -> str | None:
-    ide, _source = _terminal_ide_from_env_with_source()
-    return ide
+    env_ide, _source = _terminal_ide_from_env_with_source()
+    return env_ide
 
 
 def _terminal_ide_from_parent_chain(start_pid: int) -> str | None:
@@ -729,10 +729,10 @@ def detect_terminal_host_ide_id(
     if "pytest" in sys.modules or "unittest" in sys.modules or os.environ.get("PYTEST_CURRENT_TEST"):
         return None
     start = _start_pid if _start_pid is not None else os.getpid()
-    ide = _terminal_ide_from_parent_chain(start)
+    from_chain = _terminal_ide_from_parent_chain(start)
     if _log:
-        _log(f"terminal_host_ide: detected={ide or 'none'} (parent chain from pid={start})")
-    return ide
+        _log(f"terminal_host_ide: detected={from_chain or 'none'} (parent chain from pid={start})")
+    return from_chain
 
 
 def detect_terminal_host_context(
@@ -747,15 +747,15 @@ def detect_terminal_host_context(
         return TerminalHostContext(ide=from_env, source=source or "env", kind="integrated")
 
     start = _start_pid if _start_pid is not None else os.getpid()
-    ide = _terminal_ide_from_parent_chain(start)
-    if ide is not None:
+    from_chain = _terminal_ide_from_parent_chain(start)
+    if from_chain is not None:
         if _log:
             _log(
-                f"terminal_host_context: ide={ide} "
+                f"terminal_host_context: ide={from_chain} "
                 f"source=parent_chain(pid={start}) kind=ide_adjacent"
             )
         return TerminalHostContext(
-            ide=ide,
+            ide=from_chain,
             source=f"parent_chain(pid={start})",
             kind="ide_adjacent",
         )
