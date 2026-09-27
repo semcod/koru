@@ -347,6 +347,20 @@ def _check_autopilot_skip_conditions(
     _hp: callable,
 ) -> tuple[bool, str]:
     """Check if autopilot should be skipped and return (should_skip, skip_reason)."""
+    # Admission is an execution boundary, not an interactive prompt. Keep this
+    # ahead of promotion and stagnation, which may otherwise re-drive a denial.
+    if getattr(queue_result, "autopilot_blocked", False) or queue_result.last_status in {
+        "infrastructure_error", "planfile_error", "unsupported_executor",
+        "claim_failed", "dry_run",
+    }:
+        cycle_telemetry["autopilot_skipped_queue_admission"] = True
+        _hp("- autopilot skipped (queue_admission)")
+        return AutopilotPolicyDecision.skip(
+            "queue_admission",
+            because="queue admission or infrastructure does not permit execution",
+            action_hint="resolve the queue blocker and re-evaluate admission",
+        ).as_skip_tuple()
+
     if not _is_topology_enabled(
         project,
         "autopilot:drive",

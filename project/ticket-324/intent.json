@@ -1,0 +1,110 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-324",
+  "summary": "Preserve queue admission blocks in outer autopilot",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-324/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/cycle/cycle_skip_conditions.py",
+    "src/koru/queue/loop.py",
+    "src/koru/queue/runner.py",
+    "src/koru/queue/types.py",
+    "tests/test_queue_admission_autopilot.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [
+    "ticket-323"
+  ],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2b084bbc0a18671e794f635e92ef3eb54a737c4f",
+    "targetBranch": "main",
+    "outcome": "Outer autopilot honors queue admission denial and infrastructure failures before agent fallback.",
+    "nonGoals": [
+      "Deploy live services",
+      "Change provider or hardware policy",
+      "Disable ordinary interactive waiting prompts"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 40,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 2,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Append backward-compatible autopilot_blocked booleans to queue tick and aggregate results. Carry the decision from actual duplication admission to the first outer skip gate; infrastructure errors also fail closed.",
+      "components": [
+        {
+          "name": "queue",
+          "paths": [
+            "src/koru/queue/types.py",
+            "src/koru/queue/runner.py",
+            "src/koru/queue/loop.py"
+          ]
+        },
+        {
+          "name": "autopilot",
+          "paths": [
+            "src/koru/autonomy/cycle/cycle_skip_conditions.py"
+          ]
+        },
+        {
+          "name": "regressions",
+          "paths": [
+            "tests/test_queue_admission_autopilot.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "QueueRunResult.autopilot_blocked defaults false",
+        "QueueLoopResult.autopilot_blocked defaults false"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert through protected delivery; no persistent data migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_queue_admission_autopilot.py tests/test_planfile_queue.py"
+        ],
+        "evidence": "Real queue denial, aggregation and outer policy; no model, claim or completion."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "pytest tests/test_queue_admission_autopilot.py tests/test_autonomous_loop_runner.py tests/test_autonomous_cycle_skip_conditions.py"
+        ],
+        "evidence": "Infrastructure/claim/dry-run rejected; ordinary waiting still supported."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Focused tests and independent exact-head publication."
+      }
+    ]
+  }
+}
