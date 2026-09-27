@@ -20,6 +20,7 @@ from koru.bounded_contexts.planfile_queue.queries import (
 )
 from koru.bounded_contexts.planfile_queue.read_model import PlanfileQueueEventLogProjection
 from koru.cqrs import EventSourcingRuntime, runtime_for_project
+from tests._planfile_readiness import runnable_fixture_report
 
 
 def _ticket_args(command: list[str]) -> list[str]:
@@ -44,6 +45,7 @@ def test_planfile_queue_command_emits_completed_event_and_query_reads_ticket(tmp
         "execution": {"state": "ready"},
     }
 
+    @runnable_fixture_report
     def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
         if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
             return _ok(json.dumps(ticket))
@@ -83,6 +85,7 @@ def test_planfile_queue_command_emits_idle_event_when_no_ticket(tmp_path: Path) 
     runtime.bus.subscribe(projection.handle)
     command_service = PlanfileQueueCommandService(runtime)
 
+    @runnable_fixture_report
     def planfile_runner(_command: list[str], _project: Path) -> SimpleNamespace:
         return _ok("No runnable ticket found")
 
@@ -109,6 +112,7 @@ def test_planfile_queue_history_query_reads_persisted_events(tmp_path: Path) -> 
         "execution": {"state": "ready"},
     }
 
+    @runnable_fixture_report
     def planfile_runner(command: list[str], _project: Path) -> SimpleNamespace:
         if _ticket_args(command)[:5] == ["ticket", "list", "--status", "open", "--format"]:
             return _ok(json.dumps(ticket))

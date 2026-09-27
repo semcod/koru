@@ -16,6 +16,7 @@ from types import SimpleNamespace
 from koru.context import build_context, render_markdown_handoff
 from koru.git_attribution import KORU_AGENT_COAUTHOR_TRAILER
 from koru.policy import Policy
+from tests._planfile_readiness import runnable_fixture_report
 
 
 def _ok(stdout: str = "") -> SimpleNamespace:
@@ -58,6 +59,7 @@ class TestBuildContext(unittest.TestCase):
                 "inputs": {"prompt": "Check key presence"},
             }
 
+            @runnable_fixture_report
             def planfile_runner(_command, _project):
                 return _ok(json.dumps(ticket))
 
@@ -85,6 +87,7 @@ class TestBuildContext(unittest.TestCase):
                 encoding="utf-8",
             )
 
+            @runnable_fixture_report
             def planfile_runner(_c, _p):
                 return _ok("No runnable ticket found.\n")
 
@@ -101,6 +104,7 @@ class TestBuildContext(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             _init_planfile(Path(tmp))
 
+            @runnable_fixture_report
             def planfile_runner(_c, _p):
                 return _ok("No runnable ticket found.\n")
 
@@ -147,6 +151,7 @@ class TestBuildContext(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp:
 
+            @runnable_fixture_report
             def planfile_runner(command, _project):
                 if "next" in command:
                     return _ok("null\n")
@@ -168,6 +173,7 @@ class TestBuildContext(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             _init_planfile(Path(tmp))
 
+            @runnable_fixture_report
             def planfile_runner(_c, _p):
                 return _fail("planfile config not found")
 
@@ -188,6 +194,7 @@ class TestBuildContext(unittest.TestCase):
         # bookkeeping calls happen afterwards.
         captured: list[list[str]] = []
 
+        @runnable_fixture_report
         def planfile_runner(command, _project):
             captured.append(list(command))
             return _ok(json.dumps({"id": "PLF-074", "executor": {"kind": "shell"}}))
@@ -407,6 +414,7 @@ class TestBuildContext(unittest.TestCase):
 
             captured_commands = []
 
+            @runnable_fixture_report
             def planfile_runner(command, _project):
                 captured_commands.append(command)
                 if "show" in command:
@@ -595,6 +603,7 @@ class TestProjectPipelineInHandoff(unittest.TestCase):
                 encoding="utf-8",
             )
 
+            @runnable_fixture_report
             def planfile_runner(_c, _p):
                 return _ok("No runnable ticket found.\n")
 
@@ -616,6 +625,7 @@ class TestProjectPipelineInHandoff(unittest.TestCase):
             project = Path(tmp)
             _init_planfile(project)
 
+            @runnable_fixture_report
             def planfile_runner(_c, _p):
                 return _ok("No runnable ticket found.\n")
 
