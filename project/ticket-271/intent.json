@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-271",
+  "summary": "Address code smell: shotgun surgery data locals in scan artifacts",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-271/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/scan_artifacts.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e6f8776ed8ff7b64fd4a965d2e97f913a03996a2",
+    "targetBranch": "main",
+    "outcome": "Rename the generic local variable 'data' to stage-accurate names in each of the six functions of src/koru/scan_artifacts.py that mutate it: report (_scan_jscpd_report, parsed jscpd duplication report), redup_payload (_scan_redup_filtered and _scan_redup_changed, each a decoded redup duplicate-group export), artifact (_scan_structured_semcod_report and _scan_pfix_report, each a _load_structured_artifact result), plans_payload (_scan_todo2code_plans, decoded todo2code plans document). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'data' group drops from 6 scopes to 0. Each new name lands at <= 2 scopes, so no (file, variable) group grows toward the threshold. Pure rename of function-internal locals; the generic 'data' parameters of the pure helpers _sum_structured_counts / _count_pfix_diagnose_issues are not mutating scopes and keep their names; no behavior change. The separate pre-existing shotgun findings in this file (path, rel, found, payload, files, suggestions, priority, text) are untouched by design.",
+    "nonGoals": [
+      "No behavior, signal, suggestion-shape or interface change",
+      "No restructuring into a shared artifact-loader abstraction (each local already names one artifact stage; the shared generic name was the defect, not a missing abstraction)",
+      "No rename of the pure helpers' generic 'data' parameters or of locals in other files",
+      "No fix for the separate pre-existing shotgun findings in this file (path, rel, found, payload, files, suggestions, priority, text) - minimal scope for this ticket's reported smell only"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local renames only, inside one module. Every function that decodes an artifact names it after the stage it serves (jscpd report, redup export, structured artifact, todo2code plans document); the generic name 'data' disappears from the file's mutation set entirely. Verified with the installed code2llm ProjectAnalyzer on the src/koru package plus mutation grouping: baseline reports 'Mutation of variable data spans 6 functions' from exactly the ticket's six scopes; after the rename the 'data' group is empty, the file's mutation count is unchanged (247) and every other pre-existing finding is unchanged.",
+      "components": [
+        {
+          "name": "koru-scan-artifacts",
+          "paths": [
+            "src/koru/scan_artifacts.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named data again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm ProjectAnalyzer.analyze_project(<repo>/src/koru) + per-variable mutation-scope grouping, original vs renamed content of src/koru/scan_artifacts.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm analyzer on the package directory (single-file analysis yields empty function scopes and silently misses smells, so the package dir is required). Baseline content reports a 'data' mutation group of 6 scopes (_scan_jscpd_report, _scan_pfix_report, _scan_redup_changed, _scan_redup_filtered, _scan_structured_semcod_report, _scan_todo2code_plans) - exactly matching the ticket's reported 'spans 6 functions'. Renamed content reports a 'data' group of 0 scopes; file mutation count unchanged at 247 (pure rename); no new (file, variable) group reaches the >= 5 threshold; renamed locals land at <= 2 scopes each. The separate pre-existing findings are unchanged by design."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_scan_artifacts.py tests/test_scan.py tests/test_scan_split.py -q",
+          "ruff check src/koru/scan_artifacts.py"
+        ],
+        "evidence": "The three suites covering src/koru/scan_artifacts.py pass unchanged (pure rename of function-internal locals; the suites exercise the jscpd, redup, structured-report, pfix and todo2code scans through the public scan entry points) and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
