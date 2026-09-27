@@ -355,19 +355,19 @@ def _repo_root() -> Path | None:
 
 def _plugin_package_version(plugin_dir: Path) -> str | None:
     try:
-        data = json.loads((plugin_dir / "package.json").read_text(encoding="utf-8"))
+        plugin_manifest = json.loads((plugin_dir / "package.json").read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
-    version = data.get("version") if isinstance(data, dict) else None
+    version = plugin_manifest.get("version") if isinstance(plugin_manifest, dict) else None
     return str(version) if version else None
 
 
 def _plugin_package_name(plugin_dir: Path) -> str | None:
     try:
-        data = json.loads((plugin_dir / "package.json").read_text(encoding="utf-8"))
+        plugin_manifest = json.loads((plugin_dir / "package.json").read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
-    name = data.get("name") if isinstance(data, dict) else None
+    name = plugin_manifest.get("name") if isinstance(plugin_manifest, dict) else None
     return str(name) if name else None
 
 
@@ -693,10 +693,10 @@ def _local_plugin_dir(target_ide: str | None) -> Path | None:
 
 def _package_build_sha(package_json: Path) -> str | None:
     try:
-        data = json.loads(package_json.read_text(encoding="utf-8"))
+        package_manifest = json.loads(package_json.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
-    build_info = data.get("koruAutopilotBuild") if isinstance(data, dict) else None
+    build_info = package_manifest.get("koruAutopilotBuild") if isinstance(package_manifest, dict) else None
     if isinstance(build_info, dict) and isinstance(build_info.get("sha"), str):
         return build_info["sha"]
     return None
@@ -706,10 +706,10 @@ def _vsix_build_sha(vsix: Path) -> str | None:
     try:
         with zipfile.ZipFile(vsix) as archive:
             with archive.open("extension/package.json") as package_file:
-                data = json.loads(package_file.read().decode("utf-8"))
+                vsix_manifest = json.loads(package_file.read().decode("utf-8"))
     except (OSError, KeyError, zipfile.BadZipFile, UnicodeDecodeError, json.JSONDecodeError):
         return None
-    build_info = data.get("koruAutopilotBuild") if isinstance(data, dict) else None
+    build_info = vsix_manifest.get("koruAutopilotBuild") if isinstance(vsix_manifest, dict) else None
     if isinstance(build_info, dict) and isinstance(build_info.get("sha"), str):
         return build_info["sha"]
     return None
@@ -871,13 +871,13 @@ def _active_extension_location_from_item(item: object) -> str | None:
 
 def _active_extension_locations(metadata_path: Path) -> set[str]:
     try:
-        data = json.loads(metadata_path.read_text(encoding="utf-8"))
+        metadata_entries = json.loads(metadata_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return set()
-    if not isinstance(data, list):
+    if not isinstance(metadata_entries, list):
         return set()
     return {
-        loc for item in data
+        loc for item in metadata_entries
         if (loc := _active_extension_location_from_item(item)) is not None
     }
 
@@ -920,14 +920,14 @@ def _installed_extension_build_sha(target_ide: str) -> str | None:
     if metadata_path is None or not metadata_path.is_file():
         return None
     try:
-        data = json.loads(metadata_path.read_text(encoding="utf-8"))
+        metadata_entries = json.loads(metadata_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
-    if not isinstance(data, list):
+    if not isinstance(metadata_entries, list):
         return None
     ext_id = extension_id_for_ide(target_ide).lower()
     extensions_root = metadata_path.parent
-    for item in data:
+    for item in metadata_entries:
         if not isinstance(item, dict):
             continue
         item_id = str(item.get("identifier", {}).get("id", "") or "").lower()

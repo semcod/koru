@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-269",
+  "summary": "Address code smell: shotgun surgery data in plugin installer json loaders",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-269/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/koruide/src/koruide/plugin_installer.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ce6accbad96618232960dc459b63b7dd00d820f9",
+    "targetBranch": "main",
+    "outcome": "Rename the generic json.loads local 'data' to stage-accurate names in each of the six functions of packages/koruide/src/koruide/plugin_installer.py that assign it: plugin_manifest in _plugin_package_version and _plugin_package_name (the plugin dir's package.json manifest), package_manifest in _package_build_sha (a repo package.json Path), vsix_manifest in _vsix_build_sha (the package.json embedded in the VSIX archive), metadata_entries in _active_extension_locations and _installed_extension_build_sha (the IDE extensions.json registry list). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the group drops from 6 scopes to 0 and the largest replacement-name group is 2 (plugin_manifest, metadata_entries). Each local is an independent variable holding a different JSON document; only the shared generic name coupled them. _extract_build_sha already used pkg_data and is untouched. Pure local rename inside one module; no behavior change.",
+    "nonGoals": [
+      "No behavior, JSON-shape, error-handling or interface change",
+      "No shared json loader/helper extraction (the six loads parse four different JSON documents with different exception contracts; the shared generic name was the defect, not a missing abstraction)",
+      "No touching the separate pre-existing 'Shotgun Surgery: proc' and 'Shotgun Surgery: resolved' findings in the same file (separate findings, separate tickets; minimal scope)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local renames only, inside one module. Every renamed local names the JSON document that stage parses: plugin_manifest for the plugin directory's package.json, package_manifest for a repository package.json path, vsix_manifest for the manifest embedded in the built VSIX archive, metadata_entries for the IDE's extensions.json registry list. Verified with the code2llm shotgun-surgery detector: baseline groups 'data' mutations in 6 scopes in the file (>= 5 threshold fires, matching the ticket), after the rename the 'data' group is gone, the file's mutation count is unchanged (198) and no new (file, variable) group reaches the threshold (largest replacement group: 2 scopes). The pre-existing 'proc' (7 scopes) and 'resolved' (7 scopes) groups are untouched by design.",
+      "components": [
+        {
+          "name": "koruide-plugin-installer",
+          "paths": [
+            "packages/koruide/src/koruide/plugin_installer.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named data again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone DFGExtractor + shotgun-surgery grouping on plugin_installer.py, original vs renamed>\""
+        ],
+        "evidence": "Deterministic ground truth on the worktree file with the installed code2llm DFGExtractor: original content groups variable 'data' in exactly the 6 ticket functions (_plugin_package_version, _plugin_package_name, _package_build_sha, _vsix_build_sha, _active_extension_locations, _installed_extension_build_sha) and fires the >= 5 threshold; renamed content reports no 'data' group, total mutation count unchanged at 198, and the largest replacement-name group is 2 scopes (plugin_manifest, metadata_entries). The pre-existing 'proc' (7) and 'resolved' (7) groups are unchanged."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_autopilot_plugin_installer.py tests/test_qoder_ide_support.py tests/test_koruide_bridges.py tests/test_autonomous_plugin_runtime.py -q",
+          "ruff check packages/koruide/src/koruide/plugin_installer.py"
+        ],
+        "evidence": "All four suites that exercise plugin_installer pass unchanged (pure rename; the renamed loaders are executed through version resolution, vsix candidate resolution, build-sha comparison and extensions.json metadata paths) and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree."
+      }
+    ]
+  }
+}
