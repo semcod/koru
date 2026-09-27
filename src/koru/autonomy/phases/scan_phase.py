@@ -384,7 +384,7 @@ def _skip_scan_after_idle_for_rate_limit(
     cycle: int,
     scan_after_idle_min_interval_seconds: float,
     now: float,
-    cycle_telemetry: dict[str, Any],
+    rate_limit_skip_telemetry: dict[str, Any],
     _hp: Callable[..., Any],
     _emit: Callable[..., Any],
 ) -> bool:
@@ -408,14 +408,14 @@ def _skip_scan_after_idle_for_rate_limit(
             "min_interval_seconds": scan_after_idle_min_interval_seconds,
         },
     )
-    cycle_telemetry["scan_after_idle_skipped_rate_limit"] = True
+    rate_limit_skip_telemetry["scan_after_idle_skipped_rate_limit"] = True
     return True
 
 
 def _skip_scan_after_idle_for_create_failed_cooldown(
     state: AutoloopState,
     cycle: int,
-    cycle_telemetry: dict[str, Any],
+    create_failed_cooldown_skip_telemetry: dict[str, Any],
     _hp: Callable[..., Any],
     _emit: Callable[..., Any],
 ) -> bool:
@@ -435,7 +435,7 @@ def _skip_scan_after_idle_for_create_failed_cooldown(
             "phase": "after_idle_queue",
         },
     )
-    cycle_telemetry["scan_after_idle_skipped_create_failed_cooldown"] = True
+    create_failed_cooldown_skip_telemetry["scan_after_idle_skipped_create_failed_cooldown"] = True
     return True
 
 
@@ -473,7 +473,7 @@ def _skip_scan_after_idle_for_duplicate_cooldown(
     state: AutoloopState,
     cycle: int,
     include_semcod_artifacts: bool | None,
-    cycle_telemetry: dict[str, Any],
+    duplicate_cooldown_skip_telemetry: dict[str, Any],
     _hp: Callable[..., Any],
     _emit: Callable[..., Any],
 ) -> bool:
@@ -493,7 +493,7 @@ def _skip_scan_after_idle_for_duplicate_cooldown(
             "phase": "after_idle_queue",
         },
     )
-    cycle_telemetry["scan_after_idle_skipped_duplicate_cooldown"] = True
+    duplicate_cooldown_skip_telemetry["scan_after_idle_skipped_duplicate_cooldown"] = True
     if include_semcod_artifacts:
         _hp(
             "  idle strategy: detailed scan is in duplicate cooldown; "
@@ -502,7 +502,7 @@ def _skip_scan_after_idle_for_duplicate_cooldown(
     _run_idle_discovery_fallbacks(
         project, state, include_semcod_artifacts,
         _scan_paths_for_project(project) if include_semcod_artifacts else None,
-        cycle_telemetry, _hp, _emit,
+        duplicate_cooldown_skip_telemetry, _hp, _emit,
     )
     return True
 
@@ -565,7 +565,7 @@ def _record_scan_after_idle_result(
     scan_cmd: str,
     include_semcod_artifacts: bool | None,
     now: float,
-    cycle_telemetry: dict[str, Any],
+    idle_scan_result_telemetry: dict[str, Any],
     _hp: Callable[..., Any],
     _emit: Callable[..., Any],
 ) -> None:
@@ -574,8 +574,8 @@ def _record_scan_after_idle_result(
     state.last_scan_after_idle_ts = now
     state.telemetry_scan_after_idle_runs += 1
     state.telemetry_scan_after_idle_tickets_applied += len(idle_scan.applied)
-    cycle_telemetry["scan_after_idle_run"] = True
-    cycle_telemetry["scan_after_idle_applied"] = len(idle_scan.applied)
+    idle_scan_result_telemetry["scan_after_idle_run"] = True
+    idle_scan_result_telemetry["scan_after_idle_applied"] = len(idle_scan.applied)
     _hp(_format_scan_summary_line(idle_scan))
     _hp_scan_skip_hint(idle_scan, _hp)
     _emit(
@@ -594,7 +594,7 @@ def _record_scan_after_idle_result(
 
 def _record_code2llm_discovery_telemetry(
     state: AutoloopState,
-    cycle_telemetry: dict[str, Any],
+    code2llm_discovery_telemetry: dict[str, Any],
     discovery: dict[str, Any] | None,
 ) -> None:
     if discovery is None:
@@ -602,13 +602,13 @@ def _record_code2llm_discovery_telemetry(
     applied_count = len(discovery.get("applied", []))
     skipped_count = len(discovery.get("skipped", []))
     state.telemetry_scan_after_idle_tickets_applied += applied_count
-    cycle_telemetry["code2llm_discovery_run"] = bool(discovery.get("ran"))
-    cycle_telemetry["code2llm_discovery_applied"] = applied_count
-    cycle_telemetry["code2llm_discovery_skipped"] = skipped_count
+    code2llm_discovery_telemetry["code2llm_discovery_run"] = bool(discovery.get("ran"))
+    code2llm_discovery_telemetry["code2llm_discovery_applied"] = applied_count
+    code2llm_discovery_telemetry["code2llm_discovery_skipped"] = skipped_count
     follow_up_ticket_id = str(discovery.get("follow_up_ticket_id") or "").strip()
     if follow_up_ticket_id:
-        cycle_telemetry["code2llm_discovery_follow_up_ticket_id"] = follow_up_ticket_id
-        cycle_telemetry["code2llm_discovery_follow_up_workflow"] = str(
+        code2llm_discovery_telemetry["code2llm_discovery_follow_up_ticket_id"] = follow_up_ticket_id
+        code2llm_discovery_telemetry["code2llm_discovery_follow_up_workflow"] = str(
             discovery.get("follow_up_workflow") or "",
         ).strip() or "standardized_project_discovery"
 
@@ -640,16 +640,16 @@ def _run_monag_discovery_after_idle(
 
 def _record_monag_discovery_telemetry(
     state: AutoloopState,
-    cycle_telemetry: dict[str, Any],
+    monag_discovery_telemetry: dict[str, Any],
     discovery: dict[str, Any] | None,
 ) -> None:
     if discovery is None:
         return
     applied_count = len(discovery.get("applied", []))
     state.telemetry_scan_after_idle_tickets_applied += applied_count
-    cycle_telemetry["monag_discovery_run"] = bool(discovery.get("ran"))
-    cycle_telemetry["monag_discovery_applied"] = applied_count
-    cycle_telemetry["monag_discovery_unfinished_worktrees"] = len(
+    monag_discovery_telemetry["monag_discovery_run"] = bool(discovery.get("ran"))
+    monag_discovery_telemetry["monag_discovery_applied"] = applied_count
+    monag_discovery_telemetry["monag_discovery_unfinished_worktrees"] = len(
         discovery.get("unfinished_worktrees", []),
     )
 
@@ -678,19 +678,19 @@ def _run_nxdo_discovery_after_idle(
 
 def _record_nxdo_discovery_telemetry(
     state: AutoloopState,
-    cycle_telemetry: dict[str, Any],
+    nxdo_discovery_telemetry: dict[str, Any],
     discovery: dict[str, Any] | None,
 ) -> None:
     if discovery is None:
         return
     applied_count = len(discovery.get("applied", []))
     state.telemetry_scan_after_idle_tickets_applied += applied_count
-    cycle_telemetry["nxdo_discovery_run"] = bool(discovery.get("ran"))
-    cycle_telemetry["nxdo_discovery_applied"] = applied_count
-    cycle_telemetry["nxdo_discovery_skipped"] = len(discovery.get("skipped", []))
+    nxdo_discovery_telemetry["nxdo_discovery_run"] = bool(discovery.get("ran"))
+    nxdo_discovery_telemetry["nxdo_discovery_applied"] = applied_count
+    nxdo_discovery_telemetry["nxdo_discovery_skipped"] = len(discovery.get("skipped", []))
     target_repo = str(discovery.get("target_repo") or "").strip()
     if target_repo:
-        cycle_telemetry["nxdo_discovery_repo"] = target_repo
+        nxdo_discovery_telemetry["nxdo_discovery_repo"] = target_repo
 
 
 def _run_todo2code_discovery_after_idle(
@@ -717,19 +717,23 @@ def _run_todo2code_discovery_after_idle(
 
 def _record_todo2code_discovery_telemetry(
     state: AutoloopState,
-    cycle_telemetry: dict[str, Any],
+    todo2code_discovery_telemetry: dict[str, Any],
     discovery: dict[str, Any] | None,
 ) -> None:
     if discovery is None:
         return
     applied_count = len(discovery.get("applied", []))
     state.telemetry_scan_after_idle_tickets_applied += applied_count
-    cycle_telemetry["todo2code_discovery_run"] = bool(discovery.get("ran"))
-    cycle_telemetry["todo2code_discovery_applied"] = applied_count
-    cycle_telemetry["todo2code_discovery_skipped"] = len(discovery.get("skipped", []))
-    cycle_telemetry["todo2code_discovery_plans"] = int(discovery.get("plans_count") or 0)
-    cycle_telemetry["todo2code_discovery_useful"] = int(discovery.get("useful_plans_count") or 0)
-    cycle_telemetry["todo2code_discovery_filtered"] = int(discovery.get("filtered_out_count") or 0)
+    todo2code_discovery_telemetry["todo2code_discovery_run"] = bool(discovery.get("ran"))
+    todo2code_discovery_telemetry["todo2code_discovery_applied"] = applied_count
+    todo2code_discovery_telemetry["todo2code_discovery_skipped"] = len(discovery.get("skipped", []))
+    todo2code_discovery_telemetry["todo2code_discovery_plans"] = int(discovery.get("plans_count") or 0)
+    todo2code_discovery_telemetry["todo2code_discovery_useful"] = int(
+        discovery.get("useful_plans_count") or 0,
+    )
+    todo2code_discovery_telemetry["todo2code_discovery_filtered"] = int(
+        discovery.get("filtered_out_count") or 0,
+    )
 
 
 def _run_code_change_autonomy_after_idle(
@@ -756,17 +760,19 @@ def _run_code_change_autonomy_after_idle(
 
 def _record_code_change_autonomy_telemetry(
     state: AutoloopState,
-    cycle_telemetry: dict[str, Any],
+    code_change_autonomy_telemetry: dict[str, Any],
     discovery: dict[str, Any] | None,
 ) -> None:
     if discovery is None:
         return
-    cycle_telemetry["code_change_autonomy_run"] = bool(discovery.get("ran"))
+    code_change_autonomy_telemetry["code_change_autonomy_run"] = bool(discovery.get("ran"))
     hygiene = discovery.get("hygiene") if isinstance(discovery.get("hygiene"), dict) else {}
-    cycle_telemetry["ticket_hygiene_archived"] = len(hygiene.get("archived") or [])
-    cycle_telemetry["code_change_patches_applied"] = len(discovery.get("applied_patches") or [])
+    code_change_autonomy_telemetry["ticket_hygiene_archived"] = len(hygiene.get("archived") or [])
+    code_change_autonomy_telemetry["code_change_patches_applied"] = len(
+        discovery.get("applied_patches") or [],
+    )
     t2d = discovery.get("ticket2dsl") if isinstance(discovery.get("ticket2dsl"), dict) else {}
-    cycle_telemetry["ticket2dsl_units"] = int(t2d.get("units_count") or 0)
+    code_change_autonomy_telemetry["ticket2dsl_units"] = int(t2d.get("units_count") or 0)
 
 
 def _run_code2llm_discovery_after_idle(
