@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-312",
+  "summary": "Decompose provenance_from_result in evidence to reduce cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-312/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/evidence.py",
+    "tests/test_queue_evidence.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9e23f3b868d5bd862664fcdb18f306ad86ad51be",
+    "targetBranch": "main",
+    "outcome": "Decompose provenance_from_result in src/koru/queue/evidence.py from CC 18 to <= 5 by extracting single-responsibility helper functions while maintaining 100% backward compatibility.",
+    "nonGoals": [
+      "Altering provenance dictionary schema or field names",
+      "Modifying public interface of evidence.py"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _provenance_git_metadata, _provenance_artifact_records, and _provenance_execution_metadata helpers in src/koru/queue/evidence.py.",
+      "components": [
+        {
+          "name": "koru-queue-evidence",
+          "paths": [
+            "src/koru/queue/evidence.py",
+            "tests/test_queue_evidence.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit in src/koru/queue/evidence.py"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_queue_evidence.py"
+        ],
+        "evidence": "All tests in test_queue_evidence.py pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m radon cc src/koru/queue/evidence.py -s"
+        ],
+        "evidence": "provenance_from_result cyclomatic complexity drops from 18 to <= 5."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koru/queue/evidence.py tests/test_queue_evidence.py"
+        ],
+        "evidence": "Ruff reports zero lint or formatting errors."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}

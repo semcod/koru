@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from typing import Any
 
 from koru.queue.manifest import manifest_run_directory, persist_run_artifact
 from koru.queue.patch_mode import redact_secrets
@@ -21,9 +22,7 @@ from koru.queue.patch_mode import redact_secrets
 
 def _sha256_of(value: object) -> str:
     """Canonical-JSON sha256 — the same convention the ProposalEnvelope uses."""
-    canonical = json.dumps(
-        value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
-    ).encode("utf-8")
+    canonical = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(canonical).hexdigest()
 
 
@@ -42,6 +41,7 @@ def _runtime_versions() -> dict:
         "proposal_schema": proposal_schema,
         "evidence_schema": SCHEMA_VERSION,
     }
+
 
 #: How a run ended. ``verified`` — landed with a green gate; ``applied`` —
 #: landed with no gate to run; ``artifact`` — delivered as a reviewable file;
@@ -93,6 +93,54 @@ def patch_attempt_record(
     }
 
 
+def _extract_result_raw(result: object) -> dict[str, Any]:
+    raw = getattr(result, "raw", None)
+    return raw if isinstance(raw, dict) else {}
+
+
+def _extract_provenance_provider(raw: dict[str, Any]) -> str | None:
+    val = raw.get("provider")
+    if not val:
+        return None
+    cleaned = str(val).strip()
+    return cleaned or None
+
+
+def _extract_provenance_model(raw: dict[str, Any], result: object) -> str | None:
+    val = raw.get("model") or getattr(result, "model", "")
+    if not val:
+        return None
+    cleaned = str(val).strip()
+    return cleaned or None
+
+
+def _extract_provenance_attempts(raw: dict[str, Any]) -> list[str]:
+    raw_attempts = raw.get("provider_attempts")
+    if not raw_attempts:
+        return []
+    cleaned: list[str] = []
+    for item in raw_attempts:
+        s = str(item).strip()
+        if s:
+            cleaned.append(s)
+    return cleaned
+
+
+def _resolve_provenance_fallback(provider: str | None, attempts: list[str]) -> str | None:
+    if not provider or not attempts or attempts[0] == provider:
+        return None
+    if provider in attempts:
+        skipped = attempts[: attempts.index(provider)]
+    else:
+        skipped = attempts[:1]
+    joined = " → ".join(skipped)
+    return f"{joined} unavailable/exhausted; served by {provider}"
+
+
+def _has_provenance_signals(provider: str | None, model: str | None, attempts: list[str]) -> bool:
+    return bool(provider or model or attempts)
+
+
 def provenance_from_result(result: object) -> dict | None:
     """LLM provenance carried by the agent reply, or ``None`` for other lanes.
 
@@ -103,27 +151,22 @@ def provenance_from_result(result: object) -> dict | None:
     bundle alone answers *who proposed this change and why that provider* —
     without consulting loop logs. Provenance is context, never authority.
     """
-    raw = getattr(result, "raw", None)
-    raw = raw if isinstance(raw, dict) else {}
-    provider = str(raw.get("provider") or "").strip() or None
-    model = str(raw.get("model") or getattr(result, "model", "") or "").strip() or None
-    attempts = [
-        str(item).strip()
-        for item in (raw.get("provider_attempts") or ())
-        if str(item).strip()
-    ]
-    if not (provider or model or attempts):
+    raw = _extract_result_raw(result)
+    provider = _extract_provenance_provider(raw)
+    model = _extract_provenance_model(raw, result)
+    attempts = _extract_provenance_attempts(raw)
+
+    if not _has_provenance_signals(provider, model, attempts):
         return None
-    provenance: dict = {
+
+    provenance: dict[str, Any] = {
         "provider": provider,
         "model": model,
         "provider_attempts": attempts or None,
     }
-    if provider and attempts and attempts[0] != provider:
-        skipped = attempts[: attempts.index(provider)] if provider in attempts else attempts[:1]
-        provenance["fallback"] = (
-            f"{' → '.join(skipped)} unavailable/exhausted; served by {provider}"
-        )
+    fallback = _resolve_provenance_fallback(provider, attempts)
+    if fallback:
+        provenance["fallback"] = fallback
     return provenance
 
 
