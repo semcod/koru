@@ -150,8 +150,8 @@ def _source_root() -> Path:
 def _source_version(root: Path) -> str | None:
     try:
         raw = (root / "pyproject.toml").read_bytes()
-        data = tomllib.loads(raw.decode("utf-8"))
-        project = data.get("project", {})
+        pyproject = tomllib.loads(raw.decode("utf-8"))
+        project = pyproject.get("project", {})
         if not isinstance(project, dict) or project.get("name") != "koru":
             return None
         version = project.get("version")
@@ -163,10 +163,10 @@ def _source_version(root: Path) -> str | None:
 def _is_koru_source_root(root: Path) -> bool:
     try:
         raw = (root / "pyproject.toml").read_bytes()
-        data = tomllib.loads(raw.decode("utf-8"))
+        pyproject = tomllib.loads(raw.decode("utf-8"))
     except (OSError, tomllib.TOMLDecodeError):
         return False
-    project = data.get("project", {})
+    project = pyproject.get("project", {})
     return isinstance(project, dict) and project.get("name") == "koru"
 
 
@@ -202,13 +202,13 @@ def _installed_editable_source_root() -> Path | None:
     if not raw:
         return None
     try:
-        data = json.loads(raw)
+        direct_url = json.loads(raw)
     except json.JSONDecodeError:
         return None
-    dir_info = data.get("dir_info") if isinstance(data, dict) else None
+    dir_info = direct_url.get("dir_info") if isinstance(direct_url, dict) else None
     if not isinstance(dir_info, dict) or not dir_info.get("editable"):
         return None
-    url = str(data.get("url") or "")
+    url = str(direct_url.get("url") or "")
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme != "file":
         return None
@@ -229,10 +229,10 @@ def _expected_plugin_version(root: Path, ide_id: str | None = None) -> str | Non
     for dir_name in plugin_dir_names_for_ide(ide_id):
         package_json = root / "plugins" / dir_name / "package.json"
         try:
-            data = json.loads(package_json.read_text(encoding="utf-8"))
+            package_manifest = json.loads(package_json.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
-        version = data.get("version")
+        version = package_manifest.get("version")
         if version:
             return str(version)
     from koruide.plugin_version import expected_plugin_version_for_ide
@@ -246,10 +246,10 @@ def _expected_plugin_build_sha(root: Path, ide_id: str | None = None) -> str | N
     for dir_name in plugin_dir_names_for_ide(ide_id):
         package_json = root / "plugins" / dir_name / "package.json"
         try:
-            data = json.loads(package_json.read_text(encoding="utf-8"))
+            package_manifest = json.loads(package_json.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
-        build = data.get("koruAutopilotBuild")
+        build = package_manifest.get("koruAutopilotBuild")
         if isinstance(build, dict) and isinstance(build.get("sha"), str):
             return build["sha"]
     return None
@@ -1266,32 +1266,32 @@ def _plugin_workspace_mismatch_repair_step(
 
 
 def format_install_manager_report(report: InstallManagerReport) -> str:
-    data = report.to_dict()
+    report_dict = report.to_dict()
     color = _supports_color()
-    lines = _install_manager_base_lines(data)
+    lines = _install_manager_base_lines(report_dict)
     lines.extend(_install_manager_issue_lines(report, color=color))
     lines.extend(_install_manager_action_lines(report))
     return "\n".join(lines)
 
 
-def _install_manager_base_lines(data: dict[str, Any]) -> list[str]:
+def _install_manager_base_lines(report_dict: dict[str, Any]) -> list[str]:
     return [
         "koru autopilot manage",
-        f"  ok: {str(data['ok']).lower()}",
-        f"  source: {data['source_root']} (pyproject={data['source_version']})",
-        f"  package: {data['package_version']} via {data['python']}",
-        f"  PATH koru: {data['path_koru'] or '-'}",
-        f"  repo koru: {data['repo_koru'] or '-'}",
-        f"  socket: {data['socket']}",
-        f"  daemon: {'running' if data['daemon'].get('running') else 'stopped'}",
+        f"  ok: {str(report_dict['ok']).lower()}",
+        f"  source: {report_dict['source_root']} (pyproject={report_dict['source_version']})",
+        f"  package: {report_dict['package_version']} via {report_dict['python']}",
+        f"  PATH koru: {report_dict['path_koru'] or '-'}",
+        f"  repo koru: {report_dict['repo_koru'] or '-'}",
+        f"  socket: {report_dict['socket']}",
+        f"  daemon: {'running' if report_dict['daemon'].get('running') else 'stopped'}",
         (
             "  plugin: "
-            f"ide={data['plugin'].get('ide')} connected={data['plugin'].get('connected')} "
-            f"version={data['plugin'].get('connected_version') or '-'} "
-            f"build={data['plugin'].get('connected_build_sha') or '-'} "
-            f"installed={data['plugin'].get('installed_version') or '-'} "
-            f"expected={data['plugin'].get('expected_version') or '-'} "
-            f"expected_build={data['plugin'].get('expected_build_sha') or '-'}"
+            f"ide={report_dict['plugin'].get('ide')} connected={report_dict['plugin'].get('connected')} "
+            f"version={report_dict['plugin'].get('connected_version') or '-'} "
+            f"build={report_dict['plugin'].get('connected_build_sha') or '-'} "
+            f"installed={report_dict['plugin'].get('installed_version') or '-'} "
+            f"expected={report_dict['plugin'].get('expected_version') or '-'} "
+            f"expected_build={report_dict['plugin'].get('expected_build_sha') or '-'}"
         ),
     ]
 

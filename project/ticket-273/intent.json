@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-273",
+  "summary": "Address code smell: shotgun surgery data locals in autopilot install manager",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-273/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autopilot/install_manager.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "22d3a0f14730cd812dbaa9acd1adca97c3ec9393",
+    "targetBranch": "main",
+    "outcome": "Rename the generic local variable 'data' to stage-accurate names in each of the six functions of src/koru/autopilot/install_manager.py that mutate it: pyproject (_source_version and _is_koru_source_root, the parsed pyproject.toml TOML table), direct_url (_installed_editable_source_root, the parsed direct_url.json editable-install metadata), package_manifest (_expected_plugin_version and _expected_plugin_build_sha, the parsed plugins/<dir>/package.json document), report_dict (format_install_manager_report, the InstallManagerReport.to_dict() serialization; the 'data' parameter of _install_manager_base_lines that receives it is renamed to report_dict as well). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'data' group drops from 6 scopes to 0. Each new name lands at <= 2 scopes, so no (file, variable) group grows toward the threshold. Pure rename of function-internal locals and one private helper parameter; no signature, return shape or behavior change; no other file touched.",
+    "nonGoals": [
+      "No behavior, parsing, validation or interface change",
+      "No restructuring into a shared document-decoding abstraction (each function already owns one decode stage; the shared generic name was the defect, not a missing abstraction)",
+      "No rename of locals in other files that happen to use 'data' (each is an independent local in its own file scope)",
+      "No fix for pre-existing shotgun findings in other files - minimal scope for this ticket's reported smell only"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local renames only, inside one module. Every function that decodes a document names the decoded payload after the parse stage it serves (pyproject TOML table, direct_url editable-install metadata, package_manifest plugin manifest, report_dict serialized report); the generic name 'data' disappears from the file's mutation set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports a 'data' mutation group of exactly 6 scopes - _source_version, _is_koru_source_root, _installed_editable_source_root, _expected_plugin_version, _expected_plugin_build_sha, format_install_manager_report - matching the ticket's 'spans 6 functions'; after the rename the 'data' group is empty, the file mutation record count is unchanged (185) and no (file, variable) group reaches the >= 5 threshold (largest remaining group is 4 scopes for the pre-existing 'raw' locals).",
+      "components": [
+        {
+          "name": "koru-autopilot-install",
+          "paths": [
+            "src/koru/autopilot/install_manager.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named data again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor(Config()).extract(ast.parse(<file>)) + per-variable mutation-scope grouping, original vs renamed content of src/koru/autopilot/install_manager.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports a 'data' mutation group of 6 scopes (_source_version, _is_koru_source_root, _installed_editable_source_root, _expected_plugin_version, _expected_plugin_build_sha, format_install_manager_report) - exactly matching the ticket's reported 'spans 6 functions'. Renamed content reports a 'data' group of 0 scopes; file mutation record count unchanged at 185 (pure rename); every renamed local lands at <= 2 scopes, far below the >= 5 threshold."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_install_manager.py -q",
+          "ruff check src/koru/autopilot/install_manager.py"
+        ],
+        "evidence": "The module's dedicated suite (tests/test_install_manager.py) passes unchanged - pure rename of function-internal locals and one private helper parameter - and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
