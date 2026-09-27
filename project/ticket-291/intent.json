@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-291",
+  "summary": "Decompose instance_status and session_ticket in opencode_terminals to reduce cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-291/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_terminals.py",
+    "tests/test_dashboard_terminals.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "84889507a59af59a3d5491f0f256e3ea186ee1d6",
+    "targetBranch": "main",
+    "outcome": "Decompose instance_status (from CC 22 to <=6) and _session_ticket (from CC 18 to <=5) in src/koruapi/opencode_terminals.py while maintaining 100% backward compatibility and test coverage.",
+    "nonGoals": [
+      "Altering instance status dictionary shape or cache semantics",
+      "Modifying public interface of opencode_terminals"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _find_ticket_in_session_messages, _format_session_row, _scan_active_ticket, and _extract_instance_models helpers in src/koruapi/opencode_terminals.py.",
+      "components": [
+        {
+          "name": "koru-opencode-terminals",
+          "paths": [
+            "src/koruapi/opencode_terminals.py",
+            "tests/test_dashboard_terminals.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit in src/koruapi/opencode_terminals.py"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_dashboard_terminals.py"
+        ],
+        "evidence": "All tests in test_dashboard_terminals.py pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m radon cc src/koruapi/opencode_terminals.py -s"
+        ],
+        "evidence": "instance_status and _session_ticket cyclomatic complexity drop to <=6."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "ruff check src/koruapi/opencode_terminals.py tests/test_dashboard_terminals.py"
+        ],
+        "evidence": "Ruff reports zero lint or formatting errors."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
