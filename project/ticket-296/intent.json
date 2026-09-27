@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-296",
+  "summary": "Rename the generic found locals to stage-accurate names in scan_artifacts",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-296/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/scan_artifacts.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8ef876bc682a9da669af783f5a470d61079ac51e",
+    "targetBranch": "main",
+    "outcome": "Clear the code2llm Shotgun Surgery smell for the variable 'found' in src/koru/scan_artifacts.py (planfile ticket PLF-041, reported at line 86) by replacing the generic local with a stage-accurate name in six of the seven functions that mutate it and inlining the seventh mutation into a pure selection: yaml_artifact (_load_yaml_mapping, the first existing YAML artifact probe hit whose first element is parsed), func_locations (_parse_high_cc_suggestions, the recorded file:line locations for the CC-reported function), validation_artifact (_scan_vallm_validation, the located VALLM validation report), report_artifact (_scan_structured_semcod_report, the located structured report shared by the pyqual/prefact/regix/redsl scanners), diagnose_artifact (_scan_pfix_report, the located Pfix diagnose report) and metrun_artifact (_scan_metrun_report, the located Metrun report). _find_analysis_file keeps no local: its single-use 'found if found is not None else (None, \"\")' inlines into the pure selection '_first_existing_artifact(project, _ANALYSIS_ARTIFACT_PATHS) or (None, \"\")' - the probe returns None or an always-truthy 2-tuple (path, candidate), so the or-evaluation is equivalent to the is-not-None check. The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'found' group drops from 7 scopes to 0 and the file mutation record count drops from 247 to 246 (the removed record is the deleted single-use binding in _find_analysis_file). Each new name lands at exactly 1 scope. No behavior change: same artifact probe order, same suggestions, same fallbacks, function signatures and the module __all__ untouched. No other file touched. No duplication.toon.yaml exists in this repository, so the duplication-report checklist has nothing to consult for the touched path.",
+    "nonGoals": [
+      "No behavior, policy, message or interface change",
+      "No rename of other same-file mutation groups (path 12, rel 9, suggestions 7, payload 6, priority 6, text 6 scopes - each already a separate unreported dedupe key); this lane only clears the reported 'found' group of the cited dedupe key",
+      "No new shared helper; the six surviving renames bind different artifact families and lookup shapes (a YAML payload source, a per-function location list, four distinct report probes) and forcing an abstraction would couple independent scanners",
+      "No rename of the candidates/rel_paths parameters or _first_existing_artifact itself (read-only parameters and the shared probe are not counted as mutations by the detector)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local naming plus one pure selection inside one module. Every function that mutated the generic name 'found' names exactly the scanner stage whose artifact probe or lookup it binds: the YAML mapping loader names its artifact probe hit (yaml_artifact), the high-CC parser names the recorded locations of the reported function (func_locations), and the four report scanners name the report family they probe (validation_artifact, report_artifact, diagnose_artifact, metrun_artifact). The analysis-file finder inlines its single-use binding into the pure selection '_first_existing_artifact(...) or (None, \"\")'. The generic name 'found' disappears from the file's mutation set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports a 'found' mutation group of exactly 7 scopes - _find_analysis_file, _load_yaml_mapping, _parse_high_cc_suggestions, _scan_vallm_validation, _scan_structured_semcod_report, _scan_pfix_report, _scan_metrun_report - matching the ticket's 'spans 7 functions'; after the change the 'found' group is empty, the file mutation record count drops from 247 to 246, each renamed local lands at exactly 1 scope, and no other group newly reaches the threshold (pre-existing >= 5 groups unchanged: path 12, rel 9, suggestions 7, payload 6, priority 6, text 6).",
+      "components": [
+        {
+          "name": "koru",
+          "paths": [
+            "src/koru/scan_artifacts.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named found again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor mutation grouping on the file AST, original vs renamed content of src/koru/scan_artifacts.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports a 'found' mutation group of 7 scopes (_find_analysis_file, _load_yaml_mapping, _parse_high_cc_suggestions, _scan_vallm_validation, _scan_structured_semcod_report, _scan_pfix_report, _scan_metrun_report) - exactly matching the ticket's reported 'spans 7 functions' - and 247 total mutation records; renamed content reports a 'found' group of 0 scopes and 246 records (the removed record is the inlined single-use _find_analysis_file binding); each renamed local lands at exactly 1 scope (yaml_artifact, func_locations, validation_artifact, report_artifact, diagnose_artifact, metrun_artifact); no other variable group newly reaches the >= 5 threshold (pre-existing groups unchanged: path 12, rel 9, suggestions 7, payload 6, priority 6, text 6)."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_scan_artifacts.py tests/test_scan_split.py tests/test_scan.py -q",
+          "ruff check src/koru/scan_artifacts.py"
+        ],
+        "evidence": "The three scan suites covering every touched scanner (artifact probing, high-CC location lookup, vallm/pfix/metrun/structured-report scans, the koru.scan facade) show no new failures versus the same suites on the accepted base (known environmental main-baseline reds in tests/test_scan.py are unchanged and unrelated to this file); ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
