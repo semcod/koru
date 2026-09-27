@@ -41,71 +41,71 @@ def record_obs_event(project: Path | None, event: KoruObsEvent) -> None:
 def emit_intent(
     project: Path | None, *, corr: str, component: str = "autopilot", **data: Any
 ) -> KoruObsEvent:
-    event = obs_event(corr=corr, component=component, kind="autopilot.intent", **data)
-    record_obs_event(project, event)
-    return event
+    intent_event = obs_event(corr=corr, component=component, kind="autopilot.intent", **data)
+    record_obs_event(project, intent_event)
+    return intent_event
 
 
 def emit_decision(
     project: Path | None, *, corr: str, component: str = "autopilot", **data: Any
 ) -> KoruObsEvent:
-    event = obs_event(corr=corr, component=component, kind="autopilot.route.decision", **data)
-    record_obs_event(project, event)
-    return event
+    decision_event = obs_event(corr=corr, component=component, kind="autopilot.route.decision", **data)
+    record_obs_event(project, decision_event)
+    return decision_event
 
 
 def emit_action(
     project: Path | None, *, corr: str, component: str = "autopilot", **data: Any
 ) -> KoruObsEvent:
-    event = obs_event(corr=corr, component=component, kind="autopilot.drive.requested", **data)
-    record_obs_event(project, event)
-    return event
+    action_event = obs_event(corr=corr, component=component, kind="autopilot.drive.requested", **data)
+    record_obs_event(project, action_event)
+    return action_event
 
 
 def emit_phase(
     project: Path | None, *, corr: str, component: str = "autopilot", **data: Any
 ) -> KoruObsEvent:
-    event = obs_event(corr=corr, component=component, kind="autopilot.drive.phase", **data)
-    record_obs_event(project, event)
-    return event
+    phase_event = obs_event(corr=corr, component=component, kind="autopilot.drive.phase", **data)
+    record_obs_event(project, phase_event)
+    return phase_event
 
 
 def emit_verify(
     project: Path | None, *, corr: str, component: str = "autopilot", **data: Any
 ) -> KoruObsEvent:
-    event = obs_event(corr=corr, component=component, kind="autopilot.drive.verified", **data)
-    record_obs_event(project, event)
-    return event
+    verified_event = obs_event(corr=corr, component=component, kind="autopilot.drive.verified", **data)
+    record_obs_event(project, verified_event)
+    return verified_event
 
 
 def emit_failure(
     project: Path | None, *, corr: str, component: str = "autopilot", **data: Any
 ) -> KoruObsEvent:
-    event = obs_event(
+    failure_event = obs_event(
         corr=corr,
         component=component,
         kind="autopilot.drive.failed",
         severity="error",
         **data,
     )
-    record_obs_event(project, event)
-    return event
+    record_obs_event(project, failure_event)
+    return failure_event
 
 
 def emit_blocker(
     project: Path | None, *, corr: str, component: str = "autonomy", **data: Any
 ) -> KoruObsEvent:
-    event = obs_event(corr=corr, component=component, kind="autonomy.blocker", **data)
-    record_obs_event(project, event)
-    return event
+    blocker_event = obs_event(corr=corr, component=component, kind="autonomy.blocker", **data)
+    record_obs_event(project, blocker_event)
+    return blocker_event
 
 
 def emit_next(
     project: Path | None, *, corr: str, component: str = "autonomy", **data: Any
 ) -> KoruObsEvent:
-    event = obs_event(corr=corr, component=component, kind="autonomy.next", **data)
-    record_obs_event(project, event)
-    return event
+    next_event = obs_event(corr=corr, component=component, kind="autonomy.next", **data)
+    record_obs_event(project, next_event)
+    return next_event
 
 
 __all__ = [
