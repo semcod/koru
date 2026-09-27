@@ -23,10 +23,10 @@ def _scan_jscpd_report(project: Path) -> list[Suggestion]:
     if not path.is_file():
         return []
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        report = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
-    total = (data.get("statistics") or {}).get("total") or {}
+    total = (report.get("statistics") or {}).get("total") or {}
     dup_lines = int(total.get("duplicatedLines") or 0)
     if dup_lines <= 0:
         return []
@@ -742,10 +742,14 @@ def _scan_redup_filtered(project: Path) -> list[Suggestion]:
     if not path.is_file():
         return []
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        redup_payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
-    groups = data if isinstance(data, list) else data.get("groups") or data.get("clusters")
+    groups = (
+        redup_payload
+        if isinstance(redup_payload, list)
+        else redup_payload.get("groups") or redup_payload.get("clusters")
+    )
     if not isinstance(groups, list) or len(groups) < 20:
         return []
     rel = str(path.relative_to(project))
@@ -769,10 +773,14 @@ def _scan_redup_changed(project: Path) -> list[Suggestion]:
     if not path.is_file():
         return []
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        redup_payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
-    groups = data if isinstance(data, list) else data.get("groups") or data.get("clusters")
+    groups = (
+        redup_payload
+        if isinstance(redup_payload, list)
+        else redup_payload.get("groups") or redup_payload.get("clusters")
+    )
     if not isinstance(groups, list) or not groups:
         return []
     rel = str(path.relative_to(project))
@@ -918,10 +926,10 @@ def _scan_structured_semcod_report(
     if found is None:
         return []
     path, rel = found
-    data = _load_structured_artifact(path)
-    if data is None:
+    artifact = _load_structured_artifact(path)
+    if artifact is None:
         return []
-    count = _sum_structured_counts(data, keys)
+    count = _sum_structured_counts(artifact, keys)
     if count <= 0:
         return []
     priority = "high" if count >= high_threshold else "normal"
@@ -1088,13 +1096,13 @@ def _scan_pfix_report(project: Path) -> list[Suggestion]:
     if found is None:
         return []
     path, rel = found
-    data = _load_structured_artifact(path)
-    if data is None:
+    artifact = _load_structured_artifact(path)
+    if artifact is None:
         return []
-    count, files = _count_pfix_diagnose_issues(data)
+    count, files = _count_pfix_diagnose_issues(artifact)
     if count <= 0:
         count = _sum_structured_counts(
-            data,
+            artifact,
             frozenset(
                 {
                     "failed",
@@ -1244,12 +1252,12 @@ def _scan_todo2code_plans(project: Path) -> list[Suggestion]:
     if plans_path is None:
         return []
     try:
-        data = json.loads(plans_path.read_text(encoding="utf-8"))
+        plans_payload = json.loads(plans_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError, ValueError):
         return []
-    if not isinstance(data, dict):
+    if not isinstance(plans_payload, dict):
         return []
-    plans = [p for p in (data.get("plans") or []) if isinstance(p, dict)]
+    plans = [p for p in (plans_payload.get("plans") or []) if isinstance(p, dict)]
     try:
         plans_rel = str(plans_path.relative_to(project))
     except ValueError:
