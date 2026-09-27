@@ -23,8 +23,8 @@ from pathlib import Path
 def get_plugin_version_from_source(root: Path) -> str:
     """Read the plugin version from the source of truth."""
     version_file = root / "packages" / "koruide" / "src" / "koruide" / "plugin_version.py"
-    content = version_file.read_text(encoding="utf-8")
-    match = re.search(r'"vscode"\s*:\s*"([^"]+)"', content)
+    version_source = version_file.read_text(encoding="utf-8")
+    match = re.search(r'"vscode"\s*:\s*"([^"]+)"', version_source)
     if not match:
         raise ValueError(f"Could not find EXPECTED_PLUGIN_VERSIONS['vscode'] in {version_file}")
     return match.group(1)
@@ -33,8 +33,8 @@ def get_plugin_version_from_source(root: Path) -> str:
 def get_plugin_version_from_package(root: Path) -> str:
     """Read the plugin version from package.json."""
     package_json = root / "plugins" / "koru-autopilot-vscode" / "package.json"
-    content = package_json.read_text(encoding="utf-8")
-    match = re.search(r'"version":\s*"([^"]+)"', content)
+    package_text = package_json.read_text(encoding="utf-8")
+    match = re.search(r'"version":\s*"([^"]+)"', package_text)
     if not match:
         raise ValueError(f"Could not find version in {package_json}")
     return match.group(1)
@@ -43,16 +43,16 @@ def get_plugin_version_from_package(root: Path) -> str:
 def update_plugin_version_source(version: str, root: Path) -> None:
     """Update the version in plugin_version.py."""
     version_file = root / "packages" / "koruide" / "src" / "koruide" / "plugin_version.py"
-    content = version_file.read_text(encoding="utf-8")
+    version_source = version_file.read_text(encoding="utf-8")
     updated, count = re.subn(
         r'("vscode"\s*:\s*")[^"]+("\s*,?)',
         rf"\g<1>{version}\g<2>",
-        content,
+        version_source,
         count=1,
     )
     if count == 0:
         raise ValueError(f"Could not find EXPECTED_PLUGIN_VERSIONS['vscode'] in {version_file}")
-    if content == updated:
+    if version_source == updated:
         print(f"  ✓ plugin_version.py already at version {version}")
     else:
         version_file.write_text(updated, encoding="utf-8")
@@ -62,9 +62,9 @@ def update_plugin_version_source(version: str, root: Path) -> None:
 def update_package_json(version: str, root: Path) -> None:
     """Update the version in package.json."""
     package_json = root / "plugins" / "koru-autopilot-vscode" / "package.json"
-    content = package_json.read_text(encoding="utf-8")
-    updated = re.sub(r'"version":\s*"[^"]+"', f'"version": "{version}"', content)
-    if content == updated:
+    package_text = package_json.read_text(encoding="utf-8")
+    updated = re.sub(r'"version":\s*"[^"]+"', f'"version": "{version}"', package_text)
+    if package_text == updated:
         print(f"  ✓ package.json already at version {version}")
     else:
         package_json.write_text(updated, encoding="utf-8")
@@ -74,23 +74,23 @@ def update_package_json(version: str, root: Path) -> None:
 def update_github_workflow(version: str, root: Path) -> None:
     """Update the version in GitHub workflow file."""
     workflow_file = root / ".github" / "workflows" / "native-ide-matrix.yml"
-    content = workflow_file.read_text(encoding="utf-8")
-    
+    workflow_text = workflow_file.read_text(encoding="utf-8")
+
     # Update the default version in the Python script
     updated = re.sub(
         r'KORU_FAKE_EXTENSION_VERSION",\s*"([^"]+)"',
         f'KORU_FAKE_EXTENSION_VERSION", "{version}"',
-        content,
+        workflow_text,
     )
-    
+
     # Update the env var values
     updated = re.sub(
         r'KORU_FAKE_EXTENSION_VERSION:\s*"([^"]+)"',
         f'KORU_FAKE_EXTENSION_VERSION: "{version}"',
         updated,
     )
-    
-    if content == updated:
+
+    if workflow_text == updated:
         print(f"  ✓ native-ide-matrix.yml already at version {version}")
     else:
         workflow_file.write_text(updated, encoding="utf-8")

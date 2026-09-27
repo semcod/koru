@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-265",
+  "summary": "Address code smell: shotgun surgery content in sync vscode plugin version",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-265/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "scripts/sync-vscode-plugin-version.py",
+    "tests/test_sync_plugin_version_script.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5add17df8652626fda26532f34ed98f966a91a82",
+    "targetBranch": "main",
+    "outcome": "Rename the generic file-text local 'content' to stage-accurate names in each of the five reader/writer functions of scripts/sync-vscode-plugin-version.py: version_source (plugin_version.py text), package_text (package.json text), workflow_text (native-ide-matrix.yml text). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the groups become 2/2/1 and the smell disappears. Pure rename inside function bodies, no behavior change. Adds tests for the three previously untested functions so every renamed scope is executed.",
+    "nonGoals": [
+      "No behavior, CLI, regex or output change in the script",
+      "No restructuring into shared read/regex/write helpers (the five functions read different files with different semantics; the shared name was the defect, not missing abstraction)",
+      "No changes to scripts/sync-plugin-version.py or any other script"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local renames only: content -> version_source in get_plugin_version_from_source and update_plugin_version_source; content -> package_text in get_plugin_version_from_package and update_package_json; content -> workflow_text in update_github_workflow. The 'updated' local (3 scopes) stays under the >= 5 threshold and is left untouched for minimality. Verified on plain /tmp copies with the exact code2llm invocation that generated PLF-041: baseline reproduces the smell, the renamed tree clears it with no new smells (124 -> 123 shotgun findings).",
+      "components": [
+        {
+          "name": "sync-vscode-plugin-version-script",
+          "paths": [
+            "scripts/sync-vscode-plugin-version.py",
+            "tests/test_sync_plugin_version_script.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the five locals are named content again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "code2llm <repo-copy> -f all -o <tmp-out> --no-chunk --exclude '*.md' --exclude plugins --no-png --fast"
+        ],
+        "evidence": "Re-scan of a plain copy of the merged tree with the same invocation that generated the planfile ticket: no shotgun_surgery entry for scripts/sync-vscode-plugin-version.py and no new smell for that file (total shotgun findings drop by exactly one)."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest tests/test_sync_plugin_version_script.py -q",
+          "ruff check scripts/sync-vscode-plugin-version.py tests/test_sync_plugin_version_script.py"
+        ],
+        "evidence": "4 passed (2 existing + 2 new) and ruff clean on both touched files."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree."
+      }
+    ]
+  }
+}
