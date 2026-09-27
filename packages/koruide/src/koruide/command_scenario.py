@@ -117,27 +117,27 @@ def _validate_step(
     ide: str,
     catalog_rows: dict[str, dict[str, Any]],
 ) -> tuple[list[str], list[str], dict[str, Any]]:
-    """Validate a single step and return errors, warnings, and normalized step."""
-    errors: list[str] = []
+    """Validate a single step and return step errors, warnings, and normalized step."""
+    step_errors: list[str] = []
     warnings: list[str] = []
     
     if not isinstance(step, dict):
-        errors.append(f"steps[{index}] must be an object")
-        return errors, warnings, {}
+        step_errors.append(f"steps[{index}] must be an object")
+        return step_errors, warnings, {}
     
     draft = _scenario_step_draft(step, catalog_rows)
     if not draft.kind:
-        errors.append(f"steps[{index}].action is required")
-        return errors, warnings, {}
+        step_errors.append(f"steps[{index}].action is required")
+        return step_errors, warnings, {}
     
-    _validate_step_kind(index, draft, errors)
-    _validate_step_command(index, draft, errors)
+    _validate_step_kind(index, draft, step_errors)
+    _validate_step_command(index, draft, step_errors)
     _validate_step_catalog(index, draft, ide, warnings)
     _validate_step_category(index, draft, warnings)
-    _validate_step_risk(index, draft, errors, warnings)
+    _validate_step_risk(index, draft, step_errors, warnings)
     
     normalized = _normalize_step(draft)
-    return errors, warnings, normalized
+    return step_errors, warnings, normalized
 
 
 def _scenario_step_draft(
@@ -156,21 +156,21 @@ def _scenario_step_draft(
 def _validate_step_kind(
     index: int,
     draft: ScenarioStepDraft,
-    errors: list[str],
+    action_errors: list[str],
 ) -> None:
     """Validate step action is allowed."""
     if draft.kind not in _allowed_actions():
-        errors.append(f"steps[{index}].action {draft.kind!r} is not allowed")
+        action_errors.append(f"steps[{index}].action {draft.kind!r} is not allowed")
 
 
 def _validate_step_command(
     index: int,
     draft: ScenarioStepDraft,
-    errors: list[str],
+    command_errors: list[str],
 ) -> None:
     """Validate step command is required for certain actions."""
     if draft.kind not in {"wait", "diagnostics"} and not draft.command:
-        errors.append(f"steps[{index}].command is required for action {draft.kind!r}")
+        command_errors.append(f"steps[{index}].command is required for action {draft.kind!r}")
 
 
 def _validate_step_catalog(
@@ -202,7 +202,7 @@ def _validate_step_category(
 def _validate_step_risk(
     index: int,
     draft: ScenarioStepDraft,
-    errors: list[str],
+    risk_errors: list[str],
     warnings: list[str],
 ) -> None:
     """Validate step command risk level."""
@@ -214,7 +214,7 @@ def _validate_step_risk(
                 "override recorded",
             )
         else:
-            errors.append(
+            risk_errors.append(
                 f"steps[{index}].command {draft.command!r} is high risk and needs "
                 "risk_override_reason",
             )
@@ -243,25 +243,25 @@ def _normalize_step(draft: ScenarioStepDraft) -> dict[str, Any]:
     }
 
 
-def _validate_mode(mode: str, errors: list[str], warnings: list[str]) -> None:
+def _validate_mode(mode: str, mode_errors: list[str], warnings: list[str]) -> None:
     """Validate scenario mode."""
     if mode not in {"plan", "dry_run", "execute"}:
-        errors.append(f"mode {mode!r} is not allowed")
+        mode_errors.append(f"mode {mode!r} is not allowed")
     if mode == "execute":
         warnings.append(
             "execute mode still requires runtime command verification and Koru policy approval",
         )
 
 
-def _scenario_ide_and_steps(raw: dict[str, Any], errors: list[str]) -> tuple[str, list[Any]]:
+def _scenario_ide_and_steps(raw: dict[str, Any], header_errors: list[str]) -> tuple[str, list[Any]]:
     ide = str(raw.get("ide") or "").strip().lower()
     if ide not in supported_catalog_ides():
-        errors.append(f"unknown ide {ide!r}; supported: {', '.join(supported_catalog_ides())}")
+        header_errors.append(f"unknown ide {ide!r}; supported: {', '.join(supported_catalog_ides())}")
         ide = ide or "unknown"
 
     steps = raw.get("steps")
     if not isinstance(steps, list) or not steps:
-        errors.append("steps must be a non-empty array")
+        header_errors.append("steps must be a non-empty array")
         steps = []
     return ide, steps
 
@@ -269,7 +269,7 @@ def _scenario_ide_and_steps(raw: dict[str, Any], errors: list[str]) -> tuple[str
 def _validate_scenario_steps(
     steps: list[Any],
     ide: str,
-    errors: list[str],
+    scenario_errors: list[str],
     warnings: list[str],
 ) -> list[dict[str, Any]]:
     catalog_rows = _rows_by_command(ide) if ide in supported_catalog_ides() else {}
@@ -281,7 +281,7 @@ def _validate_scenario_steps(
             ide,
             catalog_rows,
         )
-        errors.extend(step_errors)
+        scenario_errors.extend(step_errors)
         warnings.extend(step_warnings)
         if normalized_step:
             normalized_steps.append(normalized_step)
@@ -310,7 +310,7 @@ def validate_ide_command_scenario(raw: dict[str, Any]) -> ScenarioValidation:
     This does not prove that the active IDE currently exports a command. The
     plugin still has to perform runtime verification before any real execution.
     """
-    errors: list[str] = []
+    scenario_errors: list[str] = []
     warnings: list[str] = []
     
     if not isinstance(raw, dict):
@@ -321,14 +321,14 @@ def validate_ide_command_scenario(raw: dict[str, Any]) -> ScenarioValidation:
             normalized={},
         )
 
-    ide, steps = _scenario_ide_and_steps(raw, errors)
-    normalized_steps = _validate_scenario_steps(steps, ide, errors, warnings)
+    ide, steps = _scenario_ide_and_steps(raw, scenario_errors)
+    normalized_steps = _validate_scenario_steps(steps, ide, scenario_errors, warnings)
     normalized = _normalized_scenario(raw, ide, normalized_steps)
-    _validate_mode(normalized["mode"], errors, warnings)
+    _validate_mode(normalized["mode"], scenario_errors, warnings)
 
     return ScenarioValidation(
-        ok=not errors,
-        errors=tuple(errors),
+        ok=not scenario_errors,
+        errors=tuple(scenario_errors),
         warnings=tuple(warnings),
         normalized=normalized,
     )

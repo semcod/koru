@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-277",
+  "summary": "Address code smell: shotgun surgery errors locals in koruide command scenario",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-277/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/koruide/src/koruide/command_scenario.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "dde785be7659d857b172f8f88797374a3f64d4c9",
+    "targetBranch": "main",
+    "outcome": "Rename the generic error-list local 'errors' to stage-accurate names in each of the seven functions of packages/koruide/src/koruide/command_scenario.py that mutate it: step_errors (_validate_step, the per-step findings accumulator, matching the caller's existing unpack), action_errors (_validate_step_kind), command_errors (_validate_step_command), risk_errors (_validate_step_risk), mode_errors (_validate_mode), header_errors (_scenario_ide_and_steps, the scenario-header ide/steps-presence checks), scenario_errors (_validate_scenario_steps, the per-step aggregation into the scenario report), and scenario_errors for the same-name local in the public validate_ide_command_scenario entry point (coherence rename; that local carries no method mutation). The code2llm shotgun-surgery detector groups mutations by (file, variable) and fires at >= 5 scopes; the 'errors' group drops from 7 scopes to 0. Each new name lands at 1 scope, so no (file, variable) group grows toward the threshold. Pure rename of function-internal locals and sink parameters; no signature, return shape, dataclass field (ScenarioValidation.errors) or behavior change; no other file touched.",
+    "nonGoals": [
+      "No behavior, validation semantics or interface change",
+      "No restructuring into a returned-findings (pure) validator chain; each helper already owns one validation stage, the shared generic name was the defect, not a missing abstraction",
+      "No fix for the pre-existing 'warnings' shotgun-surgery group in the same file (5 scopes, not part of this ticket's reported smell) or for findings in other files - minimal scope for this ticket's reported smell only",
+      "No rename of locals in other files that happen to use 'errors' (each is an independent local in its own file scope)"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Stage-accurate local renames only, inside one module. Every function that appends validation findings names its error channel after the validation stage it serves (per-step accumulator, action-kind, missing-command, risk-policy, mode, scenario-header, scenario aggregation); the generic name 'errors' disappears from the file's mutation set entirely. Verified with the installed code2llm DFGExtractor mutation grouping on the file's AST (standalone extract, since ProjectAnalyzer.analyze on copies/worktrees silently yields empty scopes): baseline reports an 'errors' mutation group of exactly 7 scopes - _validate_step, _validate_step_kind, _validate_step_command, _validate_step_risk, _validate_mode, _scenario_ide_and_steps, _validate_scenario_steps - matching the ticket's 'spans 7 functions'; after the rename the 'errors' group is empty, the file mutation record count is unchanged (47) and no new (file, variable) group reaches the >= 5 threshold (the pre-existing 'warnings' group at 5 scopes remains untouched and out of scope).",
+      "components": [
+        {
+          "name": "koruide",
+          "paths": [
+            "packages/koruide/src/koruide/command_scenario.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket commit; the locals are named errors again and the smell report returns."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -c \"<standalone code2llm DFGExtractor mutation grouping on the file AST, original vs renamed content of packages/koruide/src/koruide/command_scenario.py>\""
+        ],
+        "evidence": "Deterministic ground truth with the installed code2llm extractor on the file AST. Baseline content reports an 'errors' mutation group of 7 scopes (_validate_step, _validate_step_kind, _validate_step_command, _validate_step_risk, _validate_mode, _scenario_ide_and_steps, _validate_scenario_steps; 9 records, all .append/.extend) - exactly matching the ticket's reported 'spans 7 functions'. Renamed content reports an 'errors' group of 0 scopes; file mutation record count unchanged at 47 (pure rename); every renamed local lands at 1 scope, far below the >= 5 threshold; the ScenarioValidation.errors dataclass field and to_dict key are the public output contract and are untouched."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_ide_command_catalog.py tests/test_strategy_prompt.py tests/test_mcp_server.py tests/test_mcp_server_split.py -q",
+          "ruff check packages/koruide/src/koruide/command_scenario.py"
+        ],
+        "evidence": "The suites that exercise the renamed validation paths pass unchanged - pure rename of function-internal locals and sink parameters - and ruff reports zero errors on the touched file."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base <merge-base-of-HEAD-and-target>"
+        ],
+        "evidence": "GOV-PASS 0 errors 0 warnings from the ticket worktree with the changed files declared."
+      }
+    ]
+  }
+}
