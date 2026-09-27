@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-301",
+  "summary": "Fix ruff import sorting in test_autonomous_pre_checks",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-301/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "tests/test_autonomous_pre_checks.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3aff015d93ce32e199e174b0d27d4c9bbec06248",
+    "targetBranch": "main",
+    "outcome": "Fix unformatted/unsorted imports in tests/test_autonomous_pre_checks.py to satisfy ruff I001 and prevent post_run_verify failures during autonomous cycle finalization.",
+    "nonGoals": [
+      "Modifying autonomous pre-check logic or test behavior"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 5,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Combine and sort imports from koru.autonomous into a single import statement in tests/test_autonomous_pre_checks.py.",
+      "components": [
+        {
+          "name": "koru-tests",
+          "paths": [
+            "tests/test_autonomous_pre_checks.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit in tests/test_autonomous_pre_checks.py"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "ruff check tests/test_autonomous_pre_checks.py"
+        ],
+        "evidence": "Ruff check passes cleanly with zero lint errors."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_autonomous_pre_checks.py"
+        ],
+        "evidence": "All 4 unit tests in test_autonomous_pre_checks.py pass."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}

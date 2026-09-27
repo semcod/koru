@@ -6,8 +6,7 @@ import argparse
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from koru.autonomous import check_storage_limits
-from koru.autonomous import _run_autonomous_pre_checks
+from koru.autonomous import _run_autonomous_pre_checks, check_storage_limits
 
 
 def test_check_storage_limits_ok(tmp_path: Path):
