@@ -48,6 +48,7 @@ class _ConfigureArgs:
     lan: bool
     auto_port: bool
     non_interactive: bool
+    table: bool
 
     @classmethod
     def from_namespace(cls, args: argparse.Namespace) -> _ConfigureArgs:
@@ -66,4 +67,5 @@ class _ConfigureArgs:
             lan=args.lan,
             auto_port=args.auto_port,
             non_interactive=args.non_interactive,
+            table=getattr(args, "table", False),
         )

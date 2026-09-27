@@ -1,0 +1,103 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-317",
+  "summary": "Interactive table and NL shell configurator for koru config",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-317/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli.py",
+    "src/koru/configurator/**",
+    "tests/test_configurator*.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2c82e2055feb269399c3081ec6750e5b5ee9b7df",
+    "targetBranch": "main",
+    "outcome": "Expose koru config command that displays rich ASCII/Unicode configuration tables and prompts interactively via shell CLI and natural language commands (tripartite NL-DSL-LLM pattern).",
+    "nonGoals": [
+      "No breaking changes to koru configure non-interactive or schema v1/v2 format",
+      "No network dependency required for offline table display or local regex/keyword NL parser"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Alias and enhance koru config / koru configure with table rendering and interactive NL command parsing loop in koru.configurator.",
+      "components": [
+        {
+          "name": "koru-cli",
+          "paths": [
+            "src/koru/cli.py"
+          ]
+        },
+        {
+          "name": "koru-configurator",
+          "paths": [
+            "src/koru/configurator/**",
+            "tests/test_configurator*.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; restore previous configurator modules."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_configurator_render.py -q"
+        ],
+        "evidence": "Config table renderer produces clear formatted ASCII/rich table of all settings."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_configurator_cli.py -q"
+        ],
+        "evidence": "koru config subcommand works as expected both interactively and with --table flag."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest tests/test_configurator*.py -q",
+          "ruff check src/koru/configurator src/koru/cli.py"
+        ],
+        "evidence": "All configurator tests pass cleanly and ruff reports 0 lint errors."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings (GOV-PASS)."
+      }
+    ]
+  }
+}
