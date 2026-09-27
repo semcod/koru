@@ -237,12 +237,16 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "status": lambda argv: _lazy_module_main("koru.cli_global_control", "status_main", argv),
     "sum": lambda argv: _lazy_module_main("koru.cli_summary", "summary_main", argv),
     "summary": lambda argv: _lazy_module_main("koru.cli_summary", "summary_main", argv),
+    "voice": lambda argv: _lazy_module_main("koru.voice.cli", "voice_main", argv),
+    "nlp": lambda argv: _lazy_module_main("koru.voice.cli", "nlp_main", argv),
 }
 
 #: Subcommands that stay usable while the global kill-switch is set.
 #: Everything else is agent work (or can start it) and is refused, so a
 #: single `koru off` reliably silences koru across every repository.
 _ALLOWED_WHEN_DISABLED: frozenset[str] = frozenset({
+    "voice",
+    "nlp",
     "on",
     "off",
     "status",

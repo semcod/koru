@@ -1,0 +1,107 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-314",
+  "summary": "Voice and NL control bridge for koru commands and planfile queue",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-314/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli.py",
+    "src/koru/voice/**",
+    "tests/test_voice_bridge.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "96aef8ba25b5c8af9ec7572e39c9c4597326f8a9",
+    "targetBranch": "main",
+    "outcome": "Implement the koru voice and koru nlp command dispatcher translating natural language voice and text commands into deterministic koru global controls and planfile queue queries.",
+    "nonGoals": [
+      "No replacement of existing koru on/off/status global control semantics",
+      "No direct modification of git or external repos outside planfile queue and global control",
+      "No external network LLM dependency required for core deterministic speech recognition"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add modular voice package in src/koru/voice containing VoiceDispatcher for intent matching, VoiceCommandExecutor for loop and queue execution, and CLI handlers for koru voice and koru nlp. Register subcommands in src/koru/cli.py under _SUBCOMMANDS and _ALLOWED_WHEN_DISABLED.",
+      "components": [
+        {
+          "name": "koru-cli",
+          "paths": [
+            "src/koru/cli.py"
+          ]
+        },
+        {
+          "name": "koru-voice",
+          "paths": [
+            "src/koru/voice/__init__.py",
+            "src/koru/voice/cli.py",
+            "src/koru/voice/dispatcher.py",
+            "src/koru/voice/executor.py",
+            "tests/test_voice_bridge.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit; remove src/koru/voice and unregister voice/nlp from src/koru/cli.py."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_voice_bridge.py -k test_dispatcher -q"
+        ],
+        "evidence": "VoiceDispatcher successfully parses stop_loop, start_loop, status_loop, queue_status, task_next, and task_close intents with normalization and typo resilience."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_voice_bridge.py -k test_cli -q"
+        ],
+        "evidence": "koru voice and koru nlp subcommands run correctly with text, JSON, and positional phrases."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 -m pytest tests/test_voice_bridge.py -q",
+          "ruff check src/koru/voice src/koru/cli.py tests/test_voice_bridge.py"
+        ],
+        "evidence": "Full test suite in tests/test_voice_bridge.py passes and ruff reports zero lint warnings."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Governance check reports GOV-PASS: passed (0 errors, 0 warnings)."
+      }
+    ]
+  }
+}
