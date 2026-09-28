@@ -355,10 +355,16 @@ def _check_autopilot_skip_conditions(
         "claim_failed", "dry_run",
     }:
         cycle_telemetry["autopilot_skipped_queue_admission"] = True
+        admission_reason = (
+            getattr(queue_result, "last_message", "")
+            or getattr(queue_result, "error", "")
+            or "queue admission or infrastructure does not permit execution"
+        )
+        cycle_telemetry["autopilot_skipped_queue_admission_reason"] = admission_reason
         _hp("- autopilot skipped (queue_admission)")
         return AutopilotPolicyDecision.skip(
             "queue_admission",
-            because="queue admission or infrastructure does not permit execution",
+            because=admission_reason,
             action_hint="resolve the queue blocker and re-evaluate admission",
         ).as_skip_tuple()
 

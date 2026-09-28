@@ -1,0 +1,100 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-328",
+  "summary": "Autonomy trace report queue admission instead of false stuck waiting input",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-328/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/decision_trace.py",
+    "src/koru/autonomy/cycle/cycle_skip_conditions.py",
+    "src/koru/autonomy/operator/operator_loop_quick_actions.py",
+    "src/koru/standard_fleet/git_observation.py",
+    "tests/test_decision_trace.py",
+    "tests/test_standard_fleet.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ae291d7f823d5e60e2afaed204d4b7917fb748f3",
+    "targetBranch": "main",
+    "outcome": "Report structured queue_admission decision trace and suppress [auto llm-ready] hint when queue admission is denied; accelerate standard fleet git observation with filesystem descriptor fast paths.",
+    "nonGoals": [
+      "Altering queue admission rules or duplication contract definitions",
+      "Bypassing human operator confirmation for unhandled tickets",
+      "Rewriting the entire standard fleet scanner"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add queue_admission to decision trace vocabulary, telemetry flags, and reasons. Suppress auto llm-ready in operator quick actions when queue admission is blocked. Fast-path repository git dir and worktree detection in standard fleet via direct filesystem inspection.",
+      "components": [
+        {
+          "name": "autonomy",
+          "paths": [
+            "src/koru/autonomy/**",
+            "tests/test_decision_trace.py"
+          ]
+        },
+        {
+          "name": "standard-fleet",
+          "paths": [
+            "src/koru/standard_fleet/**",
+            "tests/test_standard_fleet.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-328 material commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_decision_trace.py -q"
+        ],
+        "evidence": "Decision trace correctly classifies queue_admission, surfaces admission reason, preserves code over streak-based stuck fallback, and suppresses [auto llm-ready] quick action."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest tests/test_standard_fleet.py -q"
+        ],
+        "evidence": "Filesystem-accelerated git observation passes all fleet scan tests and reduces subprocess calls."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base ae291d7f"
+        ],
+        "evidence": "Focused tests, Ruff and managed gate pass; protected exact-head delivery."
+      }
+    ]
+  }
+}

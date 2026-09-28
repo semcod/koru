@@ -39,6 +39,18 @@ def _read_text(path: Path) -> str:
 
 
 def _origin_identity(repo: Path, *, git_runner: GitRunner) -> str:
+    config_file = repo / ".git" / "config"
+    if config_file.is_file():
+        try:
+            content = config_file.read_text(encoding="utf-8", errors="replace")
+            m = re.search(r'\[remote\s+"origin"\][^\[]*?url\s*=\s*([^\r\n]+)', content)
+            if m:
+                match = _REMOTE_IDENTITY.match(m.group(1).strip())
+                if match:
+                    return f"{match.group(1)}/{match.group(2)}"
+        except OSError:
+            pass
+
     observed = git_runner(repo, ["remote", "get-url", "origin"])
     remote = _clean_text(observed.stdout)
     match = _REMOTE_IDENTITY.match(remote)
@@ -49,6 +61,19 @@ def _origin_identity(repo: Path, *, git_runner: GitRunner) -> str:
 
 def _is_linked_worktree(repo: Path, *, git_runner: GitRunner) -> bool:
     """Return whether *repo* is a linked worktree rather than its primary checkout."""
+    dot_git = repo / ".git"
+    if dot_git.is_dir():
+        return False
+    if dot_git.is_file():
+        try:
+            content = dot_git.read_text(encoding="utf-8").strip()
+            if content.startswith("gitdir:"):
+                target = content.removeprefix("gitdir:").strip()
+                if "/worktrees/" in target or "\\worktrees\\" in target:
+                    return True
+        except OSError:
+            pass
+
     git_dir_result = git_runner(repo, ["rev-parse", "--git-dir"])
     common_dir_result = git_runner(repo, ["rev-parse", "--git-common-dir"])
     if git_dir_result.returncode != 0 or common_dir_result.returncode != 0:
@@ -66,6 +91,19 @@ def _git_state(repo: Path, *, git_runner: GitRunner) -> tuple[bool, int, str | N
     dirty_result = git_runner(repo, ["status", "--porcelain"])
     if dirty_result.returncode != 0:
         return False, 0, "git-status-unavailable"
+
+    dot_git = repo / ".git"
+    if dot_git.is_dir():
+        worktrees_dir = dot_git / "worktrees"
+        if not worktrees_dir.is_dir():
+            return bool(dirty_result.stdout.strip()), 0, None
+        try:
+            entries = [e for e in worktrees_dir.iterdir() if e.is_dir()]
+            if not entries:
+                return bool(dirty_result.stdout.strip()), 0, None
+        except OSError:
+            pass
+
     worktrees_result = git_runner(repo, ["worktree", "list", "--porcelain"])
     if worktrees_result.returncode != 0:
         return bool(worktrees_result.stdout.strip()), 0, "git-worktree-unavailable"

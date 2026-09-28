@@ -53,6 +53,11 @@ def _autopilot_quick_action_lines(
             "[pause autopilot 10m] "
             "`touch .planfile/.koru/autopilot-pause-until-$(date +%s -d '+10 minutes')`"
         )
+    if "queue_admission" in status or blocked_by == "queue_admission":
+        autopilot_actions.append(
+            "[review queue admission] inspect planfile and duplication barriers "
+            "before redrive"
+        )
     return autopilot_actions
 
 
@@ -72,7 +77,7 @@ def _queue_quick_action_lines(
             "[scan signals] `koru scan --apply`"
         )
     if queue_status == "waiting_input" and waiting_ticket and waiting_ticket != "-":
-        if "stuck_waiting_input" in status:
+        if "stuck_waiting_input" in status and "queue_admission" not in status:
             queue_actions.append(
                 "[auto llm-ready] enabled by default; set "
                 "`KORU_AUTOPILOT_AUTO_LLM_READY=0` to require manual approval"
