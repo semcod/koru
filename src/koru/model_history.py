@@ -13,7 +13,17 @@ from typing import Any
 
 from koru.task_model_policy import safe_identifier
 
-_ROUTING_FIELDS = {"request_id", "ticket", "client", "requested_model", "reason", "status"}
+_ROUTING_FIELDS = {
+    "request_id",
+    "ticket",
+    "client",
+    "requested_model",
+    "reason",
+    "status",
+    "actual_client",
+    "actual_provider",
+    "actual_model",
+}
 
 
 def routing_path(project: Path) -> Path:

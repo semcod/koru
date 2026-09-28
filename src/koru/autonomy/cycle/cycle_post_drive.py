@@ -1,3 +1,4 @@
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +20,7 @@ from koru.autonomy.verification_engine import (
     absorbed_foreign_paths,
     assess_verdict,
     collect_evidence,
+    record_unsuccessful_drive,
     take_snapshot,
 )
 from koru.queue import QueueLoopResult
@@ -30,6 +32,7 @@ def _take_pre_drive_snapshot(
     wup_health: Any,
 ) -> None:
     """Capture project state before autopilot drive (ADR AUTO-002 Phase 1)."""
+    state.last_verified_drive_ticket_id = ""
     test_status = str(getattr(wup_health, "status", "unknown") or "unknown")
     snapshot = take_snapshot(project, test_status=test_status)
     state.last_drive_snapshot = snapshot.to_dict()
@@ -44,7 +47,7 @@ def _drive_effect_payload(
 ) -> dict[str, Any]:
     prompt_submitted = drive_status == "ok" and bool(evidence.chat.has_message_sent)
     ticket_still_waiting = queue_status == "waiting_input" and bool(ticket_id)
-    work_applied = evidence.git.files_changed > 0 or not ticket_still_waiting
+    work_applied = evidence.git.observed and evidence.git.files_changed > 0
     planfile_delta = "still_waiting_input" if ticket_still_waiting else queue_status or "unknown"
     return {
         "prompt_submitted": prompt_submitted,
@@ -89,6 +92,7 @@ def _snapshot_before_drive(state: AutoloopState) -> Any | None:
         git_dirty_count=int(snap_dict.get("git_dirty_count", 0)),
         test_status=str(snap_dict.get("test_status", "unknown")),
         timestamp=float(snap_dict.get("timestamp", 0)),
+        workspace_fingerprints=snap_dict.get("workspace_fingerprints"),
         git_dirty_paths=tuple(
             str(p) for p in (snap_dict.get("git_dirty_paths") or []) if str(p)
         ),
@@ -135,7 +139,8 @@ def _post_drive_verdict(
         ticket_id=ticket_id,
         drive_count=state.drive_count_for_ticket,
     )
-    if effect["prompt_submitted"] and not effect["work_applied"]:
+    if (verdict.outcome == "no_change" and effect["prompt_submitted"]
+            and not effect["work_applied"]):
         return _submitted_but_no_effect(verdict, effect)
     return verdict
 
@@ -374,7 +379,9 @@ def _handle_post_drive_verification(
     if not (status.ok or status.failed):
         return
 
-    ticket_id = _post_drive_ticket_id(queue_result)
+    ticket_id = _post_drive_ticket_id(queue_result) or state.last_driven_ticket_id
+    if ticket_id == "-":
+        ticket_id = ""
     _update_drive_count(state, ticket_id)
     evidence = _collect_post_drive_evidence(project, state, wup_health)
     effect = _drive_effect_payload(
@@ -383,7 +390,16 @@ def _handle_post_drive_verification(
         evidence=evidence,
         drive_status=drive_status,
     )
-    verdict = _post_drive_verdict(state, evidence, ticket_id, effect)
+    if status.failed:
+        verdict = Verdict("degraded", 1.0, drive_status, evidence, ticket_id)
+    else:
+        evidence = replace(
+            evidence,
+            verification_passed=bool(ticket_id) and state.last_verified_drive_ticket_id == ticket_id,
+        )
+        verdict = _post_drive_verdict(state, evidence, ticket_id, effect)
+    if verdict.outcome != "completed":
+        record_unsuccessful_drive(project, ticket_id)
     state.last_drive_verdict = verdict.to_dict()
 
     _warn_absorbed_foreign_changes(project, state, cycle, ticket_id, _hp, _emit)
@@ -396,25 +412,6 @@ def _handle_post_drive_verification(
         drive_status=drive_status,
         evidence=evidence,
         effect=effect,
-        hp=_hp,
-        emit=_emit,
-    )
-    _maybe_emit_llm_evaluation(
-        cycle=cycle,
-        ticket_id=ticket_id,
-        queue_result=queue_result,
-        state=state,
-        verdict=verdict,
-        evidence=evidence,
-        hp=_hp,
-        emit=_emit,
-    )
-    _maybe_emit_improved_prompt(
-        cycle=cycle,
-        ticket_id=ticket_id,
-        queue_result=queue_result,
-        state=state,
-        verdict=verdict,
         hp=_hp,
         emit=_emit,
     )

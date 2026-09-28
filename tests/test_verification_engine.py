@@ -16,6 +16,7 @@ from koru.autonomy.verification_engine import (
     _extract_leading_int,
     assess_verdict,
     collect_chat_evidence,
+    collect_evidence,
     collect_git_evidence,
     collect_test_evidence,
     take_snapshot,
@@ -146,14 +147,14 @@ class TestCollectChatEvidence:
 
 
 class TestAssessVerdict:
-    def test_completed_with_git_and_tests(self):
+    def test_git_chat_and_health_are_not_completion_receipts(self):
         evidence = Evidence(
             git=GitEvidence(files_changed=3, insertions=50, deletions=10),
             tests=TestEvidence(status="ok"),
             chat=ChatEvidence(has_message_sent=True, has_session_ended=True),
         )
         v = assess_verdict(evidence, ticket_id="T-1")
-        assert v.outcome == "completed"
+        assert v.outcome == "in_progress"
         assert v.confidence >= 0.6
         assert v.ticket_id == "T-1"
 
@@ -174,7 +175,7 @@ class TestAssessVerdict:
             chat=ChatEvidence(has_message_sent=True),
         )
         v = assess_verdict(evidence)
-        assert v.outcome in {"in_progress", "completed", "degraded"}
+        assert v.outcome == "degraded"
         assert "failing" in v.reason
 
     def test_in_progress_partial(self):
@@ -246,3 +247,82 @@ class TestVerdictSerialization:
         assert d["outcome"] == "completed"
         assert d["confidence"] == 0.8
         assert d["ticket_id"] == "T-1"
+
+
+def _git(project, *args):
+    result = subprocess.run(["git", *args], cwd=project, capture_output=True, text=True, check=True)
+    return result.stdout
+
+
+def _real_project(tmp_path):
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "config", "user.email", "test@example.invalid")
+    _git(tmp_path, "config", "user.name", "Test")
+    (tmp_path / "source.py").write_text("value = 1\n")
+    _git(tmp_path, "add", "source.py")
+    _git(tmp_path, "commit", "-qm", "initial")
+    return tmp_path
+
+
+def test_dirty_unchanged_not_ascribed_but_dirty_edit_is_observed(tmp_path):
+    project = _real_project(tmp_path)
+    (project / "source.py").write_text("value = 2\n")
+    before = take_snapshot(project)
+    assert collect_evidence(project, before=before).git.files_changed == 0
+    (project / "source.py").write_text("value = 3\n")
+    after = collect_evidence(project, before=before).git
+    assert after.observed and after.files_changed == 1
+    assert _git(project, "rev-parse", "HEAD").strip() == before.git_head
+
+
+def test_untracked_stage_and_commit_count_one_path_each(tmp_path):
+    project = _real_project(tmp_path)
+    before = take_snapshot(project)
+    path = project / "new file\nname.py"
+    path.write_text("value = 1\n")
+    assert collect_evidence(project, before=before).git.files_changed == 1
+    _git(project, "add", path.name)
+    assert collect_evidence(project, before=before).git.files_changed == 1
+    _git(project, "commit", "-qm", "new source")
+    assert collect_evidence(project, before=before).git.files_changed == 1
+    assert collect_evidence(project, before=take_snapshot(project)).git.files_changed == 0
+
+
+def test_snapshot_survives_cycle_serialization_and_detects_deletion(tmp_path):
+    from koru.autonomy.cycle.cycle_post_drive import _snapshot_before_drive
+    from koru.autonomy.state import AutoloopState
+    project = _real_project(tmp_path)
+    state = AutoloopState()
+    state.last_drive_snapshot = take_snapshot(project).to_dict()
+    (project / "source.py").unlink()
+    assert collect_evidence(project, before=_snapshot_before_drive(state)).git.files_changed == 1
+
+
+def test_unobserved_git_is_unknown_even_with_positive_health_and_chat(tmp_path):
+    before = Snapshot(git_head="legacy")
+    evidence = collect_evidence(tmp_path, before=before)
+    assert not evidence.git.observed
+    assert assess_verdict(evidence).outcome == "unknown"
+    before = take_snapshot(tmp_path)
+    assert before.workspace_fingerprints is None
+    assert not collect_evidence(tmp_path, before=before).git.observed
+
+
+def test_symlink_target_and_mode_change_without_following_link(tmp_path):
+    project = _real_project(tmp_path)
+    link = project / "link"
+    link.symlink_to("missing-target")
+    before = take_snapshot(project)
+    assert before.workspace_fingerprints is not None
+    link.unlink()
+    link.symlink_to("different-missing-target")
+    (project / "source.py").chmod(0o755)
+    assert collect_evidence(project, before=before).git.files_changed == 2
+
+
+def test_verification_receipt_required_and_failed_tests_veto_it():
+    evidence = Evidence(git=GitEvidence(files_changed=1), tests=TestEvidence(status="ok"),
+                        verification_passed=True)
+    assert assess_verdict(evidence).outcome == "completed"
+    from dataclasses import replace
+    assert assess_verdict(replace(evidence, tests=TestEvidence(status="failed"))).outcome == "degraded"

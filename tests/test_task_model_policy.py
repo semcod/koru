@@ -291,3 +291,16 @@ def test_small_task_claude_code_adapter(tmp_path, monkeypatch):
     assert drive.call_args.kwargs["model"] == "zai/glm-5.3-flash"
     assert result.model == "zai/glm-5.3-flash"
 
+
+
+def test_actual_executor_fields_are_independent_and_secret_free(tmp_path):
+    drive = Mock(return_value={"ok": True, "client_id": "aider", "provider": "google",
+                               "model": "openai/gemini-3.8", "stdout": "private response"})
+    reply = drive_with_model_policy(drive, project=tmp_path, client_id="claude-code",
+                                    explicit_model="zai/glm-5.3", task={"id": "PLF-099"})
+    receipt = reply["model_routing"]
+    assert receipt["client"] == "claude-code" and receipt["requested_model"] == "zai/glm-5.3"
+    assert receipt["actual_client"] == "aider" and receipt["actual_provider"] == "google"
+    assert receipt["actual_model"] == "openai/gemini-3.8"
+    text = (tmp_path / ".planfile/.koru/model-routing.jsonl").read_text()
+    assert "private response" not in text

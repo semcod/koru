@@ -82,7 +82,7 @@ class TestDriveEffectPayload:
             drive_status="ok",
         )
         assert effect["ticket_after"] == "-"
-        assert effect["work_applied"] is True  # not ticket_still_waiting -> True
+        assert effect["work_applied"] is False  # Missing ticket is not execution evidence.
 
 
 class TestSubmittedButNoEffect:
