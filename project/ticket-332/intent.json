@@ -1,0 +1,92 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-332",
+  "summary": "Optimize tool execution latency for redup regix and planfile sdk",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-332/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/ci/gates.py",
+    "src/koru/queue/planfile_sdk.py",
+    "src/koru/redup_integration.py",
+    "tests/test_ci_pipeline.py",
+    "tests/test_planfile_sdk.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "632ac25d48fef5bc7d02dafc298a2fe21c0781ee",
+    "targetBranch": "main",
+    "outcome": "Accelerate quality gate and queue lifecycle performance by switching redup to fast incremental diff scanning, regix to diff-scoped review, and eliminating redundant CLI subprocess readbacks in PlanfileClient SDK.",
+    "nonGoals": [
+      "Modify protected merge policies or release gates",
+      "Remove full-suite publication verification in CI"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add redup_gate_command using --changed-only --incremental in git repos, use regix review --workdir <project> HEAD local with config detection, and default KORU_PLANFILE_SDK_VERIFY to disabled.",
+      "components": [
+        {
+          "name": "ci-gates",
+          "paths": [
+            "src/koru/ci/gates.py",
+            "src/koru/redup_integration.py",
+            "tests/test_ci_pipeline.py"
+          ]
+        },
+        {
+          "name": "planfile-sdk",
+          "paths": [
+            "src/koru/queue/planfile_sdk.py",
+            "tests/test_planfile_sdk.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the material ticket commit cleanly."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_ci_pipeline.py tests/test_planfile_sdk.py -q"
+        ],
+        "evidence": "Fast redup gate scanning, regix review on diff, and disabled parity default tests pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors, 0 warnings."
+      }
+    ]
+  }
+}
