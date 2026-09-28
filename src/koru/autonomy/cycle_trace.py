@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -137,28 +138,64 @@ def record_decision_trace(
     append_ticket_markdown_log(project, waiting_ticket, record)
 
 
+def find_ticket_dir(project: Path, ticket_id: str) -> Path | None:
+    """Resolve a canonical wellmanifest project/ticket-* directory for a given ticket identifier.
+
+    Handles ticket identifiers such as:
+      - 'PLF-031' or 'plf-031' -> matches 'project/ticket-031' or 'project/ticket-31'
+      - 'ticket-344' -> matches 'project/ticket-344' or 'project/ticket-344--slug'
+      - '31' -> matches 'project/ticket-031' or 'project/ticket-31'
+    Returns None if project does not contain a wellmanifest `project/` directory or ticket is unmapped.
+    """
+    if not ticket_id or ticket_id == "-":
+        return None
+    project_dir = project / "project"
+    if not project_dir.is_dir():
+        return None
+
+    raw = ticket_id.strip().lower()
+    candidates: list[str] = []
+    if raw.startswith("plf-"):
+        num = raw.removeprefix("plf-")
+        candidates.extend([f"ticket-{num.zfill(3)}", f"ticket-{num}"])
+        try:
+            candidates.append(f"ticket-{int(num)}")
+        except ValueError:
+            pass
+    elif raw.startswith("ticket-"):
+        candidates.append(raw)
+        m = re.search(r"\d+", raw)
+        if m:
+            candidates.extend([f"ticket-{m.group(0).zfill(3)}", f"ticket-{int(m.group(0))}"])
+    else:
+        m = re.search(r"\d+", raw)
+        if m:
+            candidates.extend([f"ticket-{m.group(0).zfill(3)}", f"ticket-{m.group(0)}", f"ticket-{int(m.group(0))}"])
+
+    # 1. Exact candidate directory matches first
+    for c in dict.fromkeys(candidates):
+        p = project_dir / c
+        if p.is_dir():
+            return p
+
+    # 2. Slugged matches (ticket-NNN--slug or ticket-NNN-slug)
+    for c in dict.fromkeys(candidates):
+        matches = [d for d in project_dir.glob(f"{c}-*") if d.is_dir()]
+        if matches:
+            return matches[0]
+
+    return None
+
+
 def append_ticket_markdown_log(
     project: Path,
     waiting_ticket: str,
     record: Any,
 ) -> None:
     """Append decision trace to project/ticket-*/koru.log.md with markdown codeblocks."""
-    if not waiting_ticket or waiting_ticket == "-":
+    ticket_dir = find_ticket_dir(project, waiting_ticket)
+    if not ticket_dir:
         return
-
-    # Normalize ticket dir name (e.g. PLF-100 or ticket-344)
-    ticket_slug = waiting_ticket.strip().lower()
-    if not ticket_slug.startswith("ticket-") and not ticket_slug.startswith("plf-"):
-        ticket_slug = f"ticket-{ticket_slug}"
-
-    ticket_dir = project / "project" / ticket_slug
-    if not ticket_dir.is_dir():
-        # Look for matching directory like project/ticket-NNN--slug
-        matches = list(project.glob(f"project/{ticket_slug}*"))
-        if matches and matches[0].is_dir():
-            ticket_dir = matches[0]
-        else:
-            return
 
     log_file = ticket_dir / "koru.log.md"
     timestamp = getattr(record, "at", "")
@@ -180,9 +217,17 @@ def append_ticket_markdown_log(
         content_blocks.append(f"next: {record.next_step}\n")
     content_blocks.append("```\n\n")
 
+    # Add alternating NL/DSL trace block
+    content_blocks.extend([
+        "```yaml\n",
+        f'NL: "Cykl {cycle}: {record.decided} ({record.observed})"\n',
+        f'DSL: "action: {record.action} [evidence: {record.evidence}]"\n',
+        "```\n\n",
+    ])
+
     try:
         if not log_file.exists():
-            header = f"# Koru Autonomy Log: `{waiting_ticket}`\n\n"
+            header = f"# Koru Autonomy Log: `{ticket_dir.name}`\n\n"
             log_file.write_text(header + "".join(content_blocks), encoding="utf-8")
         else:
             with log_file.open("a", encoding="utf-8") as f:
@@ -191,4 +236,59 @@ def append_ticket_markdown_log(
         pass
 
 
-__all__ = ["append_ticket_markdown_log", "decision_next_step_hint", "record_decision_trace"]
+def append_queue_ticket_markdown_log(
+    project: Path,
+    result: Any,
+) -> None:
+    """Append queue execution event to project/ticket-*/koru.log.md if project has wellmanifest layout."""
+    ticket_id = getattr(result, "ticket_id", None)
+    if not ticket_id:
+        return
+    ticket_dir = find_ticket_dir(project, str(ticket_id))
+    if not ticket_dir:
+        return
+
+    log_file = ticket_dir / "koru.log.md"
+    from datetime import UTC, datetime
+
+    timestamp = datetime.now(UTC).replace(microsecond=0).isoformat()
+    status = getattr(result, "status", "unknown")
+    executor = getattr(result, "executor_kind", "unknown")
+    exit_code = getattr(result, "exit_code", 0)
+    message = getattr(result, "message", "")
+
+    content_blocks = [
+        f"### Queue Run (`{timestamp}`)\n\n",
+        "```yaml\n",
+        f"uri: koru://queue/task/{ticket_id}/{status}\n",
+        f"ticket: {ticket_id}\n",
+        f"executor: {executor}\n",
+        f"status: {status}\n",
+        f"exit_code: {exit_code}\n",
+        "```\n\n",
+    ]
+    if message:
+        content_blocks.extend([
+            "```text\n",
+            f"{message}\n",
+            "```\n\n",
+        ])
+
+    try:
+        if not log_file.exists():
+            header = f"# Koru Autonomy Log: `{ticket_dir.name}`\n\n"
+            log_file.write_text(header + "".join(content_blocks), encoding="utf-8")
+        else:
+            with log_file.open("a", encoding="utf-8") as f:
+                f.write("".join(content_blocks))
+    except OSError:
+        pass
+
+
+__all__ = [
+    "append_queue_ticket_markdown_log",
+    "append_ticket_markdown_log",
+    "decision_next_step_hint",
+    "find_ticket_dir",
+    "record_decision_trace",
+]

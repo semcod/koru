@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-346",
+  "summary": "Persist Markdown logs for wellmanifest project tickets and queue execution",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-346/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/cycle_trace.py",
+    "src/koru/bounded_contexts/planfile_queue/application.py",
+    "tests/test_cycle_trace.py",
+    "tests/test_queue_log_markdown.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2b768497ef7b0464d9d8b91ae41097620915fa9c",
+    "targetBranch": "main",
+    "outcome": "Persist Markdown formatted logs for projects with wellmanifest layout during queue execution and autonomy cycles.",
+    "nonGoals": [
+      "Modifying tickets on projects without wellmanifest layout"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Implement find_ticket_dir and append_queue_ticket_markdown_log to write structured markdown codeblocks whenever a ticket is executed.",
+      "components": [
+        {
+          "name": "autonomy-trace",
+          "paths": [
+            "src/koru/autonomy/cycle_trace.py",
+            "tests/test_cycle_trace.py"
+          ]
+        },
+        {
+          "name": "queue-application",
+          "paths": [
+            "src/koru/bounded_contexts/planfile_queue/application.py",
+            "tests/test_queue_log_markdown.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit cleanly."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_cycle_trace.py tests/test_queue_log_markdown.py -q"
+        ],
+        "evidence": "Cycle trace and queue markdown logging tests pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base 2b768497ef7b0464d9d8b91ae41097620915fa9c"
+        ],
+        "evidence": "Governance check passes with 0 errors, 0 warnings."
+      }
+    ]
+  }
+}
