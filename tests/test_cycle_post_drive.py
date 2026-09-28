@@ -8,6 +8,11 @@ wires these together and calls out to verification_engine/planning_llm.
 
 from __future__ import annotations
 
+import sqlite3
+from unittest.mock import Mock
+
+import pytest
+
 from koru.autonomy.cycle.cycle_post_drive import (
     _drive_effect_payload,
     _emit_drive_effect_if_needed,
@@ -318,3 +323,84 @@ class TestMaybeEmitImprovedPrompt:
         assert len(hp_calls) == 1
         assert emit_calls[0][0] == "LlmImprovedPrompt"
         assert emit_calls[0][1]["improved_length"] == len("a much better prompt")
+
+
+@pytest.mark.parametrize("ok,action,expected", [
+    (True, "done_verified", "completed"),
+    (True, "skipped", "in_progress"),
+    (False, "noted_unsuccessful", "degraded"),
+])
+def test_result_and_budget_follow_executed_ticket_when_queue_advances(
+    tmp_path, monkeypatch, ok, action, expected,
+):
+    import koru.autonomy.cycle.cycle_drive_outcome as outcome
+    import koru.autonomy.cycle.cycle_orchestrator as orchestrator
+    import koru.autonomy.cycle.cycle_post_drive as post
+    import koru.autonomy.shell_drive_finalize as finalize
+    from koru.autonomy.verification_engine import TestEvidence
+
+    monkeypatch.setattr(outcome, "record_submit_drive_outcome", lambda *a, **k: None)
+    monkeypatch.setattr(outcome, "risky_paste_winner", lambda *a: None)
+    monkeypatch.setattr(outcome, "_log_autopilot_result", lambda *a: None)
+    monkeypatch.setattr(orchestrator, "_emit_autopilot_observability_outcome", lambda **k: None)
+    monkeypatch.setattr("koru.agent_availability.learn_unavailability_from_reply", lambda *a: None)
+    finalizer = Mock(return_value=action)
+    monkeypatch.setattr(finalize, "finalize_shell_drive_ticket", finalizer)
+    monkeypatch.setattr(finalize, "note_provider_exhaustion", finalizer)
+    monkeypatch.setattr(post, "_collect_post_drive_evidence", lambda *a: Evidence(
+        git=GitEvidence(files_changed=1), tests=TestEvidence(status="ok"),
+    ))
+    state = AutoloopState(last_driven_ticket_id="OLD-SUCCESS")
+    before = QueueLoopResult(1, [], [], ["B", "A"], "waiting_input", last_ticket_id="A")
+    status = "ok" if ok else "failed(provider)"
+    outcome.apply_autopilot_drive_outcome(
+        project=tmp_path, state=state, queue_result=before, reply={"backend": "test"},
+        ok=ok, decision_kind="ticket_prompt", idle_prompt_kind=None,
+        autopilot_status=status, autopilot_ide="test", cycle=1,
+        cycle_telemetry={}, _hp=lambda *a: None,
+    )
+    assert finalizer.call_args.kwargs["ticket_id"] == "A"
+    after = QueueLoopResult(1, ["A"] if ok else [], [] if ok else ["A"], ["B"],
+                            "waiting_input", last_ticket_id="B")
+    events = []
+    post._handle_post_drive_verification(
+        tmp_path, state, 1, after, status, None,
+        lambda *a: None, lambda name, data: events.append((name, data)),
+    )
+    assert state.last_drive_verdict["ticket_id"] == "A"
+    assert state.last_drive_verdict["outcome"] == expected
+    assert state.last_driven_ticket_for_count == "A"
+    if ok and action == "done_verified":
+        assert state.last_drive_action_plan["ticket_id"] == "A"
+        assert state.last_drive_action_plan["action"] == "close_ticket"
+    database = tmp_path / ".planfile/.koru/drive-budget.sqlite"
+    if expected == "completed":
+        assert not database.exists()
+    else:
+        with sqlite3.connect(database) as db:
+            rows = db.execute("SELECT ticket, count FROM failures").fetchall()
+        assert rows == [("A", 1)]
+    event = next(data for name, data in events if name == "DriveVerdict")
+    assert event["ticket_id"] == "A"
+
+
+def test_ticketless_drive_cannot_charge_a_later_queue_ticket(tmp_path, monkeypatch):
+    import koru.autonomy.cycle.cycle_post_drive as post
+
+    monkeypatch.setattr(post, "_collect_post_drive_evidence", lambda *a: Evidence())
+    state = AutoloopState(last_drive_ticket_id="", last_driven_ticket_id="OLD-SUCCESS")
+    queue = QueueLoopResult(1, [], [], ["B"], "waiting_input", last_ticket_id="B")
+    post._handle_post_drive_verification(
+        tmp_path, state, 1, queue, "failed(provider)", None, lambda *a: None, lambda *a: None,
+    )
+    assert state.last_drive_verdict["ticket_id"] == ""
+    assert not (tmp_path / ".planfile/.koru/drive-budget.sqlite").exists()
+
+
+def test_snapshot_clears_previous_cycle_identity_and_receipt(tmp_path):
+    import koru.autonomy.cycle.cycle_post_drive as post
+
+    state = AutoloopState(last_drive_ticket_id="A", last_verified_drive_ticket_id="A")
+    post._take_pre_drive_snapshot(tmp_path, state, None)
+    assert state.last_drive_ticket_id is None
+    assert state.last_verified_drive_ticket_id == ""
