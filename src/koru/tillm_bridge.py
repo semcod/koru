@@ -206,6 +206,34 @@ def drive_shell_chat(
     execute_profile: str = "default",
     timeout_seconds: float | None = None,
 ) -> dict[str, object]:
+    if not execute:
+        return {
+            "ok": True,
+            "backend": "tillm_shell",
+            "client_id": client_id,
+            "type": "preview",
+            "dry_run": True,
+            "executed": False,
+            "prompt": prompt,
+            "model": _normalize_tillm_model(model),
+        }
+    from koru.shell_execution_guard import (
+        ShellExecutionBlocked,
+        require_shell_execution_workspace,
+    )
+
+    try:
+        require_shell_execution_workspace(project)
+    except ShellExecutionBlocked as exc:
+        return {
+            "ok": False,
+            "backend": "tillm_shell",
+            "client_id": client_id,
+            "type": "blocked",
+            "diagnostic_code": "shell_workspace_not_admitted",
+            "executed": False,
+            "message": str(exc),
+        }
     ensure_local_tillm_path()
     from tillm.compat import drive_koru_chat
 

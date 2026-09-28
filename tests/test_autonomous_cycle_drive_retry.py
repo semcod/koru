@@ -171,9 +171,10 @@ class ShellClientDriveTests(unittest.TestCase):
             captured.update(kwargs)
             return {"ok": True, "backend": "tillm_shell", "client_id": kwargs["client_id"]}
 
-        with mock.patch(
-            "koru.tillm_bridge.drive_shell_chat", side_effect=fake_drive_shell_chat
-        ), mock.patch.dict(os.environ, {"KORU_TILLM_MODEL": "sonnet-5"}):
+        with (
+            mock.patch("koru.tillm_bridge.drive_shell_chat", side_effect=fake_drive_shell_chat),
+            mock.patch.dict(os.environ, {"KORU_TILLM_MODEL": "sonnet-5"}),
+        ):
             reply, ok = _invoke_client_autopilot_drive(
                 None,
                 prompt="continue with the next ticket",
@@ -228,17 +229,18 @@ class ShellDriveEditorRescueTests(unittest.TestCase):
         running = [mock.Mock(id="vscode")]
         rescued_reply = {"ok": True, "backend": "gillm"}
 
-        with mock.patch(
-            "koru.tillm_bridge.drive_shell_chat",
-            side_effect=ImportError("No module named 'tillm'"),
-        ), mock.patch(
-            "koru.tillm_bridge.shell_agent_available", return_value=False
-        ), mock.patch(
-            "koruide.ide.detect_running_ides", return_value=running
-        ), mock.patch(
-            "koru.autonomous_cycle_drive_retry._post_drive_fallback_chain",
-            return_value=(rescued_reply, True),
-        ) as post_chain:
+        with (
+            mock.patch(
+                "koru.tillm_bridge.drive_shell_chat",
+                side_effect=ImportError("No module named 'tillm'"),
+            ),
+            mock.patch("koru.tillm_bridge.shell_agent_available", return_value=False),
+            mock.patch("koruide.ide.detect_running_ides", return_value=running),
+            mock.patch(
+                "koru.autonomous_cycle_drive_retry._post_drive_fallback_chain",
+                return_value=(rescued_reply, True),
+            ) as post_chain,
+        ):
             reply, ok = self._invoke_failing_shell_drive()
 
         self.assertTrue(ok)
@@ -248,13 +250,11 @@ class ShellDriveEditorRescueTests(unittest.TestCase):
     def test_working_cli_failure_is_never_masked(self) -> None:
         failure = {"ok": False, "backend": "tillm_shell", "message": "tool error"}
 
-        with mock.patch(
-            "koru.tillm_bridge.drive_shell_chat", return_value=dict(failure)
-        ), mock.patch(
-            "koru.tillm_bridge.shell_agent_available", return_value=True
-        ), mock.patch(
-            "koru.autonomous_cycle_drive_retry._post_drive_fallback_chain"
-        ) as post_chain:
+        with (
+            mock.patch("koru.tillm_bridge.drive_shell_chat", return_value=dict(failure)),
+            mock.patch("koru.tillm_bridge.shell_agent_available", return_value=True),
+            mock.patch("koru.autonomous_cycle_drive_retry._post_drive_fallback_chain") as post_chain,
+        ):
             reply, ok = self._invoke_failing_shell_drive()
 
         self.assertFalse(ok)
@@ -262,16 +262,15 @@ class ShellDriveEditorRescueTests(unittest.TestCase):
         post_chain.assert_not_called()
 
     def test_no_editor_running_returns_original_failure(self) -> None:
-        with mock.patch(
-            "koru.tillm_bridge.drive_shell_chat",
-            side_effect=ImportError("No module named 'tillm'"),
-        ), mock.patch(
-            "koru.tillm_bridge.shell_agent_available", return_value=False
-        ), mock.patch(
-            "koruide.ide.detect_running_ides", return_value=[]
-        ), mock.patch(
-            "koru.autonomous_cycle_drive_retry._post_drive_fallback_chain"
-        ) as post_chain:
+        with (
+            mock.patch(
+                "koru.tillm_bridge.drive_shell_chat",
+                side_effect=ImportError("No module named 'tillm'"),
+            ),
+            mock.patch("koru.tillm_bridge.shell_agent_available", return_value=False),
+            mock.patch("koruide.ide.detect_running_ides", return_value=[]),
+            mock.patch("koru.autonomous_cycle_drive_retry._post_drive_fallback_chain") as post_chain,
+        ):
             reply, ok = self._invoke_failing_shell_drive()
 
         self.assertFalse(ok)
@@ -281,3 +280,35 @@ class ShellDriveEditorRescueTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_shell_preview_never_invokes_policy_or_editor_rescue():
+    from koru.autonomous_cycle_drive_retry import _invoke_client_autopilot_drive
+
+    with (
+        mock.patch("koru.task_model_policy.drive_with_model_policy") as policy,
+        mock.patch("koru.tillm_bridge.shell_agent_available") as available,
+    ):
+        reply, submitted = _invoke_client_autopilot_drive(
+            None, prompt="edit", submit=False, autopilot_ide="aider", require_plugin=False
+        )
+    policy.assert_not_called()
+    available.assert_not_called()
+    assert not submitted
+    assert reply["executed"] is False
+
+
+def test_shell_admission_refusal_cannot_escape_to_editor():
+    from koru.autonomous_cycle_drive_retry import _invoke_client_autopilot_drive
+
+    blocked = {"ok": False, "diagnostic_code": "shell_workspace_not_admitted", "executed": False}
+    with (
+        mock.patch("koru.tillm_bridge.drive_shell_chat", return_value=blocked),
+        mock.patch("koru.tillm_bridge.shell_agent_available", return_value=False) as available,
+    ):
+        reply, submitted = _invoke_client_autopilot_drive(
+            None, prompt="edit", submit=True, autopilot_ide="aider", require_plugin=False
+        )
+    available.assert_not_called()
+    assert not submitted
+    assert reply["diagnostic_code"] == "shell_workspace_not_admitted"
