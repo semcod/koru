@@ -9,7 +9,11 @@ from pathlib import Path
 from koru.ticket_command.execution import propose_and_apply, snapshot, verify
 from koru.ticket_command.profile import command, git, load_profile, no_symlinks, parse_issue
 from koru.ticket_command.publication import publish
-from koru.ticket_command.workspace import preflight_workspace, prepare_workspace
+from koru.ticket_command.workspace import (
+    WorkspaceAdmissionRequired,
+    preflight_workspace,
+    prepare_workspace,
+)
 
 
 def _effect_guard(profile: dict, profiles: Path) -> None:
@@ -127,13 +131,15 @@ def _init_state_folder(profile: dict) -> tuple[Path, Path, Path]:
     return folder, path, lock
 
 
-def _check_prior_state(
-    state: dict, profile: dict, profiles: Path, folder: Path, path: Path, backend
-) -> dict | None:
+def _check_prior_state(state: dict, profile: dict, profiles: Path, folder: Path, path: Path, backend) -> dict | None:
     if state["profile_sha256"] != profile["profile_sha256"]:
         raise ValueError("local execution profile changed; reconcile the existing run first")
     if state["state"] == "reported":
         return {k: v for k, v in state.items() if k not in {"issue", "baseline", "applied_snapshot"}}
+    if profile["delivery"] == "validator" and state["state"] in {"prepared", "applied", "committed"}:
+        raise WorkspaceAdmissionRequired(
+            "existing governed execution needs protected controller admission; preserve its workspace"
+        )
     if state["state"] == "blocked":
         if not state.get("failure_comment") and state.get("planfile_ticket"):
             _effect_guard(profile, profiles)
@@ -160,9 +166,22 @@ def _prepare_ticket_state(profile: dict, state: dict, path: Path, folder: Path, 
         raise RuntimeError("install Planfile with native scoped ticket-comment support first") from exc
 
     planfile_ticket, issue = _intake(profile, folder, backend)
-    state.update(state="preparing")
+    state.update(state="preparing", planfile_ticket=planfile_ticket, issue=issue)
     _save(path, state)
-    workspace, ticket, base = prepare_workspace(profile)
+
+    def record_allocation(allocation: dict) -> None:
+        state.update(allocation=allocation)
+        _save(path, state)
+
+    try:
+        if profile["delivery"] == "validator":
+            workspace, ticket, base = prepare_workspace(profile, record_allocation=record_allocation)
+        else:
+            workspace, ticket, base = prepare_workspace(profile)
+    except WorkspaceAdmissionRequired:
+        state["preparation_blocker"] = "controller_admission_required"
+        _save(path, state)
+        raise
     state.update(
         state="prepared",
         workspace=str(workspace),
@@ -202,9 +221,7 @@ def _execute_ticket_step(
         raise
 
 
-def _commit_ticket_step(
-    profile: dict, profiles: Path, state: dict, path: Path, workspace: Path
-) -> None:
+def _commit_ticket_step(profile: dict, profiles: Path, state: dict, path: Path, workspace: Path) -> None:
     if state["state"] != "applied":
         return
     _effect_guard(profile, profiles)
@@ -231,9 +248,7 @@ def _commit_ticket_step(
     _save(path, state)
 
 
-def _publish_and_report_steps(
-    profile: dict, profiles: Path, state: dict, path: Path, folder: Path, backend
-) -> None:
+def _publish_and_report_steps(profile: dict, profiles: Path, state: dict, path: Path, folder: Path, backend) -> None:
     if state["state"] == "committed":
         _effect_guard(profile, profiles)
         state.update(publish(profile, state, folder))
