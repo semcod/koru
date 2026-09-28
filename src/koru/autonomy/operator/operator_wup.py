@@ -6,7 +6,6 @@ import os
 import shlex
 import shutil
 import subprocess
-import sys
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -22,7 +21,9 @@ from koru.topology import is_component_enabled, is_pipeline_enabled
 
 
 def _wup_stdio_info(msg: str, *, fmt: str) -> None:
-    print(msg, file=sys.stderr if fmt == "jsonl" else sys.stdout)
+    from koru.activity_log import activity_info
+
+    activity_info(msg, fmt=fmt)
 
 
 def _wup_topology_gate(project: Path, key: str, *, fallback: bool, enabled: bool) -> bool:

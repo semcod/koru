@@ -192,20 +192,22 @@ def _resolve_shell_client(args: Any, lane: str | None, *, project: Path) -> str 
     if not shell_client:
         shell_client = _shell_client_from_environ()
         if shell_client:
-            print(
-                f"[koru] using shell client '{shell_client}' from "
-                "KORU_TILLM_CLIENT/URIRUN_KORU_IDE.",
-                file=sys.stderr,
+            from koru.activity_log import activity_info
+
+            activity_info(
+                f"koru config: using shell client '{shell_client}' from "
+                "KORU_TILLM_CLIENT/URIRUN_KORU_IDE."
             )
     if not shell_client:
         shell_client = _autodetect_shell_client_for_auto(
             args.autopilot_ide, lane, tillm_available=tillm_available, project=project
         )
         if shell_client:
-            print(
-                f"[koru] no editor IDE detected; auto-selected shell client "
-                f"'{shell_client}' (tillm). Pass --ide to override.",
-                file=sys.stderr,
+            from koru.activity_log import activity_info
+
+            activity_info(
+                f"koru config: no editor IDE detected; auto-selected shell client "
+                f"'{shell_client}' (tillm). Pass --ide to override."
             )
     return shell_client
 

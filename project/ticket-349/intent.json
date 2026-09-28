@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-349",
+  "summary": "refine action URI slugs, multiline YAML formatting, and route operator logs to activity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-349/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/activity_log.py",
+    "src/koru/autonomy/operator/operator_wup.py",
+    "src/koru/autonomy/cycle/cycle_config.py",
+    "tests/test_activity_log.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "03736494a642c611eea40ac3070e466da076c7ff",
+    "targetBranch": "main",
+    "outcome": "Refine action URI slug generation to prevent path mangling, format multiline NL/DSL blocks with proper YAML indentation, and route operator/wup prints through activity logger.",
+    "nonGoals": [
+      "Rewriting WUP watcher backend",
+      "Changing CLI flag interface"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Enhance _action_slug in activity_log.py to ignore filepaths and strip prepositions, format multiline messages as indented YAML block scalars, and route _wup_stdio_info and shell client notices through activity_info.",
+      "components": [
+        {
+          "name": "telemetry",
+          "paths": [
+            "src/koru/activity_log.py",
+            "tests/test_activity_log.py"
+          ]
+        },
+        {
+          "name": "operator",
+          "paths": [
+            "src/koru/autonomy/operator/operator_wup.py",
+            "src/koru/autonomy/cycle/cycle_config.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-349 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_activity_log.py"
+        ],
+        "evidence": "All activity log tests pass with clean slugs and multiline formatting."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base 03736494a642c611eea40ac3070e466da076c7ff"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}

@@ -254,16 +254,46 @@ def _category_slug(category: str) -> str:
     return cat or "activity"
 
 
+def _clean_slug_token(word: str) -> str:
+    cleaned = re.sub(r"[^\w-]", "", word).strip("-_").replace("_", "-")
+    return cleaned.lower()
+
+
 def _action_slug(message: str, data: dict[str, Any] | None = None) -> str:
     if data and "action" in data:
         slug = str(data["action"]).lower().strip()
         slug = re.sub(r"[^\w.-]+", "-", slug).strip("-")
         if slug:
             return slug
-    first_part = re.split(r"[:\-—=→>«]", message, maxsplit=1)[0].strip()
-    slug = re.sub(r"[^\w\s-]", "", first_part).strip()
-    words = slug.split()[:4]
-    slug_str = "-".join(words).lower()
+
+    msg = re.sub(r"^\[(?:WARN|!|i|INFO|OK)\]\s*", "", message.strip(), flags=re.IGNORECASE)
+    msg = re.sub(r"^[—\-*]{2,}\s*", "", msg)
+
+    if re.match(r"^koru\s+\d+\.\d+", msg, re.IGNORECASE):
+        return "version"
+
+    if msg.startswith("project ") and ("/" in msg or "~" in msg):
+        return "project-root"
+
+    first_part = re.split(r"[:=→«]", msg, maxsplit=1)[0].strip()
+    if "->" in first_part:
+        first_part = first_part.split("->", 1)[0].strip()
+
+    words: list[str] = []
+    for token in first_part.split():
+        if "/" in token or token.startswith("~") or token.startswith("http"):
+            break
+        cleaned = _clean_slug_token(token)
+        if cleaned:
+            words.append(cleaned)
+        if len(words) >= 4:
+            break
+
+    prepositions = {"on", "at", "for", "to", "in", "with", "by", "from", "of", "into", "about"}
+    while words and words[-1] in prepositions:
+        words.pop()
+
+    slug_str = "-".join(words)
     return slug_str or "event"
 
 
@@ -289,33 +319,46 @@ def format_activity_uri_trace(
     blue = _ANSI_BLUE if color else ""
     reset = _ANSI_RESET if color else ""
 
+    clean_msg = message.strip()
     cat_slug = _category_slug(category)
-    act_slug = _action_slug(message, data)
+    act_slug = _action_slug(clean_msg, data)
     uri = f"koru://{cat_slug}/{act_slug}"
+
+    if "\n" in clean_msg:
+        nl_body = "\n" + "\n".join(f"    {line}" for line in clean_msg.splitlines())
+    else:
+        nl_body = f"  {clean_msg}"
 
     lines = [
         f"{magenta}uri:{reset} {cyan}{uri}{reset}",
-        f"  {yellow}NL:{reset}  {green}{message}{reset}",
+        f"  {yellow}NL:{reset}{green}{nl_body}{reset}",
     ]
 
     dsl_parts: list[str] = []
     if ts:
         dsl_parts.append(f"[{ts}]")
     dsl_parts.append(f"koru ▸ {category.upper()}:")
-    dsl_parts.append(_highlight_shell_data(message, enabled=color))
+    dsl_parts.append(_highlight_shell_data(clean_msg, enabled=color))
     if preview:
-        preview_disp = _highlight_shell_data(preview_text(preview), enabled=color)
+        preview_disp = _highlight_shell_data(preview_text(preview.strip()), enabled=color)
         dsl_parts.append(f"«{preview_disp}»")
     if data:
         extras = [f"{k}={v}" for k, v in data.items() if k not in ("action", "project", "ticket_id")]
         if extras:
             dsl_parts.append(" ".join(extras))
 
-    lines.append(f"  {yellow}DSL:{reset} {blue}{' '.join(dsl_parts)}{reset}")
+    raw_dsl = " ".join(dsl_parts)
+    if "\n" in raw_dsl:
+        dsl_body = "\n" + "\n".join(f"    {line}" for line in raw_dsl.splitlines())
+    else:
+        dsl_body = f" {raw_dsl}"
 
-    if preview and preview not in message:
-        lines.append(f"  {yellow}NL:{reset}  {green}  → {preview}{reset}")
-        lines.append(f"  {yellow}DSL:{reset} {blue}  → {preview}{reset}")
+    lines.append(f"  {yellow}DSL:{reset}{blue}{dsl_body}{reset}")
+
+    if preview and preview.strip() not in clean_msg:
+        clean_preview = preview.strip()
+        lines.append(f"  {yellow}NL:{reset}  {green}  → {clean_preview}{reset}")
+        lines.append(f"  {yellow}DSL:{reset} {blue}  → {clean_preview}{reset}")
 
     return lines
 
