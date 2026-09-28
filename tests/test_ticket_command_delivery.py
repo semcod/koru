@@ -1,12 +1,10 @@
 import hashlib
 import json
-from pathlib import Path
 
 import pytest
 
-from koru.ticket_command.profile import git, validator_environment
+from koru.ticket_command.profile import validator_environment
 from koru.ticket_command.publication import publish
-from koru.ticket_command.workspace import prepare_workspace
 
 
 def test_validator_environment_is_pinned_and_never_shell_evaluated(tmp_path):
@@ -216,69 +214,3 @@ def test_created_pull_request_binding_uses_the_raw_listing(tmp_path, monkeypatch
     }
     with pytest.raises(ValueError, match="does not bind the verified head"):
         publish(profile, {"workspace": str(tmp_path), "head": head, "ticket": "ticket-002"}, tmp_path)
-
-
-def test_canonical_worktree_uses_real_git_relative_pointers(tmp_path, monkeypatch):
-    import koru.ticket_command.workspace as module
-
-    root = tmp_path / "project"
-    root.mkdir()
-    git(root, "init", "-b", "main")
-    git(root, "config", "user.name", "Test")
-    git(root, "config", "user.email", "test@example.invalid")
-    git(root, "config", "core.hooksPath", str(tmp_path / "empty-hooks"))
-    (root / "project").mkdir()
-    (root / "scripts").mkdir()
-    (root / ".governance").mkdir()
-    (root / ".gitignore").write_text(".worktrees/\n.subactor/\n")
-    checker = root / ".governance/worktree_path_check.py"
-    checker.write_text("# fixture pinned checker")
-    (root / "scripts/install-agent-hosts.sh").write_text("exit 0\n")
-    git(root, "add", ".")
-    git(root, "commit", "-m", "initial")
-    base = git(root, "rev-parse", "HEAD")
-    git(root, "update-ref", "refs/remotes/origin/main", base)
-    actual_command = module.command
-    actual_git = module.git
-
-    def run(where, args, **kwargs):
-        if "feature-probe" in args:
-            return '{"supported":true}'
-        if "project/new-ticket.sh" in args:
-            ticket = root / "project/ticket-001"
-            ticket.mkdir()
-            (ticket / "README.md").write_text("Managed allocation")
-            return "Successfully scaffolded project/ticket-001"
-        if "plan" in args:
-            return json.dumps(
-                {
-                    "branch": "ticket/001-github-12",
-                    "leasePath": str(root / ".subactor/leases/ticket-001--github-12.json"),
-                    "worktreePath": str(root / ".worktrees/ticket-001--github-12"),
-                }
-            )
-        if "validate" in args:
-            return '{"ok":true}'
-        return actual_command(where, args, **kwargs)
-
-    monkeypatch.setattr(module, "command", run)
-    monkeypatch.setattr(module, "git", lambda where, *args: "" if args[0] == "fetch" else actual_git(where, *args))
-    profile = {
-        "primary": root,
-        "delivery": "validator",
-        "repository": "a/b",
-        "number": 12,
-        "url": "https://github.com/a/b/issues/12",
-        "allowed_paths": ["src/**"],
-        "worktree_checker_sha256": hashlib.sha256(checker.read_bytes()).hexdigest(),
-        "intent": {"workstream": "application"},
-    }
-    workspace, ticket, observed_base = prepare_workspace(profile)
-    assert workspace == root / ".worktrees/ticket-001--github-12"
-    assert ticket == "ticket-001" and observed_base == base
-    assert not (root / "project/ticket-001").exists()
-    assert (root / ".subactor/leases/ticket-001--github-12.json").exists()
-    pointer = (workspace / ".git").read_text().strip().removeprefix("gitdir: ")
-    assert not Path(pointer).is_absolute()
-    backlink = (workspace / pointer / "gitdir").read_text().strip()
-    assert not Path(backlink).is_absolute()

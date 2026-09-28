@@ -1,0 +1,91 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-330",
+  "summary": "Consume canonical allocator workspaces without duplicate creation",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-330/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/ticket_command/workspace.py",
+    "src/koru/ticket_command/service.py",
+    "tests/test_ticket_command_delivery.py",
+    "tests/test_ticket_workspace.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e4af82eea1c49244fe7e08e6b2507ed871e7ec33",
+    "targetBranch": "main",
+    "outcome": "Consume the real Worktrees v5 allocation exactly once, validate its registered canonical workspace, and retain an explicit controller-admission handoff before any implementation edits. Bind failed or interrupted preparation to the original allocation instead of creating duplicate worktrees or fake leases. First bounded slice of PLF-100 / #565.",
+    "nonGoals": [
+      "Implement the protected controller adapter or grant write authority from an allocation lease",
+      "Queue execution and promotion (active ticket-329 owns queue/**)",
+      "Apply or discard PLF-031 stashes; modify main-only exception or protected merge policy"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Read and validate allocator-owned workspace and lease records. Preserve allocation identity in a local run journal. Stop governed execution with a structured admission-required error until independent controller admission is implemented; do not manufacture ownership.",
+      "components": [
+        {
+          "name": "ticket-command",
+          "paths": [
+            "src/koru/ticket_command/**",
+            "tests/test_ticket_command_delivery.py",
+            "tests/test_ticket_workspace.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [
+        {
+          "kind": "component-local-state",
+          "component": "ticket-command",
+          "description": "Add allocation identity and admission blocker to the existing ignored local execution journal; no migration or cross-component ownership transfer."
+        }
+      ],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the material ticket commit; preserve all allocator reservations and worktrees."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_ticket_workspace.py tests/test_ticket_command_delivery.py -q"
+        ],
+        "evidence": "Real managed allocator/checker and Git: single canonical linked allocation, scope and base bindings, no remote fetch or synthetic lease; dirty/invalid/symlink inputs rejected; controller handoff persisted and replay disabled."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base e4af82eea1c49244fe7e08e6b2507ed871e7ec33"
+        ],
+        "evidence": "Managed gate, focused stack checks and independent protected delivery."
+      }
+    ]
+  }
+}
