@@ -23,7 +23,18 @@ def test_dynamic_pipelining_continuous_scheduling(tmp_path: Path) -> None:
     active_tickets: set[str] = set()
     completed_order: list[str] = []
 
-    def fake_next_tickets(project, runner, count=1, queue_name=None, target_ticket_id=None, *, disjoint_files=True, interactive=False, locked_files=None, exclude_ids=None):
+    def fake_next_tickets(
+        project,
+        runner,
+        count=1,
+        queue_name=None,
+        target_ticket_id=None,
+        *,
+        disjoint_files=True,
+        interactive=False,
+        locked_files=None,
+        exclude_ids=None,
+    ):
         locked = set(locked_files or [])
         excluded = set(exclude_ids or []) | active_tickets
 
