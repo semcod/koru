@@ -38,8 +38,8 @@ class GitEvidence:
     """Evidence collected from ``git diff``."""
 
     files_changed: int = 0
-    insertions: int = 0
-    deletions: int = 0
+    insertions: int | None = None
+    deletions: int | None = None
     diff_stat: str = ""
     observed: bool = True
 
@@ -508,8 +508,10 @@ def assess_verdict(
     elif not evidence.git.observed:
         outcome = "unknown"
         reasons.append("git: observation unavailable")
-    elif score >= 0.6 and evidence.verification_passed:
+    elif evidence.verification_passed:
         outcome = "completed"
+        score = 1.0
+        reasons.append("verification: matching drive passed")
     elif score >= 0.3:
         outcome = "in_progress"
     elif evidence.git.files_changed == 0 and not evidence.chat.has_message_sent:

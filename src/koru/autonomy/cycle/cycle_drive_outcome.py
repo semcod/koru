@@ -77,6 +77,9 @@ def apply_autopilot_drive_outcome(
     autopilot_backend = str(reply.get("backend")) if reply.get("backend") is not None else None
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
     ticket_id = "" if waiting_ticket == "-" else waiting_ticket
+    # Capture before finalization can resolve A and advance the queue to B.
+    # Failed submissions also belong to this drive, not the last successful one.
+    state.last_drive_ticket_id = ticket_id
 
     if ok:
         state.last_message_sent_ts = time.time()

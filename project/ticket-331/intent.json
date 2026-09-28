@@ -1,0 +1,106 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-331",
+  "summary": "Bind autonomous drive evidence to executed ticket and finish retry regressions",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-331/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/cycle/cycle_drive_outcome.py",
+    "src/koru/autonomy/cycle/cycle_post_drive.py",
+    "src/koru/autonomy/state.py",
+    "src/koru/autonomy/verification_engine.py",
+    "tests/test_autonomous_cycle_drive_outcome.py",
+    "tests/test_autonomous_retry_guard.py",
+    "tests/test_cycle_post_drive.py",
+    "tests/test_verification_engine.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "3173e652dfbf2dff431ec5bdbecdff1ecd902686",
+    "targetBranch": "main",
+    "outcome": "Complete the accepted PLF099 incident remediation: bind post-drive evidence, verification and durable budget to the ticket actually driven even after queue reconciliation; preserve failed verification semantics and cover concurrency/restart boundaries; publish through protected exact-head review.",
+    "nonGoals": [
+      "Change queue parallel execution or canonical ticket allocation (tickets329/330)",
+      "Reset retry budgets, alter protected policy or resume live paid retries before verification"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep the executed-ticket identity separately from historical successful submissions and the next queue target. Clear per-drive state at snapshot; only the matching successful finalizer receipt permits completion. Hash deltas retain unknown line counts; existing durable SQLite admission remains unchanged.",
+      "components": [
+        {
+          "name": "autonomy",
+          "paths": [
+            "src/koru/autonomy/cycle/cycle_drive_outcome.py",
+            "src/koru/autonomy/cycle/cycle_post_drive.py",
+            "src/koru/autonomy/state.py",
+            "src/koru/autonomy/verification_engine.py",
+            "tests/test_autonomous_cycle_drive_outcome.py",
+            "tests/test_autonomous_retry_guard.py",
+            "tests/test_cycle_post_drive.py",
+            "tests/test_verification_engine.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [
+        {
+          "kind": "component-local-state",
+          "component": "autonomy",
+          "description": "Add per-cycle executed ticket identity to in-memory state; no retry-state migration or reset."
+        }
+      ],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the material ticket331 commit; retain durable retry budget and archived incident changes."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_cycle_post_drive.py tests/test_autonomous_cycle_drive_outcome.py tests/test_verification_engine.py -q"
+        ],
+        "evidence": "Drive A followed by queue B still charges A; failures never reuse previous successful ticket; exact finalization completes without chat score; observed failing tests veto completion."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest tests/test_autonomous_retry_guard.py tests/test_task_model_policy.py tests/test_model_history.py tests/test_configurator_nl_control.py -q"
+        ],
+        "evidence": "Real Git fixtures and mocked paid transport: exactly3 attempts, no fourth invocation, concurrent admission, restart and corrupted storage; preserve requested/actual identity and PLF099 behavior."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base 3173e652dfbf2dff431ec5bdbecdff1ecd902686"
+        ],
+        "evidence": "Focused regressions, Ruff, managed gate and protected exact-head OneDev/Validator review; separately verify deployed runtime."
+      }
+    ]
+  }
+}
