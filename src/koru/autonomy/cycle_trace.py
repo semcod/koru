@@ -121,12 +121,13 @@ def record_decision_trace(
     )
     if repeated_idle:
         return
-    hp(f"  decision: {record.compact_line()}")
+    for formatted_line in record.to_uri_formatted_trace(color=True):
+        hp(f"  {formatted_line}")
     if record.skip_code not in ("ok",):
         reason = human_skip_reason(record.skip_code, fallback=record.skip_code)
         because = record.skip_because
         suffix = f" — {because}" if because else ""
-        hp(f"  decision: because[{record.skip_code}] {reason}{suffix}")
+        hp(f"  \033[33mdecision:\033[0m because[{record.skip_code}] {reason}{suffix}")
 
 
 __all__ = ["decision_next_step_hint", "record_decision_trace"]

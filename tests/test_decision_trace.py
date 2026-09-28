@@ -595,3 +595,13 @@ def test_queue_quick_actions_suppress_auto_llm_ready_on_queue_admission() -> Non
     )
     assert any("[review queue admission]" in line for line in auto_lines)
 
+
+def test_decision_record_to_uri_formatted_trace() -> None:
+    rec = _record(42)
+    lines = rec.to_uri_formatted_trace(color=False)
+    assert any("uri: koru://cycle/42/decision/no_op" in line for line in lines)
+    assert any("NL:  Cykl 42: skip:idle_no_ticket" in line for line in lines)
+    assert any("DSL: action: no_op" in line for line in lines)
+    assert any("NL:  Powód: queue idle AND zero open planfile tickets" in line for line in lines)
+    assert any("DSL: next: scan" in line for line in lines)
+
