@@ -3,6 +3,8 @@
 Parses concise process URI configurations ('yaml: uri {json}'),
 validates parameters against the ProcessUriRegistry, and applies reconfigurations
 to target projects conforming to wellmanifest/dsl standards.
+Supports internal Koru state transitions as well as external Docker sandbox
+and CDP browser operations.
 """
 
 from __future__ import annotations
@@ -10,13 +12,22 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from koru.autonomy.cdp_browser import CdpBrowserController
+from koru.autonomy.docker_sandbox import DockerSandboxRunner
 from koru.autonomy.process_uri import ProcessUri, ProcessUriRegistry, parse_uri_json_line
 
 
-def build_default_autonomy_registry() -> ProcessUriRegistry:
+def build_default_autonomy_registry(
+    *,
+    sandbox_runner: DockerSandboxRunner | None = None,
+    browser_controller: CdpBrowserController | None = None,
+) -> ProcessUriRegistry:
     """Build the standard ProcessUriRegistry for Koru and task autonomy."""
     reg = ProcessUriRegistry()
+    sandbox = sandbox_runner or DockerSandboxRunner()
+    browser = browser_controller or CdpBrowserController()
 
+    # --- Internal Koru & Task lifecycle ---
     reg.register(
         "koru://workspace/allocate",
         "Allocate a dedicated worktree and lease for a ticket",
@@ -58,6 +69,88 @@ def build_default_autonomy_registry() -> ProcessUriRegistry:
         {"required": ["key", "value"]},
     )
 
+    # --- External Process URI: Docker Sandbox & PyPI ---
+    def handle_sandbox(u: ProcessUri, p: dict[str, Any]) -> Any:
+        return sandbox.execute_uri(u, p, dry_run=True)
+
+    reg.register(
+        "sandbox://run",
+        "Execute command in isolated Docker container",
+        {"required": ["image"]},
+        handler=handle_sandbox,
+    )
+    reg.register(
+        "sandbox://run/",
+        "Execute command in isolated Docker container",
+        {"required": ["image"]},
+        handler=handle_sandbox,
+    )
+    reg.register(
+        "pypi://run",
+        "Execute Python package tool inside isolated sandbox",
+        {"required": []},
+        handler=handle_sandbox,
+    )
+    reg.register(
+        "pypi://run/",
+        "Execute Python package tool inside isolated sandbox",
+        {"required": []},
+        handler=handle_sandbox,
+    )
+
+    # --- External Process URI: Chrome DevTools Protocol (CDP) Browser ---
+    def handle_browser(u: ProcessUri, p: dict[str, Any]) -> Any:
+        return browser.execute_uri(u, p, dry_run=True)
+
+    reg.register(
+        "browser://navigate",
+        "Navigate browser page to URL",
+        {"required": ["url"]},
+        handler=handle_browser,
+    )
+    reg.register(
+        "browser://navigate/",
+        "Navigate browser page to URL",
+        {"required": ["url"]},
+        handler=handle_browser,
+    )
+    reg.register(
+        "browser://click",
+        "Click element matching CSS selector",
+        {"required": ["selector"]},
+        handler=handle_browser,
+    )
+    reg.register(
+        "browser://click/",
+        "Click element matching CSS selector",
+        {"required": ["selector"]},
+        handler=handle_browser,
+    )
+    reg.register(
+        "browser://screenshot",
+        "Capture screenshot of the page",
+        {"required": []},
+        handler=handle_browser,
+    )
+    reg.register(
+        "browser://screenshot/",
+        "Capture screenshot of the page",
+        {"required": []},
+        handler=handle_browser,
+    )
+    reg.register(
+        "browser://evaluate",
+        "Evaluate JavaScript in browser context",
+        {"required": ["expression"]},
+        handler=handle_browser,
+    )
+    reg.register(
+        "browser://evaluate/",
+        "Evaluate JavaScript in browser context",
+        {"required": ["expression"]},
+        handler=handle_browser,
+    )
+
     return reg
 
 
@@ -80,16 +173,31 @@ class DslReconfigurator:
             operations.append((uri, payload))
         return operations
 
-    def apply_to_project(self, project_path: Path, spec_content: str) -> dict[str, Any]:
+    def apply_to_project(
+        self,
+        project_path: Path,
+        spec_content: str,
+        *,
+        execute_handlers: bool = True,
+    ) -> dict[str, Any]:
         """Apply a reconfiguration spec to a target project."""
         ops = self.parse_spec(spec_content)
         executed: list[dict[str, Any]] = []
 
         for uri, payload in ops:
+            action_def = self.registry.get(uri.canonical_action)
+            result = None
+            if execute_handlers and action_def and action_def.handler:
+                try:
+                    result = action_def.handler(uri, payload)
+                except Exception as exc:  # noqa: BLE001
+                    result = {"error": str(exc)}
+
             action_record = {
                 "uri": uri.canonical_action,
                 "params": payload,
                 "status": "applied",
+                "result": result,
             }
             executed.append(action_record)
 
