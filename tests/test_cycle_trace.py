@@ -115,3 +115,66 @@ def test_append_ticket_markdown_log(tmp_path) -> None:
     assert "```yaml" in content
     assert "uri: koru://cycle/1/decision/submit_verified" in content
     assert "decided: ticket_prompt" in content
+    assert 'NL: "Cykl 1: ticket_prompt' in content
+    assert 'DSL: "action: submit_verified' in content
+
+
+def test_find_ticket_dir(tmp_path) -> None:
+    from koru.autonomy.cycle_trace import find_ticket_dir
+
+    # No project directory
+    assert find_ticket_dir(tmp_path, "PLF-031") is None
+
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+
+    # Create ticket directories
+    (project_dir / "ticket-031").mkdir()
+    (project_dir / "ticket-102--feature-test").mkdir()
+
+    # PLF mapping with leading zeros and integer variants
+    assert find_ticket_dir(tmp_path, "PLF-031") == project_dir / "ticket-031"
+    assert find_ticket_dir(tmp_path, "plf-31") == project_dir / "ticket-031"
+    assert find_ticket_dir(tmp_path, "31") == project_dir / "ticket-031"
+
+    # Direct ticket names and slugged directories
+    assert find_ticket_dir(tmp_path, "ticket-031") == project_dir / "ticket-031"
+    assert find_ticket_dir(tmp_path, "ticket-102") == project_dir / "ticket-102--feature-test"
+
+    # Unmapped
+    assert find_ticket_dir(tmp_path, "PLF-999") is None
+    assert find_ticket_dir(tmp_path, "-") is None
+    assert find_ticket_dir(tmp_path, "") is None
+
+
+def test_append_ticket_markdown_log_with_plf_identifier(tmp_path) -> None:
+    ticket_dir = tmp_path / "project" / "ticket-031"
+    ticket_dir.mkdir(parents=True)
+
+    lines: list[str] = []
+    record_decision_trace(
+        project=tmp_path,
+        cycle=42,
+        queue_result=SimpleNamespace(
+            last_status="waiting_input",
+            waiting=["PLF-031"],
+            waiting_ticket="PLF-031",
+        ),
+        diag_result=SimpleNamespace(status="ok"),
+        wup_health=SimpleNamespace(status="ok"),
+        autopilot_status="ok",
+        autopilot_ide="cursor",
+        autopilot_backend="plugin",
+        autopilot_drive_kind="ticket_prompt",
+        cycle_telemetry={},
+        stagnation_streak=0,
+        hp=lines.append,
+    )
+
+    log_file = ticket_dir / "koru.log.md"
+    assert log_file.is_file()
+    content = log_file.read_text(encoding="utf-8")
+    assert "# Koru Autonomy Log: `ticket-031`" in content
+    assert "uri: koru://cycle/42/decision/submit_verified" in content
+    assert 'NL: "Cykl 42: ticket_prompt' in content
+
