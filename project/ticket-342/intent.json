@@ -1,0 +1,88 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-342",
+  "summary": "fast in process planfile sdk for queue listing and admission",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-342/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/admission.py",
+    "src/koru/queue/runner.py",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1cac69a32dccb2ef3728831c2ec3f09c9e33f585",
+    "targetBranch": "main",
+    "outcome": "Accelerate queue iteration latency by using in-process Planfile SDK fast paths for ticket listing and admission queries with CLI subprocess fallbacks.",
+    "nonGoals": [
+      "Remove CLI compatibility fallbacks",
+      "Change ticket lease or claim locking semantics"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add in-process Planfile SDK fast-paths for ticket listing in runner.py and native runnable_report in admission.py, falling back to subprocess when unavailable.",
+      "components": [
+        {
+          "name": "queue-runner",
+          "paths": [
+            "src/koru/queue/runner.py",
+            "tests/test_planfile_queue.py"
+          ]
+        },
+        {
+          "name": "queue-admission",
+          "paths": [
+            "src/koru/queue/admission.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the material ticket commit cleanly."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_planfile_queue.py -q"
+        ],
+        "evidence": "In-process fast path for ticket discovery and admission passes all queue tests."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base 1cac69a32dccb2ef3728831c2ec3f09c9e33f585"
+        ],
+        "evidence": "Governance check passes with 0 errors, 0 warnings."
+      }
+    ]
+  }
+}

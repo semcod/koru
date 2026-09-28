@@ -22,9 +22,29 @@ def admitted_payload(
     An unsupported or malformed report is not permission to execute. Keep this
     read before claim/start and use the same Planfile command as ticket reads.
     """
-    # Older supported Planfile versions build the dependency snapshot from
-    # the requested sprint only. Include archived prerequisites in readiness;
-    # execution remains restricted to the caller's current candidate payload.
+    # Fast path: native in-process Planfile SDK when using default runner
+    from koru.queue.runners import run_process
+
+    if runner is run_process:
+        try:
+            from planfile import Planfile
+
+            pf = Planfile.auto_discover(project)
+            if hasattr(pf, "runnable_report"):
+                report = pf.runnable_report(queue=queue_name)
+                ids = report.get("servable") if isinstance(report, dict) else None
+                if isinstance(ids, list) and all(isinstance(item, str) and item for item in ids):
+                    tickets = json.loads(payload, strict=False)
+                    admitted = set(ids)
+                    if isinstance(tickets, dict):
+                        return json.dumps(tickets if tickets.get("id") in admitted else None)
+                    return json.dumps([
+                        ticket for ticket in tickets
+                        if isinstance(ticket, dict) and ticket.get("id") in admitted
+                    ])
+        except Exception:
+            pass
+
     args = ["ticket", "next", "--debug", "--sprint", "all", "--format", "json"]
     if queue_name:
         args.extend(["--queue", queue_name])
