@@ -246,6 +246,159 @@ def _out_stream(fmt: str) -> TextIO:
     return sys.stderr if fmt == "jsonl" else sys.stdout
 
 
+def _category_slug(category: str) -> str:
+    cat = category.strip().lower()
+    if cat.startswith("koru"):
+        cat = cat.removeprefix("koru").strip("-_ ")
+    cat = cat.replace(" ", "/")
+    return cat or "activity"
+
+
+def _action_slug(message: str, data: dict[str, Any] | None = None) -> str:
+    if data and "action" in data:
+        slug = str(data["action"]).lower().strip()
+        slug = re.sub(r"[^\w.-]+", "-", slug).strip("-")
+        if slug:
+            return slug
+    first_part = re.split(r"[:\-—=→>«]", message, maxsplit=1)[0].strip()
+    slug = re.sub(r"[^\w\s-]", "", first_part).strip()
+    words = slug.split()[:4]
+    slug_str = "-".join(words).lower()
+    return slug_str or "event"
+
+
+def _yaml_quote(val: str) -> str:
+    cleaned = val.replace('"', '\\"').replace("\n", " ")
+    return f'"{cleaned}"'
+
+
+def format_activity_uri_trace(
+    category: str,
+    message: str,
+    *,
+    preview: str | None = None,
+    data: dict[str, Any] | None = None,
+    color: bool = True,
+    ts: str | None = None,
+) -> list[str]:
+    """Format shell activity as a YAML Action URI header followed by alternating NL/DSL blocks."""
+    cyan = _ANSI_CYAN if color else ""
+    magenta = _ANSI_MAGENTA if color else ""
+    green = _ANSI_GREEN if color else ""
+    yellow = _ANSI_YELLOW if color else ""
+    blue = _ANSI_BLUE if color else ""
+    reset = _ANSI_RESET if color else ""
+
+    cat_slug = _category_slug(category)
+    act_slug = _action_slug(message, data)
+    uri = f"koru://{cat_slug}/{act_slug}"
+
+    lines = [
+        f"{magenta}uri:{reset} {cyan}{uri}{reset}",
+        f"  {yellow}NL:{reset}  {green}{message}{reset}",
+    ]
+
+    dsl_parts: list[str] = []
+    if ts:
+        dsl_parts.append(f"[{ts}]")
+    dsl_parts.append(f"koru ▸ {category.upper()}:")
+    dsl_parts.append(_highlight_shell_data(message, enabled=color))
+    if preview:
+        preview_disp = _highlight_shell_data(preview_text(preview), enabled=color)
+        dsl_parts.append(f"«{preview_disp}»")
+    if data:
+        extras = [f"{k}={v}" for k, v in data.items() if k not in ("action", "project", "ticket_id")]
+        if extras:
+            dsl_parts.append(" ".join(extras))
+
+    lines.append(f"  {yellow}DSL:{reset} {blue}{' '.join(dsl_parts)}{reset}")
+
+    if preview and preview not in message:
+        lines.append(f"  {yellow}NL:{reset}  {green}  → {preview}{reset}")
+        lines.append(f"  {yellow}DSL:{reset} {blue}  → {preview}{reset}")
+
+    return lines
+
+
+def _append_activity_to_ticket_markdown_log(
+    category: str,
+    message: str,
+    *,
+    preview: str | None = None,
+    data: dict[str, Any] | None = None,
+) -> None:
+    """Append shell activity event to project/ticket-*/koru.log.md if wellmanifest layout exists."""
+    project_root: Path | None = None
+    if data and "project" in data:
+        project_root = Path(data["project"])
+    elif "KORU_PROJECT_ROOT" in os.environ:
+        project_root = Path(os.environ["KORU_PROJECT_ROOT"])
+    else:
+        cwd = Path.cwd()
+        if (cwd / "project").is_dir():
+            project_root = cwd
+        elif (cwd.parent / "project").is_dir():
+            project_root = cwd.parent
+
+    if not project_root or not (project_root / "project").is_dir():
+        return
+
+    ticket_id = (data or {}).get("ticket_id") or os.environ.get("KORU_TICKET_ID")
+    target_ticket_dir: Path | None = None
+    if ticket_id:
+        try:
+            from koru.autonomy.cycle_trace import find_ticket_dir
+            target_ticket_dir = find_ticket_dir(project_root, str(ticket_id))
+        except ImportError:
+            pass
+
+    if target_ticket_dir is None:
+        ticket_dirs = [
+            d for d in (project_root / "project").glob("ticket-*")
+            if d.is_dir() and not d.name.endswith(".md")
+        ]
+        if ticket_dirs:
+            ticket_dirs.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+            target_ticket_dir = ticket_dirs[0]
+
+    if target_ticket_dir is None:
+        return
+
+    log_file = target_ticket_dir / "koru.log.md"
+    from datetime import UTC, datetime
+    iso_ts = datetime.now(UTC).replace(microsecond=0).isoformat()
+    cat_slug = _category_slug(category)
+    act_slug = _action_slug(message, data)
+    uri = f"koru://{cat_slug}/{act_slug}"
+
+    content = [
+        f"### Activity (`{iso_ts}`)\n\n",
+        "```yaml\n",
+        f"uri: {uri}\n",
+        f"category: {category}\n",
+        "```\n\n",
+        "```yaml\n",
+        f"NL: {_yaml_quote(message)}\n",
+    ]
+    dsl_val = message
+    if preview:
+        dsl_val = f"{dsl_val} «{preview}»"
+    content.extend([
+        f"DSL: {_yaml_quote(dsl_val)}\n",
+        "```\n\n",
+    ])
+
+    try:
+        if not log_file.exists():
+            header = f"# Koru Autonomy Log: `{target_ticket_dir.name}`\n\n"
+            log_file.write_text(header + "".join(content), encoding="utf-8")
+        else:
+            with log_file.open("a", encoding="utf-8") as f:
+                f.write("".join(content))
+    except OSError:
+        pass
+
+
 def activity(
     category: str,
     message: str,
@@ -254,7 +407,7 @@ def activity(
     preview: str | None = None,
     data: dict[str, Any] | None = None,
 ) -> None:
-    """Emit one timestamped line (always flushed)."""
+    """Emit one timestamped line or structured YAML URI + NL/DSL trace (always flushed)."""
     if not activity_enabled():
         return
     fmt = fmt or default_stdio_format_from_env()
@@ -263,14 +416,29 @@ def activity(
     ts = datetime.now(UTC).strftime("%H:%M:%S")
     stream = _out_stream(fmt)
     color = fmt != "jsonl" and _supports_color(stream)
-    ts_text = _ansi(f"[{ts}]", _ANSI_DIM) if color else f"[{ts}]"
-    category_text = _color_category(category, enabled=color)
-    line = f"{ts_text} koru ▸ {category_text}: {_highlight_shell_data(message, enabled=color)}"
-    if preview:
-        preview_display = _highlight_shell_data(preview_text(preview), enabled=color)
-        line += f" «{preview_display}»"
-    print(line, file=stream, flush=True)
+
+    log_format = os.environ.get("KORU_LOG_FORMAT", "").strip().lower()
+    if fmt == "legacy" or log_format == "legacy":
+        ts_text = _ansi(f"[{ts}]", _ANSI_DIM) if color else f"[{ts}]"
+        category_text = _color_category(category, enabled=color)
+        line = f"{ts_text} koru ▸ {category_text}: {_highlight_shell_data(message, enabled=color)}"
+        if preview:
+            preview_display = _highlight_shell_data(preview_text(preview), enabled=color)
+            line += f" «{preview_display}»"
+        print(line, file=stream, flush=True)
+    else:
+        lines = format_activity_uri_trace(
+            category,
+            message,
+            preview=preview,
+            data=data,
+            color=color,
+            ts=ts,
+        )
+        print("\n".join(lines), file=stream, flush=True)
+
     _emit_nfo_activity(category, message, fmt=fmt, preview=preview, data=data)
+    _append_activity_to_ticket_markdown_log(category, message, preview=preview, data=data)
 
 
 def activity_warn(
@@ -280,7 +448,7 @@ def activity_warn(
     fmt: str | None = None,
     data: dict[str, Any] | None = None,
 ) -> None:
-    """Emit a yellow-highlighted WARN line to stdout — for actionable user warnings."""
+    """Emit a yellow-highlighted WARN line or structured URI trace — for actionable user warnings."""
     if not activity_enabled():
         return
     fmt = fmt or default_stdio_format_from_env()
@@ -289,14 +457,29 @@ def activity_warn(
     ts = datetime.now(UTC).strftime("%H:%M:%S")
     stream = _out_stream(fmt)
     color = _supports_color(stream) and fmt != "jsonl"
-    warn_tag = f"{_ANSI_YELLOW}WARN{_ANSI_RESET}" if color else "WARN"
-    msg_colored = f"{_ANSI_YELLOW}{message}{_ANSI_RESET}" if color else message
-    line = f"[{ts}] koru ▸ {warn_tag}: {msg_colored}"
-    if hint:
-        hint_colored = f"{_ANSI_YELLOW}  → {hint}{_ANSI_RESET}" if color else f"  → {hint}"
-        line = f"{line}\n{hint_colored}"
-    print(line, file=stream, flush=True)
+    log_format = os.environ.get("KORU_LOG_FORMAT", "").strip().lower()
+
+    if fmt == "legacy" or log_format == "legacy":
+        warn_tag = f"{_ANSI_YELLOW}WARN{_ANSI_RESET}" if color else "WARN"
+        msg_colored = f"{_ANSI_YELLOW}{message}{_ANSI_RESET}" if color else message
+        line = f"[{ts}] koru ▸ {warn_tag}: {msg_colored}"
+        if hint:
+            hint_colored = f"{_ANSI_YELLOW}  → {hint}{_ANSI_RESET}" if color else f"  → {hint}"
+            line = f"{line}\n{hint_colored}"
+        print(line, file=stream, flush=True)
+    else:
+        lines = format_activity_uri_trace(
+            "WARN",
+            message,
+            preview=hint,
+            data=data,
+            color=color,
+            ts=ts,
+        )
+        print("\n".join(lines), file=stream, flush=True)
+
     _emit_nfo_activity("WARN", message, fmt=fmt, preview=hint, data=data)
+    _append_activity_to_ticket_markdown_log("WARN", message, preview=hint, data=data)
 
 
 def activity_info(
@@ -332,6 +515,7 @@ __all__ = [
     "activity_info",
     "activity_warn",
     "configure_nfo_activity_log",
+    "format_activity_uri_trace",
     "nfo_activity_log_path",
     "preview_text",
 ]
