@@ -326,3 +326,26 @@ def test_verification_receipt_required_and_failed_tests_veto_it():
     assert assess_verdict(evidence).outcome == "completed"
     from dataclasses import replace
     assert assess_verdict(replace(evidence, tests=TestEvidence(status="failed"))).outcome == "degraded"
+
+
+def test_matching_receipt_completes_without_git_delta_or_chat_score():
+    evidence = Evidence(verification_passed=True)
+    verdict = assess_verdict(evidence, ticket_id="PLF-099")
+    assert verdict.outcome == "completed"
+    assert verdict.confidence == 1.0
+    assert verdict.ticket_id == "PLF-099"
+    from dataclasses import replace
+
+    assert assess_verdict(replace(evidence, verification_passed=False)).outcome == "no_change"
+    assert assess_verdict(replace(evidence, git=GitEvidence(observed=False))).outcome == "unknown"
+
+
+def test_fingerprint_delta_does_not_invent_line_counts(tmp_path):
+    project = _real_project(tmp_path)
+    before = take_snapshot(project)
+    (project / "source.py").write_text("value = 9\n")
+    evidence = collect_evidence(project, before=before)
+    assert evidence.git.files_changed == 1
+    assert evidence.git.insertions is None
+    assert evidence.git.deletions is None
+    assert evidence.to_dict()["git"]["insertions"] is None

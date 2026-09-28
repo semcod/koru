@@ -3,7 +3,7 @@
 - **ID**: ticket-331
 - **Owner**: agent:codex
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: PUBLICATION
 
 SESSION_EXECUTION_AUTHORIZATION: user requested a better solution for PLF099,
 implementation/deployment/tests and continued twice. Continuation of the
@@ -13,11 +13,20 @@ primary changes and previous stashes; do not write the primary checkout.
 
 ## Acceptance criteria
 
-- [ ] AC-01: Result, completion receipt and failed-attempt accounting belong to
+- [x] AC-01: Result, completion receipt and failed-attempt accounting belong to
   the ticket actually driven, including failures and a changed next queue target.
   Matching verified completion does not require unrelated chat score; failing
   tests veto it. Unmeasured line counts remain unknown.
-- [ ] AC-02: Real Git, mocked transport, concurrent admission and fresh-process
+- [x] AC-02: Real Git, mocked transport, concurrent admission and fresh-process
   restart regressions prove the3-attempt bound and preserve PLF099 behavior.
 - [ ] AC-03: Focused tests, Ruff and managed gate pass; independent exact-head
   protected publication and verified runtime. Do not equate commit with deploy.
+
+Validation: 244 focused tests passed, including current-task attribution, finalizer
+error handling, paid-call admission, concurrent reservations and fresh-process
+restart. Package Ruff and managed governance passed. AC-03 still awaits exact-head
+protected review and separately observed deployment.
+
+Validation prerequisite: hosted package Ruff exposed one unsorted import group
+in queue/loop.py inherited from merged329. This ticket includes the required
+blank-line formatting correction; queue scheduling behavior is unchanged.
