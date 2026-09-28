@@ -25,7 +25,7 @@ def admitted_payload(
     # Fast path: native in-process Planfile SDK when using default runner
     from koru.queue.runners import run_process
 
-    if runner is run_process:
+    if runner is run_process or getattr(runner, "__name__", "") in {"run_process", "sprint_runner"}:
         try:
             from planfile import Planfile
 

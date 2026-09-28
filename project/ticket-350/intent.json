@@ -1,0 +1,107 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-350",
+  "summary": "dynamic queue pipelining and in-process planfile sdk optimization",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-350/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/loop.py",
+    "src/koru/queue/runner.py",
+    "src/koru/queue/admission.py",
+    "src/koru/queue/ticket.py",
+    "src/koru/cli_ticket_queue.py",
+    "src/koru/queue_cli_helpers.py",
+    "src/koru/cli_parser.py",
+    "src/koru/utils/subprocess_runner.py",
+    "tests/test_queue_pipelining.py",
+    "tests/test_queue_concurrency.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ed56b691139f9c283d0b8eb969b6e96550f8e5e8",
+    "targetBranch": "main",
+    "outcome": "Implement dynamic queue pipelining without batch barrier, fast-path in-process planfile SDK, and dry_run concurrency support.",
+    "nonGoals": [
+      "Rewriting planfile storage engine",
+      "Replacing thread pool executor"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use concurrent.futures.wait(FIRST_COMPLETED) in run_planfile_queue_loop with locked files tracking, unwrap runners in admission/runner for native Planfile fast path, and pass dry_run to workers.",
+      "components": [
+        {
+          "name": "queue",
+          "paths": [
+            "src/koru/queue/loop.py",
+            "src/koru/queue/runner.py",
+            "src/koru/queue/admission.py",
+            "src/koru/queue/ticket.py",
+            "src/koru/queue_cli_helpers.py",
+            "tests/test_queue_pipelining.py",
+            "tests/test_queue_concurrency.py"
+          ]
+        },
+        {
+          "name": "cli",
+          "paths": [
+            "src/koru/cli_parser.py",
+            "src/koru/cli_ticket_queue.py"
+          ]
+        },
+        {
+          "name": "utils",
+          "paths": [
+            "src/koru/utils/subprocess_runner.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-350 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_queue_pipelining.py"
+        ],
+        "evidence": "Continuous pipelining and dry-run concurrency tests pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
