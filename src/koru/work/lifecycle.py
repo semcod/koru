@@ -276,13 +276,23 @@ def finish_work(
         ci_result = run_local_ci(project)
         stages.append({"stage": "ci", **ci_result})
         if ci_result.get("overall_status") != "passed":
+            status_val = ci_result.get("overall_status")
+            reason = "ci_not_verified" if status_val == "not_verified" else "ci_failed"
             return {
                 "status": "blocked",
-                "reason": "ci_failed",
+                "reason": reason,
                 "ticket_id": resolved_ticket_id,
                 "branch": branch,
                 "stages": stages,
             }
+    elif publish:
+        return {
+            "status": "blocked",
+            "reason": "publication_requires_verified_ci",
+            "ticket_id": resolved_ticket_id,
+            "branch": branch,
+            "stages": stages,
+        }
 
     resolved_pr = pr_number
     if open_pr and resolved_pr is None:
