@@ -10,13 +10,47 @@ import pytest
 from koru import activity_log as al
 
 
-def test_activity_flushes_with_timestamp(capsys: pytest.CaptureFixture[str]) -> None:
+def test_activity_flushes_with_uri_and_nl_dsl(capsys: pytest.CaptureFixture[str]) -> None:
     al.activity("CHAT", "test message", preview="hello world", fmt="human")
+    out = capsys.readouterr().out
+    assert "uri: koru://chat/test-message" in out
+    assert "koru ▸ CHAT:" in out
+    assert "test message" in out
+    assert "«hello world»" in out
+    assert "NL:" in out
+    assert "DSL:" in out
+
+
+def test_activity_legacy_format(capsys: pytest.CaptureFixture[str]) -> None:
+    al.activity("CHAT", "test message", preview="hello world", fmt="legacy")
     out = capsys.readouterr().out
     assert "koru ▸ CHAT:" in out
     assert "test message" in out
     assert "«hello world»" in out
     assert out.strip().startswith("[")
+
+
+def test_activity_appends_to_project_ticket_markdown_log(
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    ticket_dir = tmp_path / "project" / "ticket-348"
+    ticket_dir.mkdir(parents=True)
+    monkeypatch.setenv("KORU_PROJECT_ROOT", str(tmp_path))
+    monkeypatch.setenv("KORU_TICKET_ID", "ticket-348")
+
+    al.activity("QUEUE", "task running ticket=ticket-348", preview="worker-1", fmt="human")
+
+    log_file = ticket_dir / "koru.log.md"
+    assert log_file.is_file()
+    content = log_file.read_text(encoding="utf-8")
+    assert "# Koru Autonomy Log: `ticket-348`" in content
+    assert "uri: koru://queue/task-running" in content
+    assert "```yaml" in content
+    assert "NL:" in content
+    assert "DSL:" in content
+    assert "worker-1" in content
 
 
 def test_activity_colorizes_shell_data_when_enabled(

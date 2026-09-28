@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-348",
+  "summary": "format shell activity logs with yaml URI header and alternating colored NL DSL blocks",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-348/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/activity_log.py",
+    "tests/test_activity_log.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "be716b2b2f78b12b77c114af0936e0dbc9478fbf",
+    "targetBranch": "main",
+    "outcome": "Format shell activity logs with YAML URI header and alternating colored NL and DSL blocks, persist markdown logs with codeblocks to project ticket directory, and support legacy format via configuration.",
+    "nonGoals": [
+      "Modifying observability JSONL event writer",
+      "Changing NFO event transport"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Introduce format_activity_uri_trace in activity_log.py returning YAML URI header followed by alternating ANSI-colored NL and DSL blocks. Support legacy fallback when fmt='legacy' or KORU_LOG_FORMAT='legacy'. Append formatted markdown blocks to project/ticket-*/koru.log.md when available.",
+      "components": [
+        {
+          "name": "telemetry",
+          "paths": [
+            "src/koru/activity_log.py",
+            "tests/test_activity_log.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-348 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_activity_log.py"
+        ],
+        "evidence": "All activity log tests pass including YAML URI, NL/DSL alternating blocks, and markdown logging."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base be716b2b2f78b12b77c114af0936e0dbc9478fbf"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
