@@ -1,10 +1,13 @@
 """Loop driver for draining the planfile queue."""
 
 
+import concurrent.futures
+import threading
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
-from koru.queue.runner import run_next_planfile_task
+from koru.queue.runner import _next_tickets_or_result, run_next_planfile_task
 from koru.queue.types import CommandResult, QueueLoopResult, QueueRunResult
 
 # Statuses that should NOT terminate the loop (a transient outcome for the
@@ -65,13 +68,9 @@ def run_planfile_queue_loop(
     iterations = 0
 
     if concurrency > 1:
-        import concurrent.futures
-        import threading
-        from koru.queue.runner import _next_tickets_or_result
-
         progress_lock = threading.Lock()
 
-        def _execute_worker(ticket_dict: dict[str, any], worker_num: int) -> QueueRunResult:
+        def _execute_worker(ticket_dict: dict[str, Any], worker_num: int) -> QueueRunResult:
             t_id = str(ticket_dict.get("id") or "")
             worker_actor = f"{actor}-w{worker_num}"
             return run_next_planfile_task(
