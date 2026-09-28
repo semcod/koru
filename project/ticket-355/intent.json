@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-355",
+  "summary": "Format line length in test queue pipelining",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-355/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "tests/test_queue_pipelining.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5e9871941e04617b58337c95d2dd82cc8a180525",
+    "targetBranch": "main",
+    "outcome": "Wrap fake_next_tickets signature in test_queue_pipelining to satisfy line length limit and unblock post_run_verify.",
+    "nonGoals": [
+      "Changing queue pipelining behavior"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 5,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Wrap fake_next_tickets arguments across multiple lines so that line length does not exceed 120 characters.",
+      "components": [
+        {
+          "name": "tests",
+          "paths": [
+            "tests/test_queue_pipelining.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-355 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          ".venv/bin/python -m ruff check src tests"
+        ],
+        "evidence": "Ruff check passes with 0 errors."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          ".venv/bin/python -m pytest tests/test_queue_pipelining.py -q"
+        ],
+        "evidence": "All test_queue_pipelining tests pass."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
