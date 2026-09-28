@@ -147,6 +147,96 @@ def _pick_from_ticket_list(
     return _select_from_eligible(eligible, interactive=interactive)
 
 
+def ticket_file_scope(ticket: dict[str, Any]) -> set[str]:
+    """Extract affected files/paths from a ticket representation."""
+    files: set[str] = set()
+    raw_files = ticket.get("files")
+    if isinstance(raw_files, list):
+        files.update(str(f) for f in raw_files if f)
+    elif isinstance(raw_files, str) and raw_files:
+        files.add(raw_files)
+
+    inputs = ticket.get("inputs")
+    if isinstance(inputs, dict):
+        in_files = inputs.get("files")
+        if isinstance(in_files, list):
+            files.update(str(f) for f in in_files if f)
+        elif isinstance(in_files, str) and in_files:
+            files.add(in_files)
+        if in_file := inputs.get("file"):
+            files.add(str(in_file))
+
+    source = ticket.get("source")
+    if isinstance(source, dict):
+        ctx = source.get("context")
+        if isinstance(ctx, dict):
+            if src_file := ctx.get("file"):
+                files.add(str(src_file))
+
+    allowed = ticket.get("allowed_paths") or ticket.get("allowedPaths")
+    if isinstance(allowed, list):
+        files.update(str(p) for p in allowed if p)
+
+    return files
+
+
+def parse_next_tickets(
+    stdout: str,
+    *,
+    count: int = 1,
+    queue_name: str | None = None,
+    ticket_id: str | None = None,
+    interactive: bool = False,
+    disjoint_files: bool = True,
+) -> list[dict]:
+    """Pick up to `count` runnable tickets from planfile output.
+
+    When `disjoint_files` is True, ensures returned tickets don't touch
+    overlapping files, enabling safe concurrent multi-worker execution.
+    """
+    if count <= 0:
+        return []
+    payload = _load_ticket_payload(stdout)
+    if isinstance(payload, dict):
+        match = _match_single_ticket(payload, queue_name=queue_name, ticket_id=ticket_id)
+        return [match] if match else []
+    if not isinstance(payload, list):
+        return []
+
+    runnable = _filter_runnable_tickets(payload, queue_name=queue_name, ticket_id=ticket_id)
+    if not runnable:
+        return []
+    _sort_tickets_by_priority(runnable)
+    eligible = [
+        entry
+        for entry in runnable
+        if interactive or not _should_skip_deferred_human(entry)
+    ]
+    if not eligible:
+        return []
+
+    if not interactive:
+        # Machine tickets take precedence over human tickets
+        machine_tickets = [entry for entry in eligible if not _is_human_executor(entry)]
+        human_tickets = [entry for entry in eligible if _is_human_executor(entry)]
+        eligible = machine_tickets + human_tickets
+
+    if not disjoint_files or count <= 1:
+        return eligible[:count]
+
+    selected: list[dict] = []
+    locked_files: set[str] = set()
+    for entry in eligible:
+        scope = ticket_file_scope(entry)
+        if scope and not scope.isdisjoint(locked_files):
+            continue
+        selected.append(entry)
+        locked_files.update(scope)
+        if len(selected) >= count:
+            break
+    return selected
+
+
 def parse_next_ticket(
     stdout: str,
     *,
@@ -160,14 +250,15 @@ def parse_next_ticket(
     an array (``ticket list --format json``). Returns ``None`` when the
     queue is idle.
     """
-    payload = _load_ticket_payload(stdout)
-    if isinstance(payload, dict):
-        return _match_single_ticket(payload, queue_name=queue_name, ticket_id=ticket_id)
-    if isinstance(payload, list):
-        return _pick_from_ticket_list(
-            payload, queue_name=queue_name, ticket_id=ticket_id, interactive=interactive
-        )
-    return None
+    tickets = parse_next_tickets(
+        stdout,
+        count=1,
+        queue_name=queue_name,
+        ticket_id=ticket_id,
+        interactive=interactive,
+        disjoint_files=False,
+    )
+    return tickets[0] if tickets else None
 
 
 def _is_human_executor(ticket: dict) -> bool:
