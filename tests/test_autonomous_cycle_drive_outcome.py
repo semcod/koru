@@ -180,6 +180,12 @@ def test_finalization_contract_and_exception_isolation(monkeypatch, tmp_path, ok
     )
     assert result == ("test", "ticket_prompt")
     assert events == ["finalize", "log", "emit"]
-    assert telemetry["shell_drive_finalize"] == ("done_verified" if action == "done_verified" else "prior")
+    expected_status = {
+        "done_verified": "done_verified",
+        "error": "verify_failed:finalization_error",
+    }.get(action, "prior")
+    assert telemetry["shell_drive_finalize"] == expected_status
+    assert state.last_drive_ticket_id == "T-1"
+    assert state.last_verified_drive_ticket_id == ("T-1" if action == "done_verified" else "")
     if action == "error":
         assert logs == ["  shell-drive finalize error: finalization unavailable"]

@@ -32,6 +32,7 @@ def _take_pre_drive_snapshot(
     wup_health: Any,
 ) -> None:
     """Capture project state before autopilot drive (ADR AUTO-002 Phase 1)."""
+    state.last_drive_ticket_id = None
     state.last_verified_drive_ticket_id = ""
     test_status = str(getattr(wup_health, "status", "unknown") or "unknown")
     snapshot = take_snapshot(project, test_status=test_status)
@@ -102,6 +103,19 @@ def _snapshot_before_drive(state: AutoloopState) -> Any | None:
 def _post_drive_ticket_id(queue_result: QueueLoopResult) -> str:
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
     return "" if waiting_ticket == "-" else waiting_ticket
+
+
+def _executed_ticket_status(queue_result: QueueLoopResult, ticket_id: str) -> str:
+    """Do not label A as waiting merely because the next queued ticket B waits."""
+    if ticket_id in queue_result.completed:
+        return "completed"
+    if ticket_id in queue_result.failed:
+        return "failed"
+    if ticket_id in queue_result.waiting:
+        return "waiting_input"
+    if ticket_id and ticket_id == queue_result.last_ticket_id:
+        return str(queue_result.last_status or "unknown")
+    return "unknown"
 
 
 def _update_drive_count(state: AutoloopState, ticket_id: str) -> None:
@@ -379,14 +393,18 @@ def _handle_post_drive_verification(
     if not (status.ok or status.failed):
         return
 
-    ticket_id = _post_drive_ticket_id(queue_result) or state.last_driven_ticket_id
+    ticket_id = state.last_drive_ticket_id
+    if ticket_id is None:
+        # Compatibility for direct callers without a recorded current drive.
+        # Never fall back to the previous cycle's successful submission.
+        ticket_id = _post_drive_ticket_id(queue_result)
     if ticket_id == "-":
         ticket_id = ""
     _update_drive_count(state, ticket_id)
     evidence = _collect_post_drive_evidence(project, state, wup_health)
     effect = _drive_effect_payload(
         ticket_id=ticket_id,
-        queue_status=str(queue_result.last_status or ""),
+        queue_status=_executed_ticket_status(queue_result, ticket_id),
         evidence=evidence,
         drive_status=drive_status,
     )

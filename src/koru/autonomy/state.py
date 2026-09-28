@@ -44,6 +44,8 @@ class AutoloopState:
     post_verify_seen: set[str] = field(default_factory=set)
     last_driven_backend: str = ""
     # Verification engine (ADR AUTO-002 Phase 1)
+    # None: no current drive recorded; "": current drive had no ticket.
+    last_drive_ticket_id: str | None = None
     last_verified_drive_ticket_id: str = ""
     last_drive_snapshot: dict[str, Any] = field(default_factory=dict)
     last_drive_verdict: dict[str, Any] = field(default_factory=dict)
