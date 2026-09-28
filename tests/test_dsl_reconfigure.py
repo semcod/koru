@@ -35,6 +35,22 @@ def test_dsl_reconfigurator_apply(tmp_path: Path):
     assert result["operations"][0]["uri"] == "koru://workspace/allocate"
 
 
+def test_dsl_reconfigurator_external_sandbox_and_browser(tmp_path: Path):
+    reconfigurator = DslReconfigurator()
+    spec = """
+    sandbox://run {"image": "python:3.11-slim", "command": "pytest"}
+    browser://navigate {"url": "https://example.com"}
+    """
+    result = reconfigurator.apply_to_project(tmp_path, spec)
+    assert result["status"] == "success"
+    assert result["operations_count"] == 2
+    assert result["operations"][0]["uri"] == "sandbox://run/"
+    assert result["operations"][0]["result"].exit_code == 0
+    assert "[dry-run]" in result["operations"][0]["result"].stdout
+    assert result["operations"][1]["uri"] == "browser://navigate/"
+    assert result["operations"][1]["result"].success is True
+
+
 def test_cli_export_gbnf(capsys):
     args = MagicMock(export_gbnf=True, list_actions=False, spec=None)
     code = run_reconfigure_cli(args)

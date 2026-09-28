@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-341",
+  "summary": "feat(autonomy): integrate external and internal reconfiguration engine with process uri registry and llm",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-341/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/dsl_reconfigure.py",
+    "tests/test_dsl_reconfigure.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d4ae4852c4dbb0327310fef13e7ad7765b039c37",
+    "targetBranch": "main",
+    "outcome": "Extend DslReconfigurator to execute internal Koru reconfigurations (queue, autonomy strategies) and external sandbox/browser/pypi process URI operations, registering handlers in ProcessUriRegistry.",
+    "nonGoals": [
+      "Replacing whole autonomy cycle engine",
+      "Direct network calls in dry-run mode"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Attach executable handlers to ProcessUriRegistry and support external sandbox:// and browser:// execution directly via DslReconfigurator.",
+      "components": [
+        {
+          "name": "autonomy-reconfiguration",
+          "paths": [
+            "src/koru/autonomy/dsl_reconfigure.py",
+            "tests/test_dsl_reconfigure.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit cleanly."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_dsl_reconfigure.py -q"
+        ],
+        "evidence": "Internal and external reconfiguration handlers execute correctly."
+      }
+    ]
+  }
+}
