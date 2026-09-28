@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-334",
+  "summary": "feat(autonomy): process uri registry and dsl reconfigurator",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-334/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/process_uri.py",
+    "src/koru/autonomy/dsl_reconfigure.py",
+    "src/koru/cli_reconfigure.py",
+    "src/koru/cli/__init__.py",
+    "tests/test_process_uri.py",
+    "tests/test_dsl_reconfigure.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a30898695eb07212808318ccc9c072190c500e86",
+    "targetBranch": "main",
+    "outcome": "Implement Process URI registry, RFC 3986 URN/URI parsing, GBNF grammar generation, and koru reconfigure DSL engine using concise yaml: uri {json} format.",
+    "nonGoals": [
+      "Replacing all existing MCP tool implementations",
+      "Altering repository branch protection rules"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 7,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Introduce ProcessUri and ProcessUriRegistry for typed process dispatching, export GBNF grammar for LLM structured decoding, and implement koru reconfigure CLI command.",
+      "components": [
+        {
+          "name": "autonomy-process-uri",
+          "paths": [
+            "src/koru/autonomy/process_uri.py",
+            "src/koru/autonomy/dsl_reconfigure.py",
+            "src/koru/cli_reconfigure.py",
+            "src/koru/cli/__init__.py",
+            "tests/test_process_uri.py",
+            "tests/test_dsl_reconfigure.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the material commit cleanly."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_process_uri.py tests/test_dsl_reconfigure.py -q"
+        ],
+        "evidence": "ProcessUri parsing, registry schema validation, GBNF export, and DSL reconfigure engine tests pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base a30898695eb07212808318ccc9c072190c500e86"
+        ],
+        "evidence": "Governance check passes with 0 errors, 0 warnings."
+      }
+    ]
+  }
+}
