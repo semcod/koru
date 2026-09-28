@@ -43,10 +43,14 @@ def test_update_living_status_fastpath_success(tmp_path: Path) -> None:
 
 
 def test_update_living_status_fallback_on_custom_runner(tmp_path: Path) -> None:
-    custom_runner = MagicMock(return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""))
+    dummy_proc = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
+    custom_runner = MagicMock(return_value=dummy_proc)
     ticket = {"id": "T-002", "description": "Another task"}
 
-    with patch("koru.queue.planfile_sdk.planfile_lifecycle_command", return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")) as mock_lifecycle:
+    with patch(
+        "koru.queue.planfile_sdk.planfile_lifecycle_command",
+        return_value=dummy_proc,
+    ) as mock_lifecycle:
         result = update_living_status(
             project=tmp_path,
             ticket=ticket,
