@@ -156,6 +156,10 @@ SKIP_CODE_DESCRIPTIONS: dict[str, str] = {
         "Plugin pasted text into chat but submit was not verified; manual "
         "send or a submit-strategy fix is required before another drive."
     ),
+    "queue_admission": (
+        "Queue admission or contract fence does not permit execution (e.g. "
+        "missing duplication contract, unsupported executor, or infrastructure error)."
+    ),
     "stuck_waiting_input": (
         "Queue has been stuck on ``waiting_input`` for several cycles and "
         "the waiting ticket is not marked ``llm-ready``; autopilot refuses "
@@ -358,6 +362,7 @@ def load_recent_decisions(
 
 _TELEMETRY_SKIP_FLAGS: tuple[tuple[str, str], ...] = (
     ("autopilot_skipped_ide_mismatch", "ide_mismatch"),
+    ("autopilot_skipped_queue_admission", "queue_admission"),
     ("autopilot_skipped_chat_activity", "chat_activity"),
     ("autopilot_skipped_idle_no_ticket", "idle_no_ticket"),
     ("autopilot_skipped_waiting_ticket_closed", "waiting_ticket_closed"),
@@ -511,6 +516,9 @@ def _evidence_label(
     plugin_reason = cycle_telemetry.get("autopilot_skipped_plugin_missing_reason")
     if plugin_reason:
         parts.append(f"plugin_reason={plugin_reason}")
+    admission_reason = cycle_telemetry.get("autopilot_skipped_queue_admission_reason")
+    if admission_reason and blocked_by == "queue_admission":
+        parts.append(f"admission_reason={admission_reason}")
     scan_run = cycle_telemetry.get("scan_after_idle_run")
     scan_applied = cycle_telemetry.get("scan_after_idle_applied")
     if scan_run:
@@ -614,6 +622,11 @@ def _skip_because_for_code(
     stagnation_streak: int,
     autopilot_ide: str,
 ) -> str:
+    if skip_code == "queue_admission":
+        reason = str(cycle_telemetry.get("autopilot_skipped_queue_admission_reason") or "").strip()
+        if reason:
+            return reason
+        return "queue admission or infrastructure does not permit execution"
     if skip_code == "chat_activity":
         return _chat_activity_skip_because(cycle_telemetry)
     if skip_code == "idle_streak":

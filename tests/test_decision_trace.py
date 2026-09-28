@@ -501,3 +501,97 @@ def test_build_decision_record_plugin_missing_uses_detailed_reason() -> None:
     )
     assert record.skip_because == "daemon status plugin list is empty"
     assert "plugin_reason=daemon status plugin list is empty" in record.evidence
+
+
+def test_classify_skip_code_queue_admission() -> None:
+    assert classify_skip_code({"autopilot_skipped_queue_admission": True}, "skipped") == "queue_admission"
+    assert classify_skip_code({}, "skipped(queue_admission)") == "queue_admission"
+
+
+def test_classify_skip_code_queue_admission_prioritised_over_chat_and_stuck() -> None:
+    telemetry = {
+        "autopilot_skipped_queue_admission": True,
+        "autopilot_skipped_chat_activity": True,
+        "autopilot_skipped_stuck_status": True,
+        "autopilot_skipped_stuck_status_queue": "waiting_input",
+    }
+    assert classify_skip_code(telemetry, "skipped(waiting_input)") == "queue_admission"
+
+
+def test_build_decision_record_queue_admission_with_detailed_reason() -> None:
+    record = build_decision_record(
+        cycle=15,
+        queue_status="waiting_input",
+        waiting_ticket="STARTER-400",
+        stagnation_streak=0,
+        autopilot_status="skipped(queue_admission)",
+        autopilot_ide="cursor",
+        autopilot_backend=None,
+        autopilot_drive_kind=None,
+        diag_status="ok",
+        wup_status="ok",
+        cycle_telemetry={
+            "autopilot_skipped_queue_admission": True,
+            "autopilot_skipped_queue_admission_reason": (
+                "ticket references duplicate scope from STARTER-399 without duplication contract"
+            ),
+        },
+        next_step="resolve queue admission blocker",
+    )
+    assert record.skip_code == "queue_admission"
+    assert record.blocked_by == "queue_admission"
+    assert record.decided == "skip:queue_admission"
+    assert "without duplication contract" in record.skip_because
+    assert "admission_reason=" in record.evidence
+
+
+def test_build_decision_record_queue_admission_not_masked_by_stagnation_streak() -> None:
+    record = build_decision_record(
+        cycle=16,
+        queue_status="waiting_input",
+        waiting_ticket="STARTER-400",
+        stagnation_streak=6,
+        autopilot_status="skipped(queue_admission)",
+        autopilot_ide="cursor",
+        autopilot_backend=None,
+        autopilot_drive_kind=None,
+        diag_status="ok",
+        wup_status="ok",
+        cycle_telemetry={
+            "autopilot_skipped_queue_admission": True,
+            "autopilot_skipped_stuck_status": True,
+            "autopilot_skipped_stuck_status_queue": "waiting_input",
+            "autopilot_skipped_queue_admission_reason": "unsupported executor kind",
+        },
+        next_step="resolve queue admission blocker",
+    )
+    assert record.skip_code == "queue_admission"
+    assert record.blocked_by == "queue_admission"
+    assert record.decided == "skip:queue_admission"
+    assert record.skip_because == "unsupported executor kind"
+
+
+def test_queue_quick_actions_suppress_auto_llm_ready_on_queue_admission() -> None:
+    from koru.autonomy.operator.operator_loop_quick_actions import (
+        _autopilot_quick_action_lines,
+        _queue_quick_action_lines,
+    )
+
+    urls = {"create_project_ticket_action": "http://create", "tickets": "http://tickets"}
+    lines = _queue_quick_action_lines(
+        status="skipped(queue_admission) stuck_waiting_input",
+        queue_status="waiting_input",
+        waiting_ticket="STARTER-400",
+        autopilot_ide="cursor",
+        urls=urls,
+    )
+    assert not any("[auto llm-ready]" in line for line in lines)
+    assert any("[mark ticket input]" in line for line in lines)
+
+    auto_lines = _autopilot_quick_action_lines(
+        status="skipped(queue_admission)",
+        blocked_by="queue_admission",
+        autopilot_ide="cursor",
+    )
+    assert any("[review queue admission]" in line for line in auto_lines)
+

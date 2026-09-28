@@ -244,3 +244,56 @@ def test_emit_uses_stable_key_and_waiting_input_without_write_authority(
     assert scaffold["executor_kind"] == "human"
     assert scaffold["source_context"]["dedupe_key"].endswith(":" + "a" * 40)
     assert "grants no write or merge authority" in calls[0]["text"]
+
+
+def test_git_observation_fast_paths(tmp_path: Path) -> None:
+    from koru.standard_fleet.git_observation import (
+        _git_state,
+        _is_linked_worktree,
+        _origin_identity,
+    )
+    from koru.standard_fleet.models import GitObservation
+
+    repo = tmp_path / "fast_repo"
+    repo.mkdir()
+    dot_git = repo / ".git"
+    dot_git.mkdir()
+    (dot_git / "config").write_text(
+        '[core]\n\trepositoryformatversion = 0\n[remote "origin"]\n\turl = git@github.com:semcod/koru.git\n',
+        encoding="utf-8",
+    )
+
+    calls: list[list[str]] = []
+
+    def mock_runner(_r: Path, args: list[str]) -> GitObservation:
+        calls.append(list(args))
+        if args == ["status", "--porcelain"]:
+            return GitObservation(0, stdout="")
+        return GitObservation(1, stderr="unexpected subprocess invocation")
+
+    # 1. _is_linked_worktree on primary dir checkout uses zero subprocesses
+    assert _is_linked_worktree(repo, git_runner=mock_runner) is False
+    assert len(calls) == 0
+
+    # 2. _origin_identity on git config uses zero subprocesses
+    assert _origin_identity(repo, git_runner=mock_runner) == "semcod/koru"
+    assert len(calls) == 0
+
+    # 3. _git_state without worktrees dir calls only status --porcelain, NOT worktree list
+    dirty, linked_worktrees, err = _git_state(repo, git_runner=mock_runner)
+    assert dirty is False
+    assert linked_worktrees == 0
+    assert err is None
+    assert calls == [["status", "--porcelain"]]
+
+    # 4. _is_linked_worktree on linked .git file pointing to worktrees
+    linked_repo = tmp_path / "linked_repo"
+    linked_repo.mkdir()
+    (linked_repo / ".git").write_text(
+        "gitdir: /home/tom/github/semcod/koru/.git/worktrees/ticket-328\n",
+        encoding="utf-8",
+    )
+    calls.clear()
+    assert _is_linked_worktree(linked_repo, git_runner=mock_runner) is True
+    assert len(calls) == 0
+
