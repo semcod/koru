@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-337",
+  "summary": "feat(autonomy): docker sandbox and cdp browser adapters for process uri",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-337/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/cdp_browser.py",
+    "src/koru/autonomy/docker_sandbox.py",
+    "tests/test_cdp_browser.py",
+    "tests/test_docker_sandbox.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a5d5ba1be2527de30f72eac5b49b303546027520",
+    "targetBranch": "main",
+    "outcome": "Implement DockerSandboxRunner for sandbox:// and pypi:// process URIs, and CdpBrowserController for browser:// action URIs.",
+    "nonGoals": [
+      "Replacing full headless Chrome infrastructure on host",
+      "Bypassing host security restrictions"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add DockerSandboxRunner to generate and execute secure Docker container runs for sandbox and pypi URIs. Add CdpBrowserController to format and dispatch CDP commands.",
+      "components": [
+        {
+          "name": "autonomy-sandbox-browser",
+          "paths": [
+            "src/koru/autonomy/cdp_browser.py",
+            "src/koru/autonomy/docker_sandbox.py",
+            "tests/test_cdp_browser.py",
+            "tests/test_docker_sandbox.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the material commit cleanly."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_docker_sandbox.py tests/test_cdp_browser.py -q"
+        ],
+        "evidence": "Docker sandbox isolation, volume binds, pypi execution and CDP browser frame tests pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base a5d5ba1be2527de30f72eac5b49b303546027520"
+        ],
+        "evidence": "Governance check passes with 0 errors, 0 warnings."
+      }
+    ]
+  }
+}
