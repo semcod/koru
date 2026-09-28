@@ -66,6 +66,36 @@ def _apply_single_nl_command(
     if text in {"show", "pokaz", "status", "tabela", "table", "ls"}:
         return ConfigMutationResult(success=True, message="Aktualny stan konfiguracji:", updated=False, config=config)
 
+    for handler in (
+        _apply_ide_command, _apply_port_command, _apply_host_command,
+        _apply_model_command, _apply_queue_command, _apply_lan_command,
+        _apply_auto_port_command, _apply_features_command,
+    ):
+        result = handler(config, text, project_path)
+        if result is not None:
+            return result
+
+    return ConfigMutationResult(
+        success=False,
+        message=(
+            f"Nie rozpoznano intencji dla: '{raw_input}'. "
+            "Przykłady komend NL:\n"
+            "  - ide na cursor / zmien ide na windsurf\n"
+            "  - port na 8080 / zmien port na 9000\n"
+            "  - host na 0.0.0.0\n"
+            "  - kolejka na ops / queue to default\n"
+            "  - wlacz lan / wylacz lan\n"
+            "  - wlacz mesh / wylacz vision\n"
+            "  - pokaz / table\n"
+            "  - exit / wyjdz"
+        ),
+        updated=False,
+    )
+
+
+def _apply_ide_command(
+    config: dict[str, Any], text: str, project_path: Any,
+) -> ConfigMutationResult | None:
     # 1. IDE change: "ide na cursor", "zmien ide na vscode", "set ide to windsurf"
     m_ide = re.search(r"(?:zmien\s+)?ide(?:\s+lane)?(?:\s+(?:na|to|=))?\s+([a-z0-9_-]+)", text)
     if m_ide:
@@ -86,7 +116,12 @@ def _apply_single_nl_command(
             message=f"Nieznane IDE: {candidate}. Dostępne: {', '.join(valid_choices)}",
             updated=False,
         )
+    return None
 
+
+def _apply_port_command(
+    config: dict[str, Any], text: str, project_path: Any,
+) -> ConfigMutationResult | None:
     # 2. Port change: "port na 9000", "zmien port na 8080", "set port 8765"
     m_port = re.search(r"(?:zmien\s+)?port(?:\s+(?:na|to|=))?\s+(\d+)", text)
     if m_port:
@@ -100,7 +135,12 @@ def _apply_single_nl_command(
             updated=True,
             config=config,
         )
+    return None
 
+
+def _apply_host_command(
+    config: dict[str, Any], text: str, project_path: Any,
+) -> ConfigMutationResult | None:
     # 3. Host change: "host na 0.0.0.0", "dashboard host 127.0.0.1"
     m_host = re.search(r"(?:zmien\s+)?host(?:\s+(?:na|to|=))?\s+([0-9a-z\.-]+)", text)
     if m_host:
@@ -114,7 +154,12 @@ def _apply_single_nl_command(
             updated=True,
             config=config,
         )
+    return None
 
+
+def _apply_model_command(
+    config: dict[str, Any], text: str, project_path: Any,
+) -> ConfigMutationResult | None:
     # 4. Model change: "model na sonnet", "zmien model na glm-5.3", "prosty model na glm5.3-flash"
     m_simple_model = re.search(
         r"(?:zmien\s+)?(?:prosty|maly|tani|simple|small|flash)\s+model(?:\s+(?:na|to|=))?\s+([a-z0-9_.:/-]+)",
@@ -144,7 +189,12 @@ def _apply_single_nl_command(
             updated=True,
             config=config,
         )
+    return None
 
+
+def _apply_queue_command(
+    config: dict[str, Any], text: str, project_path: Any,
+) -> ConfigMutationResult | None:
     # 5. Queue change: "kolejka na ops", "queue to default", "zmien queue na background"
     m_queue = re.search(r"(?:zmien\s+)?(?:kolejka|queue|kolejke)(?:\s+(?:na|to|=))?\s+([a-z0-9_-]+)", text)
     if m_queue:
@@ -157,7 +207,12 @@ def _apply_single_nl_command(
             updated=True,
             config=config,
         )
+    return None
 
+
+def _apply_lan_command(
+    config: dict[str, Any], text: str, project_path: Any,
+) -> ConfigMutationResult | None:
     # 5. LAN toggle: "wlacz lan", "wylacz lan", "enable lan", "disable lan", "lan on/off"
     if any(k in text for k in ("wlacz lan", "enable lan", "lan on", "lan true", "lan tak")):
         serve = config.setdefault("serve", {})
@@ -179,7 +234,12 @@ def _apply_single_nl_command(
             updated=True,
             config=config,
         )
+    return None
 
+
+def _apply_auto_port_command(
+    config: dict[str, Any], text: str, project_path: Any,
+) -> ConfigMutationResult | None:
     # 6. Auto-port toggle: "wlacz auto-port", "wylacz auto-port", "auto port on/off"
     clean_no_hyphen = text.replace("-", " ")
     on_patterns = ("wlacz auto port", "wlacz autoport", "enable auto port", "auto port on", "autoport on")
@@ -204,7 +264,12 @@ def _apply_single_nl_command(
             updated=True,
             config=config,
         )
+    return None
 
+
+def _apply_features_command(
+    config: dict[str, Any], text: str, project_path: Any,
+) -> ConfigMutationResult | None:
     # 7. Features enable/disable: "wlacz mesh", "wylacz vision", "enable sandbox", "disable browse"
     for feature in _TOGGLEABLE_FEATURES:
         if any(f"{action} {feature}" in text for action in ("wlacz", "enable", "activate", "start")):
@@ -223,23 +288,7 @@ def _apply_single_nl_command(
                 updated=True,
                 config=res.config,
             )
-
-    return ConfigMutationResult(
-        success=False,
-        message=(
-            f"Nie rozpoznano intencji dla: '{raw_input}'. "
-            "Przykłady komend NL:\n"
-            "  - ide na cursor / zmien ide na windsurf\n"
-            "  - port na 8080 / zmien port na 9000\n"
-            "  - host na 0.0.0.0\n"
-            "  - kolejka na ops / queue to default\n"
-            "  - wlacz lan / wylacz lan\n"
-            "  - wlacz mesh / wylacz vision\n"
-            "  - pokaz / table\n"
-            "  - exit / wyjdz"
-        ),
-        updated=False,
-    )
+    return None
 
 
 def apply_nl_config_command(

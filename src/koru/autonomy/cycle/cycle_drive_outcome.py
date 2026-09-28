@@ -23,7 +23,7 @@ def _apply_shell_finalization(
     *, project: Path, ticket_id: str, reply: dict[str, Any], ok: bool,
     decision_kind: str | None, autopilot_ide: str,
     cycle_telemetry: dict[str, Any], _hp: Callable[..., Any],
-) -> None:
+) -> str:
     """Route finalization without allowing its failure to interrupt observability."""
     try:
         from koru.autonomy.shell_drive_finalize import (
@@ -50,8 +50,11 @@ def _apply_shell_finalization(
             )
         if finalize_action != "skipped":
             cycle_telemetry["shell_drive_finalize"] = finalize_action
+        return finalize_action
     except Exception as exc:  # noqa: BLE001 — finalization must never break the cycle
         _hp(f"  shell-drive finalize error: {exc}")
+        cycle_telemetry["shell_drive_finalize"] = "verify_failed:finalization_error"
+        return "verify_failed:finalization_error"
 
 
 def apply_autopilot_drive_outcome(
@@ -121,11 +124,12 @@ def apply_autopilot_drive_outcome(
     _update_autopilot_state(
         state, ok, decision_kind, autopilot_drive_kind, reply.get("prompt", "")
     )
-    _apply_shell_finalization(
+    finalize_action = _apply_shell_finalization(
         project=project, ticket_id=ticket_id, reply=reply, ok=ok,
         decision_kind=decision_kind, autopilot_ide=autopilot_ide,
         cycle_telemetry=cycle_telemetry, _hp=_hp,
     )
+    state.last_verified_drive_ticket_id = ticket_id if finalize_action == "done_verified" else ""
     _log_autopilot_result(ok, queue_result, autopilot_ide, decision_kind, reply, _hp)
     from koru.autonomy.cycle.cycle_orchestrator import _emit_autopilot_observability_outcome
 

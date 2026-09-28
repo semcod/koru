@@ -1,0 +1,128 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-327",
+  "summary": "Bound autonomous retries and verify real per-drive changes",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-327/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/cycle/cycle_drive_outcome.py",
+    "src/koru/autonomy/cycle/cycle_post_drive.py",
+    "src/koru/autonomy/cycle/cycle_skip_conditions.py",
+    "src/koru/autonomy/state.py",
+    "src/koru/autonomy/verification_engine.py",
+    "src/koru/configurator/nl_control.py",
+    "src/koru/model_history.py",
+    "src/koru/task_model_policy.py",
+    "tests/test_autonomous_retry_guard.py",
+    "tests/test_configurator_nl_control.py",
+    "tests/test_cycle_drive_outcome.py",
+    "tests/test_cycle_post_drive.py",
+    "tests/test_cycle_skip_conditions.py",
+    "tests/test_model_history.py",
+    "tests/test_task_model_policy.py",
+    "tests/test_verification_engine.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6243a9920f0b01f050bec796bca34f86674ad582",
+    "targetBranch": "main",
+    "outcome": "Measure real per-drive workspace changes, bound persisted unsuccessful redrives, record actual executor separately, and complete behavior-preserving PLF099 refactor. Publish via independent protected delivery.",
+    "nonGoals": [
+      "Changing governance or trusted approval",
+      "Restoring unrelated handedoff primary changes",
+      "Treating exit0 or chat alone as ticket completion",
+      "Auto-executing generated advisory instructions"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 90,
+    "budgets": {
+      "maxImplementationFiles": 15,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Existing verification engine captures byte/mode/index fingerprints and persists a per-ticket failure circuit breaker in SQLite. Existing routing receipts distinguish requested/actual executor. Extract nl command handlers preserving signatures and tests.",
+      "components": [
+        {
+          "name": "autonomy",
+          "paths": [
+            "src/koru/autonomy/**",
+            "tests/test_autonomous_retry_guard.py",
+            "tests/test_verification_engine.py",
+            "tests/test_cycle*.py"
+          ]
+        },
+        {
+          "name": "model-routing",
+          "paths": [
+            "src/koru/task_model_policy.py",
+            "src/koru/model_history.py",
+            "tests/test_task_model_policy.py",
+            "tests/test_model_history.py"
+          ]
+        },
+        {
+          "name": "configurator",
+          "paths": [
+            "src/koru/configurator/nl_control.py",
+            "tests/test_configurator_nl_control.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [
+        {
+          "kind": "component-local-state",
+          "component": "autonomy",
+          "description": "Host-scoped per-ticket failure circuit breaker in SQLite"
+        }
+      ],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-327 material commit and restore prior retry state; retain persisted stashes."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_verification_engine.py tests/test_autonomous_retry_guard.py tests/test_cycle_post_drive.py -q"
+        ],
+        "evidence": "Actual temporary-Git regressions cover dirty/staged/untracked/committed deltas; persistent failed/no-effect budget blocks repeat drives after restart."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest tests/test_task_model_policy.py tests/test_model_history.py tests/test_configurator_nl_control.py -q"
+        ],
+        "evidence": "Requested and actual client/provider/model are distinct; failed verification cannot be called completed; PLF099 complexity <=15 with behavior tests."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base 6243a992"
+        ],
+        "evidence": "Focused tests, Ruff and managed gate pass; protected exact-head delivery."
+      }
+    ]
+  }
+}

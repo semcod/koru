@@ -270,6 +270,16 @@ def drive_with_model_policy(
         "reason": decision["reason"],
     }
     project = kwargs["project"]
+    from koru.autonomy.verification_engine import reserve_drive_attempt
+
+    if kwargs.get("execute", True) and not reserve_drive_attempt(project, receipt["ticket"]):
+        return {
+            "ok": False, "exit_code": None,
+            "message": "drive_budget: three unverified attempts or retry-state storage unavailable; repair required",
+            "model_routing": {**receipt, "status": "blocked", "recorded": append_routing_event(
+                project, {**receipt, "status": "blocked"},
+            )},
+        }
     recorded = append_routing_event(project, {**receipt, "status": "started"})
     started = time.monotonic()
     try:
@@ -279,6 +289,11 @@ def drive_with_model_policy(
             project, {**receipt, "status": "error", "duration_ms": round((time.monotonic() - started) * 1000)}
         )
         raise
+    receipt.update({
+        "actual_client": safe_identifier(reply.get("client_id")),
+        "actual_provider": safe_identifier(reply.get("provider")),
+        "actual_model": safe_identifier(reply.get("model")),
+    })
     finished = append_routing_event(
         project,
         {

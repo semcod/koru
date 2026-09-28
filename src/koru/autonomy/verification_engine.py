@@ -8,8 +8,13 @@ heuristics.
 
 from __future__ import annotations
 
+import hashlib
+import os
+import sqlite3
+import stat
 import subprocess
 import time
+from contextlib import closing
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -36,6 +41,7 @@ class GitEvidence:
     insertions: int = 0
     deletions: int = 0
     diff_stat: str = ""
+    observed: bool = True
 
 
 @dataclass(frozen=True)
@@ -77,6 +83,7 @@ class Evidence:
     chat: ChatEvidence = field(default_factory=ChatEvidence)
     files: FileEvidence = field(default_factory=FileEvidence)
     collected_at: float = 0.0
+    verification_passed: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -93,6 +100,7 @@ class Snapshot:
     #: Paths dirty/untracked BEFORE the drive — the operator's work in
     #: progress. Used post-drive to detect agent commits that absorbed it.
     git_dirty_paths: tuple[str, ...] = ()
+    workspace_fingerprints: dict[str, str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -131,10 +139,10 @@ def collect_git_evidence(project: Path) -> GitEvidence:
             timeout=10,
         )
     except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
-        return GitEvidence()
+        return GitEvidence(observed=False)
 
     if result.returncode != 0:
-        return GitEvidence()
+        return GitEvidence(observed=False)
 
     lines = (result.stdout or "").strip().splitlines()
     if not lines:
@@ -178,10 +186,10 @@ def collect_git_diff_between(
             timeout=10,
         )
     except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
-        return GitEvidence()
+        return GitEvidence(observed=False)
 
     if result.returncode != 0:
-        return collect_git_evidence(project)
+        return GitEvidence(observed=False)
 
     lines = (result.stdout or "").strip().splitlines()
     if not lines:
@@ -264,6 +272,7 @@ def take_snapshot(project: Path, test_status: str = "unknown") -> Snapshot:
         test_status=test_status,
         timestamp=time.time(),
         git_dirty_paths=dirty_paths,
+        workspace_fingerprints=_workspace_fingerprints(project),
     )
 
 
@@ -305,10 +314,11 @@ def collect_evidence(
     drive_timestamp: float = 0.0,
 ) -> Evidence:
     """Collect all available evidence after a drive."""
-    if before and before.git_head:
-        git = collect_git_diff_between(project, before.git_head)
+    if before and before.workspace_fingerprints is not None:
+        git = _workspace_delta(project, before)
     else:
-        git = collect_git_evidence(project)
+        # Without a baseline, a per-drive delta is unknown (not zero).
+        git = GitEvidence(observed=False, diff_stat="pre-drive workspace baseline unavailable")
 
     tests = collect_test_evidence(wup_health)
     chat = collect_chat_evidence(autopilot_events or [], drive_timestamp)
@@ -319,6 +329,127 @@ def collect_evidence(
         chat=chat,
         collected_at=time.time(),
     )
+
+
+def _git_bytes(project: Path, *args: str) -> bytes:
+    result = subprocess.run(
+        ["git", *args], cwd=project, capture_output=True, timeout=10, check=True,
+    )
+    out = result.stdout
+    if isinstance(out, str):
+        return out.encode("utf-8")
+    return out or b""
+
+
+def _workspace_fingerprints(project: Path) -> dict[str, str] | None:
+    """Observe bytes, symlink targets, modes and index entries without staging.
+
+    Ignored runtime files are excluded; tracked and untracked source is included.
+    No raw file contents enter a checkpoint. Errors remain unknown evidence.
+    """
+    try:
+        names = _git_bytes(project, "ls-files", "--cached", "--others", "--exclude-standard", "-z")
+        entries: dict[str, str] = {}
+        for raw in set(names.split(b"\0")) - {b""}:
+            name = os.fsdecode(raw)
+            path = project / name
+            try:
+                mode = path.lstat().st_mode
+            except FileNotFoundError:
+                entries[f"worktree:{name}"] = "deleted"
+                continue
+            if stat.S_ISLNK(mode):
+                content = os.fsencode(os.readlink(path))
+            elif stat.S_ISREG(mode):
+                content = path.read_bytes()
+            else:
+                raise OSError("unsupported workspace entry")
+            entries[f"worktree:{name}"] = f"{mode}:{hashlib.sha256(content).hexdigest()}"
+        for raw in _git_bytes(project, "ls-files", "--stage", "-z").split(b"\0"):
+            if raw and b"\t" in raw:
+                metadata, name = raw.split(b"\t", 1)
+                entries[f"index:{os.fsdecode(name)}"] = metadata.decode("ascii", errors="replace")
+        return entries
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+
+
+def _workspace_delta(project: Path, before: Snapshot) -> GitEvidence:
+    after = _workspace_fingerprints(project)
+    if after is None:
+        return GitEvidence(observed=False, diff_stat="workspace observation failed")
+    prior = before.workspace_fingerprints or {}
+    changed = {
+        name.split(":", 1)[1] for name in prior.keys() | after.keys()
+        if prior.get(name) != after.get(name)
+    }
+    return GitEvidence(files_changed=len(changed), diff_stat=f"{len(changed)} workspace paths changed")
+
+
+def _drive_budget_db(project: Path) -> sqlite3.Connection:
+    path = project / ".planfile" / ".koru" / "drive-budget.sqlite"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    db = sqlite3.connect(path, timeout=5)
+    try:
+        db.execute("CREATE TABLE IF NOT EXISTS failures (ticket TEXT PRIMARY KEY, count INTEGER NOT NULL)")
+        db.execute("CREATE TABLE IF NOT EXISTS attempts (ticket TEXT PRIMARY KEY, count INTEGER NOT NULL)")
+        return db
+    except sqlite3.Error:
+        db.close()
+        raise
+
+
+def record_unsuccessful_drive(project: Path, ticket: str) -> None:
+    """Persist failure count independently of waiting streak and loop restarts."""
+    if not ticket:
+        return
+    with closing(_drive_budget_db(project)) as db, db:
+        db.execute(
+            "INSERT INTO failures VALUES (?, 1) ON CONFLICT(ticket) DO UPDATE SET count=count+1", (ticket,),
+        )
+
+
+
+def drive_budget_exhausted(project: Path, ticket: str, limit: int = 3) -> bool:
+    """Storage errors close admission; failures need an explicit ticket repair."""
+    if not ticket:
+        return False
+    try:
+        with closing(_drive_budget_db(project)) as db, db:
+            counts = _drive_budget_counts(db, ticket)
+        return max(counts) >= limit
+    except (OSError, sqlite3.Error):
+        return True
+
+
+def _drive_budget_counts(db: sqlite3.Connection, ticket: str) -> tuple[int, int]:
+    counts = []
+    for table in ("failures", "attempts"):
+        row = db.execute(f"SELECT count FROM {table} WHERE ticket=?", (ticket,)).fetchone()
+        counts.append(int(row[0]) if row else 0)
+    return counts[0], counts[1]
+
+
+def reserve_drive_attempt(project: Path, ticket: str, limit: int = 3) -> bool:
+    """Reserve before a paid shell call, atomically; crashes cannot erase attempts.
+
+    The protected finalizer owns completion. Unverified shell calls share the
+    admission budget with failed GUI drives; separate counts avoid double debit.
+    """
+    if not ticket:
+        return True
+    try:
+        with closing(_drive_budget_db(project)) as db, db:
+            db.execute("BEGIN IMMEDIATE")
+            if max(_drive_budget_counts(db, ticket)) >= limit:
+                return False
+            db.execute(
+                "INSERT INTO attempts VALUES (?, 1) ON CONFLICT(ticket) DO UPDATE SET count=count+1",
+                (ticket,),
+            )
+        return True
+    except (OSError, sqlite3.Error):
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -372,14 +503,17 @@ def assess_verdict(
     score = max(0.0, min(1.0, score))
 
     # Determine outcome
-    if score >= 0.6:
-        outcome: VerdictOutcome = "completed"
+    if evidence.tests.status in {"failing", "failed", "error", "down"}:
+        outcome: VerdictOutcome = "degraded"
+    elif not evidence.git.observed:
+        outcome = "unknown"
+        reasons.append("git: observation unavailable")
+    elif score >= 0.6 and evidence.verification_passed:
+        outcome = "completed"
     elif score >= 0.3:
         outcome = "in_progress"
     elif evidence.git.files_changed == 0 and not evidence.chat.has_message_sent:
         outcome = "no_change"
-    elif evidence.tests.status in {"failing", "failed", "error", "down"}:
-        outcome = "degraded"
     else:
         outcome = "unknown"
 

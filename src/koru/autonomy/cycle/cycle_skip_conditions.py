@@ -25,6 +25,7 @@ from koru.autonomy.ide_operator_guidance import (
 from koru.autonomy.policy_decision import AutopilotPolicyDecision
 from koru.autonomy.prompts import DEFAULT_ESCALATION_THRESHOLD
 from koru.autonomy.state import AutoloopState
+from koru.autonomy.verification_engine import drive_budget_exhausted
 from koru.queue import QueueLoopResult
 from koru.topology import is_component_enabled, is_pipeline_enabled
 
@@ -359,6 +360,17 @@ def _check_autopilot_skip_conditions(
             "queue_admission",
             because="queue admission or infrastructure does not permit execution",
             action_hint="resolve the queue blocker and re-evaluate admission",
+        ).as_skip_tuple()
+
+    ticket_id = _waiting_ticket_id(queue_result)
+    if drive_budget_exhausted(project, ticket_id):
+        cycle_telemetry["autopilot_skipped_drive_budget"] = True
+        cycle_telemetry["drive_budget_ticket"] = ticket_id
+        _hp(f"- autopilot skipped (drive_budget): {ticket_id}; repair required")
+        return AutopilotPolicyDecision.skip(
+            "drive_budget",
+            because="three unverified drives or retry-state storage unavailable",
+            action_hint="inspect execution and verification failures before an explicit retry reset",
         ).as_skip_tuple()
 
     if not _is_topology_enabled(
