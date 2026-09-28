@@ -95,11 +95,7 @@ def _ide_supports_vscode_plugin(autopilot_ide: str) -> bool:
 
 def _operator_forces_keyboard() -> bool:
     """User opted into keyboard/gillm fallback; do not override with strict plugin."""
-    return (
-        _allow_keyboard_autopilot_fallback()
-        or _prefer_keyboard_autopilot()
-        or _allow_gillm_autopilot_fallback()
-    )
+    return _allow_keyboard_autopilot_fallback() or _prefer_keyboard_autopilot() or _allow_gillm_autopilot_fallback()
 
 
 def _workspace_mismatch_override() -> bool:
@@ -153,11 +149,7 @@ def _client_has_usable_plugin(
 
 
 def _folder_covers_project(folder: str, project_path: str) -> bool:
-    return (
-        folder == project_path
-        or project_path.startswith(f"{folder}/")
-        or folder.startswith(f"{project_path}/")
-    )
+    return folder == project_path or project_path.startswith(f"{folder}/") or folder.startswith(f"{project_path}/")
 
 
 def _plugin_row_workspace_folders(row: dict[str, Any], wanted: str) -> list[str] | None:
@@ -199,10 +191,7 @@ def _plugin_workspace_conflict(
             return None  # covered
         seen_folders = normalized
     if seen_folders:
-        return (
-            f"plugin workspaceFolders {seen_folders!r} do not include "
-            f"project root ({project_path})"
-        )
+        return f"plugin workspaceFolders {seen_folders!r} do not include project root ({project_path})"
     return None
 
 
@@ -591,14 +580,14 @@ def _drive_shell_client(
             timeout_seconds = None
     try:
         reply = drive_with_model_policy(
-            drive_shell_chat, task=task,
+            drive_shell_chat,
+            task=task,
             client_id=client_id,
             project=project or Path.cwd(),
             prompt=prompt,
             execute=True,
             model=os.environ.get("KORU_TILLM_MODEL", "").strip() or None,
-            execute_profile=os.environ.get("KORU_TILLM_EXECUTE_PROFILE", "").strip()
-            or "default",
+            execute_profile=os.environ.get("KORU_TILLM_EXECUTE_PROFILE", "").strip() or "default",
             timeout_seconds=timeout_seconds,
         )
     except Exception as exc:
@@ -675,9 +664,21 @@ def _invoke_client_autopilot_drive(
 
     shell_client = shell_drive_client_id(autopilot_ide)
     if shell_client:
+        if not submit:
+            return {
+                "ok": True,
+                "backend": "tillm_shell",
+                "client_id": shell_client,
+                "type": "preview",
+                "dry_run": True,
+                "executed": False,
+                "prompt": prompt,
+            }, False
         reply, ok = _drive_shell_client(shell_client, prompt=prompt, project=project, task=task)
         if ok:
             return reply, ok
+        if reply.get("diagnostic_code") == "shell_workspace_not_admitted":
+            return reply, False
         rescue = _shell_drive_editor_rescue(
             reply,
             client_id=shell_client,
@@ -800,11 +801,7 @@ def _idle_no_ticket_skip_result(
 
 def _resolve_drive_plugin_requirement(client: Any, autopilot_ide: str) -> bool:
     require_plugin = _plugin_required_for_ide(autopilot_ide)
-    if (
-        not require_plugin
-        and _ide_supports_vscode_plugin(autopilot_ide)
-        and not _operator_forces_keyboard()
-    ):
+    if not require_plugin and _ide_supports_vscode_plugin(autopilot_ide) and not _operator_forces_keyboard():
         plugin_live, _ = _client_has_usable_plugin(client, autopilot_ide)
         if plugin_live:
             return True
@@ -862,9 +859,7 @@ def _reply_needs_submit_retry(reply: dict[str, Any]) -> bool:
     if verification in {"submit_unverified", "submit_failed"}:
         return True
     if reply.get("submitted") is False and (
-        reply.get("attempted_submit")
-        or reply.get("winning_paste")
-        or reply.get("submit_failure_reason")
+        reply.get("attempted_submit") or reply.get("winning_paste") or reply.get("submit_failure_reason")
     ):
         return True
     msg = str(reply.get("message") or "").lower()
@@ -1046,16 +1041,14 @@ def _log_autopilot_result(
             )
         else:
             _hp(
-                "  autopilot: ok "
-                f"(ide={autopilot_ide}, backend={backend}, kind={decision_kind}{extra})",
+                f"  autopilot: ok (ide={autopilot_ide}, backend={backend}, kind={decision_kind}{extra})",
             )
     else:
         if decision_kind in {"idle_no_ticket", "waiting_ticket_closed"}:
             return
         elif _reply_requires_manual_chat_focus(reply):
             _hp(
-                "  autopilot: skipped(manual_focus) "
-                f"({reply.get('message', 'unknown error')}, kind={decision_kind})",
+                f"  autopilot: skipped(manual_focus) ({reply.get('message', 'unknown error')}, kind={decision_kind})",
             )
         else:
             msg = reply.get("message", "unknown error")

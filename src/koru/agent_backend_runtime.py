@@ -17,7 +17,6 @@ the small :class:`AgentBackend` protocol and concrete implementations:
 Lane → backend resolution lives in :func:`build_agent_backend`.
 """
 
-
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -35,16 +34,11 @@ except ImportError:  # gillm optional — OsInjectorBackend degrades to a soft e
         """Raised when gillm's OS injector is unavailable on this host."""
 
     def load_profile(profile_id: str, config_path: Any = None) -> Any:  # type: ignore[misc]
-        raise OsInjectorError(
-            "gillm is not installed; os_injector backend unavailable "
-            "(pip install gillm)"
-        )
+        raise OsInjectorError("gillm is not installed; os_injector backend unavailable (pip install gillm)")
 
     def inject_with_profile(*, profile: Any, text: str, submit: bool, dry_run: bool = False) -> Any:  # type: ignore[misc]
-        raise OsInjectorError(
-            "gillm is not installed; os_injector backend unavailable "
-            "(pip install gillm)"
-        )
+        raise OsInjectorError("gillm is not installed; os_injector backend unavailable (pip install gillm)")
+
 
 from koru.agent_backends import normalize_agent_backend_id
 from koru.ide_adapters.gillm_client import GillmIDEControlClient, build_gillm_ide_client
@@ -158,13 +152,13 @@ class TillmShellBackend:
         submit: bool,
         ticket_id: str | None = None,
     ) -> dict[str, Any]:
-        del ide, submit, ticket_id
+        del ide, ticket_id
         try:
             return drive_shell_chat(
                 client_id=self.client_id,
                 project=project,
                 prompt=prompt,
-                execute=self.execute,
+                execute=self.execute and submit,
             )
         except Exception as exc:
             return {
@@ -307,18 +301,21 @@ def _build_plugin_socket_backend(client: IDEControlClient | None = None) -> Agen
         raise ValueError("plugin_socket backend requires an IDEControlClient")
     return PluginSocketBackend(client=client)
 
+
 def _build_mcp_tool_backend(mcp_server: str | None = None) -> AgentBackend:
     return McpToolBackend(mcp_server=mcp_server)
+
 
 def _build_vendor_agent_cli_backend(shell_client_id: str | None = None) -> AgentBackend:
     return TillmShellBackend(
         client_id=shell_client_id or os.environ.get("KORU_TILLM_CLIENT", "aider"),
-        execute=os.environ.get("KORU_TILLM_DRY_RUN", "").strip().lower()
-        not in {"1", "true", "yes", "on"},
+        execute=os.environ.get("KORU_TILLM_DRY_RUN", "").strip().lower() not in {"1", "true", "yes", "on"},
     )
+
 
 def _build_gillm_gui_backend() -> AgentBackend:
     return GillmGuiBackend(client=build_gillm_ide_client())
+
 
 def _build_os_injector_backend() -> AgentBackend:
     profile = os.environ.get("KORU_OS_INJECTOR_PROFILE", "").strip()
@@ -328,26 +325,40 @@ def _build_os_injector_backend() -> AgentBackend:
     cfg = Path(raw_cfg).expanduser().resolve() if raw_cfg else None
     return OsInjectorBackend(profile_id=profile, config_path=cfg)
 
+
 def _build_nlp2uri_desktop_backend() -> AgentBackend:
     dry = os.environ.get("KORU_NLP2URI_DRY_RUN", "").strip().lower() in {
-        "1", "true", "yes", "on",
+        "1",
+        "true",
+        "yes",
+        "on",
     }
     return Nlp2UriDesktopBackend(dry_run=dry)
 
+
 def _build_imgl_desktop_backend() -> AgentBackend:
     dry = os.environ.get("KORU_IMGL_DRY_RUN", "").strip().lower() in {
-        "1", "true", "yes", "on",
+        "1",
+        "true",
+        "yes",
+        "on",
     }
     return ImglDesktopBackend(dry_run=dry)
 
+
 def _build_vdisplay_control_backend() -> AgentBackend:
     dry = os.environ.get("KORU_VDISPLAY_DRY_RUN", "").strip().lower() in {
-        "1", "true", "yes", "on",
+        "1",
+        "true",
+        "yes",
+        "on",
     }
     return VdisplayControlBackend(dry_run=dry)
 
+
 def _build_noop_backend(noop_reason: str) -> AgentBackend:
     return NoopBackend(reason=noop_reason)
+
 
 _BACKEND_BUILDERS = {
     "plugin_socket": _build_plugin_socket_backend,
@@ -372,6 +383,7 @@ _BACKEND_BUILDERS = {
     "noop": _build_noop_backend,
     "": _build_noop_backend,
 }
+
 
 def build_agent_backend(
     *,
@@ -455,6 +467,7 @@ def _nlp2uri_desktop_send(
 
     # Step 2: Small delay for window manager to complete the focus switch.
     import time
+
     time.sleep(0.3)
 
     # Step 3: Type text via gillm Injector.
