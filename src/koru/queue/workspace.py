@@ -81,6 +81,24 @@ def revert_files(project: Path, files: tuple[str, ...]) -> None:
     _git(project, "checkout", "--", *files)
 
 
+def reverse_unified_diff(project: Path, diff: str) -> PatchApplyResult:
+    """Undo only this diff, including added/deleted files, without touching the index.
+
+    Refuse changed context instead of restoring HEAD over concurrent edits.
+    Git applies all hunks atomically unless --reject is requested; never use it.
+    """
+    try:
+        checked = _git(project, "apply", "--reverse", "--check", "-", stdin=diff)
+        if checked.returncode != 0:
+            return PatchApplyResult(False, f"reverse patch does not apply: {checked.stderr.strip()[:400]}")
+        applied = _git(project, "apply", "--reverse", "-", stdin=diff)
+    except OSError as exc:
+        return PatchApplyResult(False, f"reverse patch could not run: {exc}")
+    if applied.returncode != 0:
+        return PatchApplyResult(False, f"reverse patch failed: {applied.stderr.strip()[:400]}")
+    return PatchApplyResult(True, "patch reversed")
+
+
 def diff_target_files(project: Path, diff: str) -> tuple[str, ...]:
     """List the paths a diff touches, without applying it."""
     listed = _git(project, "apply", "--numstat", "-", stdin=diff)

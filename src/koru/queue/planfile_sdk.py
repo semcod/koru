@@ -185,8 +185,8 @@ def _default_sdk_preference(runner: Callable[..., CommandResult]) -> bool:
 
 
 def _verify_enabled() -> bool:
-    value = os.environ.get("KORU_PLANFILE_SDK_VERIFY", "1").strip().lower()
-    return value not in {"0", "false", "no", "off"}
+    value = os.environ.get("KORU_PLANFILE_SDK_VERIFY", "0").strip().lower()
+    return value in {"1", "true", "yes", "on"}
 
 
 def _load_client_factory() -> Callable[..., Any] | None:

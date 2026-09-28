@@ -44,6 +44,28 @@ class TestWorkFinish(unittest.TestCase):
         self.assertEqual(result["status"], "blocked")
         self.assertEqual(result["reason"], "ci_failed")
 
+    def test_finish_blocked_on_unverified_ci(self) -> None:
+        with (
+            patch("koru.work.lifecycle._ensure_repo"),
+            patch("koru.work.lifecycle._current_branch", return_value="ticket-099-demo"),
+            patch(
+                "koru.work.lifecycle.run_local_ci",
+                return_value={"overall_status": "not_verified", "stages": []},
+            ),
+        ):
+            result = finish_work(Path("/tmp/project"), ticket_id="ticket-099", publish=False)
+        self.assertEqual(result["status"], "blocked")
+        self.assertEqual(result["reason"], "ci_not_verified")
+
+    def test_finish_blocked_when_publishing_without_ci(self) -> None:
+        with (
+            patch("koru.work.lifecycle._ensure_repo"),
+            patch("koru.work.lifecycle._current_branch", return_value="ticket-099-demo"),
+        ):
+            result = finish_work(Path("/tmp/project"), ticket_id="ticket-099", run_ci=False, publish=True)
+        self.assertEqual(result["status"], "blocked")
+        self.assertEqual(result["reason"], "publication_requires_verified_ci")
+
 
 class TestWorkCli(unittest.TestCase):
     def test_work_start_cli(self) -> None:

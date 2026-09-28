@@ -13,6 +13,7 @@ moved names so existing ``koru.queue.context`` imports stay stable.
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -55,21 +56,37 @@ def _read_file_tree(project: Path, *, max_entries: int = 500) -> str:
     """Return a compact directory listing of the project root."""
     lines: list[str] = []
     count = 0
+    collected: list[tuple[Path, bool]] = []
     try:
-        for path in sorted(project.rglob("*")):
+        for root_str, dirs, files in os.walk(project):
+            root_path = Path(root_str)
+            try:
+                rel_root = root_path.relative_to(project)
+            except ValueError:
+                continue
+
+            # Prune directories in place to prevent os.walk from descending into excluded subtrees (.git, .venv, etc.)
+            pruned_dirs: list[str] = []
+            for d in dirs:
+                rel_d = (rel_root / d).as_posix() if rel_root.parts else d
+                if not _is_excluded(rel_d) and not _is_excluded(d):
+                    pruned_dirs.append(d)
+                    collected.append((rel_root / d if rel_root.parts else Path(d), True))
+            dirs[:] = pruned_dirs
+
+            for f in files:
+                rel_f = (rel_root / f).as_posix() if rel_root.parts else f
+                if not _is_excluded(rel_f):
+                    collected.append((rel_root / f if rel_root.parts else Path(f), False))
+
+        collected.sort(key=lambda item: item[0])
+        for rel, is_dir in collected:
             if count >= max_entries:
                 lines.append(f"  ... (listing truncated at {max_entries} entries)")
                 break
-            try:
-                rel = path.relative_to(project)
-            except ValueError:
-                continue
-            rel_str = rel.as_posix()
-            if _is_excluded(rel_str):
-                continue
             indent = "  " + "  " * (len(rel.parts) - 1)
-            suffix = "/" if path.is_dir() else ""
-            lines.append(f"{indent}{path.name}{suffix}")
+            suffix = "/" if is_dir else ""
+            lines.append(f"{indent}{rel.name}{suffix}")
             count += 1
     except OSError as exc:
         _logger.debug("context: file tree error: %s", exc)

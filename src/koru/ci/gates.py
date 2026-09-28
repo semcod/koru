@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from koru.quality_gate_commands import sumr_scan_command, vallm_batch_command
-from koru.redup_integration import redup_check_command
+from koru.redup_integration import redup_gate_command
 
 try:
     import psutil
@@ -31,10 +31,18 @@ def has_testql_scenarios(project: Path, pattern: str = TESTQL_PATTERN) -> bool:
         return False
 
 
+def has_regix_config(project: Path) -> bool:
+    """Return True when project tree contains a regix configuration file."""
+    for candidate in ("regix.yaml", "regix.yml", ".regix.yaml", ".regix.yml"):
+        if (project / candidate).is_file():
+            return True
+    return False
+
+
 def gate_commands(project: Path) -> dict[str, list[str]]:
     return {
-        "regix": ["regix", "gates", "--workdir", str(project)],
-        "redup": redup_check_command(project),
+        "regix": ["regix", "review", "--workdir", str(project), "HEAD", "local"],
+        "redup": redup_gate_command(project),
         "vallm": vallm_batch_command(project),
         "sumr": sumr_scan_command(project),
         "testql": [
@@ -210,6 +218,16 @@ def run_quality_gates(
                     "status": "skipped",
                     "issues": [],
                     "message": f"No {TESTQL_PATTERN} scenarios under project root",
+                }
+            )
+            continue
+        if gate_name == "regix" and not has_regix_config(project):
+            results.append(
+                {
+                    "gate": gate_name,
+                    "status": "skipped",
+                    "issues": [],
+                    "message": "No regix.yaml configuration under project root",
                 }
             )
             continue

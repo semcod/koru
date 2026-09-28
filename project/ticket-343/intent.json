@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-343",
+  "summary": "feat(telemetry): format decision trace logs with yaml URI header and alternating colored NL DSL blocks",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-343/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/cycle_trace.py",
+    "src/koru/autonomy/decision_trace.py",
+    "tests/test_decision_trace.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1cac69a32dccb2ef3728831c2ec3f09c9e33f585",
+    "targetBranch": "main",
+    "outcome": "Format decision trace logs with YAML Process URI header and alternating ANSI-colored NL / DSL blocks.",
+    "nonGoals": [
+      "Breaking machine-readable telemetry JSON structure",
+      "Adding external colorizing dependencies"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add to_uri_formatted_trace method on DecisionRecord that prints YAML Action URI header followed by colored NL/DSL alternating lines.",
+      "components": [
+        {
+          "name": "autonomy-trace",
+          "paths": [
+            "src/koru/autonomy/cycle_trace.py",
+            "src/koru/autonomy/decision_trace.py",
+            "tests/test_decision_trace.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit cleanly."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_decision_trace.py -q"
+        ],
+        "evidence": "Decision trace formatting tests pass with YAML URI headers and NL/DSL blocks."
+      }
+    ]
+  }
+}

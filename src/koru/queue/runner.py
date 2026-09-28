@@ -623,6 +623,42 @@ def _next_ticket_or_result(
     *,
     interactive: bool = False,
 ) -> tuple[dict[str, Any] | None, QueueRunResult | None]:
+    from koru.queue.runners import run_process
+
+    if planfile_runner is run_process:
+        try:
+            from planfile import Planfile
+
+            pf = Planfile.auto_discover(project)
+            if target_ticket_id is not None:
+                single = pf.get_ticket(target_ticket_id)
+                if single:
+                    dict_t = (
+                        single.model_dump(mode="json", exclude_none=True)
+                        if hasattr(single, "model_dump")
+                        else dict(single)
+                    )
+                    payload = json.dumps([dict_t])
+                    payload = admitted_payload(
+                        project, payload, runner=planfile_runner, queue_name=queue_name
+                    )
+                    ticket = parse_next_ticket(
+                        payload, queue_name=queue_name, ticket_id=target_ticket_id, interactive=interactive
+                    )
+                    if ticket is not None:
+                        return ticket, None
+            elif hasattr(pf, "next_ticket") and not interactive:
+                single = pf.next_ticket(queue=queue_name)
+                if single:
+                    dict_t = (
+                        single.model_dump(mode="json", exclude_none=True)
+                        if hasattr(single, "model_dump")
+                        else dict(single)
+                    )
+                    return dict_t, None
+        except Exception:
+            pass
+
     next_result = planfile_command(
         project,
         ["ticket", "list", "--status", "open", "--format", "json"],
@@ -705,23 +741,66 @@ def _next_tickets_or_result(
         return ([single_t] if single_t else []), None
 
     # Fast path: native Planfile API with graph/critical-path prioritization
-    try:
-        from planfile import Planfile
-        pf = Planfile.auto_discover(project)
-        if hasattr(pf, "next_tickets"):
-            native_tickets = pf.next_tickets(
-                count=count,
-                queue=queue_name,
-                disjoint_files=disjoint_files,
-            )
-            if native_tickets:
-                dict_tickets = [
-                    t.model_dump(mode="json", exclude_none=True) if hasattr(t, "model_dump") else dict(t)
-                    for t in native_tickets
-                ]
-                return dict_tickets, None
-    except Exception:
-        pass
+    if planfile_runner is run_process:
+        try:
+            from planfile import Planfile
+
+            pf = Planfile.auto_discover(project)
+            if hasattr(pf, "next_tickets"):
+                native_tickets = pf.next_tickets(
+                    count=count,
+                    queue=queue_name,
+                    disjoint_files=disjoint_files,
+                )
+                if native_tickets:
+                    dict_tickets = [
+                        t.model_dump(mode="json", exclude_none=True) if hasattr(t, "model_dump") else dict(t)
+                        for t in native_tickets
+                    ]
+                    return dict_tickets, None
+            if count == 1 and hasattr(pf, "next_ticket") and not interactive:
+                single = pf.next_ticket(queue=queue_name)
+                if single:
+                    dict_ticket = (
+                        single.model_dump(mode="json", exclude_none=True)
+                        if hasattr(single, "model_dump")
+                        else dict(single)
+                    )
+                    return [dict_ticket], None
+            if hasattr(pf, "list_tickets"):
+                open_tickets = pf.list_tickets(status="open")
+                if open_tickets:
+                    raw_tickets = [
+                        t.model_dump(mode="json", exclude_none=True) if hasattr(t, "model_dump") else dict(t)
+                        for t in open_tickets
+                    ]
+                    tickets = parse_next_tickets(
+                        json.dumps(raw_tickets),
+                        count=count,
+                        queue_name=queue_name,
+                        ticket_id=target_ticket_id,
+                        interactive=interactive,
+                        disjoint_files=disjoint_files,
+                    )
+                    if tickets:
+                        try:
+                            payload = admitted_payload(
+                                project, json.dumps(tickets), runner=planfile_runner, queue_name=queue_name
+                            )
+                            admitted_tickets = parse_next_tickets(
+                                payload,
+                                count=count,
+                                queue_name=queue_name,
+                                ticket_id=target_ticket_id,
+                                interactive=interactive,
+                                disjoint_files=disjoint_files,
+                            )
+                            if admitted_tickets:
+                                return admitted_tickets, None
+                        except ValueError:
+                            pass
+        except Exception:
+            pass
 
     next_result = planfile_command(
         project,

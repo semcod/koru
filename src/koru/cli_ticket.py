@@ -13,7 +13,7 @@ def ticket_main(argv: list[str]) -> int:
     # An issue URL must never enter broad backlog synchronization or ID guessing.
     if argv and argv[0] == "auto" and len(argv) > 1 and argv[1].startswith("https://"):
         argv = argv[1:]
-    elif argv and argv[0] in {"auto", "list", "next"}:
+    elif argv and argv[0] in {"auto", "list", "next", "waves"}:
         from koru.cli_ticket_queue import ticket_main as queue_main
 
         return queue_main(argv)
@@ -27,7 +27,8 @@ def ticket_main(argv: list[str]) -> int:
         epilog="Profiles default to ~/.config/koru/tickets.json. C2004 uses clean main only; "
         "other configured repositories use canonical ticket worktrees and independent Validator delivery. "
         "Issue lists resume their saved selection after interruption; reported issues are not executed again. "
-        "Use 'koru ticket auto --help', 'koru ticket list --help', or 'koru ticket next --help' "
+        "Use 'koru ticket auto --help', 'koru ticket list --help', "
+        "'koru ticket next --help', or 'koru ticket waves --help' "
         "for local Planfile queue actions.",
     )
     parser.add_argument(

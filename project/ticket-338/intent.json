@@ -1,0 +1,73 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-338",
+  "summary": "fix(autonomy): align gbnf grammar test assertions and export with python 3.12",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-338/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "tests/test_dsl_reconfigure.py",
+    "tests/test_process_uri.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d8c83d135578cac8b797cc2506324a0c6d5e0106",
+    "targetBranch": "main",
+    "outcome": "Align GBNF grammar export assertions in test_process_uri.py and test_dsl_reconfigure.py with Python 3.12/3.13 string escaping behavior.",
+    "nonGoals": [
+      "Changing GBNF grammar format specification"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Match quotes and escaped characters in GBNF test assertions.",
+      "components": [
+        {
+          "name": "autonomy-gbnf-tests",
+          "paths": [
+            "tests/test_dsl_reconfigure.py",
+            "tests/test_process_uri.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit cleanly."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_process_uri.py tests/test_dsl_reconfigure.py -q"
+        ],
+        "evidence": "All GBNF export and DSL reconfigure tests pass."
+      }
+    ]
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-340",
+  "summary": "optimize context tree traversal and align mcp test assertions",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-340/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/context_files.py",
+    "tests/test_queue_context_modules.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d8c83d135578cac8b797cc2506324a0c6d5e0106",
+    "targetBranch": "main",
+    "outcome": "Accelerate project context tree traversal by pruning excluded directories in os.walk.",
+    "nonGoals": [
+      "Alter security exclusion definitions or leak sensitive repository contents",
+      "Remove context caps or change max entries behavior"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use os.walk with in-place excluded directory pruning in _read_file_tree instead of unpruned rglob('*').",
+      "components": [
+        {
+          "name": "context-assembly",
+          "paths": [
+            "src/koru/queue/context_files.py",
+            "tests/test_queue_context_modules.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the material ticket commit cleanly."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_queue_context_modules.py -q"
+        ],
+        "evidence": "Directory traversal pruning and file tree context assembly tests pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors, 0 warnings."
+      }
+    ]
+  }
+}

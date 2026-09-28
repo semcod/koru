@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-333",
+  "summary": "Prevent unadmitted shell agents from overwriting repository contents",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-333/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/agent_backend_runtime.py",
+    "src/koru/autonomy/cycle/cycle_drive_retry.py",
+    "src/koru/shell_execution_guard.py",
+    "src/koru/tillm_bridge.py",
+    "tests/test_agent_backend_runtime.py",
+    "tests/test_autonomous_cycle_drive_retry.py",
+    "tests/test_tillm_bridge.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "44fd805b7f62808865df079ef487eb3a5025ee97",
+    "targetBranch": "main",
+    "outcome": "Prevent unattended shell editing of primary, dirty or unadmitted governed workspaces; preserve preview semantics before model policy or editor fallback. Reproduce PLF031 source overwrite with a local malicious executor fixture and prove original bytes survive refusal.",
+    "nonGoals": [
+      "Implement the protected controller execution adapter or authorize governed editing from local lease files",
+      "Change active ticket331 evidence attribution or ticket332 SDK latency",
+      "Repair third-party Aider parsing or restart the old production lane"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 65,
+    "budgets": {
+      "maxImplementationFiles": 7,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use a shared read-only Git workspace guard at the Tillm execution boundary. Refuse governed writes pending controller admission, consistent with ticket330. Preview returns before execution policy/fallback and never invokes a vendor. Git checks are accident prevention, not an OS sandbox.",
+      "components": [
+        {
+          "name": "shell-execution",
+          "paths": [
+            "src/koru/tillm_bridge.py",
+            "src/koru/shell_execution_guard.py",
+            "src/koru/agent_backend_runtime.py",
+            "tests/test_tillm_bridge.py",
+            "tests/test_agent_backend_runtime.py"
+          ]
+        },
+        {
+          "name": "autonomy-drive",
+          "paths": [
+            "src/koru/autonomy/cycle/cycle_drive_retry.py",
+            "tests/test_autonomous_cycle_drive_retry.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert material commit; keep unsafe lane stopped and incident snapshots intact."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_tillm_bridge.py tests/test_agent_backend_runtime.py tests/test_autonomous_cycle_drive_retry.py -q"
+        ],
+        "evidence": "Real Git fixtures and local corrupting executor: primary, dirty, nested, symlink and governed targets never invoke editor or mutate original/index; clean isolated unmanaged checkout still executes."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base 44fd805b7f62808865df079ef487eb3a5025ee97"
+        ],
+        "evidence": "Preview invokes no provider, policy or GUI rescue; refusal cannot trigger GUI rescue; managed gate and scoped checks."
+      }
+    ]
+  }
+}
