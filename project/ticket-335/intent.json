@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-335",
+  "summary": "Fix test queue concurrency mock protocol instantiation",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-335/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "tests/test_queue_concurrency.py",
+    "tests/test_mcp_server.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a30898695eb07212808318ccc9c072190c500e86",
+    "targetBranch": "main",
+    "outcome": "Fix CommandResult mock object instantiation in test_queue_concurrency.py and align regix review subcommand assertion in test_mcp_server.py.",
+    "nonGoals": [
+      "Changing queue concurrency logic or models"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use MagicMock instead of instantiating CommandResult Protocol in test_queue_concurrency.py; accept review in test_mcp_server.py.",
+      "components": [
+        {
+          "name": "tests",
+          "paths": [
+            "tests/test_queue_concurrency.py",
+            "tests/test_mcp_server.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-335 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_queue_concurrency.py tests/test_mcp_server.py -q"
+        ],
+        "evidence": "Tests in test_queue_concurrency.py and test_mcp_server.py pass cleanly."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base a30898695eb07212808318ccc9c072190c500e86"
+        ],
+        "evidence": "Governance check passes with 0 errors, 0 warnings."
+      }
+    ]
+  }
+}

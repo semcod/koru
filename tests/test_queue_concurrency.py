@@ -10,7 +10,7 @@ from koru.cli_ticket_queue import ticket_main
 from koru.queue.loop import run_planfile_queue_loop
 from koru.queue.runner import _next_tickets_or_result
 from koru.queue.ticket import parse_next_tickets, ticket_file_scope
-from koru.queue.types import CommandResult, QueueRunResult
+from koru.queue.types import QueueRunResult
 
 
 def test_ticket_file_scope_extraction() -> None:
@@ -93,9 +93,10 @@ def test_next_tickets_or_result_fallback(tmp_path: Path) -> None:
         {"id": "T-1", "status": "open", "priority": "high", "files": ["f1.py"]},
         {"id": "T-2", "status": "open", "priority": "normal", "files": ["f2.py"]},
     ]
-    runner = MagicMock(return_value=CommandResult(0, json.dumps(tickets), ""))
+    mock_res = MagicMock(returncode=0, stdout=json.dumps(tickets), stderr="")
+    runner = MagicMock(return_value=mock_res)
 
-    with patch("koru.queue.runner.planfile_command", return_value=CommandResult(0, json.dumps(tickets), "")):
+    with patch("koru.queue.runner.planfile_command", return_value=mock_res):
         with patch("koru.queue.runner.admitted_payload", return_value=json.dumps(tickets)):
             batch, err = _next_tickets_or_result(tmp_path, runner, count=2, disjoint_files=True)
             assert err is None

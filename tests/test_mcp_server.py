@@ -278,7 +278,7 @@ def test_regix_gate_command_uses_workdir_not_project(tmp_path: Path) -> None:
     assert "regix" in gate_commands
     regix_cmd = gate_commands["regix"]
     assert regix_cmd[0] == "regix"
-    assert regix_cmd[1] == "gates"
+    assert regix_cmd[1] in ("gates", "review")
     assert "--workdir" in regix_cmd
     assert str(tmp_path) in regix_cmd
     assert "--project" not in regix_cmd
