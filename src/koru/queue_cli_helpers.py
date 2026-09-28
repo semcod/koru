@@ -153,6 +153,7 @@ def run_queue_loop_mode(
         actor=args.actor,
         queue_name=args.queue_name,
         interactive=args.interactive,
+        concurrency=getattr(args, "concurrency", 1),
         max_iterations=args.max_iterations,
         progress_callback=_queue_progress_callback(args, run_log),
         stop_callback=queue_manager_stop_callback(manager),

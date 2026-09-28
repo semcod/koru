@@ -51,6 +51,7 @@ from koru.queue.shell_evidence import (
 )
 from koru.queue.ticket import (
     parse_next_ticket,
+    parse_next_tickets,
     planfile_command,
     ticket_api_request,
     ticket_command,
@@ -677,6 +678,105 @@ def _next_ticket_or_result(
     return ticket, None
 
 
+def _next_tickets_or_result(
+    project: Path,
+    planfile_runner: Callable[[list[str], Path], CommandResult],
+    count: int = 1,
+    queue_name: str | None = None,
+    target_ticket_id: str | None = None,
+    *,
+    disjoint_files: bool = True,
+    interactive: bool = False,
+) -> tuple[list[dict[str, Any]], QueueRunResult | None]:
+    if count <= 0:
+        return [], None
+
+    # Targeted single ticket shortcut
+    if target_ticket_id is not None:
+        single_t, err = _next_ticket_or_result(
+            project,
+            planfile_runner,
+            queue_name=queue_name,
+            target_ticket_id=target_ticket_id,
+            interactive=interactive,
+        )
+        if err is not None:
+            return [], err
+        return ([single_t] if single_t else []), None
+
+    # Fast path: native Planfile API with graph/critical-path prioritization
+    try:
+        from planfile import Planfile
+        pf = Planfile.auto_discover(project)
+        if hasattr(pf, "next_tickets"):
+            native_tickets = pf.next_tickets(
+                count=count,
+                queue=queue_name,
+                disjoint_files=disjoint_files,
+            )
+            if native_tickets:
+                dict_tickets = [
+                    t.model_dump(mode="json", exclude_none=True) if hasattr(t, "model_dump") else dict(t)
+                    for t in native_tickets
+                ]
+                return dict_tickets, None
+    except Exception:
+        pass
+
+    next_result = planfile_command(
+        project,
+        ["ticket", "list", "--status", "open", "--format", "json"],
+        runner=planfile_runner,
+    )
+    if next_result.returncode != 0:
+        from koru.queue.ticket import planfile_module_missing
+
+        message = "planfile ticket list failed"
+        if planfile_module_missing(f"{next_result.stdout}\n{next_result.stderr}"):
+            message += (
+                " — planfile module missing in the resolved environment; "
+                "fix: pip install planfile into the project venv "
+                "(or pip install 'koru[planfile]')"
+            )
+        return [], QueueRunResult(
+            status="planfile_error",
+            message=message,
+            exit_code=next_result.returncode,
+            stdout=next_result.stdout,
+            stderr=next_result.stderr,
+        )
+
+    tickets = parse_next_tickets(
+        next_result.stdout,
+        count=count,
+        queue_name=queue_name,
+        ticket_id=target_ticket_id,
+        interactive=interactive,
+        disjoint_files=disjoint_files,
+    )
+    if tickets:
+        try:
+            payload = admitted_payload(
+                project, next_result.stdout, runner=planfile_runner, queue_name=queue_name
+            )
+            tickets = parse_next_tickets(
+                payload,
+                count=count,
+                queue_name=queue_name,
+                ticket_id=target_ticket_id,
+                interactive=interactive,
+                disjoint_files=disjoint_files,
+            )
+        except ValueError as exc:
+            return [], QueueRunResult(
+                status="planfile_error", message=str(exc), exit_code=1, stderr=str(exc)
+            )
+
+    if not tickets:
+        return [], QueueRunResult(status="idle", message="No runnable ticket found")
+    return tickets, None
+
+
 def _log_queue_ticket_start(ticket: dict[str, Any], ticket_id: str) -> None:
     ticket_name = str(ticket.get("name") or ticket_id)
     try:
@@ -933,76 +1033,77 @@ def _run_next_planfile_task_impl(
         if claimed:
             return claimed
 
-        expects_edits = _ticket_expects_edits(ticket)
-        before = _snapshot_declared_files(project, ticket) if expects_edits else {}
-        resolved_action, use_patch_mode = _prepare_action_for_patch_mode(
-            executor_kind, expects_edits, ticket, resolved_action,
-        )
+    expects_edits = _ticket_expects_edits(ticket)
+    before = _snapshot_declared_files(project, ticket) if expects_edits else {}
+    resolved_action, use_patch_mode = _prepare_action_for_patch_mode(
+        executor_kind, expects_edits, ticket, resolved_action,
+    )
 
-        recording = None
-        if use_patch_mode:
-            from koru.queue.repair_recording import RepairRecordingSession
+    recording = None
+    if use_patch_mode:
+        from koru.queue.repair_recording import RepairRecordingSession
 
-            # Best-effort at this stage: a missing store never blocks the queue,
-            # but every model call of a recorded run is persisted as an attempt.
-            recording = RepairRecordingSession.begin(project, ticket, actor)
-            if recording is not None:
-                llm_runner = recording.wrap_llm(llm_runner)
-
-        if use_patch_mode and (denial := _pre_llm_contract_denial(project, ticket, actor)):
-            # The contract is checked before the model ever sees a prompt: an
-            # actor outside its box must not spend an LLM run finding out.
-            planfile_lifecycle_command(
-                project,
-                ["ticket", "block", ticket_id, "--reason", f"FAIL: [policy_denied] {denial}"],
-                runner=planfile_runner,
-            )
-            return QueueRunResult(
-                status="failed",
-                ticket_id=ticket_id,
-                executor_kind=executor_kind,
-                message=denial,
-                exit_code=1,
-                stdout="",
-                stderr=denial,
-            )
-
-        result, action_label = _execute_action(
-            executor_kind,
-            resolved_action,
-            project,
-            ticket_id,
-            api_runner,
-            llm_runner,
-            shell_runner,
-            taskand_runner,
-        )
-
-
-        result, patch_outcome, patch_evidence = _apply_patch_step(
-            project,
-            result,
-            ticket,
-            resolved_action,
-            llm_runner,
-            shell_runner,
-            use_patch_mode,
-            actor=actor,
-        )
+        # Best-effort at this stage: a missing store never blocks the queue,
+        # but every model call of a recorded run is persisted as an attempt.
+        recording = RepairRecordingSession.begin(project, ticket, actor)
         if recording is not None:
-            recording.finish(result, patch_outcome)
+            llm_runner = recording.wrap_llm(llm_runner)
 
-        verification_error = _compute_verification_error(
+    if use_patch_mode and (denial := _pre_llm_contract_denial(project, ticket, actor)):
+        # The contract is checked before the model ever sees a prompt: an
+        # actor outside its box must not spend an LLM run finding out.
+        planfile_lifecycle_command(
             project,
-            ticket,
-            use_patch_mode,
-            result,
-            patch_outcome,
-            patch_evidence,
-            expects_edits,
-            before,
+            ["ticket", "block", ticket_id, "--reason", f"FAIL: [policy_denied] {denial}"],
+            runner=planfile_runner,
+        )
+        return QueueRunResult(
+            status="failed",
+            ticket_id=ticket_id,
+            executor_kind=executor_kind,
+            message=denial,
+            exit_code=1,
+            stdout="",
+            stderr=denial,
         )
 
+    result, action_label = _execute_action(
+        executor_kind,
+        resolved_action,
+        project,
+        ticket_id,
+        api_runner,
+        llm_runner,
+        shell_runner,
+        taskand_runner,
+    )
+
+
+    result, patch_outcome, patch_evidence = _apply_patch_step(
+        project,
+        result,
+        ticket,
+        resolved_action,
+        llm_runner,
+        shell_runner,
+        use_patch_mode,
+        actor=actor,
+    )
+    if recording is not None:
+        recording.finish(result, patch_outcome)
+
+    verification_error = _compute_verification_error(
+        project,
+        ticket,
+        use_patch_mode,
+        result,
+        patch_outcome,
+        patch_evidence,
+        expects_edits,
+        before,
+    )
+
+    with queue_runner_lock(project):
         return _finalize_ticket(
             project,
             ticket,

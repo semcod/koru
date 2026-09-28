@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-329",
+  "summary": "Parallel ticket batching and execution waves in koru queue",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-329/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli_ticket_queue.py",
+    "src/koru/queue/**",
+    "src/koru/queue_cli_helpers.py",
+    "tests/test_queue_concurrency.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e4af82eea1c49244fe7e08e6b2507ed871e7ec33",
+    "targetBranch": "main",
+    "outcome": "Enable disjoint ticket batching and concurrent execution waves in koru queue loop without lock contention during task runs.",
+    "nonGoals": [
+      "Changing planfile ticket scheduling algorithms or format",
+      "Allowing overlapping file modifications concurrently"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 6,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Introduce parse_next_tickets with disjoint_files filter; refine queue_runner_lock scope so execution runs concurrently; add concurrency options to CLI.",
+      "components": [
+        {
+          "name": "queue",
+          "paths": [
+            "src/koru/queue/**",
+            "src/koru/cli_ticket_queue.py",
+            "src/koru/queue_cli_helpers.py",
+            "tests/test_queue_concurrency.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-329 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_queue_concurrency.py -q"
+        ],
+        "evidence": "Disjoint file parsing, batch selection and concurrency execution tests pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base e4af82eea1c49244fe7e08e6b2507ed871e7ec33"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
