@@ -1,5 +1,4 @@
 from dataclasses import replace
-
 from pathlib import Path
 from typing import Any
 
@@ -21,8 +20,8 @@ from koru.autonomy.verification_engine import (
     absorbed_foreign_paths,
     assess_verdict,
     collect_evidence,
-    take_snapshot,
     record_unsuccessful_drive,
+    take_snapshot,
 )
 from koru.queue import QueueLoopResult
 

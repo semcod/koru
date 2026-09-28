@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sqlite3
 import subprocess
 from pathlib import Path
 
@@ -10,9 +9,7 @@ from koru.autonomy.cycle.cycle_common import DiagnosticResult
 from koru.autonomy.cycle.cycle_skip_conditions import _check_autopilot_skip_conditions
 from koru.autonomy.state import AutoloopState
 from koru.autonomy.verification_engine import (
-    GitEvidence,
     _workspace_delta,
-    _workspace_fingerprints,
     drive_budget_exhausted,
     record_unsuccessful_drive,
     take_snapshot,
