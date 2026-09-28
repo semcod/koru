@@ -21,6 +21,23 @@ def test_activity_flushes_with_uri_and_nl_dsl(capsys: pytest.CaptureFixture[str]
     assert "DSL:" in out
 
 
+def test_action_slug_clean_and_concise() -> None:
+    assert al._action_slug("project /home/tom/github/semcod/koru") == "project-root"
+    assert al._action_slug("[WARN] venv_alignment: virtual_env=/home") == "venv-alignment"
+    assert al._action_slug("koru 0.1.461 (python 3.12.7)") == "version"
+    assert al._action_slug("probing autopilot daemon on /run/user/1000/koru.sock") == "probing-autopilot-daemon"
+    assert al._action_slug("started autopilot daemon on /run/user/1000/koru.sock") == "started-autopilot-daemon"
+    assert al._action_slug("git co-author hook active (Co-authored-by: Koru Agent)") == "git-co-author-hook-active"
+
+
+def test_activity_multiline_yaml_indentation(capsys: pytest.CaptureFixture[str]) -> None:
+    msg = "\nkoru autonomous: stopped after SIGTERM\n(WUP watcher stopped)"
+    al.activity("INFO", msg, fmt="human")
+    out = capsys.readouterr().out
+    assert "uri: koru://info/" in out
+    assert "  NL:\n    koru autonomous: stopped after SIGTERM\n    (WUP watcher stopped)" in out
+
+
 def test_activity_legacy_format(capsys: pytest.CaptureFixture[str]) -> None:
     al.activity("CHAT", "test message", preview="hello world", fmt="legacy")
     out = capsys.readouterr().out
