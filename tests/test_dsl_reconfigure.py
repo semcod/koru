@@ -40,7 +40,7 @@ def test_cli_export_gbnf(capsys):
     code = run_reconfigure_cli(args)
     captured = capsys.readouterr()
     assert code == 0
-    assert "koru\\://workspace/allocate" in captured.out
+    assert '"koru://workspace/allocate"' in captured.out
 
 
 def test_cli_list_actions(capsys):
