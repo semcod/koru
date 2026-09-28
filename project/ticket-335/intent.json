@@ -1,0 +1,78 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-335",
+  "summary": "Fix test queue concurrency mock protocol instantiation",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-335/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "tests/test_queue_concurrency.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a30898695eb07212808318ccc9c072190c500e86",
+    "targetBranch": "main",
+    "outcome": "Fix CommandResult mock object instantiation in test_queue_concurrency.py to prevent TypeError on typing.Protocol.",
+    "nonGoals": [
+      "Changing queue concurrency logic or models"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use MagicMock(returncode=0, stdout=..., stderr=...) instead of directly instantiating CommandResult Protocol in unit test.",
+      "components": [
+        {
+          "name": "queue-tests",
+          "paths": [
+            "tests/test_queue_concurrency.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-335 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_queue_concurrency.py -q"
+        ],
+        "evidence": "All 6 tests in test_queue_concurrency.py pass cleanly without protocol instantiation error."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base a30898695eb07212808318ccc9c072190c500e86"
+        ],
+        "evidence": "Governance check passes with 0 errors, 0 warnings."
+      }
+    ]
+  }
+}
