@@ -65,3 +65,28 @@ def test_vdisplay_client_reexports_env_helpers():
     assert vc.sync_prepare_capture_flags_to_env is es.sync_prepare_capture_flags_to_env
     assert vc._session_type is es.session_type
     assert vc._dry_run is es.dry_run_enabled
+
+
+def test_vdisplay_subprocess_env_pythonpath_does_not_shadow_queue(monkeypatch):
+    import subprocess
+    import sys
+
+    from koru.integrations.vdisplay.imgl_loader import _vdisplay_subprocess_env
+
+    monkeypatch.delenv("KORU_SRC", raising=False)
+    env = _vdisplay_subprocess_env()
+    pythonpath = env.get("PYTHONPATH", "")
+    parts = pythonpath.split(":")
+    for part in parts:
+        assert not part.endswith("/src/koru"), f"Poisoned PYTHONPATH part: {part}"
+        assert not part.endswith("\\src\\koru"), f"Poisoned PYTHONPATH part: {part}"
+
+    proc = subprocess.run(
+        [sys.executable, "-c", "import concurrent.futures.thread; import queue; assert hasattr(queue, 'Queue')"],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, f"Failed importing stdlib queue: {proc.stderr}"
+

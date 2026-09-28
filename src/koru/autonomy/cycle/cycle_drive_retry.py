@@ -348,7 +348,21 @@ def _waiting_ticket_is_missing(project: Path, ticket_id: str) -> bool:
     if proc.returncode == 0:
         return False
     output = f"{proc.stdout}\n{proc.stderr}".lower()
-    return "not found" in output
+    if (
+        "traceback" in output
+        or "modulenotfounderror" in output
+        or "command not found" in output
+        or "not found:" in output
+    ):
+        return False
+    ticket_lower = ticket.lower()
+    return (
+        f"ticket {ticket_lower} not found" in output
+        or f"ticket '{ticket_lower}' not found" in output
+        or f"ticket \"{ticket_lower}\" not found" in output
+        or f"ticket {ticket_lower} does not exist" in output
+        or f"ticket '{ticket_lower}' does not exist" in output
+    )
 
 
 def _resolve_autopilot_drive_decision(

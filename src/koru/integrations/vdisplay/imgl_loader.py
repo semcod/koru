@@ -120,7 +120,12 @@ def _vdisplay_subprocess_env(*, ide: str = "auto") -> dict[str, str]:
         path_parts.append(vdisplay_src)
     koru_src = os.environ.get("KORU_SRC", "").strip()
     if not koru_src:
-        koru_src = str(Path(__file__).resolve().parents[2])
+        for parent in Path(__file__).resolve().parents:
+            if parent.name == "src" and (parent / "koru" / "__init__.py").is_file():
+                koru_src = str(parent)
+                break
+        if not koru_src:
+            koru_src = str(Path(__file__).resolve().parents[3])
     if koru_src:
         path_parts.append(koru_src)
     existing = env.get("PYTHONPATH", "").strip()

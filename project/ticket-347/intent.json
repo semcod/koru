@@ -1,0 +1,104 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-347",
+  "summary": "fix koru src path in vdisplay subprocess env and ghost ticket check",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-347/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay/imgl_loader.py",
+    "src/koru/autonomy/cycle/cycle_drive_retry.py",
+    "tests/test_queue_living_status_fastpath.py",
+    "tests/test_vdisplay_env_session.py",
+    "tests/test_cycle_drive_missing.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "276cfef3d3526fb592b5b079cbfbad64c1374ba5",
+    "targetBranch": "main",
+    "outcome": "Fix koru_src path resolution in vdisplay subprocess env to prevent shadowing Python standard library queue module, make ghost ticket detection resilient against planfile crashes, and fix E501 line length in fastpath test.",
+    "nonGoals": [
+      "Rewriting vdisplay capture logic",
+      "Removing ghost ticket detection"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Resolve koru_src to the repository src root in imgl_loader.py; guard _waiting_ticket_is_missing in cycle_drive_retry.py against false positives on tool/module crashes; split long lines in test_queue_living_status_fastpath.py.",
+      "components": [
+        {
+          "name": "vdisplay",
+          "paths": [
+            "src/koru/integrations/vdisplay/imgl_loader.py",
+            "tests/test_vdisplay_env_session.py"
+          ]
+        },
+        {
+          "name": "autonomy",
+          "paths": [
+            "src/koru/autonomy/cycle/cycle_drive_retry.py",
+            "tests/test_cycle_drive_missing.py"
+          ]
+        },
+        {
+          "name": "queue",
+          "paths": [
+            "tests/test_queue_living_status_fastpath.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-347 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m unittest tests/test_cycle_drive_missing.py"
+        ],
+        "evidence": "Resilient ghost ticket check tests pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_vdisplay_env_session.py"
+        ],
+        "evidence": "Vdisplay env tests verify koru_src points to src and does not shadow queue."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh --base 276cfef3d3526fb592b5b079cbfbad64c1374ba5"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
