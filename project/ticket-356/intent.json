@@ -1,0 +1,87 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-356",
+  "summary": "Fix executed ticket status for mock queue loop result",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-356/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/cycle/cycle_post_drive.py",
+    "tests/test_autonomous.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "c511039d21db4f1047460cfbb2af2c714ad09fc6",
+    "targetBranch": "main",
+    "outcome": "Use getattr when accessing completed/failed/waiting/last_ticket_id in _executed_ticket_status so mock queue loop results in tests do not trigger AttributeError.",
+    "nonGoals": [
+      "Altering QueueLoopResult dataclass definition or queue loop execution"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 5,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Safely read completed, failed, waiting, and last_ticket_id attributes with default empty values in _executed_ticket_status.",
+      "components": [
+        {
+          "name": "autonomy",
+          "paths": [
+            "src/koru/autonomy/cycle/cycle_post_drive.py",
+            "tests/test_autonomous.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-356 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          ".venv/bin/python -m ruff check src tests"
+        ],
+        "evidence": "Ruff check passes with 0 errors."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          ".venv/bin/python -m pytest tests/test_autonomous.py -k test_run_cycle_sends_fallback_prompt_when_waiting_input_empty_message -q"
+        ],
+        "evidence": "Targeted autonomous cycle test passes without AttributeError."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}

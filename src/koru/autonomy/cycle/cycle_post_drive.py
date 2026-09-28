@@ -107,14 +107,14 @@ def _post_drive_ticket_id(queue_result: QueueLoopResult) -> str:
 
 def _executed_ticket_status(queue_result: QueueLoopResult, ticket_id: str) -> str:
     """Do not label A as waiting merely because the next queued ticket B waits."""
-    if ticket_id in queue_result.completed:
+    if ticket_id in getattr(queue_result, "completed", ()):
         return "completed"
-    if ticket_id in queue_result.failed:
+    if ticket_id in getattr(queue_result, "failed", ()):
         return "failed"
-    if ticket_id in queue_result.waiting:
+    if ticket_id in getattr(queue_result, "waiting", ()):
         return "waiting_input"
-    if ticket_id and ticket_id == queue_result.last_ticket_id:
-        return str(queue_result.last_status or "unknown")
+    if ticket_id and ticket_id == getattr(queue_result, "last_ticket_id", None):
+        return str(getattr(queue_result, "last_status", None) or "unknown")
     return "unknown"
 
 
