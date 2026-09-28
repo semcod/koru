@@ -3577,3 +3577,29 @@ def test_native_idle_sleep_wakes_on_machine_arrival_without_claiming(tmp_path, m
     ticket = store.get_ticket(created[0].id)
     assert ticket.status.value == "open"
     assert ticket.execution.assigned_to is None
+
+
+def test_in_process_planfile_sdk_fast_path(tmp_path, monkeypatch):
+    from koru.queue.admission import admitted_payload
+    from koru.queue.runner import _next_tickets_or_result
+    from koru.queue.runners import run_process
+    from tests.test_queue_admission import native_store, shell_ticket
+
+    store = native_store(tmp_path, monkeypatch)
+    ticket = shell_ticket(store, "fast path task", execution={"queue": "default"})
+
+    tickets, result = _next_tickets_or_result(
+        tmp_path,
+        planfile_runner=run_process,
+        queue_name="default",
+        count=1,
+    )
+    assert result is None
+    assert tickets is not None
+    assert len(tickets) == 1
+    assert tickets[0]["id"] == ticket.id
+
+    payload = json.dumps([{"id": ticket.id, "name": "fast path task"}])
+    admitted = admitted_payload(tmp_path, payload, runner=run_process, queue_name="default")
+    assert json.loads(admitted)[0]["id"] == ticket.id
+
