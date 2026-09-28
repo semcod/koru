@@ -13,8 +13,6 @@ from pathlib import Path
 def _find_project_root(start: Path) -> Path:
     current = start.resolve()
     for directory in [current, *current.parents]:
-        if directory in {Path("/tmp"), Path("/")}:
-            continue
         if (directory / ".planfile").exists() or (directory / "koru.yaml").exists():
             return directory
     return current
@@ -30,6 +28,9 @@ def format_next_ticket(ticket: dict | None, fmt: str = "text") -> str:
         if fmt == "markdown":
             return "*No runnable ticket found in queue (queue is idle).*"
         return "ℹ️  No runnable ticket found in queue (queue is idle)."
+
+    if fmt == "json":
+        return json.dumps(ticket, indent=2)
 
     ticket_id = ticket.get("id") or "UNKNOWN"
     title = ticket.get("name") or ticket.get("title") or ""
@@ -48,12 +49,10 @@ def format_next_ticket(ticket: dict | None, fmt: str = "text") -> str:
     if fmt == "brief":
         return f"{ticket_id}: {title}" if title else ticket_id
 
-    if fmt == "json":
-        return json.dumps(ticket, indent=2)
-
     if fmt == "markdown":
         lines = [
             f"### Next Ticket: {ticket_id} — {title}",
+            "",
             f"- **Status**: `{status}`",
             f"- **Priority**: `{priority}`",
             f"- **Executor**: `{executor_kind}`",
@@ -63,13 +62,15 @@ def format_next_ticket(ticket: dict | None, fmt: str = "text") -> str:
         ]
         if description:
             lines.extend(["", "#### Description", description])
-        lines.extend([
-            "",
-            "#### Quick Actions",
-            f"- Run: `koru ticket auto {ticket_id}`",
-            f"- Agent brief: `koru --context --ticket {ticket_id}`",
-            f"- Mark done: `planfile ticket done {ticket_id}`",
-        ])
+        lines.extend(
+            [
+                "",
+                "#### Quick Actions",
+                f"- Run: `koru ticket auto {ticket_id}`",
+                f"- Agent brief: `koru --context --ticket {ticket_id}`",
+                f"- Mark done: `planfile ticket done {ticket_id}`",
+            ]
+        )
         return "\n".join(lines)
 
     # default: text format
@@ -88,13 +89,15 @@ def format_next_ticket(ticket: dict | None, fmt: str = "text") -> str:
     ]
     if description:
         box_lines.extend(["Description:", f"  {description}"])
-    box_lines.extend([
-        "",
-        "Quick actions:",
-        f"  • Run ticket:       koru ticket auto {ticket_id}",
-        f"  • Agent brief:      koru --context --ticket {ticket_id}",
-        f"  • Mark done:        planfile ticket done {ticket_id}",
-    ])
+    box_lines.extend(
+        [
+            "",
+            "Quick actions:",
+            f"  • Run ticket:       koru ticket auto {ticket_id}",
+            f"  • Agent brief:      koru --context --ticket {ticket_id}",
+            f"  • Mark done:        planfile ticket done {ticket_id}",
+        ]
+    )
     return "\n".join(box_lines)
 
 
@@ -203,7 +206,7 @@ def ticket_main(argv: list[str]) -> int:
 
     args = parser.parse_args(effective_argv)
 
-    project = _find_project_root(args.project or Path.cwd())
+    project = args.project.resolve() if args.project is not None else _find_project_root(Path.cwd())
 
     if args.action == "list":
         py = os.environ.get("PY") or sys.executable
@@ -213,15 +216,28 @@ def ticket_main(argv: list[str]) -> int:
 
     if args.action == "next":
         fmt = "brief" if getattr(args, "brief", False) else getattr(args, "format", "text")
-        from koru.queue.runner import _next_ticket_or_result
         from koru.queue import run_process as _queue_run_process
+        from koru.queue.runner import _next_ticket_or_result
 
         queue_name = args.queue_name or os.environ.get("KORU_QUEUE_NAME") or "default"
-        ticket, early_result = _next_ticket_or_result(
-            project,
-            _queue_run_process,
-            queue_name=queue_name,
-        )
+
+        def sprint_runner(command, cwd):
+            # Scope the resolver's candidate list while preserving its native
+            # readiness query across all sprints (archived dependencies matter).
+            candidate_query = ["ticket", "list", "--status", "open", "--format", "json"]
+            if list(command[-len(candidate_query) :]) == candidate_query:
+                command = [*command, "--sprint", args.sprint]
+            return _queue_run_process(command, cwd)
+
+        try:
+            ticket, early_result = _next_ticket_or_result(
+                project,
+                sprint_runner,
+                queue_name=queue_name,
+            )
+        except (OSError, ValueError) as exc:
+            print(f"koru ticket next: error: {exc}", file=sys.stderr)
+            return 1
         if early_result and early_result.status == "planfile_error":
             print(f"koru ticket next: error: {early_result.message}", file=sys.stderr)
             return early_result.exit_code or 1

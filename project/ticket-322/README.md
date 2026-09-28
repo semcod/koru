@@ -3,7 +3,7 @@
 - **ID**: ticket-322
 - **Owner**: human:tom
 - **Status**: IN_PROGRESS
-- **Workflow state**: EDIT
+- **Workflow state**: PUBLICATION
 - **Created**: 2026-09-27
 - **Authorization**: SESSION_EXECUTION_AUTHORIZATION
 
@@ -20,7 +20,11 @@
 
 ## Acceptance criteria
 
-- [ ] AC-01: `koru ticket next` outputs the next runnable ticket in text, brief, json, and markdown formats.
-- [ ] AC-02: `koru ticket next` reports idle status when no runnable ticket is found.
-- [ ] AC-03: Full test suite in `tests/test_ticket_command_queue.py` passes.
-- [ ] AC-04: `./project/governance-check.sh` reports `GOV-PASS: passed (0 errors, 0 warnings)`.
+- [x] AC-01: `koru ticket next` outputs the next runnable ticket in text, brief, json, and markdown formats.
+- [x] AC-02: `koru ticket next` reports idle status when no runnable ticket is found.
+- [x] AC-03: Full test suite in `tests/test_ticket_command_queue.py` passes.
+- [x] AC-04: `./project/governance-check.sh` reports `GOV-PASS: passed (0 errors, 0 warnings)`.
+
+## Continuation and validation
+
+User explicitly handed off ticket-322 after the previous session ended; resumed 2026-09-28 with a new controller-issued lease after clean HEAD and scope observation. The preview scopes candidate queries to the requested sprint and keeps native readiness across archived dependencies. Explicit project directories are respected. Invalid transport/JSON returns a nonzero error; JSON output retains raw fields. 69 focused CLI, selection and admission tests pass; scoped Ruff and governance pass. Independent protected publication is still required.

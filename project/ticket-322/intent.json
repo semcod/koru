@@ -41,7 +41,7 @@
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Add 'next' subparser in cli_ticket_queue, route 'next' from cli_ticket, and implement formatted next-ticket preview leveraging queue.runner candidate resolution.",
+      "decision": "Reuse queue.runner candidate resolution with a scoped CLI transport adapter: append the requested sprint only to candidate listing, preserve all-sprint native readiness, and never claim or execute during preview.",
       "components": [
         {
           "name": "cli-ticket",

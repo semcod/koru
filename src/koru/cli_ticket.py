@@ -27,7 +27,8 @@ def ticket_main(argv: list[str]) -> int:
         epilog="Profiles default to ~/.config/koru/tickets.json. C2004 uses clean main only; "
         "other configured repositories use canonical ticket worktrees and independent Validator delivery. "
         "Issue lists resume their saved selection after interruption; reported issues are not executed again. "
-        "Use 'koru ticket auto --help', 'koru ticket list --help', or 'koru ticket next --help' for local Planfile queue actions.",
+        "Use 'koru ticket auto --help', 'koru ticket list --help', or 'koru ticket next --help' "
+        "for local Planfile queue actions.",
     )
     parser.add_argument(
         "url", help="https://github.com/OWNER/REPO/issues/N or /issues/ (oldest first, stop on failure)"
