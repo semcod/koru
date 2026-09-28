@@ -4,82 +4,62 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any
 
 from koru.autonomy.execution_plan_profiles import (
     count_skipped_complete as _count_skipped_complete,
-)
-from koru.autonomy.execution_plan_profiles import (
     fallback_profile_id as _fallback_profile_id,
-)
-from koru.autonomy.execution_plan_profiles import (
     load_task_profiles as _load_task_profiles,
-)
-from koru.autonomy.execution_plan_profiles import (
     open_refactor_tickets as _open_refactor_tickets,
-)
-from koru.autonomy.execution_plan_profiles import (
     profile_matches as _profile_matches,
-)
-from koru.autonomy.execution_plan_profiles import (
     profile_order as _profile_order,
-)
-from koru.autonomy.execution_plan_profiles import (
     select_profile,
-)
-from koru.autonomy.execution_plan_profiles import (
     target_source_lines as _target_source_lines,
-)
-from koru.autonomy.execution_plan_profiles import (
     ticket_labels as _ticket_labels,
-)
-from koru.autonomy.execution_plan_profiles import (
     ticket_likely_complete as _ticket_likely_complete,
-)
-from koru.autonomy.execution_plan_profiles import (
     ticket_matches_profile as _ticket_matches_profile,
-)
-from koru.autonomy.execution_plan_profiles import (
     ticket_name as _ticket_name,
-)
-from koru.autonomy.execution_plan_profiles import (
     ticket_signal as _ticket_signal,
-)
-from koru.autonomy.execution_plan_profiles import (
     ticket_sort_key as _ticket_sort_key,
 )
+from koru.autonomy.execution_plan_selection import (
+    PlanSelection as _PlanSelection,
+    PlanSignals as _PlanSignals,
+    collect_plan_signals as _collect_plan_signals,
+    discovery_selection as _discovery_selection,
+    filter_unmerged_worktrees as _filter_unmerged_worktrees,
+    pipeline_order as _pipeline_order,
+    plan_summary as _plan_summary,
+    queued_ticket_steps as _queued_ticket_steps,
+    select_issue_or_discovery as _select_issue_or_discovery,
+    select_pending_pr as _select_pending_pr,
+    select_pending_worktree as _select_pending_worktree,
+    select_plan_work as _select_plan_work,
+)
+
+
+def _select_profile(
+    ticket: dict[str, Any] | None,
+    phase: str,
+) -> tuple[str | None, dict[str, Any] | None]:
+    return select_profile(ticket, phase, profiles_doc=_load_task_profiles())
+
 from koru.autonomy.execution_plan_steps import (
     ExecutionStep,
+    discovery_steps as _discovery_steps,
+    format_command as _format_command,
+    pr_steps as _pr_steps,
     resolve_ticket_repo,
     run_auto_steps,
-)
-from koru.autonomy.execution_plan_steps import (
-    discovery_steps as _discovery_steps,
-)
-from koru.autonomy.execution_plan_steps import (
-    format_command as _format_command,
-)
-from koru.autonomy.execution_plan_steps import (
-    pr_steps as _pr_steps,
-)
-from koru.autonomy.execution_plan_steps import (
     workflow_steps as _workflow_steps,
-)
-from koru.autonomy.execution_plan_steps import (
     worktree_steps as _worktree_steps,
 )
-from koru.autonomy.ide_work import sprint_ticket_status_summary
 from koru.autonomy.task_strategies import (
-    DEFAULT_TASK_STRATEGY,
-    STRATEGY_ORDER,
     PendingPR,
     PendingWorktree,
-    find_pending_prs,
-    find_pending_worktrees,
     resolve_task_strategy,
 )
 from koru.autonomy_strategy import load_autonomy_strategy
-from koru.autonomy_strategy.heuristics import build_strategy_heuristics
 
 _SCHEMA = "koru.execution_plan/v1"
 
@@ -122,250 +102,12 @@ def _ticket_summary(ticket: dict[str, Any], project: Path) -> dict[str, Any]:
     }
 
 
-class _PlanSignals(NamedTuple):
-    """Signal payload plus the open refactor tickets it was computed from."""
-
-    payload: dict[str, Any]
-    open_tickets: list[dict[str, Any]]
-    pending_prs: list[PendingPR]
-    pending_worktrees: list[PendingWorktree]
-
-
-class _PlanSelection(NamedTuple):
-    """Chosen plan phase with the steps, ticket, PR, or worktree that represent it."""
-
-    phase: str
-    steps: list[ExecutionStep]
-    selected: dict[str, Any] | None = None
-    selected_pr: dict[str, Any] | None = None
-    selected_worktree: dict[str, Any] | None = None
-    summary: str = ""
-
-
-def _select_profile(ticket: dict[str, Any] | None, phase: str) -> tuple[str | None, dict[str, Any] | None]:
-    return select_profile(ticket, phase, profiles_doc=_load_task_profiles())
-
-
-def _queued_ticket_steps(
+def _build_execution_plan(
     project: Path,
-    selected: dict[str, Any],
-    phase: str,
-) -> list[ExecutionStep]:
-    repo = Path(resolve_ticket_repo(project, selected) or project)
-    profile_id, profile = _select_profile(selected, phase)
-    if profile is None:
-        profiles_doc = _load_task_profiles()
-        fallback_id = _fallback_profile_id(profiles_doc)
-        profile = (profiles_doc.get("profiles") or {}).get(fallback_id)
-        profile_id = fallback_id if isinstance(profile, dict) else None
-    if isinstance(profile, dict):
-        steps = _workflow_steps(
-            profile,
-            project=project,
-            repo=repo,
-            ticket=selected,
-            profile_id=profile_id or "generic",
-            phase=phase,
-        )
-    else:
-        steps = [
-            ExecutionStep(
-                id="work_ticket",
-                kind="ide_work",
-                reason="Runnable planfile ticket without a matching profile.",
-                ticket_id=str(selected.get("id")),
-                repo=str(repo.resolve()),
-                hint=_ticket_name(selected),
-            ),
-        ]
-    return steps
-
-
-def _pipeline_order(strategy: dict[str, Any]) -> list[Any]:
-    pipeline = strategy.get("default_pipeline") if isinstance(strategy.get("default_pipeline"), dict) else {}
-    order = pipeline.get("order") if isinstance(pipeline.get("order"), list) else []
-    return order
-
-
-def _filter_unmerged_worktrees(wts: list[PendingWorktree]) -> list[PendingWorktree]:
-    """Exclude worktrees that have already been merged into main."""
-    return [w for w in wts if not w.is_merged]
-
-
-def _collect_plan_signals(
-    project: Path,
-    *,
-    task_strategy: str = DEFAULT_TASK_STRATEGY,
-    pending_prs: list[PendingPR] | None = None,
-    pending_worktrees: list[PendingWorktree] | None = None,
-) -> _PlanSignals:
-    open_tickets = _open_refactor_tickets(project)
-    prs = pending_prs if pending_prs is not None else find_pending_prs(project)
-    raw_wts = pending_worktrees if pending_worktrees is not None else find_pending_worktrees(project)
-    wts = _filter_unmerged_worktrees(raw_wts)
-    payload: dict[str, Any] = {
-        "planfile": sprint_ticket_status_summary(project),
-        "open_refactor_tickets": len(open_tickets),
-        "skipped_likely_complete": _count_skipped_complete(project),
-        "task_strategy": task_strategy,
-        "pending_prs_count": len(prs),
-        "pending_worktrees_count": len(wts),
-        "pending_prs": [p.to_dict() for p in prs],
-        "pending_worktrees": [w.to_dict() for w in wts],
-        "heuristics": build_strategy_heuristics(project),
-    }
-    try:
-        from koru.work.llm_provenance import resolve_work_llm_context
-
-        payload["llm"] = resolve_work_llm_context(project).to_dict()
-    except Exception:
-        pass
-    return _PlanSignals(
-        payload=payload,
-        open_tickets=open_tickets,
-        pending_prs=prs,
-        pending_worktrees=wts,
-    )
-
-
-def _discovery_selection(project: Path, order: list[Any]) -> _PlanSelection:
-    for phase_name in order:
-        if phase_name in {"idle_scan", "whole_project_discovery"}:
-            phase = str(phase_name)
-            return _PlanSelection(
-                phase=phase,
-                steps=_discovery_steps(project, phase),
-                selected=None,
-                summary=f"phase={phase}",
-            )
-    return _PlanSelection(phase="idle", steps=[], selected=None, summary="phase=idle")
-
-
-def _select_pending_pr(
-    project: Path,
-    prs: list[PendingPR],
-) -> _PlanSelection | None:
-    """Return a selection for the highest-priority pending PR, if any."""
-    if not prs:
-        return None
-    pr = prs[0]
-    steps = _pr_steps(project, pr)
-    return _PlanSelection(
-        phase="pending_pr",
-        steps=steps,
-        selected=None,
-        selected_pr=pr.to_dict(),
-        summary=f"phase=pending_pr pr=#{pr.number} title={pr.title}",
-    )
-
-
-def _select_pending_worktree(
-    project: Path,
-    wts: list[PendingWorktree],
-) -> _PlanSelection | None:
-    """Return a selection for the highest-priority pending worktree, if any."""
-    if not wts:
-        return None
-    wt = wts[0]
-    steps = _worktree_steps(project, wt)
-    return _PlanSelection(
-        phase="pending_worktree",
-        steps=steps,
-        selected=None,
-        selected_worktree=wt.to_dict(),
-        summary=f"phase=pending_worktree ticket={wt.ticket_id or 'unknown'} branch={wt.branch}",
-    )
-
-
-def _select_issue_or_discovery(
-    project: Path,
-    strategy: dict[str, Any],
-    open_tickets: list[dict[str, Any]],
-) -> _PlanSelection | None:
-    """Return a selection for the next open ticket or a discovery phase."""
-    if open_tickets:
-        phase = "planfile_queue"
-        selected = open_tickets[0]
-        steps = _queued_ticket_steps(project, selected, phase)
-        profile = steps[0].profile_id if steps else "n/a"
-        return _PlanSelection(
-            phase=phase,
-            steps=steps,
-            selected=selected,
-            summary=f"phase={phase} ticket={selected.get('id')} profile={profile}",
-        )
-    return _discovery_selection(project, _pipeline_order(strategy))
-
-
-def _select_plan_work(
-    project: Path,
-    strategy: dict[str, Any],
-    open_tickets: list[dict[str, Any]],
-    *,
-    task_strategy: str = DEFAULT_TASK_STRATEGY,
-    pending_prs: list[PendingPR] | None = None,
-    pending_worktrees: list[PendingWorktree] | None = None,
-) -> _PlanSelection:
-    order = STRATEGY_ORDER.get(task_strategy, STRATEGY_ORDER[DEFAULT_TASK_STRATEGY])
-
-    prs = pending_prs if pending_prs is not None else find_pending_prs(project)
-    raw_wts = pending_worktrees if pending_worktrees is not None else find_pending_worktrees(project)
-    wts = _filter_unmerged_worktrees(raw_wts)
-
-    _selectors: dict[str, Any] = {
-        "pending_prs": lambda: _select_pending_pr(project, prs),
-        "pending_worktrees": lambda: _select_pending_worktree(project, wts),
-        "issues": lambda: _select_issue_or_discovery(project, strategy, open_tickets),
-    }
-
-    for target in order:
-        selector = _selectors.get(target)
-        if selector is not None:
-            result = selector()
-            if result is not None:
-                return result
-
-    return _PlanSelection(phase="idle", steps=[], selected=None, summary="phase=idle")
-
-
-def _plan_summary(selection: _PlanSelection) -> str:
-    if selection.summary:
-        return selection.summary
-    summary = f"phase={selection.phase}"
-    if selection.selected is not None:
-        profile = selection.steps[0].profile_id if selection.steps else "n/a"
-        summary += f" ticket={selection.selected.get('id')} profile={profile}"
-    elif selection.selected_pr is not None:
-        summary += f" pr=#{selection.selected_pr.get('number')}"
-    elif selection.selected_worktree is not None:
-        summary += f" worktree={selection.selected_worktree.get('ticket_id')}"
-    return summary
-
-
-def compile_execution_plan(
-    project: Path,
-    strategy_override: str | None = None,
-    *,
-    pending_prs: list[PendingPR] | None = None,
-    pending_worktrees: list[PendingWorktree] | None = None,
+    active_strategy: str,
+    signals: _PlanSignals,
+    selection: _PlanSelection,
 ) -> ExecutionPlan:
-    project = project.resolve()
-    strategy = load_autonomy_strategy(project) or {}
-    active_strategy = resolve_task_strategy(project, explicit_strategy=strategy_override)
-    signals = _collect_plan_signals(
-        project,
-        task_strategy=active_strategy,
-        pending_prs=pending_prs,
-        pending_worktrees=pending_worktrees,
-    )
-    selection = _select_plan_work(
-        project,
-        strategy,
-        signals.open_tickets,
-        task_strategy=active_strategy,
-        pending_prs=signals.pending_prs,
-        pending_worktrees=signals.pending_worktrees,
-    )
     return ExecutionPlan(
         schema=_SCHEMA,
         project=str(project),
@@ -378,6 +120,33 @@ def compile_execution_plan(
         selected_worktree=selection.selected_worktree,
         summary=selection.summary or _plan_summary(selection),
     )
+
+
+def compile_execution_plan(
+    project: Path,
+    strategy_override: str | None = None,
+    *,
+    pending_prs: list[PendingPR] | None = None,
+    pending_worktrees: list[PendingWorktree] | None = None,
+) -> ExecutionPlan:
+    resolved = project.resolve()
+    strategy = load_autonomy_strategy(resolved) or {}
+    active_strategy = resolve_task_strategy(resolved, explicit_strategy=strategy_override)
+    signals = _collect_plan_signals(
+        resolved,
+        task_strategy=active_strategy,
+        pending_prs=pending_prs,
+        pending_worktrees=pending_worktrees,
+    )
+    selection = _select_plan_work(
+        resolved,
+        strategy,
+        signals.open_tickets,
+        task_strategy=active_strategy,
+        pending_prs=signals.pending_prs,
+        pending_worktrees=signals.pending_worktrees,
+    )
+    return _build_execution_plan(resolved, active_strategy, signals, selection)
 
 
 __all__ = [

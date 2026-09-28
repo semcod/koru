@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-351",
+  "summary": "decompose compile execution plan and extract selection module",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-351/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/execution_plan.py",
+    "src/koru/autonomy/execution_plan_selection.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "c907482448d4a3e6cd9b44ebd486aefc017ddaf7",
+    "targetBranch": "main",
+    "outcome": "Decompose compile_execution_plan to reduce cyclomatic complexity and extract plan selection into execution_plan_selection module.",
+    "nonGoals": [
+      "Changing execution plan schema or public API behavior",
+      "Modifying task strategies resolution logic"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract plan selection helper methods (_collect_plan_signals, _select_plan_work, _build_execution_plan) into src/koru/autonomy/execution_plan_selection.py while preserving complete backward compatibility in src/koru/autonomy/execution_plan.py.",
+      "components": [
+        {
+          "name": "autonomy",
+          "paths": [
+            "src/koru/autonomy/execution_plan.py",
+            "src/koru/autonomy/execution_plan_selection.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-351 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q -p no:wellmanifest_governance tests/test_execution_plan*.py"
+        ],
+        "evidence": "All execution plan tests pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
