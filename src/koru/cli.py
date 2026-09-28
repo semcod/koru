@@ -205,6 +205,7 @@ _SUBCOMMANDS: dict[str, Callable[[list[str]], int]] = {
     "git": lambda argv: _lazy_module_main("koru.git_cli", "git_main", argv),
     "github": lambda argv: _lazy_module_main("koru.git_cli", "github_main", argv),
     "tools": lambda argv: _lazy_module_main("koru.cli_tools", "_tools_main", argv),
+    "benchmark": lambda argv: _lazy_module_main("koru.cli_benchmark", "benchmark_main", argv),
     "mcp-serve": lambda argv: _lazy_module_main("koruapi.mcp", "mcp_main", argv),
     "ide-router": lambda argv: _lazy_module_main(
         "koru.cli_ide_router",

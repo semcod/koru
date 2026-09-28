@@ -1,0 +1,122 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-326",
+  "summary": "Daily verified benchmark routing by tool and task class",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-326/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "scripts/install-benchmark-timer.py",
+    "src/koru/cli.py",
+    "src/koru/cli_benchmark.py",
+    "src/koru/queue/benchmark_router.py",
+    "src/koru/queue/routing/**",
+    "src/koru/queue/runners.py",
+    "src/koru/queue/ticket.py",
+    "tests/fixtures/benchmark/**",
+    "tests/test_benchmark*.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a9f56863f9b05dbaef91327e5cf8d275b53d7575",
+    "targetBranch": "main",
+    "outcome": "Class-aware executor routing with one persistent daily validated benchmark campaign, explainable task-specific ranking and user timer using isolated fixtures. Preserve explicit client/model choice and benchmark evidence.",
+    "nonGoals": [
+      "Changing governance/publication policy",
+      "Restoring or modifying unrelated user stashes",
+      "Driving an unverified user GUI session",
+      "Treating CLI exit0 as independently verified task success"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 110,
+    "budgets": {
+      "maxImplementationFiles": 12,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Separate pure contracts/classification/ranking, transactional SQLite campaign ledger and bounded isolated adapters; CLI is a thin orchestrator; timer and CLI share one local-date claim. Structured task classes simple/complex/other, tool classes deterministic/api/cli/ide;gillm remains transport.",
+      "components": [
+        {
+          "name": "routing",
+          "paths": [
+            "src/koru/queue/routing/**",
+            "src/koru/queue/benchmark_router.py",
+            "tests/test_benchmark*.py"
+          ]
+        },
+        {
+          "name": "queue-cli",
+          "paths": [
+            "src/koru/queue/runners.py",
+            "src/koru/queue/ticket.py",
+            "src/koru/cli.py",
+            "src/koru/cli_benchmark.py"
+          ]
+        },
+        {
+          "name": "daily-scheduler",
+          "paths": [
+            "scripts/install-benchmark-timer.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "koru benchmark run/today/explain/history/schedule"
+      ],
+      "dataChanges": [
+        {
+          "kind": "component-local-state",
+          "component": "routing",
+          "description": "Host-scoped SQLite campaigns and independently validated probe results"
+        }
+      ],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Disable user timer and revert ticket326 material commit; retain database and preserved stashes."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_benchmark_router.py tests/test_benchmark_daily.py"
+        ],
+        "evidence": "Classification,explicit override,capability filters,quality-gate outcome,date/DST,daily cross-process claim,crash/restart,versions/freshness and unknown cost."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Managed governance passes; source scope and lease match."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "koru benchmark run",
+          "koru benchmark today --format json"
+        ],
+        "evidence": "Offline fixture smoke and bounded authorized real available tool campaign record truthful outcomes; no unverified GUI typing."
+      }
+    ]
+  }
+}

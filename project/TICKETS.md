@@ -322,6 +322,9 @@ project analysis or human-owned ticket inputs.
 | **ticket-319** | [`README.md`](./ticket-319/README.md) | - | - | - | - | - |
 | **ticket-320** | [`README.md`](./ticket-320/README.md) | - | - | - | - | - |
 | **ticket-321** | [`README.md`](./ticket-321/README.md) | - | - | - | - | - |
+| **ticket-322** | [`README.md`](./ticket-322/README.md) | - | - | - | - | - |
 | **ticket-323** | [`README.md`](./ticket-323/README.md) | - | - | - | - | - |
-| **ticket-325** | [`README.md`](./ticket-325/README.md) | - | - | - | - | - |
+| **ticket-324** | [`README.md`](./ticket-324/README.md) | - | - | - | - | - |
+| **ticket-325** | [`README.md`](./ticket-325/README.md) | - | - | - | - | [`changelog.md`](./ticket-325/changelog.md) |
+| **ticket-326** | [`README.md`](./ticket-326/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->
