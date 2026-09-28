@@ -1,0 +1,83 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-322",
+  "summary": "Add koru ticket next command",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-322/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli_ticket.py",
+    "src/koru/cli_ticket_queue.py",
+    "tests/test_ticket_command_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "97173f5313ad7a5d4fc35ce8ce87ec6237ec725d",
+    "targetBranch": "main",
+    "outcome": "Add 'koru ticket next' CLI command to preview and display the next runnable Planfile ticket for a project across text, json, markdown, and brief formats.",
+    "nonGoals": [
+      "Do not mutate ticket state or execute tasks during 'next' inspection",
+      "Do not break existing 'koru ticket auto' or 'koru ticket list' commands"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reuse queue.runner candidate resolution with a scoped CLI transport adapter: append the requested sprint only to candidate listing, preserve all-sprint native readiness, and never claim or execute during preview.",
+      "components": [
+        {
+          "name": "cli-ticket",
+          "paths": [
+            "src/koru/cli_ticket.py",
+            "src/koru/cli_ticket_queue.py",
+            "tests/test_ticket_command_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit in ticket-322."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_ticket_command_queue.py"
+        ],
+        "evidence": "Tests confirm 'koru ticket next' accurately resolves and formats the next ticket across text, json, markdown, and brief formats."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}
