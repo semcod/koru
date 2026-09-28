@@ -7,15 +7,27 @@ from typing import Any, NamedTuple
 
 from koru.autonomy.execution_plan_profiles import (
     count_skipped_complete as _count_skipped_complete,
+)
+from koru.autonomy.execution_plan_profiles import (
     load_task_profiles as _load_task_profiles,
+)
+from koru.autonomy.execution_plan_profiles import (
     open_refactor_tickets as _open_refactor_tickets,
+)
+from koru.autonomy.execution_plan_profiles import (
     select_profile as _select_profile_fn,
 )
 from koru.autonomy.execution_plan_steps import (
     ExecutionStep,
-    discovery_steps as _discovery_steps,
-    pr_steps as _pr_steps,
     queued_ticket_steps,
+)
+from koru.autonomy.execution_plan_steps import (
+    discovery_steps as _discovery_steps,
+)
+from koru.autonomy.execution_plan_steps import (
+    pr_steps as _pr_steps,
+)
+from koru.autonomy.execution_plan_steps import (
     worktree_steps as _worktree_steps,
 )
 from koru.autonomy.ide_work import sprint_ticket_status_summary

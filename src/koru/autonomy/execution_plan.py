@@ -8,50 +8,97 @@ from typing import Any
 
 from koru.autonomy.execution_plan_profiles import (
     count_skipped_complete as _count_skipped_complete,
+)
+from koru.autonomy.execution_plan_profiles import (
     fallback_profile_id as _fallback_profile_id,
+)
+from koru.autonomy.execution_plan_profiles import (
     load_task_profiles as _load_task_profiles,
+)
+from koru.autonomy.execution_plan_profiles import (
     open_refactor_tickets as _open_refactor_tickets,
+)
+from koru.autonomy.execution_plan_profiles import (
     profile_matches as _profile_matches,
+)
+from koru.autonomy.execution_plan_profiles import (
     profile_order as _profile_order,
+)
+from koru.autonomy.execution_plan_profiles import (
     select_profile,
+)
+from koru.autonomy.execution_plan_profiles import (
     target_source_lines as _target_source_lines,
+)
+from koru.autonomy.execution_plan_profiles import (
     ticket_labels as _ticket_labels,
+)
+from koru.autonomy.execution_plan_profiles import (
     ticket_likely_complete as _ticket_likely_complete,
+)
+from koru.autonomy.execution_plan_profiles import (
     ticket_matches_profile as _ticket_matches_profile,
+)
+from koru.autonomy.execution_plan_profiles import (
     ticket_name as _ticket_name,
+)
+from koru.autonomy.execution_plan_profiles import (
     ticket_signal as _ticket_signal,
+)
+from koru.autonomy.execution_plan_profiles import (
     ticket_sort_key as _ticket_sort_key,
 )
 from koru.autonomy.execution_plan_selection import (
     PlanSelection as _PlanSelection,
+)
+from koru.autonomy.execution_plan_selection import (
     PlanSignals as _PlanSignals,
+)
+from koru.autonomy.execution_plan_selection import (
     collect_plan_signals as _collect_plan_signals,
+)
+from koru.autonomy.execution_plan_selection import (
     discovery_selection as _discovery_selection,
-    filter_unmerged_worktrees as _filter_unmerged_worktrees,
+)
+from koru.autonomy.execution_plan_selection import (
     pipeline_order as _pipeline_order,
+)
+from koru.autonomy.execution_plan_selection import (
     plan_summary as _plan_summary,
+)
+from koru.autonomy.execution_plan_selection import (
     queued_ticket_steps as _queued_ticket_steps,
+)
+from koru.autonomy.execution_plan_selection import (
     select_issue_or_discovery as _select_issue_or_discovery,
+)
+from koru.autonomy.execution_plan_selection import (
     select_pending_pr as _select_pending_pr,
+)
+from koru.autonomy.execution_plan_selection import (
     select_pending_worktree as _select_pending_worktree,
+)
+from koru.autonomy.execution_plan_selection import (
     select_plan_work as _select_plan_work,
 )
-
-
-def _select_profile(
-    ticket: dict[str, Any] | None,
-    phase: str,
-) -> tuple[str | None, dict[str, Any] | None]:
-    return select_profile(ticket, phase, profiles_doc=_load_task_profiles())
-
 from koru.autonomy.execution_plan_steps import (
     ExecutionStep,
-    discovery_steps as _discovery_steps,
-    format_command as _format_command,
-    pr_steps as _pr_steps,
     resolve_ticket_repo,
     run_auto_steps,
+)
+from koru.autonomy.execution_plan_steps import (
+    discovery_steps as _discovery_steps,
+)
+from koru.autonomy.execution_plan_steps import (
+    format_command as _format_command,
+)
+from koru.autonomy.execution_plan_steps import (
+    pr_steps as _pr_steps,
+)
+from koru.autonomy.execution_plan_steps import (
     workflow_steps as _workflow_steps,
+)
+from koru.autonomy.execution_plan_steps import (
     worktree_steps as _worktree_steps,
 )
 from koru.autonomy.task_strategies import (
@@ -60,6 +107,14 @@ from koru.autonomy.task_strategies import (
     resolve_task_strategy,
 )
 from koru.autonomy_strategy import load_autonomy_strategy
+
+
+def _select_profile(
+    ticket: dict[str, Any] | None,
+    phase: str,
+) -> tuple[str | None, dict[str, Any] | None]:
+    return select_profile(ticket, phase, profiles_doc=_load_task_profiles())
+
 
 _SCHEMA = "koru.execution_plan/v1"
 
