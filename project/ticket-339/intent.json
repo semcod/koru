@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-339",
+  "summary": "CI: do not report verified success when zero checks ran",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-339/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/ci/**",
+    "src/koru/work/lifecycle.py",
+    "tests/test_ci_pipeline.py",
+    "tests/test_work_lifecycle.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d8c83d135578cac8b797cc2506324a0c6d5e0106",
+    "targetBranch": "main",
+    "outcome": "run_local_ci returns not_verified when zero checks ran, reports skipped gate coverage in stages, and publication/work consumers reject empty evidence.",
+    "nonGoals": [
+      "Change external validator agent dispatch script",
+      "Alter quality gate execution rules for non-skipped runs"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Track executed vs skipped stages in run_local_ci; if no checks execute return not_verified status. Require passed status in finish_work before publication.",
+      "components": [
+        {
+          "name": "ci-runner",
+          "paths": [
+            "src/koru/ci/runner.py",
+            "src/koru/work/lifecycle.py",
+            "tests/test_ci_pipeline.py",
+            "tests/test_work_lifecycle.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit to restore previous ci runner behavior."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_ci_pipeline.py -q"
+        ],
+        "evidence": "Zero checks return not_verified with non-zero exit; skipped gate coverage is reported in stages."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base d8c83d135578cac8b797cc2506324a0c6d5e0106"
+        ],
+        "evidence": "Governance check passes cleanly."
+      }
+    ]
+  }
+}

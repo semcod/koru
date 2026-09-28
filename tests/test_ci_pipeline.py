@@ -40,14 +40,35 @@ class TestCiRunner(unittest.TestCase):
             result = run_local_ci(Path("/tmp/project"), include_gates=False)
         self.assertEqual(result["overall_status"], "failed")
 
-    def test_skip_gates_without_policy_command_is_a_noop(self) -> None:
+    def test_skip_gates_without_policy_command_reports_not_verified(self) -> None:
         policy = Policy(ci_command="")
         with (
             patch("koru.ci.runner.load_policy", return_value=policy),
             patch("koru.ci.runner.run_quality_gates") as quality_gates,
         ):
             result = run_local_ci(Path("/tmp/project"), include_gates=False)
-        self.assertEqual(result, {"overall_status": "passed", "stages": []})
+        self.assertEqual(result["overall_status"], "not_verified")
+        self.assertEqual(result["reason"], "zero_checks_executed")
+        stages = [s["stage"] for s in result["stages"]]
+        self.assertEqual(stages, ["policy_ci", "quality_gates"])
+        for s in result["stages"]:
+            self.assertEqual(s["status"], "skipped")
+        quality_gates.assert_not_called()
+
+    def test_skip_gates_with_policy_command_reports_skipped_gates_coverage(self) -> None:
+        policy = Policy(ci_command="echo ok")
+        with (
+            patch("koru.ci.runner.load_policy", return_value=policy),
+            patch("koru.ci.runner.run_policy_ci_command", return_value=(0, "ok")),
+            patch("koru.ci.runner.run_quality_gates") as quality_gates,
+        ):
+            result = run_local_ci(Path("/tmp/project"), include_gates=False)
+        self.assertEqual(result["overall_status"], "passed")
+        self.assertEqual(len(result["stages"]), 2)
+        self.assertEqual(result["stages"][0]["stage"], "policy_ci")
+        self.assertEqual(result["stages"][0]["status"], "passed")
+        self.assertEqual(result["stages"][1]["stage"], "quality_gates")
+        self.assertEqual(result["stages"][1]["status"], "skipped")
         quality_gates.assert_not_called()
 
 
@@ -180,6 +201,14 @@ class TestCiCli(unittest.TestCase):
         ):
             code = ci_main(["run", "--project", "/tmp/project", "--skip-gates"])
         self.assertEqual(code, 0)
+
+    def test_ci_run_exits_nonzero_when_not_verified(self) -> None:
+        with (
+            patch("koru.cli_ci.run_local_ci", return_value={"overall_status": "not_verified", "stages": []}),
+            patch("koru.cli_ci.emit_management_event"),
+        ):
+            code = ci_main(["run", "--project", "/tmp/project", "--skip-gates"])
+        self.assertEqual(code, 1)
 
     def test_ci_gates_help(self) -> None:
         with patch("koru.cli_ci.run_quality_gates", return_value={"overall_status": "passed", "results": []}):

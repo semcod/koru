@@ -40,7 +40,8 @@ def run_local_ci(
     policy = load_policy(project)
     stages: list[dict[str, Any]] = []
 
-    if policy.ci_command.strip():
+    has_policy_command = bool(policy.ci_command and policy.ci_command.strip())
+    if has_policy_command:
         try:
             code, output = run_policy_ci_command(project)
         except subprocess.TimeoutExpired:
@@ -50,17 +51,33 @@ def run_local_ci(
         stages.append({"stage": "policy_ci", "status": status, "exit_code": code, "output_tail": output[-4000:]})
         if code != 0:
             return {"overall_status": "failed", "stages": stages}
+    elif not include_gates:
+        stages.append({
+            "stage": "policy_ci",
+            "status": "skipped",
+            "skipped": True,
+            "reason": "no_ci_command",
+        })
 
     if include_gates:
         gate_result = run_quality_gates(project, gates=gates, fail_fast=fail_fast)
         stages.append({"stage": "quality_gates", **gate_result})
         if gate_result.get("overall_status") != "passed":
             return {"overall_status": "failed", "stages": stages}
+    else:
+        stages.append({
+            "stage": "quality_gates",
+            "status": "skipped",
+            "skipped": True,
+            "reason": "skip_gates_requested",
+        })
 
-    if not stages and include_gates:
-        gate_result = run_quality_gates(project, gates=gates, fail_fast=fail_fast)
-        stages.append({"stage": "quality_gates", **gate_result})
-        overall = gate_result.get("overall_status", "failed")
-        return {"overall_status": overall, "stages": stages}
+    active_stages = [s for s in stages if s.get("status") not in ("skipped", None)]
+    if not active_stages:
+        return {
+            "overall_status": "not_verified",
+            "stages": stages,
+            "reason": "zero_checks_executed",
+        }
 
     return {"overall_status": "passed", "stages": stages}
