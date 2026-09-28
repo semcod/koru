@@ -234,7 +234,8 @@ def test_older_sdk_falls_back_for_lifecycle_method_it_does_not_expose(
     ]
 
 
-def test_real_planfile_client_lifecycle_and_cli_readback(tmp_path: Path) -> None:
+def test_real_planfile_client_lifecycle_and_cli_readback(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("KORU_PLANFILE_SDK_VERIFY", "1")
     from planfile import Planfile
 
     from koru.observability_writer import observability_event_store_path
@@ -322,3 +323,28 @@ def test_real_planfile_client_lifecycle_and_cli_readback(tmp_path: Path) -> None
         "ticket.complete",
     ]
     assert all(command["replayable"] is False for command in sdk_commands)
+
+
+def test_real_planfile_client_lifecycle_defaults_to_fast_mode(tmp_path: Path) -> None:
+    from planfile import Planfile
+
+    from koru.queue.runners import run_process
+
+    backend = Planfile(str(tmp_path))
+    ticket = backend.create_ticket(name="Koru SDK fast contract")
+
+    claim = planfile_lifecycle_command(
+        tmp_path,
+        [
+            "ticket",
+            "claim",
+            ticket.id,
+            "--assigned-to",
+            "koru-test",
+            "--lease-seconds",
+            "60",
+        ],
+        run_process,
+    )
+    assert claim.transition_code == "ok"
+    assert claim.parity == "disabled"

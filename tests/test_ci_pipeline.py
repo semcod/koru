@@ -142,7 +142,34 @@ class TestCiGates(unittest.TestCase):
         with patch("koru.ci.gates.has_testql_scenarios", return_value=False):
             result = run_quality_gates(project, gates=["testql"])
         self.assertEqual(result["overall_status"], "passed")
-        self.assertEqual(result["results"][0]["status"], "skipped"        )
+        self.assertEqual(result["results"][0]["status"], "skipped")
+
+    def test_skips_regix_when_no_config(self) -> None:
+        project = Path("/tmp/koru-regix-skip")
+        project.mkdir(parents=True, exist_ok=True)
+        with patch("koru.ci.gates.has_regix_config", return_value=False):
+            result = run_quality_gates(project, gates=["regix"])
+        self.assertEqual(result["overall_status"], "passed")
+        self.assertEqual(result["results"][0]["status"], "skipped")
+        self.assertIn("No regix.yaml", result["results"][0]["message"])
+
+    def test_gate_commands_uses_fast_regix_review_and_redup_gate(self) -> None:
+        project = Path("/tmp/koru-fast-gates")
+        commands = gate_commands(project)
+        self.assertEqual(commands["regix"][:3], ["regix", "review", "--workdir"])
+        self.assertEqual(commands["regix"][-2:], ["HEAD", "local"])
+
+    def test_redup_gate_command_uses_changed_only_in_git_repo(self) -> None:
+        from koru.redup_integration import redup_gate_command
+        with (
+            patch("koru.redup_integration.is_git_repository", return_value=True),
+            patch("koru.redup_integration._redup_scan_supports", return_value=True),
+        ):
+            cmd = redup_gate_command(Path("/tmp/repo"))
+        self.assertIn("--changed-only", cmd)
+        self.assertIn("--incremental", cmd)
+        self.assertIn("--include-untracked", cmd)
+        self.assertIn("scan", cmd)
 
 
 class TestCiCli(unittest.TestCase):

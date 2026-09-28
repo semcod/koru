@@ -29,6 +29,40 @@ def redup_check_command(path: str | Path = ".", *, min_lines: int = DEFAULT_MIN_
     return [*_redup_module_command(), "check", str(path), "--min-lines", str(min_lines)]
 
 
+def is_git_repository(path: str | Path = ".") -> bool:
+    """Return True if path is inside a git working tree."""
+    p = Path(path).resolve()
+    return (p / ".git").exists() or any((parent / ".git").exists() for parent in p.parents)
+
+
+def redup_gate_command(
+    path: str | Path = ".",
+    *,
+    min_lines: int = DEFAULT_MIN_LINES,
+    base_ref: str = DEFAULT_BASE_REF,
+) -> list[str]:
+    """Build a fast quality-gate command for reDUP.
+
+    In a git repository supporting incremental scanning, uses --changed-only
+    with --incremental to check diffs in milliseconds instead of full-repo scan.
+    Falls back to redup check when git is unavailable.
+    """
+    if is_git_repository(path) and _redup_scan_supports("--changed-only"):
+        return [
+            *_redup_module_command(),
+            "scan",
+            str(path),
+            "--changed-only",
+            "--base-ref",
+            base_ref,
+            "--include-untracked",
+            "--incremental",
+            "--min-lines",
+            str(min_lines),
+        ]
+    return redup_check_command(path, min_lines=min_lines)
+
+
 def redup_changed_scan_command(
     path: str | Path = ".",
     *,
