@@ -82,3 +82,36 @@ def test_repeated_idle_decision_is_persisted_without_repeated_human_log(tmp_path
 
     assert lines == []
     assert load_recent_decisions(tmp_path)[-1]["cycle"] == 7
+
+
+def test_append_ticket_markdown_log(tmp_path) -> None:
+    ticket_dir = tmp_path / "project" / "ticket-101"
+    ticket_dir.mkdir(parents=True)
+
+    lines: list[str] = []
+    record_decision_trace(
+        project=tmp_path,
+        cycle=1,
+        queue_result=SimpleNamespace(
+            last_status="waiting_input",
+            waiting=["ticket-101"],
+            waiting_ticket="ticket-101",
+        ),
+        diag_result=SimpleNamespace(status="ok"),
+        wup_health=SimpleNamespace(status="ok"),
+        autopilot_status="ok",
+        autopilot_ide="cursor",
+        autopilot_backend="plugin",
+        autopilot_drive_kind="ticket_prompt",
+        cycle_telemetry={},
+        stagnation_streak=0,
+        hp=lines.append,
+    )
+
+    log_file = ticket_dir / "koru.log.md"
+    assert log_file.is_file()
+    content = log_file.read_text(encoding="utf-8")
+    assert "# Koru Autonomy Log: `ticket-101`" in content
+    assert "```yaml" in content
+    assert "uri: koru://cycle/1/decision/submit_verified" in content
+    assert "decided: ticket_prompt" in content
