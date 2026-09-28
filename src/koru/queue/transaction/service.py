@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
+from types import SimpleNamespace
 from typing import NamedTuple
 
 from koru.queue.journal import (
@@ -85,8 +86,8 @@ def execute_patch_transaction(
 ) -> PatchTransactionResult:
     """Apply the diff an agent proposed, then verify it, rolling back on failure.
 
-    A patch that fails its ticket's verify command is reverted, so a failed run
-    leaves the workspace as it found it.
+    A patch that fails its ticket's verify command is reversed when safe.
+    A failed reversal is reported explicitly and requires reconciliation.
 
     Refusals that fire before a plan exists (no diff, symlink screen) are not
     journaled: there is no run identity yet, and nothing was going to change.
@@ -326,7 +327,7 @@ def _run_direct(
     frozen_journaled: bool = False,
     authorize: Authorizer | None = None,
 ) -> PatchOutcome | None:
-    """Patch the workspace in place, with ``git checkout --`` as the only undo."""
+    """Patch the workspace in place, reversing the exact diff on failed verification."""
     refusal = screen_direct_apply(plan)
     if refusal is not None:
         journal.append(PHASE_REFUSED, data={"code": refusal.code})
@@ -366,10 +367,14 @@ def _apply_to_workspace(
     journal.append(PHASE_APPLIED, data={"changed_files": sorted(applied.changed_files)})
 
     if verify:
-        gate = shell_runner(plan.verify_command, plan.project)
+        try:
+            gate = shell_runner(plan.verify_command, plan.project)
+        except Exception as exc:
+            gate = SimpleNamespace(returncode=1, stdout="", stderr=f"{type(exc).__name__}: {exc}")
         if gate.returncode != 0:
             outcome = roll_back_failed_verify(plan, applied.changed_files, gate)
-            journal.append(PHASE_ROLLED_BACK, data={"code": outcome.code})
+            phase = PHASE_ROLLED_BACK if outcome.workspace_left_untouched else PHASE_REFUSED
+            journal.append(phase, data={"code": outcome.code})
             return outcome
         journal.append(PHASE_VERIFIED)
 

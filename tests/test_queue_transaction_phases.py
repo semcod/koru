@@ -21,6 +21,7 @@ from koru.queue.journal import (
     PHASE_FROZEN,
     PHASE_REFUSED,
     PHASE_RESOLVED,
+    PHASE_ROLLED_BACK,
     read_events,
 )
 from koru.queue.patch_mode import (
@@ -33,6 +34,7 @@ from koru.queue.patch_mode import (
     PROMOTION_FAILED,
     PROMOTION_REFUSED_DIRTY_REPO,
     UNSAFE_DIRTY_WORKSPACE,
+    VERIFY_FAILED_ROLLBACK_FAILED,
     VERIFY_FAILED_ROLLED_BACK,
 )
 from koru.queue.transaction import (
@@ -395,6 +397,114 @@ class TestRollback(_RepoCase):
             self.assertIn("pytest -q", outcome.message)
             self.assertIn("1 failed", outcome.message)
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
+
+
+    _ADDITION = (
+        "diff --git a/new.txt b/new.txt\n"
+        "new file mode 100644\n"
+        "--- /dev/null\n"
+        "+++ b/new.txt\n"
+        "@@ -0,0 +1 @@\n"
+        "+added\n"
+    )
+    _DELETION = (
+        "diff --git a/deleted.txt b/deleted.txt\n"
+        "deleted file mode 100644\n"
+        "--- a/deleted.txt\n"
+        "+++ /dev/null\n"
+        "@@ -1 +0,0 @@\n"
+        "-original\n"
+    )
+
+    def _direct_transaction(self, project, diff, verifier):
+        ticket = {"id": "T-rollback", "inputs": {
+            "verify_command": "pytest -q", "promotion_mode": "apply",
+        }}
+        with mock.patch.dict("os.environ", {"KORU_QUEUE_WORKTREE": "0"}):
+            return execute_patch_transaction(project, _reply(stdout=diff), ticket, verifier)
+
+    def test_mixed_patch_restores_deleted_files_removes_additions_and_preserves_index(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            self._commit_file(project, "deleted.txt", "original\n")
+            self._commit_file(project, "unrelated.txt", "baseline\n")
+            (project / "unrelated.txt").write_text("staged\n")
+            subprocess.run(["git", "add", "unrelated.txt"], cwd=project, check=True)
+            (project / "unrelated.txt").write_text("unstaged\n")
+            (project / "untracked.txt").write_bytes(b"unique bytes\x00")
+            index_before = (project / ".git/index").read_bytes()
+
+            def fail(cmd, cwd):
+                self.assertEqual((cwd / "a.txt").read_text(), "new\n")
+                self.assertEqual((cwd / "new.txt").read_text(), "added\n")
+                self.assertFalse((cwd / "deleted.txt").exists())
+                return _reply(returncode=1)
+
+            result = self._direct_transaction(project, _DIFF + self._ADDITION + self._DELETION, fail)
+
+            self.assertEqual(result.outcome.code, VERIFY_FAILED_ROLLED_BACK)
+            self.assertEqual((project / "a.txt").read_text(), "old\n")
+            self.assertEqual((project / "deleted.txt").read_text(), "original\n")
+            self.assertFalse((project / "new.txt").exists())
+            self.assertEqual((project / "unrelated.txt").read_text(), "unstaged\n")
+            self.assertEqual((project / "untracked.txt").read_bytes(), b"unique bytes\x00")
+            self.assertEqual((project / ".git/index").read_bytes(), index_before)
+            self.assertEqual(read_events(project, result.plan.run_id)[-1]["phase"], PHASE_ROLLED_BACK)
+
+    def test_conflicting_later_edit_survives_and_journal_does_not_claim_rollback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+
+            def conflicting_verifier(cmd, cwd):
+                (cwd / "a.txt").write_text("later writer's content\n")
+                return _reply(returncode=1)
+
+            result = self._direct_transaction(project, _DIFF + self._ADDITION, conflicting_verifier)
+
+            from koru.queue import VERIFY_FAILED_ROLLBACK_FAILED as public_code
+
+            self.assertEqual(result.outcome.code, public_code)
+            self.assertFalse(result.outcome.workspace_left_untouched)
+            self.assertFalse(result.outcome.retryable)
+            self.assertEqual((project / "a.txt").read_text(), "later writer's content\n")
+            self.assertEqual((project / "new.txt").read_text(), "added\n")
+            events = read_events(project, result.plan.run_id)
+            self.assertEqual(events[-1]["phase"], PHASE_REFUSED)
+            self.assertEqual(events[-1]["data"]["code"], VERIFY_FAILED_ROLLBACK_FAILED)
+            self.assertNotIn(PHASE_ROLLED_BACK, [e["phase"] for e in events])
+
+    def test_verifier_exception_also_restores_the_patch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "old\n")
+            result = self._direct_transaction(
+                project, _DIFF + self._ADDITION, mock.Mock(side_effect=TimeoutError("gate timed out")),
+            )
+            self.assertEqual(result.outcome.code, VERIFY_FAILED_ROLLED_BACK)
+            self.assertIn("TimeoutError: gate timed out", result.outcome.message)
+            self.assertEqual((project / "a.txt").read_text(), "old\n")
+            self.assertFalse((project / "new.txt").exists())
+
+    def test_git_failure_never_claims_successful_recovery(self):
+        failures = (
+            OSError("git unavailable"),
+            [_reply(returncode=1, stderr="check failed")],
+            [_reply(), _reply(returncode=1, stderr="apply failed")],
+        )
+        for failure in failures:
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as tmp:
+                project = self._git_repo(tmp)
+                self._commit_file(project, "a.txt", "old\n")
+                (project / "a.txt").write_text("new\n")
+                plan = self._plan(project)
+                with mock.patch("koru.queue.workspace._git", side_effect=failure):
+                    outcome = roll_back_failed_verify(plan, ("a.txt",), _reply(returncode=1))
+                self.assertEqual(outcome.code, VERIFY_FAILED_ROLLBACK_FAILED)
+                self.assertFalse(outcome.workspace_left_untouched)
+                self.assertFalse(outcome.retryable)
+                self.assertEqual((project / "a.txt").read_text(), "new\n")
 
 
 class TestWorktreeUnavailable(_RepoCase):

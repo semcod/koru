@@ -1,0 +1,96 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-336",
+  "summary": "Restore complete failed patches and report rollback conflicts honestly",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-336/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/__init__.py",
+    "src/koru/queue/journal.py",
+    "src/koru/queue/lifecycle.py",
+    "src/koru/queue/patch_mode.py",
+    "src/koru/queue/transaction/rollback.py",
+    "src/koru/queue/transaction/service.py",
+    "src/koru/queue/workspace.py",
+    "tests/test_queue_transaction_phases.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6a6691ff888c22d67700121d512a3b2e0016511b",
+    "targetBranch": "main",
+    "outcome": "Undo the exact applied diff on failed direct verification, including file additions/deletions, while preserving index and unrelated edits. Report rollback conflict or verifier exception honestly, never claiming an untouched workspace when recovery failed.",
+    "nonGoals": [
+      "Change commit-failure rollback or worktree allocation/promotion",
+      "Resolve protected controller admission or deploy/restart production lanes",
+      "Guarantee rollback of arbitrary verifier side effects outside patch targets"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 65,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reverse the exact patch with git apply --reverse --check followed by atomic apply. Refuse reversal when concurrent edits make it unsafe. Reuse terminal refused journal phase with an explicit rollback-failed code; preserve existing success code and function signature. Catch verifier exceptions as failed verification so restoration still runs.",
+      "components": [
+        {
+          "name": "patch-transaction",
+          "paths": [
+            "src/koru/queue/__init__.py",
+            "src/koru/queue/journal.py",
+            "src/koru/queue/lifecycle.py",
+            "src/koru/queue/patch_mode.py",
+            "src/koru/queue/transaction/rollback.py",
+            "src/koru/queue/transaction/service.py",
+            "src/koru/queue/workspace.py",
+            "tests/test_queue_transaction_phases.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Add stable verify_failed_rollback_failed outcome code to the existing queue result API"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert material commit; keep failing-run evidence and service stopped."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_queue_transaction_phases.py tests/test_planfile_queue.py tests/test_patch_result_public_api.py -q"
+        ],
+        "evidence": "Real Git: mixed additions/modifications/deletions reversed; unrelated staged/unstaged data preserved; conflicting edits survive with non-retryable failure and truthful journal; verifier exception also rolls back."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base 6a6691ff888c22d67700121d512a3b2e0016511b"
+        ],
+        "evidence": "Scoped Ruff and managed governance, protected CI and independent review."
+      }
+    ]
+  }
+}
