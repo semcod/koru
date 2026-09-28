@@ -67,8 +67,8 @@ def test_export_gbnf_grammar():
     registry.register("taskand://git/commit", "Commit changes")
 
     grammar = registry.export_gbnf()
-    assert "koru\\://workspace/allocate" in grammar
-    assert "taskand\\://git/commit" in grammar
+    assert '"koru://workspace/allocate"' in grammar
+    assert '"taskand://git/commit"' in grammar
     assert "json_payload" in grammar
 
 
