@@ -258,6 +258,36 @@ class DecisionRecord:
             f" → next={self.next_step}"
         )
 
+    def to_uri_formatted_trace(self, *, color: bool = True) -> list[str]:
+        """Format decision as a YAML Action URI header followed by alternating NL/DSL blocks.
+
+        Colors:
+          - Cyan / Magenta for Action URI & YAML keys
+          - Green / Yellow for Natural Language (NL) explanations
+          - Blue / Dim for Domain Specific Language (DSL) execution tokens
+        """
+        cyan = "\033[36m" if color else ""
+        magenta = "\033[35m" if color else ""
+        green = "\033[32m" if color else ""
+        yellow = "\033[33m" if color else ""
+        blue = "\033[34m" if color else ""
+        reset = "\033[0m" if color else ""
+
+        # Map decided/action into canonical URI representation
+        action_name = self.action.replace(" ", "/").replace(":", "/")
+        uri = f"koru://cycle/{self.cycle}/decision/{action_name}"
+
+        lines = [
+            f"{magenta}uri:{reset} {cyan}{uri}{reset}",
+            f"  {yellow}NL:{reset}  {green}Cykl {self.cycle}: {self.decided} ({self.observed}){reset}",
+            f"  {yellow}DSL:{reset} {blue}action: {self.action} [evidence: {self.evidence}]{reset}",
+        ]
+        if self.skip_because:
+            lines.append(f"  {yellow}NL:{reset}  {green}Powód: {self.skip_because}{reset}")
+        if self.next_step:
+            lines.append(f"  {yellow}DSL:{reset} {blue}next: {self.next_step}{reset}")
+        return lines
+
 
 def now_utc_iso() -> str:
     """ISO-8601 UTC timestamp with second precision (no microseconds)."""
