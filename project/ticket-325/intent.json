@@ -1,0 +1,104 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-325",
+  "summary": "Prepare protected publication approval ruleset migration",
+  "workstream": "governance",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-325/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".governance/docs/RULESET_APPROVAL_MIGRATION.md",
+    ".governance/publication-policy/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2b084bbc0a18671e794f635e92ef3eb54a737c4f",
+    "targetBranch": "main",
+    "outcome": "Koru owns an independently reviewable ruleset 22026679 migration profile that requires one trusted exact-head approving review, drops the RepositoryRole(5) always bypass, retains the Validator App integration bypass, required OneDev/conformance checks and strict base verification, with readback verification, fork-scoped canary evidence, tested recovery and a documented remediation path for already-merged unapproved heads.",
+    "nonGoals": [
+      "Modify, deploy or stage ruleset 22026679 on semcod/koru",
+      "Forge approval receipts or retroactively approve PR542, PR543 or PR550",
+      "Retire or weaken the OneDev, conformance or operating-system test requirements",
+      "Invoke the local Validator for this lane's own publication"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Store the exact PUT-able desired ruleset body as tracked code next to a read-only readback/verify/canary gate, validate the body and negative-merge enforcement on an operator-owned fork (production ruleset untouched), and defer the production PUT plus App-reviewed positive canary to the live deployment acceptance ticket.",
+      "components": [
+        {
+          "name": "publication-policy",
+          "paths": [
+            ".governance/publication-policy/**"
+          ]
+        },
+        {
+          "name": "migration-doc",
+          "paths": [
+            ".governance/docs/RULESET_APPROVAL_MIGRATION.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "No production effect exists; delete the tracked profile, gate and doc through independent publication if the migration is rejected."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 .governance/publication-policy/ruleset_readback.py --self-test"
+        ],
+        "evidence": "Desired-profile comparison, canary evidence validation and fail-closed behavior hold against the captured 2026-09-27 baseline and synthetic records."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 .governance/publication-policy/ruleset_readback.py verify --from-file .governance/publication-policy/fixtures/ruleset-observed-2026-09-27.json"
+        ],
+        "evidence": "Baseline readback reports exactly the approval-count, last-push-approval and RepositoryRole bypass gaps and preserves the OneDev/conformance checks with strict base verification."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python3 .governance/publication-policy/ruleset_readback.py canary project/ticket-325/evidence/ruleset-canary-fork-2026-09-27.json"
+        ],
+        "evidence": "Fork-scoped canary records validate: desired body round-trips to a conformant live ruleset, author/operator merge without review is rejected, and the ruleset recovery path restores the prior state."
+      },
+      {
+        "criterion": "AC-04",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Governance gate passes for the ticket scope and the change reaches main only through independent exact-head review."
+      }
+    ]
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "schema": "new-project.publication-ruleset/v1",
+  "repository": "semcod/koru",
+  "rulesetId": 22026679,
+  "intake": "PLF-064 (semcod/koru#545), ticket-325",
+  "desired": {
+    "name": "protected exact-head delivery",
+    "target": "branch",
+    "enforcement": "active",
+    "conditions": {
+      "ref_name": {
+        "include": ["refs/heads/main"],
+        "exclude": []
+      }
+    },
+    "rules": [
+      {"type": "deletion"},
+      {"type": "non_fast_forward"},
+      {
+        "type": "pull_request",
+        "parameters": {
+          "required_approving_review_count": 1,
+          "dismiss_stale_reviews_on_push": true,
+          "required_reviewers": [],
+          "require_code_owner_review": false,
+          "dismissal_restriction": {"enabled": false, "allowed_actors": []},
+          "require_last_push_approval": true,
+          "required_review_thread_resolution": true,
+          "require_extra_approval_for_unattributed_changes": true,
+          "allowed_merge_methods": ["merge"]
+        }
+      },
+      {
+        "type": "required_status_checks",
+        "parameters": {
+          "strict_required_status_checks_policy": true,
+          "do_not_enforce_on_create": true,
+          "required_status_checks": [
+            {"context": "onedev/local-verify"},
+            {"context": "standard packs / conformance"}
+          ]
+        }
+      }
+    ],
+    "bypass_actors": [
+      {"actor_id": 4344831, "actor_type": "Integration", "bypass_mode": "always"}
+    ]
+  },
+  "migration": {
+    "observedAt": "2026-09-27T21:20:00Z",
+    "baselineFixture": ".governance/publication-policy/fixtures/ruleset-observed-2026-09-27.json",
+    "changes": [
+      {
+        "path": "rules[pull_request].parameters.required_approving_review_count",
+        "from": 0,
+        "to": 1,
+        "reason": "Koru PR542, PR543 and PR550 merged with an empty reviews endpoint; a required approving review is the minimum independent publication approval. GitHub never counts the pull request author's own review."
+      },
+      {
+        "path": "rules[pull_request].parameters.require_last_push_approval",
+        "from": false,
+        "to": true,
+        "reason": "The approval must cover the exact head: the last pusher cannot be the approver, so any post-approval push invalidates merge eligibility until re-approved."
+      },
+      {
+        "path": "bypass_actors",
+        "from": [
+          {"actor_id": 5, "actor_type": "RepositoryRole", "bypass_mode": "always"},
+          {"actor_id": 4344831, "actor_type": "Integration", "bypass_mode": "always"}
+        ],
+        "to": [
+          {"actor_id": 4344831, "actor_type": "Integration", "bypass_mode": "always"}
+        ],
+        "reason": "RepositoryRole(5) always-bypass let the ordinary author/operator account merge without any review; removing it subjects admins to the same exact-head approval. The Validator App integration bypass is retained because its merges are gated by the independent validator runbook and protected key, outside repository control. A pull_request bypass mode was assessed and rejected: it would still let the role merge without the required review."
+      }
+    ],
+    "preserved": [
+      "rules[type=deletion] and rules[type=non_fast_forward] on refs/heads/main",
+      "dismiss_stale_reviews_on_push=true",
+      "required_review_thread_resolution=true",
+      "require_extra_approval_for_unattributed_changes=true",
+      "allowed_merge_methods=[merge]",
+      "required_status_checks strict_required_status_checks_policy=true (branches must be up to date before merging)",
+      "required checks onedev/local-verify and standard packs / conformance carry the OneDev profile's full test and operating-system matrix",
+      "RepositoryRole(5) actors may still merge once an exact-head approval exists; the ruleset removes unreviewed merging, not emergency admin ruleset editing (see migration doc residual-risk section)"
+    ],
+    "deployment": {
+      "owner": "live deployment acceptance ticket (successor of the PLF-062 intake)",
+      "applyCommand": "gh api -X PUT repos/semcod/koru/rulesets/22026679 --input <(jq .desired .governance/publication-policy/ruleset.desired.json)",
+      "verifyCommand": "python3 .governance/publication-policy/ruleset_readback.py verify",
+      "rollback": "List and restore the prior ruleset version: gh api repos/semcod/koru/rulesets/22026679/versions, then gh api -X PUT repos/semcod/koru/rulesets/22026679/versions/<version_id> --field version_id=<version_id> (see migration doc recovery section)"
+    },
+    "forkSandbox": {
+      "note": "Sandbox validation on an operator-owned fork creates the ruleset from this desired body with bypass_actors emptied, because the Validator App integration is not installed on the fork. The production PUT keeps the integration bypass.",
+      "bypass_actors": []
+    }
+  }
+}

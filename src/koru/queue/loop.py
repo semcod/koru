@@ -67,6 +67,7 @@ def run_planfile_queue_loop(
     last_status = "idle"
     last_message = ""
     last_ticket_id: str | None = None
+    autopilot_blocked = False
     iterations = 0
 
     for i in range(max_iterations):
@@ -88,6 +89,7 @@ def run_planfile_queue_loop(
         last_status = result.status
         last_message = result.message
         last_ticket_id = result.ticket_id
+        autopilot_blocked = result.autopilot_blocked
 
         if result.status == "completed" and result.ticket_id:
             completed.append(result.ticket_id)
@@ -112,4 +114,5 @@ def run_planfile_queue_loop(
         last_status=last_status,
         last_message=last_message,
         last_ticket_id=last_ticket_id,
+        autopilot_blocked=autopilot_blocked,
     )
