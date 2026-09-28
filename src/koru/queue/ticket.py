@@ -147,35 +147,48 @@ def _pick_from_ticket_list(
     return _select_from_eligible(eligible, interactive=interactive)
 
 
+def _add_file_entry(target: set[str], entry: Any) -> None:
+    if isinstance(entry, str):
+        for part in entry.split(","):
+            part = part.strip()
+            if part:
+                target.add(part)
+    elif entry:
+        target.add(str(entry))
+
+
 def ticket_file_scope(ticket: dict[str, Any]) -> set[str]:
     """Extract affected files/paths from a ticket representation."""
     files: set[str] = set()
     raw_files = ticket.get("files")
     if isinstance(raw_files, list):
-        files.update(str(f) for f in raw_files if f)
+        for f in raw_files:
+            _add_file_entry(files, f)
     elif isinstance(raw_files, str) and raw_files:
-        files.add(raw_files)
+        _add_file_entry(files, raw_files)
 
     inputs = ticket.get("inputs")
     if isinstance(inputs, dict):
         in_files = inputs.get("files")
         if isinstance(in_files, list):
-            files.update(str(f) for f in in_files if f)
+            for f in in_files:
+                _add_file_entry(files, f)
         elif isinstance(in_files, str) and in_files:
-            files.add(in_files)
+            _add_file_entry(files, in_files)
         if in_file := inputs.get("file"):
-            files.add(str(in_file))
+            _add_file_entry(files, in_file)
 
     source = ticket.get("source")
     if isinstance(source, dict):
         ctx = source.get("context")
         if isinstance(ctx, dict):
             if src_file := ctx.get("file"):
-                files.add(str(src_file))
+                _add_file_entry(files, src_file)
 
     allowed = ticket.get("allowed_paths") or ticket.get("allowedPaths")
     if isinstance(allowed, list):
-        files.update(str(p) for p in allowed if p)
+        for p in allowed:
+            _add_file_entry(files, p)
 
     return files
 

@@ -33,6 +33,7 @@ def run_planfile_queue_loop(
     actor: str = "koru-shell",
     queue_name: str | None = None,
     interactive: bool = False,
+    dry_run: bool = False,
     concurrency: int = 1,
     max_iterations: int = 100,
     progress_callback: Callable[[QueueRunResult, int], None] | None = None,
@@ -45,7 +46,8 @@ def run_planfile_queue_loop(
 ) -> QueueLoopResult:
     """Drain the planfile queue by repeatedly calling run_next_planfile_task.
 
-    When ``concurrency > 1``, uses a thread pool to execute disjoint tickets in parallel.
+    When ``concurrency > 1``, uses dynamic pipelining with a thread pool to execute
+    disjoint tickets in parallel without idle worker barriers.
     The loop terminates when the queue is idle, a ticket needs human
     input we cannot satisfy, an executor kind is unsupported, planfile
     itself errors out, or ``max_iterations`` is reached. Successful
@@ -69,6 +71,7 @@ def run_planfile_queue_loop(
         import threading
 
         from koru.queue.runner import _next_tickets_or_result
+        from koru.queue.ticket import ticket_file_scope
 
         progress_lock = threading.Lock()
 
@@ -81,6 +84,7 @@ def run_planfile_queue_loop(
                 queue_name=queue_name,
                 target_ticket_id=t_id,
                 interactive=interactive,
+                dry_run=dry_run,
                 planfile_runner=planfile_runner,
                 shell_runner=shell_runner,
                 api_runner=api_runner,
@@ -88,37 +92,65 @@ def run_planfile_queue_loop(
                 prompt_runner=prompt_runner,
             )
 
+        active_futures: dict[concurrent.futures.Future[QueueRunResult], tuple[str, set[str]]] = {}
+        worker_counter = 0
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
             while iterations < max_iterations:
-                batch, batch_err = _next_tickets_or_result(
-                    project,
-                    planfile_runner,
-                    count=min(concurrency, max_iterations - iterations),
-                    queue_name=queue_name,
-                    disjoint_files=True,
-                    interactive=interactive,
+                slots_available = min(
+                    concurrency - len(active_futures),
+                    max_iterations - (iterations + len(active_futures)),
                 )
-                if batch_err is not None:
-                    last_status = batch_err.status
-                    last_message = batch_err.message
-                    break
-                if not batch:
+                if slots_available > 0:
+                    current_locked_files: set[str] = set()
+                    current_running_ids: set[str] = set()
+                    for t_id, f_set in active_futures.values():
+                        current_running_ids.add(t_id)
+                        current_locked_files.update(f_set)
+
+                    new_tickets, batch_err = _next_tickets_or_result(
+                        project,
+                        planfile_runner,
+                        count=slots_available,
+                        queue_name=queue_name,
+                        disjoint_files=True,
+                        interactive=interactive,
+                        locked_files=current_locked_files,
+                        exclude_ids=current_running_ids,
+                    )
+                    if batch_err is not None:
+                        if not active_futures:
+                            last_status = batch_err.status
+                            last_message = batch_err.message
+                            break
+                    elif new_tickets:
+                        for t in new_tickets:
+                            t_id = str(t.get("id") or "")
+                            t_files = ticket_file_scope(t)
+                            worker_counter += 1
+                            fut = pool.submit(_execute_worker, t, worker_counter)
+                            active_futures[fut] = (t_id, t_files)
+
+                if not active_futures:
                     last_status = "idle"
                     last_message = "No runnable ticket found"
                     break
 
-                futures = [
-                    pool.submit(_execute_worker, t, idx + 1)
-                    for idx, t in enumerate(batch)
-                ]
+                done, _ = concurrent.futures.wait(
+                    active_futures.keys(),
+                    return_when=concurrent.futures.FIRST_COMPLETED,
+                )
 
                 should_stop = False
-                for fut in concurrent.futures.as_completed(futures):
+                for fut in done:
+                    t_id, _ = active_futures.pop(fut)
                     iterations += 1
                     try:
                         res = fut.result()
                     except Exception as exc:
-                        res = QueueRunResult(status="failed", message=str(exc), exit_code=1)
+                        res = QueueRunResult(
+                            status="failed", message=str(exc), exit_code=1, ticket_id=t_id
+                        )
 
                     with progress_lock:
                         if progress_callback is not None:
@@ -145,6 +177,8 @@ def run_planfile_queue_loop(
                         should_stop = True
 
                 if should_stop:
+                    for fut in active_futures:
+                        fut.cancel()
                     break
 
         return QueueLoopResult(
@@ -163,6 +197,7 @@ def run_planfile_queue_loop(
         result = run_next_planfile_task(
             project=project,
             actor=actor,
+            dry_run=dry_run,
             queue_name=queue_name,
             interactive=interactive,
             planfile_runner=planfile_runner,

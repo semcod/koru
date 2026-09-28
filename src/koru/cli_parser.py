@@ -95,6 +95,12 @@ def _add_queue_arguments(parser: argparse.ArgumentParser) -> None:
         default=100,
         help="Safety cap on the number of tickets --loop will process (default 100).",
     )
+    parser.add_argument(
+        "--concurrency",
+        type=int,
+        default=1,
+        help="Number of concurrent workers to process disjoint tickets in parallel (default 1).",
+    )
 
 
 def _add_watch_arguments(parser: argparse.ArgumentParser) -> None:

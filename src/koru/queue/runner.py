@@ -625,7 +625,7 @@ def _next_ticket_or_result(
 ) -> tuple[dict[str, Any] | None, QueueRunResult | None]:
     from koru.queue.runners import run_process
 
-    if planfile_runner is run_process:
+    if planfile_runner is run_process or getattr(planfile_runner, "__name__", "") in {"run_process", "sprint_runner"}:
         try:
             from planfile import Planfile
 
@@ -656,6 +656,9 @@ def _next_ticket_or_result(
                         else dict(single)
                     )
                     return dict_t, None
+                elif hasattr(pf, "list_tickets"):
+                    if not pf.list_tickets(status="open"):
+                        return None, None
         except Exception:
             pass
 
@@ -723,6 +726,8 @@ def _next_tickets_or_result(
     *,
     disjoint_files: bool = True,
     interactive: bool = False,
+    locked_files: set[str] | None = None,
+    exclude_ids: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], QueueRunResult | None]:
     if count <= 0:
         return [], None
@@ -741,24 +746,29 @@ def _next_tickets_or_result(
         return ([single_t] if single_t else []), None
 
     # Fast path: native Planfile API with graph/critical-path prioritization
-    if planfile_runner is run_process:
+    if planfile_runner is run_process or getattr(planfile_runner, "__name__", "") in {"run_process", "sprint_runner"}:
         try:
             from planfile import Planfile
 
             pf = Planfile.auto_discover(project)
             if hasattr(pf, "next_tickets"):
-                native_tickets = pf.next_tickets(
-                    count=count,
-                    queue=queue_name,
-                    disjoint_files=disjoint_files,
-                )
+                kwargs: dict[str, Any] = {
+                    "count": count,
+                    "queue": queue_name,
+                    "disjoint_files": disjoint_files,
+                }
+                if locked_files is not None:
+                    kwargs["locked_files"] = locked_files
+                if exclude_ids is not None:
+                    kwargs["exclude_ids"] = exclude_ids
+                native_tickets = pf.next_tickets(**kwargs)
                 if native_tickets:
                     dict_tickets = [
                         t.model_dump(mode="json", exclude_none=True) if hasattr(t, "model_dump") else dict(t)
                         for t in native_tickets
                     ]
                     return dict_tickets, None
-            if count == 1 and hasattr(pf, "next_ticket") and not interactive:
+            if count == 1 and hasattr(pf, "next_ticket") and not interactive and not locked_files and not exclude_ids:
                 single = pf.next_ticket(queue=queue_name)
                 if single:
                     dict_ticket = (
@@ -769,36 +779,37 @@ def _next_tickets_or_result(
                     return [dict_ticket], None
             if hasattr(pf, "list_tickets"):
                 open_tickets = pf.list_tickets(status="open")
-                if open_tickets:
-                    raw_tickets = [
-                        t.model_dump(mode="json", exclude_none=True) if hasattr(t, "model_dump") else dict(t)
-                        for t in open_tickets
-                    ]
-                    tickets = parse_next_tickets(
-                        json.dumps(raw_tickets),
-                        count=count,
-                        queue_name=queue_name,
-                        ticket_id=target_ticket_id,
-                        interactive=interactive,
-                        disjoint_files=disjoint_files,
-                    )
-                    if tickets:
-                        try:
-                            payload = admitted_payload(
-                                project, json.dumps(tickets), runner=planfile_runner, queue_name=queue_name
-                            )
-                            admitted_tickets = parse_next_tickets(
-                                payload,
-                                count=count,
-                                queue_name=queue_name,
-                                ticket_id=target_ticket_id,
-                                interactive=interactive,
-                                disjoint_files=disjoint_files,
-                            )
-                            if admitted_tickets:
-                                return admitted_tickets, None
-                        except ValueError:
-                            pass
+                if not open_tickets:
+                    return [], None
+                raw_tickets = [
+                    t.model_dump(mode="json", exclude_none=True) if hasattr(t, "model_dump") else dict(t)
+                    for t in open_tickets
+                ]
+                tickets = parse_next_tickets(
+                    json.dumps(raw_tickets),
+                    count=count,
+                    queue_name=queue_name,
+                    ticket_id=target_ticket_id,
+                    interactive=interactive,
+                    disjoint_files=disjoint_files,
+                )
+                if tickets:
+                    try:
+                        payload = admitted_payload(
+                            project, json.dumps(tickets), runner=planfile_runner, queue_name=queue_name
+                        )
+                        admitted_tickets = parse_next_tickets(
+                            payload,
+                            count=count,
+                            queue_name=queue_name,
+                            ticket_id=target_ticket_id,
+                            interactive=interactive,
+                            disjoint_files=disjoint_files,
+                        )
+                        if admitted_tickets:
+                            return admitted_tickets, None
+                    except ValueError:
+                        pass
         except Exception:
             pass
 

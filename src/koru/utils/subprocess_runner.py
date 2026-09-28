@@ -1,6 +1,7 @@
 """Subprocess runner utilities."""
 
 import subprocess
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -31,10 +32,10 @@ def resolve_planfile_subpath(project: Path, *parts: str) -> Path:
 
 def get_python_cmd(project: Path) -> list[str]:
     """Return command list starting the best available Python interpreter.
-    Prefers project-local .venv/bin/python if it exists.
+    Prefers project-local .venv/bin/python if it exists, then sys.executable.
     """
     for venv_name in (".venv", "venv"):
         candidate = Path(project) / venv_name / "bin" / "python"
         if candidate.is_file():
             return [str(candidate)]
-    return ["python3"]
+    return [sys.executable] if sys.executable else ["python3"]
