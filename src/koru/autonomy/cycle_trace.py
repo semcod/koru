@@ -94,6 +94,10 @@ def record_decision_trace(
     from koru.autonomy.cycle.cycle_common import _queue_loop_waiting_ticket_label
 
     waiting_ticket = _queue_loop_waiting_ticket_label(queue_result)
+    if waiting_ticket == "-":
+        candidate = getattr(queue_result, "waiting_ticket", None)
+        if candidate:
+            waiting_ticket = str(candidate)
     next_step = decision_next_step_hint(
         queue_status=str(queue_result.last_status or ""),
         autopilot_status=autopilot_status,
@@ -129,5 +133,62 @@ def record_decision_trace(
         suffix = f" — {because}" if because else ""
         hp(f"  \033[33mdecision:\033[0m because[{record.skip_code}] {reason}{suffix}")
 
+    # Append markdown-formatted console log to project/ticket-*/koru.log.md
+    append_ticket_markdown_log(project, waiting_ticket, record)
 
-__all__ = ["decision_next_step_hint", "record_decision_trace"]
+
+def append_ticket_markdown_log(
+    project: Path,
+    waiting_ticket: str,
+    record: Any,
+) -> None:
+    """Append decision trace to project/ticket-*/koru.log.md with markdown codeblocks."""
+    if not waiting_ticket or waiting_ticket == "-":
+        return
+
+    # Normalize ticket dir name (e.g. PLF-100 or ticket-344)
+    ticket_slug = waiting_ticket.strip().lower()
+    if not ticket_slug.startswith("ticket-") and not ticket_slug.startswith("plf-"):
+        ticket_slug = f"ticket-{ticket_slug}"
+
+    ticket_dir = project / "project" / ticket_slug
+    if not ticket_dir.is_dir():
+        # Look for matching directory like project/ticket-NNN--slug
+        matches = list(project.glob(f"project/{ticket_slug}*"))
+        if matches and matches[0].is_dir():
+            ticket_dir = matches[0]
+        else:
+            return
+
+    log_file = ticket_dir / "koru.log.md"
+    timestamp = getattr(record, "at", "")
+    cycle = getattr(record, "cycle", 0)
+
+    # Format trace as markdown with yaml codeblock
+    content_blocks = [
+        f"### Cycle {cycle} (`{timestamp}`)\n\n",
+        "```yaml\n",
+        f"uri: koru://cycle/{cycle}/decision/{record.action}\n",
+        f"observed: {record.observed}\n",
+        f"decided: {record.decided}\n",
+        f"action: {record.action}\n",
+        f"evidence: {record.evidence}\n",
+    ]
+    if getattr(record, "skip_because", ""):
+        content_blocks.append(f"because: {record.skip_because}\n")
+    if getattr(record, "next_step", ""):
+        content_blocks.append(f"next: {record.next_step}\n")
+    content_blocks.append("```\n\n")
+
+    try:
+        if not log_file.exists():
+            header = f"# Koru Autonomy Log: `{waiting_ticket}`\n\n"
+            log_file.write_text(header + "".join(content_blocks), encoding="utf-8")
+        else:
+            with log_file.open("a", encoding="utf-8") as f:
+                f.write("".join(content_blocks))
+    except OSError:
+        pass
+
+
+__all__ = ["append_ticket_markdown_log", "decision_next_step_hint", "record_decision_trace"]

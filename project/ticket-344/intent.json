@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-344",
+  "summary": "feat(telemetry): append markdown formatted console logs with codeblocks to project ticket koru log",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-344/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/cycle_trace.py",
+    "tests/test_cycle_trace.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "942d7e3c69740c811231ff1f95bff6db4ca62361",
+    "targetBranch": "main",
+    "outcome": "Persist markdown formatted console logs with codeblocks for URI, YAML and NL/DSL in project/ticket-*/koru.log.md.",
+    "nonGoals": [
+      "Overwriting existing manual notes in ticket folders"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Implement append_markdown_ticket_log in cycle_trace.py to write markdown codeblocks whenever a ticket is active.",
+      "components": [
+        {
+          "name": "autonomy-trace",
+          "paths": [
+            "src/koru/autonomy/cycle_trace.py",
+            "tests/test_cycle_trace.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit cleanly."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_cycle_trace.py -q"
+        ],
+        "evidence": "Cycle trace tests pass and verify koru.log.md markdown codeblocks."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base 942d7e3c69740c811231ff1f95bff6db4ca62361"
+        ],
+        "evidence": "Governance check passes with 0 errors, 0 warnings."
+      }
+    ]
+  }
+}
