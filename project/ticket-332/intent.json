@@ -13,6 +13,7 @@
     "TODO.md",
     "project/TICKETS.md",
     "src/koru/ci/gates.py",
+    "src/koru/queue/loop.py",
     "src/koru/queue/planfile_sdk.py",
     "src/koru/redup_integration.py",
     "tests/test_ci_pipeline.py",
@@ -33,10 +34,10 @@
       "Modify protected merge policies or release gates",
       "Remove full-suite publication verification in CI"
     ],
-    "complexity": "S",
+    "complexity": "M",
     "estimatedMinutes": 30,
     "budgets": {
-      "maxImplementationFiles": 5,
+      "maxImplementationFiles": 6,
       "maxAffectedComponents": 2,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
@@ -56,6 +57,7 @@
         {
           "name": "planfile-sdk",
           "paths": [
+            "src/koru/queue/loop.py",
             "src/koru/queue/planfile_sdk.py",
             "tests/test_planfile_sdk.py"
           ]
