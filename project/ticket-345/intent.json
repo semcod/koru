@@ -1,0 +1,83 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-345",
+  "summary": "fast living status update and waves routing",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-345/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli_ticket.py",
+    "src/koru/queue/living_status.py",
+    "tests/test_queue_living_status_fastpath.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "68b6104285f44d031743552d62fe44a082006d7c",
+    "targetBranch": "main",
+    "outcome": "Route koru ticket waves to queue main and provide fast-path living status updates via in-process Planfile SDK.",
+    "nonGoals": [
+      "Changing living status format or markers",
+      "Removing subprocess fallback"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add waves to supported CLI queue actions in cli_ticket.py and add fast-path Planfile update_ticket call in living_status.py with graceful subprocess fallback.",
+      "components": [
+        {
+          "name": "queue",
+          "paths": [
+            "src/koru/cli_ticket.py",
+            "src/koru/queue/living_status.py",
+            "tests/test_queue_living_status_fastpath.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-345 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_queue_living_status_fastpath.py -q"
+        ],
+        "evidence": "Waves routing and living status fast-path tests pass."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh --base 68b6104285f44d031743552d62fe44a082006d7c"
+        ],
+        "evidence": "Governance check passes with 0 errors and 0 warnings."
+      }
+    ]
+  }
+}

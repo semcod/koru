@@ -89,7 +89,9 @@ def update_living_status(
     message: str | None = None,
 ) -> CommandResult:
     """Update canonical Planfile state; remote publication is intentionally separate."""
-    from koru.queue.planfile_sdk import planfile_lifecycle_command
+    import subprocess
+
+    from koru.queue.runners import run_process
 
     block = living_status_block(
         ticket,
@@ -100,6 +102,23 @@ def update_living_status(
         message=message,
     )
     description = upsert_living_status(str(ticket.get("description") or ""), block)
+
+    # Fast-path: update directly via in-process Planfile SDK when using the default system runner
+    if runner is run_process:
+        try:
+            from planfile import Planfile
+
+            pf = Planfile.auto_discover(str(project))
+            pf.update_ticket(str(ticket["id"]), description=description)
+            from koru.queue.planfile_sync import sync_after_ticket_update
+
+            sync_after_ticket_update(project, str(ticket["id"]))
+            return subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
+        except Exception:
+            pass
+
+    from koru.queue.planfile_sdk import planfile_lifecycle_command
+
     result = planfile_lifecycle_command(
         project,
         ["ticket", "update", str(ticket["id"]), "--description", description],
