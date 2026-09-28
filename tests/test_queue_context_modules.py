@@ -195,6 +195,23 @@ class TestReadFileTree(unittest.TestCase):
             self.assertIn("listing truncated at 2 entries", tree)
             self.assertNotIn(".git", tree)
 
+    def test_prunes_excluded_directory_subtrees(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / ".venv" / "lib" / "python").mkdir(parents=True)
+            (project / ".venv" / "lib" / "python" / "site.py").write_text("x\n", encoding="utf-8")
+            (project / "node_modules" / "pkg").mkdir(parents=True)
+            (project / "node_modules" / "pkg" / "index.js").write_text("x\n", encoding="utf-8")
+            (project / "src").mkdir()
+            (project / "src" / "main.py").write_text("print('hello')\n", encoding="utf-8")
+            tree = context_files._read_file_tree(project, max_entries=50)
+            self.assertIn("src/", tree)
+            self.assertIn("main.py", tree)
+            self.assertNotIn(".venv", tree)
+            self.assertNotIn("site.py", tree)
+            self.assertNotIn("node_modules", tree)
+            self.assertNotIn("index.js", tree)
+
 
 class TestExtractPythonSymbolSlice(unittest.TestCase):
     """context_slicing: AST window extraction."""
