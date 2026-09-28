@@ -572,17 +572,56 @@ def _collect_ticket_state(
     )
 
 
+def _prepare_project(project: Path, policy: Policy | None) -> tuple[Path, Policy]:
+    """Resolve project root, load dotenv, and resolve policy."""
+    resolved = project.resolve()
+    _load_project_dotenv(resolved)
+    resolved_policy = policy if policy is not None else load_policy(resolved)
+    return resolved, resolved_policy
+
+
+def _collect_environment(
+    project: Path,
+    *,
+    queue_name: str | None,
+    planfile_present: bool,
+    git_probe: Callable[[Path], dict[str, Any]] | None,
+    environment_probe: Callable[[Path], dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Collect git and agent environment state for the brief."""
+    git_state = (git_probe or _git_probe)(project)
+    detected_env = (environment_probe or detect_agent_environment)(project)
+    return {
+        "git": git_state,
+        "planfile_initialised": planfile_present,
+        "queue_name": queue_name,
+        **detected_env,
+    }
+
+
 def _assemble_context(
     *,
     project: Path,
     tickets: _TicketState,
     policy: Policy,
-    queue_name: str | None,
-    planfile_present: bool,
-    git_state: dict[str, Any],
-    detected_environment: dict[str, Any],
+    environment: dict[str, Any] | None = None,
+    queue_name: str | None = None,
+    planfile_present: bool = False,
+    git_state: dict[str, Any] | None = None,
+    detected_environment: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Assemble the final brief dictionary from the collected state."""
+    env = (
+        environment
+        if environment is not None
+        else {
+            "git": git_state,
+            "planfile_initialised": planfile_present,
+            "queue_name": queue_name,
+            **(detected_environment or {}),
+        }
+    )
+    is_initialised = bool(env.get("planfile_initialised", planfile_present))
     return {
         "schema_version": "1",
         "project": str(project),
@@ -592,25 +631,100 @@ def _assemble_context(
         "all_tickets": tickets.history,
         "ticket_compatibility": tickets.compatibility.to_dict(),
         "policy": policy.to_dict(),
-        "environment": {
-            "git": git_state,
-            "planfile_initialised": planfile_present,
-            "queue_name": queue_name,
-            **detected_environment,
-        },
+        "environment": env,
         "instructions": _build_instructions(
             policy,
             tickets.data,
-            planfile_initialised=planfile_present,
+            planfile_initialised=is_initialised,
         ),
         "self_service": _build_self_service(
             policy,
             tickets.data,
-            planfile_initialised=planfile_present,
+            planfile_initialised=is_initialised,
         ),
         "project_pipeline": build_project_pipeline_brief(project),
         "autonomy_loop": build_autonomy_loop_brief(project),
     }
+
+
+PlanfileRunner = (
+    Callable[
+        [Sequence[str], Path],
+        subprocess.CompletedProcess[str],
+    ]
+    | None
+)
+ProbeFunc = Callable[[Path], dict[str, Any]] | None
+
+
+class ContextBuilder:
+    """Coordinates context brief assembly."""
+
+    def __init__(
+        self,
+        project: Path,
+        policy: Policy | None = None,
+        runner: PlanfileRunner = None,
+    ) -> None:
+        self.project, self.policy = _prepare_project(project, policy)
+        self.runner = runner
+        self.planfile_present = _planfile_is_initialised(self.project)
+
+    def collect_tickets(
+        self,
+        ticket_id: str | None = None,
+        queue_name: str | None = None,
+        include_fixtures: bool | None = None,
+    ) -> _TicketState:
+        return _collect_ticket_state(
+            self.project,
+            ticket_id,
+            queue_name,
+            self.planfile_present,
+            self.runner,
+            include_fixtures,
+        )
+
+    def collect_environment(
+        self,
+        queue_name: str | None = None,
+        git_probe: ProbeFunc = None,
+        environment_probe: ProbeFunc = None,
+    ) -> dict[str, Any]:
+        return _collect_environment(
+            self.project,
+            queue_name=queue_name,
+            planfile_present=self.planfile_present,
+            git_probe=git_probe,
+            environment_probe=environment_probe,
+        )
+
+    def assemble(
+        self,
+        tickets: _TicketState,
+        environment: dict[str, Any],
+    ) -> dict[str, Any]:
+        return _assemble_context(
+            project=self.project,
+            tickets=tickets,
+            policy=self.policy,
+            environment=environment,
+            planfile_present=self.planfile_present,
+        )
+
+    def build(
+        self,
+        *,
+        ticket_id: str | None = None,
+        queue_name: str | None = None,
+        git_probe: ProbeFunc = None,
+        environment_probe: ProbeFunc = None,
+        include_fixtures: bool | None = None,
+    ) -> dict[str, Any]:
+        tickets = self.collect_tickets(ticket_id, queue_name, include_fixtures)
+        _auto_promote_blocking_tickets(self.project, runner=self.runner)
+        environment = self.collect_environment(queue_name, git_probe, environment_probe)
+        return self.assemble(tickets, environment)
 
 
 def build_context(
@@ -618,13 +732,9 @@ def build_context(
     project: Path,
     ticket_id: str | None = None,
     queue_name: str | None = None,
-    planfile_runner: Callable[
-        [Sequence[str], Path],
-        subprocess.CompletedProcess[str],
-    ]
-    | None = None,
-    git_probe: Callable[[Path], dict[str, Any]] | None = None,
-    environment_probe: Callable[[Path], dict[str, Any]] | None = None,
+    planfile_runner: PlanfileRunner = None,
+    git_probe: ProbeFunc = None,
+    environment_probe: ProbeFunc = None,
     policy: Policy | None = None,
     include_fixtures: bool | None = None,
 ) -> dict[str, Any]:
@@ -633,35 +743,11 @@ def build_context(
     The function is fully injectable to keep tests hermetic. In normal
     use, callers just pass ``project`` and let everything else default.
     """
-    project = project.resolve()
-    # Load project-local `.env` so capability probes (e.g.
-    # OPENROUTER_API_KEY) see what the user already has on disk.
-    # No-op when the file is absent; never overrides existing env.
-    _load_project_dotenv(project)
-    resolved_policy = policy if policy is not None else load_policy(project)
-
-    planfile_present = _planfile_is_initialised(project)
-    tickets = _collect_ticket_state(
-        project,
-        ticket_id,
-        queue_name,
-        planfile_present,
-        planfile_runner,
-        include_fixtures,
-    )
-
-    # Auto-promote blocking tickets to critical priority
-    _auto_promote_blocking_tickets(project, runner=planfile_runner)
-
-    git_state = (git_probe or _git_probe)(project)
-    detected_environment = (environment_probe or detect_agent_environment)(project)
-
-    return _assemble_context(
-        project=project,
-        tickets=tickets,
-        policy=resolved_policy,
+    builder = ContextBuilder(project, policy=policy, runner=planfile_runner)
+    return builder.build(
+        ticket_id=ticket_id,
         queue_name=queue_name,
-        planfile_present=planfile_present,
-        git_state=git_state,
-        detected_environment=detected_environment,
+        git_probe=git_probe,
+        environment_probe=environment_probe,
+        include_fixtures=include_fixtures,
     )
