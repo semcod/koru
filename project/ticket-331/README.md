@@ -24,5 +24,9 @@ primary changes and previous stashes; do not write the primary checkout.
 
 Validation: 244 focused tests passed, including current-task attribution, finalizer
 error handling, paid-call admission, concurrent reservations and fresh-process
-restart. Ruff and managed governance passed. AC-03 still awaits exact-head
+restart. Package Ruff and managed governance passed. AC-03 still awaits exact-head
 protected review and separately observed deployment.
+
+Validation prerequisite: hosted package Ruff exposed one unsorted import group
+in queue/loop.py inherited from merged329. This ticket includes the required
+blank-line formatting correction; queue scheduling behavior is unchanged.

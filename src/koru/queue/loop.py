@@ -67,6 +67,7 @@ def run_planfile_queue_loop(
     if concurrency > 1:
         import concurrent.futures
         import threading
+
         from koru.queue.runner import _next_tickets_or_result
 
         progress_lock = threading.Lock()

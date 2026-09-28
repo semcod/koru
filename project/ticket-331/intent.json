@@ -19,7 +19,8 @@
     "tests/test_autonomous_cycle_drive_outcome.py",
     "tests/test_autonomous_retry_guard.py",
     "tests/test_cycle_post_drive.py",
-    "tests/test_verification_engine.py"
+    "tests/test_verification_engine.py",
+    "src/koru/queue/loop.py"
   ],
   "forbiddenPaths": [
     "project/ticket-*/user-*.md"
@@ -34,12 +35,13 @@
     "outcome": "Complete the accepted PLF099 incident remediation: bind post-drive evidence, verification and durable budget to the ticket actually driven even after queue reconciliation; preserve failed verification semantics and cover concurrency/restart boundaries; publish through protected exact-head review.",
     "nonGoals": [
       "Change queue parallel execution or canonical ticket allocation (tickets329/330)",
-      "Reset retry budgets, alter protected policy or resume live paid retries before verification"
+      "Reset retry budgets, alter protected policy or resume live paid retries before verification",
+      "Queue change is restricted to the import-group formatting required by package Ruff; no scheduling behavior changes."
     ],
     "complexity": "L",
     "estimatedMinutes": 90,
     "budgets": {
-      "maxImplementationFiles": 8,
+      "maxImplementationFiles": 9,
       "maxAffectedComponents": 2,
       "maxPublicInterfaceChanges": 0,
       "maxRuntimeDependencies": 0
@@ -59,6 +61,12 @@
             "tests/test_autonomous_retry_guard.py",
             "tests/test_cycle_post_drive.py",
             "tests/test_verification_engine.py"
+          ]
+        },
+        {
+          "name": "queue",
+          "paths": [
+            "src/koru/queue/loop.py"
           ]
         }
       ],
