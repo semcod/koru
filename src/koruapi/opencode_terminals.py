@@ -276,20 +276,17 @@ def list_providers(url: str) -> list[dict[str, Any]]:
     items = catalog_payload.get("data", catalog_payload) if isinstance(catalog_payload, dict) else catalog_payload
     if not isinstance(items, list):
         return []
-    out: list[dict[str, Any]] = []
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-        api = item.get("api") if isinstance(item.get("api"), dict) else {}
-        out.append(
-            {
-                "id": item.get("id"),
-                "name": item.get("name"),
-                "api_type": api.get("type"),
-                "api_url": api.get("url"),
-            }
-        )
-    return out
+    models = [
+        {
+            "id": item.get("id"),
+            "name": item.get("name"),
+            "api_type": (item.get("api") if isinstance(item.get("api"), dict) else {}).get("type"),
+            "api_url": (item.get("api") if isinstance(item.get("api"), dict) else {}).get("url"),
+        }
+        for item in items
+        if isinstance(item, dict)
+    ]
+    return models
 
 
 def parse_exhaustion_from_error(
@@ -370,7 +367,7 @@ def is_provider_exhausted(provider_id: str) -> bool:
 def get_exhausted_providers() -> dict[str, dict[str, Any]]:
     """Return a dictionary of currently exhausted providers with remaining seconds."""
     now = time.time()
-    out = {}
+    exhausted: dict[str, dict[str, Any]] = {}
     with _EXHAUSTION_LOCK:
         expired = []
         for pid, record in _EXHAUSTED_PROVIDERS.items():
@@ -378,7 +375,7 @@ def get_exhausted_providers() -> dict[str, dict[str, Any]]:
             if rem <= 0:
                 expired.append(pid)
             else:
-                out[pid] = {
+                exhausted[pid] = {
                     "providerID": record["providerID"],
                     "reason": record["reason"],
                     "marked_at": record["marked_at"],
@@ -387,7 +384,7 @@ def get_exhausted_providers() -> dict[str, dict[str, Any]]:
                 }
         for pid in expired:
             del _EXHAUSTED_PROVIDERS[pid]
-    return out
+    return exhausted
 
 
 def clear_provider_exhaustion(provider_id: str | None = None) -> None:
@@ -644,8 +641,8 @@ def _legacy_chunks(msg: dict[str, Any]) -> list[str]:
                     chunks.append(f"[tool: {c['name']}]")
         return chunks
     if msg.get("command"):
-        out = msg.get("output")
-        return ["$ " + str(msg["command"]) + (f"\n{out}" if out else "")]
+        output = msg.get("output")
+        return ["$ " + str(msg["command"]) + (f"\n{output}" if output else "")]
     return []
 
 
@@ -718,7 +715,7 @@ def send_prompt(
 
 
 def pending_requests(url: str) -> dict[str, list[dict[str, Any]]]:
-    out: dict[str, list[dict[str, Any]]] = {"permissions": [], "questions": []}
+    pending: dict[str, list[dict[str, Any]]] = {"permissions": [], "questions": []}
     for kind, path in (
         ("permissions", "/api/permission/request"),
         ("questions", "/api/question/request"),
@@ -729,8 +726,8 @@ def pending_requests(url: str) -> dict[str, list[dict[str, Any]]]:
             continue
         items = request_payload.get("data", request_payload) if isinstance(request_payload, dict) else request_payload
         if isinstance(items, list):
-            out[kind] = [i for i in items if isinstance(i, dict)]
-    return out
+            pending[kind] = [i for i in items if isinstance(i, dict)]
+    return pending
 
 
 def reply_permission(url: str, session_id: str, request_id: str, reply: str) -> dict[str, Any]:
@@ -1171,10 +1168,10 @@ def _send_prompt_with_failover(
             failover_meta = retry_meta
         else:
             return {"error": str(exc)}
-    out: dict[str, Any] = {"ok": True, "session_id": session_id, "result": result}
+    result_out: dict[str, Any] = {"ok": True, "session_id": session_id, "result": result}
     if failover_meta:
-        out["failover"] = failover_meta
-    return out
+        result_out["failover"] = failover_meta
+    return result_out
 
 
 def _parse_prompt_request(body: dict[str, Any]) -> tuple[str, str, dict[str, Any] | None, str | None]:
