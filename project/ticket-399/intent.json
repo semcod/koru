@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-399",
+  "summary": "refactor(opencode-terminals): address shotgun surgery on out variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-399/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/opencode_terminals.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ad333c5b3d204e0d4e51665292664ec8ae6a6f72",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on out removed in opencode_terminals.py: shared generic accumulator name replaced by per-function semantic names (models/exhausted/output/pending/result_out).",
+    "nonGoals": [
+      "Terminal API behavior changes",
+      "Other koruapi module smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Per-function semantic accumulator names replace the repeated generic out binding; model list built via comprehension.",
+      "components": [
+        {
+          "name": "koruapi-opencode-terminals",
+          "paths": [
+            "src/koruapi/opencode_terminals.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests -k opencode -x -q"
+        ],
+        "evidence": "Terminal output and pending-request payloads preserved."
+      }
+    ]
+  }
+}
