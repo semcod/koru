@@ -127,104 +127,93 @@ def _ticket_title(plan: dict[str, Any]) -> str:
 
 
 def _ticket_plan_lines(plan: dict[str, Any], *, plans_rel: str) -> list[str]:
-    lines: list[str] = []
     plan_id = str(plan.get("id") or "").strip()
     plan_hash = str(plan.get("planHash") or "").strip()
-    if plan_id or plan_hash:
-        lines.append("")
-        lines.append(f"Plan id: {plan_id or 'n/a'}")
-        if plan_hash:
-            lines.append(f"Plan hash: {plan_hash}")
-        lines.append(f"Source artifact: {plans_rel}")
-
     paths = _plan_paths(plan)
-    if paths:
-        lines.append("")
-        lines.append("Target paths:")
-        lines.extend(f"- {path}" for path in paths)
+    return [
+        *(
+            [
+                "",
+                f"Plan id: {plan_id or 'n/a'}",
+                *([f"Plan hash: {plan_hash}"] if plan_hash else []),
+                f"Source artifact: {plans_rel}",
+            ]
+            if plan_id or plan_hash
+            else []
+        ),
+        *(["", "Target paths:", *(f"- {path}" for path in paths)] if paths else []),
+    ]
 
-    return lines
+
+def _change_line(change: dict[str, Any]) -> str:
+    path = str(change.get("path") or "").strip()
+    action = str(change.get("action") or "modify").strip()
+    rationale = str(change.get("rationale") or "").strip()
+    symbols = _string_list(change.get("symbols"))
+    piece = f"- {action} `{path}`"
+    if symbols:
+        piece += f" ({', '.join(symbols)})"
+    if rationale:
+        piece += f": {rationale}"
+    return piece
 
 
 def _ticket_change_lines(plan: dict[str, Any]) -> list[str]:
-    lines: list[str] = []
     changes = plan.get("changes") if isinstance(plan.get("changes"), list) else []
-    change_lines: list[str] = []
-    for change in changes:
-        if not isinstance(change, dict):
-            continue
-        path = str(change.get("path") or "").strip()
-        action = str(change.get("action") or "modify").strip()
-        rationale = str(change.get("rationale") or "").strip()
-        symbols = _string_list(change.get("symbols"))
-        piece = f"- {action} `{path}`"
-        if symbols:
-            piece += f" ({', '.join(symbols)})"
-        if rationale:
-            piece += f": {rationale}"
-        change_lines.append(piece)
-    if change_lines:
-        lines.append("")
-        lines.append("Proposed changes:")
-        lines.extend(change_lines)
-
-    return lines
+    change_lines = [_change_line(change) for change in changes if isinstance(change, dict)]
+    if not change_lines:
+        return []
+    return ["", "Proposed changes:", *change_lines]
 
 
 def _ticket_risk_lines(plan: dict[str, Any]) -> list[str]:
-    lines: list[str] = []
     risk = plan.get("risk") if isinstance(plan.get("risk"), dict) else {}
     risk_level = str(risk.get("level") or "").strip()
     risk_reasons = _string_list(risk.get("reasons"))
-    if risk_level or risk_reasons:
-        lines.append("")
-        lines.append(f"Risk: {risk_level or 'unknown'}")
-        lines.extend(f"- {reason}" for reason in risk_reasons)
-
-    return lines
+    if not (risk_level or risk_reasons):
+        return []
+    return [
+        "",
+        f"Risk: {risk_level or 'unknown'}",
+        *(f"- {reason}" for reason in risk_reasons),
+    ]
 
 
 def _ticket_recovery_lines(plan: dict[str, Any]) -> list[str]:
-    lines: list[str] = []
     rollback = str(plan.get("rollback") or "").strip()
-    if rollback:
-        lines.append("")
-        lines.append(f"Rollback: {rollback}")
-
     evidence = plan.get("evidence") if isinstance(plan.get("evidence"), dict) else {}
     diagnostic_ids = _string_list(evidence.get("diagnosticIds"))
-    if diagnostic_ids:
-        lines.append("")
-        lines.append("Diagnostics:")
-        lines.extend(f"- {diag}" for diag in diagnostic_ids)
-
-    return lines
+    return [
+        *(["", f"Rollback: {rollback}"] if rollback else []),
+        *(
+            ["", "Diagnostics:", *(f"- {diag}" for diag in diagnostic_ids)]
+            if diagnostic_ids
+            else []
+        ),
+    ]
 
 
 def _ticket_text(plan: dict[str, Any], *, plans_rel: str) -> str:
-    lines: list[str] = []
     description = str(plan.get("description") or "").strip()
     title = str(plan.get("title") or "").strip()
-    lines.append(description or title or "Implement grounded todo2code code-change plan.")
-
-    lines.extend(_ticket_plan_lines(plan, plans_rel=plans_rel))
-    lines.extend(_ticket_change_lines(plan))
-
     criteria = _string_list(plan.get("acceptanceCriteria"))
-    if criteria:
-        lines.append("")
-        lines.append("Acceptance criteria:")
-        lines.extend(f"- {item}" for item in criteria)
-
-    lines.extend(_ticket_risk_lines(plan))
-    lines.extend(_ticket_recovery_lines(plan))
-
-    lines.append("")
-    lines.append(
-        "Implement only the declared target paths, then re-run "
-        "`t2c evaluate-code-change` / pipeline before marking the ticket done."
+    return "\n".join(
+        [
+            description or title or "Implement grounded todo2code code-change plan.",
+            *_ticket_plan_lines(plan, plans_rel=plans_rel),
+            *_ticket_change_lines(plan),
+            *(
+                ["", "Acceptance criteria:", *(f"- {item}" for item in criteria)]
+                if criteria
+                else []
+            ),
+            *_ticket_risk_lines(plan),
+            *_ticket_recovery_lines(plan),
+            "",
+            "Implement only the declared target paths, then re-run "
+            "`t2c evaluate-code-change` / pipeline before marking the ticket done.",
+        ]
     )
-    return "\n".join(lines)
 
 
 def _build_ticket_inputs(paths: list[str], contract: str | None) -> dict[str, Any]:

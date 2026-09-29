@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-393",
+  "summary": "refactor(todo2code-tickets): address shotgun surgery on lines variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-393/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/todo2code_tickets.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a653ed99d545d52dad819315ce4d1cf147fa6788",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on lines removed in todo2code_tickets.py: five ticket-text builders return composed lists (literal + unpacking) instead of mutating a lines accumulator; change-line formatting extracted to _change_line.",
+    "nonGoals": [
+      "Other smells or ticket content changes",
+      "todo2code plan schema changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Section builders return fully constructed lists composed by _ticket_text; no shared mutable accumulator.",
+      "components": [
+        {
+          "name": "todo2code-tickets",
+          "paths": [
+            "src/koru/autonomy/todo2code_tickets.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module compositional refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_todo2code_ticket_text.py tests/test_todo2code_modules.py -x -q"
+        ],
+        "evidence": "Rendered ticket text identical for populated and sparse plans."
+      }
+    ]
+  }
+}
