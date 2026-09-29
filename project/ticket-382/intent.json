@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-382",
+  "summary": "refactor(agent-backend-runtime): split god module",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-382/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/agent_backend_runtime.py",
+    "src/koru/agent_backend_runtime/**",
+    "tests/test_agent_backend_runtime.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1f5bf1ac0a07689a7d0a725a46b28ec9b31c8a66",
+    "targetBranch": "main",
+    "outcome": "agent_backend_runtime.py (510 lines, 10 classes) split into a package: base.py (AgentBackend protocol), backends.py (9 backend classes + _nlp2uri_desktop_send), registry.py (builders + _BACKEND_BUILDERS + build_agent_backend), __init__.py facade re-exporting the same public surface and __all__.",
+    "nonGoals": [
+      "Changing backend behavior, env vars, or build_agent_backend dispatch",
+      "Adding new backends or changing __all__"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 6,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Module becomes package: base/backends/registry split by responsibility; __init__.py keeps from koru.agent_backend_runtime import <name> working, including private _nlp2uri_desktop_send used by cycle_gate. Monkeypatch targets in tests updated to backends.drive_shell_chat.",
+      "components": [
+        {
+          "name": "agent-backend-runtime",
+          "paths": [
+            "src/koru/agent_backend_runtime.py",
+            "src/koru/agent_backend_runtime/__init__.py",
+            "src/koru/agent_backend_runtime/base.py",
+            "src/koru/agent_backend_runtime/backends.py",
+            "src/koru/agent_backend_runtime/registry.py",
+            "tests/test_agent_backend_runtime.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; package is a pure move of the same code."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_agent_backend_runtime.py tests/test_imgl_integration.py -x -q"
+        ],
+        "evidence": "Public imports, __all__, backend resolution and nlp2uri send path unchanged."
+      }
+    ]
+  }
+}

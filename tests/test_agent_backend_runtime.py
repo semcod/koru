@@ -116,7 +116,7 @@ def test_tillm_shell_backend_delegates_to_bridge(monkeypatch: pytest.MonkeyPatch
         calls.update(kwargs)
         return {"ok": True, "backend": "tillm_shell", "client_id": kwargs["client_id"]}
 
-    monkeypatch.setattr("koru.agent_backend_runtime.drive_shell_chat", fake_drive_shell_chat)
+    monkeypatch.setattr("koru.agent_backend_runtime.backends.drive_shell_chat", fake_drive_shell_chat)
     backend = TillmShellBackend(client_id="aider", execute=False)
 
     out = backend.send_chat(Path("/tmp/project"), "fix tests", ide="auto", submit=True)
@@ -189,6 +189,6 @@ def test_all_backends_implement_send_chat(backend_id, kwargs) -> None:
 @pytest.mark.parametrize("submit,execute,expected", [(False, True, False), (True, False, False), (True, True, True)])
 def test_shell_backend_honors_submit_and_execute(monkeypatch, tmp_path, submit, execute, expected):
     calls = []
-    monkeypatch.setattr("koru.agent_backend_runtime.drive_shell_chat", lambda **kw: calls.append(kw) or {"ok": True})
+    monkeypatch.setattr("koru.agent_backend_runtime.backends.drive_shell_chat", lambda **kw: calls.append(kw) or {"ok": True})
     TillmShellBackend(execute=execute).send_chat(tmp_path, "edit", ide="aider", submit=submit)
     assert calls[0]["execute"] is expected

@@ -1,26 +1,8 @@
-"""Runtime *agent UI* backends — how ``autonomous`` reaches an IDE-side LLM.
+"""Concrete :class:`AgentBackend` implementations."""
 
-Static capability profiles live in :mod:`koru.agent_backends`; this module holds
-the small :class:`AgentBackend` protocol and concrete implementations:
-
-  * :class:`PluginSocketBackend` — IDE plugin + unix socket (windsurf, vscode,
-    cursor, jetbrains via koru-autopilot plugin).
-  * :class:`McpToolBackend` — MCP tool path (Cursor / any MCP-aware IDE that
-    runs ``koru mcp-server runstdio``); send_chat is a no-op since the LLM is
-    expected to call ``koru_run_ticket`` itself. Used to keep the autonomy
-    loop running when no plugin socket is available.
-  * :class:`NoopBackend` — explicit "headless / smoke" backend; useful for CI
-    and `--no-autopilot` smoke tests.
-  * :class:`TillmShellBackend` — shell LLM client via the external ``tillm``
-    plugin/package (aider, Claude Code, Codex CLI, Devin, ...).
-
-Lane → backend resolution lives in :func:`build_agent_backend`.
-"""
-
-import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any
 
 try:
     from gillm.injection.os_injector import (
@@ -40,27 +22,10 @@ except ImportError:  # gillm optional — OsInjectorBackend degrades to a soft e
         raise OsInjectorError("gillm is not installed; os_injector backend unavailable (pip install gillm)")
 
 
-from koru.agent_backends import normalize_agent_backend_id
-from koru.ide_adapters.gillm_client import GillmIDEControlClient, build_gillm_ide_client
+from koru.ide_adapters.gillm_client import GillmIDEControlClient
 from koru.ide_adapters.gillm_recovery import enrich_drive_reply_with_recovery
 from koru.ide_client import IDEControlClient
 from koru.tillm_bridge import drive_shell_chat
-
-
-class AgentBackend(Protocol):
-    """Push a prompt toward the agent UI (chat / drive session) for this project."""
-
-    def send_chat(
-        self,
-        project: Path,
-        prompt: str,
-        *,
-        ide: str,
-        submit: bool,
-        ticket_id: str | None = None,
-    ) -> dict[str, Any]:
-        """Return the same shape as :meth:`IDEControlClient.drive` (``ok``, ``message``, …)."""
-        ...
 
 
 @dataclass
@@ -296,125 +261,6 @@ class Nlp2UriDesktopBackend:
         return _nlp2uri_desktop_send(prompt, ide=ide, submit=submit, dry_run=self.dry_run)
 
 
-def _build_plugin_socket_backend(client: IDEControlClient | None = None) -> AgentBackend:
-    if client is None:
-        raise ValueError("plugin_socket backend requires an IDEControlClient")
-    return PluginSocketBackend(client=client)
-
-
-def _build_mcp_tool_backend(mcp_server: str | None = None) -> AgentBackend:
-    return McpToolBackend(mcp_server=mcp_server)
-
-
-def _build_vendor_agent_cli_backend(shell_client_id: str | None = None) -> AgentBackend:
-    return TillmShellBackend(
-        client_id=shell_client_id or os.environ.get("KORU_TILLM_CLIENT", "aider"),
-        execute=os.environ.get("KORU_TILLM_DRY_RUN", "").strip().lower() not in {"1", "true", "yes", "on"},
-    )
-
-
-def _build_gillm_gui_backend() -> AgentBackend:
-    return GillmGuiBackend(client=build_gillm_ide_client())
-
-
-def _build_os_injector_backend() -> AgentBackend:
-    profile = os.environ.get("KORU_OS_INJECTOR_PROFILE", "").strip()
-    if not profile:
-        raise ValueError("os_injector backend requires KORU_OS_INJECTOR_PROFILE")
-    raw_cfg = os.environ.get("KORU_OS_INJECTOR_CONFIG", "").strip()
-    cfg = Path(raw_cfg).expanduser().resolve() if raw_cfg else None
-    return OsInjectorBackend(profile_id=profile, config_path=cfg)
-
-
-def _build_nlp2uri_desktop_backend() -> AgentBackend:
-    dry = os.environ.get("KORU_NLP2URI_DRY_RUN", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
-    return Nlp2UriDesktopBackend(dry_run=dry)
-
-
-def _build_imgl_desktop_backend() -> AgentBackend:
-    dry = os.environ.get("KORU_IMGL_DRY_RUN", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
-    return ImglDesktopBackend(dry_run=dry)
-
-
-def _build_vdisplay_control_backend() -> AgentBackend:
-    dry = os.environ.get("KORU_VDISPLAY_DRY_RUN", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
-    return VdisplayControlBackend(dry_run=dry)
-
-
-def _build_noop_backend(noop_reason: str) -> AgentBackend:
-    return NoopBackend(reason=noop_reason)
-
-
-_BACKEND_BUILDERS = {
-    "plugin_socket": _build_plugin_socket_backend,
-    "vscode_family_plugin_socket": _build_plugin_socket_backend,
-    "mcp_tool": _build_mcp_tool_backend,
-    "mcp_stdio_server": _build_mcp_tool_backend,
-    "vendor_agent_cli": _build_vendor_agent_cli_backend,
-    "gillm_gui": _build_gillm_gui_backend,
-    "gillm_gui_driver": _build_gillm_gui_backend,
-    "os_injector": _build_os_injector_backend,
-    "os_keyboard_injector": _build_os_injector_backend,
-    "nlp2uri_desktop": _build_nlp2uri_desktop_backend,
-    "nlp2uri_desktop_window": _build_nlp2uri_desktop_backend,
-    "imgl": _build_imgl_desktop_backend,
-    "imgl_vision": _build_imgl_desktop_backend,
-    "imgl_desktop": _build_imgl_desktop_backend,
-    "imgl_vision_driver": _build_imgl_desktop_backend,
-    "vdisplay": _build_vdisplay_control_backend,
-    "vdisplay_control": _build_vdisplay_control_backend,
-    "vdisplay_semantic_control": _build_vdisplay_control_backend,
-    "none": _build_noop_backend,
-    "noop": _build_noop_backend,
-    "": _build_noop_backend,
-}
-
-
-def build_agent_backend(
-    *,
-    backend_id: str,
-    client: IDEControlClient | None = None,
-    mcp_server: str | None = None,
-    noop_reason: str = "headless",
-    shell_client_id: str | None = None,
-) -> AgentBackend:
-    """Resolve a lane backend id into a concrete :class:`AgentBackend`.
-
-    Lane ids follow :mod:`koru.agent_backends` (``plugin_socket``,
-    ``mcp_tool``, ``os_injector``, ``none``).
-    """
-    bid = (backend_id or "").strip().lower().replace("-", "_")
-    normalized = normalize_agent_backend_id(backend_id or "")
-    builder = _BACKEND_BUILDERS.get(bid) or _BACKEND_BUILDERS.get(normalized)
-    if builder:
-        if "client" in builder.__code__.co_varnames:
-            return builder(client=client)
-        elif "mcp_server" in builder.__code__.co_varnames:
-            return builder(mcp_server=mcp_server)
-        elif "shell_client_id" in builder.__code__.co_varnames:
-            return builder(shell_client_id=shell_client_id)
-        elif "noop_reason" in builder.__code__.co_varnames:
-            return builder(noop_reason=noop_reason)
-        else:
-            return builder()
-    raise ValueError(f"unknown agent backend id: {backend_id!r}")
-
-
 def _nlp2uri_desktop_send(
     prompt: str,
     *,
@@ -494,17 +340,3 @@ def _nlp2uri_desktop_send(
             "focus_ok": focus_ok,
             "type": "error",
         }
-
-
-__all__ = [
-    "AgentBackend",
-    "PluginSocketBackend",
-    "McpToolBackend",
-    "TillmShellBackend",
-    "GillmGuiBackend",
-    "ImglDesktopBackend",
-    "OsInjectorBackend",
-    "Nlp2UriDesktopBackend",
-    "NoopBackend",
-    "build_agent_backend",
-]
