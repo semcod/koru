@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-380",
+  "summary": "refactor(cli-ticket-queue): reduce ticket_main cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-380/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli_ticket_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8c2728b0aea61dcf4097104b9a89c9264bdf01f3",
+    "targetBranch": "main",
+    "outcome": "ticket_main CC reduced: per-action handlers extracted (_resolve_project/_ticket_list/_ticket_waves/_load_execution_waves/_ticket_next/_report_next_error/_ticket_auto/_auto_queue_runners/_queue_name/_sprint_scoped_runner); ticket_main becomes a thin argv-normalize + dispatch.",
+    "nonGoals": [
+      "Changing CLI flags, output, or exit codes",
+      "Refactoring build_ticket_parser (PLF-049) or format_next_ticket"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Split ticket_main into per-action helpers; keep lazy queue imports inside handlers; dispatch via handler table.",
+      "components": [
+        {
+          "name": "cli-ticket-queue",
+          "paths": [
+            "src/koru/cli_ticket_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_ticket_command_queue.py tests/test_queue_cli_helpers.py tests/test_queue_concurrency.py -x -q"
+        ],
+        "evidence": "All queue CLI behaviors (list/waves/next/auto, --project validation, dry-run/sync refusal, sprint scoping) unchanged."
+      }
+    ]
+  }
+}
