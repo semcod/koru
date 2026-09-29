@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-364",
+  "summary": "refactor(cli-benchmark): reduce benchmark_main cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-364/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli_benchmark.py",
+    "tests/test_benchmark_daily.py",
+    "tests/test_benchmark_router.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "7f5f907f7f934b19aa64544d90601c405de655a3",
+    "targetBranch": "main",
+    "outcome": "benchmark_main is a thin dispatcher: parser construction and each subcommand's output logic live in dedicated helpers, cyclomatic complexity of every function is below the code2llm limit (15), and CLI behavior/output is unchanged.",
+    "nonGoals": [
+      "Changing benchmark routing logic, ledger schema or CLI flags/output",
+      "Refactoring helpers outside cli_benchmark.py"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _build_parser and per-action _cmd_* handlers behind an _ACTIONS dispatch table; benchmark_main keeps its public signature.",
+      "components": [
+        {
+          "name": "cli-benchmark",
+          "paths": [
+            "src/koru/cli_benchmark.py",
+            "tests/test_benchmark_daily.py",
+            "tests/test_benchmark_router.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; the change is a pure function-level refactor in one file."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_benchmark_daily.py tests/test_benchmark_router.py -x -q"
+        ],
+        "evidence": "All benchmark CLI tests pass; benchmark_main CC<=15 per radon/code2llm."
+      }
+    ]
+  }
+}
