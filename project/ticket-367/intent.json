@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-367",
+  "summary": "refactor(queue-loop): reduce run_planfile_queue_loop cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-367/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/loop.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0a41c0946d00ffdb16404f4943d94e8a42c8d6d0",
+    "targetBranch": "main",
+    "outcome": "run_planfile_queue_loop is a thin entry point (CC<=15): result accounting lives in _LoopState and sequential/parallel drains in dedicated helpers; loop semantics, statuses and callback order unchanged.",
+    "nonGoals": [
+      "Changing loop termination, status or concurrency semantics",
+      "Refactoring queue runner internals"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 40,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Introduce _LoopState accumulator plus _run_sequential_loop and _run_parallel_loop with _dispatch_batch/_resolve_future/_record_result helpers; keep the public signature and terminal/continue status tables.",
+      "components": [
+        {
+          "name": "queue-loop",
+          "paths": [
+            "src/koru/queue/loop.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_queue_concurrency.py tests/test_queue_pipelining.py -x -q"
+        ],
+        "evidence": "Sequential and concurrent loop tests pass; run_planfile_queue_loop CC<=15."
+      }
+    ]
+  }
+}
