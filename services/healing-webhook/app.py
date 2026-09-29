@@ -140,7 +140,7 @@ def _record_action(action: str, status: str, component: str, detail: dict) -> No
     )
 
 
-def _enrich_ticket_with_vallm(alert: dict, payload: dict) -> None:
+def _enrich_ticket_with_vallm(alert: dict, ticket_fields: dict) -> None:
     """Add vallm pre-flight summary to ticket description."""
     try:
         labels = alert.get("labels", {}) or {}
@@ -155,7 +155,7 @@ def _enrich_ticket_with_vallm(alert: dict, payload: dict) -> None:
                 icon = "✅" if r.get("ok") else "❌"
                 rel = f.replace(f"{REPO_PATH}/", "")
                 lines.append(f"- {icon} `{rel}` — score `{r.get('score', 0):.2f}`")
-            payload["description"] = payload["description"] + "\n" + "\n".join(lines)
+            ticket_fields["description"] = ticket_fields["description"] + "\n" + "\n".join(lines)
     except Exception as exc:  # noqa: BLE001
         log.debug("vallm enrichment skipped: %s", exc)
 
@@ -174,24 +174,24 @@ def _build_command(base: list[str], *flags: list[str] | None) -> list[str]:
     return cmd
 
 
-def _build_planfile_command(payload: dict) -> list[str]:
+def _build_planfile_command(fields: dict) -> list[str]:
     """Build planfile ticket create command from payload."""
     return _build_command(
         [
             PLANFILE_BIN,
             "ticket",
             "create",
-            payload["name"],
+            fields["name"],
             "--priority",
-            payload["priority"],
+            fields["priority"],
             "--sprint",
             PLANFILE_SPRINT,
             "--source",
-            payload["source"],
+            fields["source"],
             "--description",
-            payload["description"],
+            fields["description"],
         ],
-        *(["--label", label] for label in payload["labels"]),
+        *(["--label", label] for label in fields["labels"]),
     )
 
 
@@ -245,19 +245,19 @@ def create_planfile_ticket(alert: dict, *, source: str = "healing-webhook") -> d
         return {"skipped": "PLANFILE_ENABLED=false"}
 
     try:
-        payload = build_ticket_payload(alert, repo=REPO_PATH, source=source)
+        ticket_payload = build_ticket_payload(alert, repo=REPO_PATH, source=source)
     except Exception as exc:  # noqa: BLE001
         log.warning("ticket_builder failed: %s", exc)
         TICKETS_CREATED.labels(severity="unknown", outcome="build_failed").inc()
         return {"error": f"ticket_builder failed: {exc}"}
 
-    _enrich_ticket_with_vallm(alert, payload)
+    _enrich_ticket_with_vallm(alert, ticket_payload)
 
     severity = next(
-        (lbl.split(":", 1)[1] for lbl in payload["labels"] if lbl.startswith("severity:")),
+        (lbl.split(":", 1)[1] for lbl in ticket_payload["labels"] if lbl.startswith("severity:")),
         "unknown",
     )
-    return _execute_planfile_create(_build_planfile_command(payload), severity)
+    return _execute_planfile_create(_build_planfile_command(ticket_payload), severity)
 
 
 def _docker_run_command(image: str, cmd: list[str]) -> list[str]:
@@ -385,14 +385,14 @@ def _run_vallm_check(file_path: str, timeout: int = 15) -> dict:
         ok = proc.returncode == 0
         try:
             import json as _json
-            payload = _json.loads(proc.stdout or "{}")
-            score = float(payload.get("score", 1.0 if ok else 0.0))
+            check_json = _json.loads(proc.stdout or "{}")
+            score = float(check_json.get("score", 1.0 if ok else 0.0))
         except Exception:  # noqa: BLE001
-            payload = {"raw_stdout": (proc.stdout or "")[:300]}
+            check_json = {"raw_stdout": (proc.stdout or "")[:300]}
             score = 1.0 if ok else 0.0
         VALLM_SCORE.labels(path=file_path, tier="check").set(score)
         VALLM_RUNS.labels(tier="check", outcome="pass" if ok else "fail").inc()
-        return {"ok": ok, "score": score, "tier": "check", "raw": payload}
+        return {"ok": ok, "score": score, "tier": "check", "raw": check_json}
     except FileNotFoundError:
         VALLM_RUNS.labels(tier="check", outcome="no_cli").inc()
         return {"ok": True, "score": 1.0, "tier": "check", "skipped": "vallm not installed"}
@@ -419,14 +419,14 @@ def _run_vallm_validate(file_path: str, model: str | None = None, timeout: int =
         ok = proc.returncode == 0
         try:
             import json as _json
-            payload = _json.loads(proc.stdout or "{}")
-            score = float(payload.get("score", 1.0 if ok else 0.0))
+            validate_json = _json.loads(proc.stdout or "{}")
+            score = float(validate_json.get("score", 1.0 if ok else 0.0))
         except Exception:  # noqa: BLE001
-            payload = {"raw_stdout": (proc.stdout or "")[:300]}
+            validate_json = {"raw_stdout": (proc.stdout or "")[:300]}
             score = 1.0 if ok else 0.0
         VALLM_SCORE.labels(path=file_path, tier="validate").set(score)
         VALLM_RUNS.labels(tier="validate", outcome="pass" if ok else "fail").inc()
-        return {"ok": ok, "score": score, "tier": "validate", "raw": payload}
+        return {"ok": ok, "score": score, "tier": "validate", "raw": validate_json}
     except FileNotFoundError:
         VALLM_RUNS.labels(tier="validate", outcome="no_cli").inc()
         return {"ok": True, "score": 1.0, "tier": "validate", "skipped": "vallm not installed"}
@@ -518,9 +518,9 @@ def heal_vallm_validate(component: str, detail: dict) -> dict:
 # is breached we still create a ticket — the budget check is enforced by
 # scripts/redup-check.sh exit code (non-zero = breach).
 
-def _parse_redup_summary(payload: dict) -> dict:
+def _parse_redup_summary(report: dict) -> dict:
     """Parse redup-check.sh JSON payload into summary dict."""
-    s = payload.get("summary", {}) or {}
+    s = report.get("summary", {}) or {}
     summary = {
         "groups": int(s.get("total_groups", 0)),
         "saved_lines": int(s.get("total_saved_lines", 0)),
@@ -528,7 +528,7 @@ def _parse_redup_summary(payload: dict) -> dict:
     }
     # Top 3 groups by fragment count for ticket context
     groups = sorted(
-        payload.get("groups", []) or [],
+        report.get("groups", []) or [],
         key=lambda g: len(g.get("fragments", []) or []),
         reverse=True,
     )[:3]
@@ -575,8 +575,8 @@ def _run_redup_check(timeout: int = 180) -> dict:
     try:
         import json as _json
         with open(filtered_json, encoding="utf-8") as fh:
-            payload = _json.load(fh)
-        summary = _parse_redup_summary(payload)
+            redup_json = _json.load(fh)
+        summary = _parse_redup_summary(redup_json)
     except Exception as exc:  # noqa: BLE001
         log.debug("redup filtered report parse failed: %s", exc)
 
@@ -663,9 +663,9 @@ def get_history() -> list[dict]:
 
 async def alertmanager_webhook(request: Request) -> dict[str, Any]:
     """Accept the Alertmanager webhook payload (v4)."""
-    payload = await request.json()
+    alert_payload = await request.json()
     return route_alertmanager_payload(
-        payload,
+        alert_payload,
         resolve_strategy=_resolve_strategy,
         create_planfile_ticket=lambda alert: create_planfile_ticket(alert, source="alertmanager"),
         alerts_counter=ALERTS,
@@ -675,9 +675,9 @@ async def alertmanager_webhook(request: Request) -> dict[str, Any]:
 
 async def probe_failure(request: Request) -> dict:
     """Accept the testql-watchdog probe-failure payload."""
-    payload = await request.json()
+    probe_payload = await request.json()
     return route_probe_failure_payload(
-        payload,
+        probe_payload,
         heal_redsl_improve=heal_redsl_improve,
         heal_redsl_gate=heal_redsl_gate,
         create_planfile_ticket=lambda alert: create_planfile_ticket(
