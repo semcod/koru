@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-410",
+  "summary": "refactor(dsl2koru-grammar): address shotgun surgery on parts variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-410/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/dsl2koru/src/dsl2koru/grammar.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "95d9f4811ac1673e57e60ae3b55973ab30c1cc5b",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on parts removed in dsl2koru/grammar.py: shared token-list param renamed per serializer (fields/std_tokens/history_tokens/lane_tokens/resolve_tokens/repair_tokens/ui_tokens/serialized).",
+    "nonGoals": [
+      "Grammar serialization semantics",
+      "Other smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Param renamed per serializer; call sites positional; serialization output unchanged.",
+      "components": [
+        {
+          "name": "dsl2koru-grammar",
+          "paths": [
+            "packages/dsl2koru/src/dsl2koru/grammar.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "PYTHONPATH=packages/dsl2koru/src python3 -m pytest packages/dsl2koru/tests/test_grammar_matrix.py packages/dsl2koru/tests/test_argv.py -x -q"
+        ],
+        "evidence": "Grammar matrix tests preserved."
+      }
+    ]
+  }
+}
