@@ -261,6 +261,204 @@ def build_ticket_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _resolve_project(args: argparse.Namespace, parser: argparse.ArgumentParser) -> Path:
+    explicit = getattr(args, "project", None)
+    if explicit is None:
+        return _find_project_root(Path.cwd())
+    project = explicit.resolve()
+    if not _is_project_root(project):
+        parser.error(f"--project is not a Koru project root (no .planfile or koru.yaml): {project}")
+    return project
+
+
+def _queue_name(args: argparse.Namespace) -> str:
+    return args.queue_name or os.environ.get("KORU_QUEUE_NAME") or "default"
+
+
+def _sprint_scoped_runner(sprint: str):
+    from koru.queue import run_process as _queue_run_process
+
+    def sprint_runner(command, cwd):
+        # Scope the resolver's candidate list while preserving its native
+        # readiness query across all sprints (archived dependencies matter).
+        candidate_query = ["ticket", "list", "--status", "open", "--format", "json"]
+        if list(command[-len(candidate_query) :]) == candidate_query:
+            command = [*command, "--sprint", sprint]
+        return _queue_run_process(command, cwd)
+
+    return sprint_runner
+
+
+def _ticket_list(args: argparse.Namespace, project: Path) -> int:
+    py = os.environ.get("PY") or sys.executable
+    return subprocess.run([py, "-m", "planfile.cli", "ticket", "list", "--status", args.status], cwd=project).returncode
+
+
+def _load_execution_waves(project: Path, sprint: str) -> list:
+    try:
+        from planfile import Planfile
+
+        pf = Planfile.auto_discover(project)
+        if hasattr(pf, "execution_waves"):
+            waves = pf.execution_waves(sprint=sprint)
+            if waves:
+                return waves
+    except Exception:
+        pass
+
+    py = os.environ.get("PY") or sys.executable
+    proc = subprocess.run(
+        [py, "-m", "planfile.cli", "ticket", "list", "--status", "open", "--format", "json"],
+        cwd=project,
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        return []
+    try:
+        data = json.loads(proc.stdout)
+        return [[str(t.get("id")) for t in data if isinstance(t, dict)]]
+    except Exception:
+        return []
+
+
+def _ticket_waves(args: argparse.Namespace, project: Path) -> int:
+    fmt = getattr(args, "format", "text")
+    waves = _load_execution_waves(project, args.sprint)
+    if fmt == "json":
+        print(json.dumps(waves, indent=2))
+    elif not waves:
+        print("No open ticket waves found.")
+    else:
+        print(f"Parallel Execution Waves ({len(waves)} waves):")
+        for idx, wave in enumerate(waves):
+            print(f"  Wave {idx}: {', '.join(wave)}")
+    return 0
+
+
+def _report_next_error(exc_or_result) -> int | None:
+    """Print a planfile/next-ticket error; return its exit code or None."""
+    if isinstance(exc_or_result, (OSError, ValueError)):
+        print(f"koru ticket next: error: {exc_or_result}", file=sys.stderr)
+        return 1
+    if exc_or_result is not None and exc_or_result.status == "planfile_error":
+        print(f"koru ticket next: error: {exc_or_result.message}", file=sys.stderr)
+        return exc_or_result.exit_code or 1
+    return None
+
+
+def _ticket_next(args: argparse.Namespace, project: Path) -> int:
+    fmt = "brief" if getattr(args, "brief", False) else getattr(args, "format", "text")
+    from koru.queue.runner import _next_ticket_or_result, _next_tickets_or_result
+
+    queue_name = _queue_name(args)
+    sprint_runner = _sprint_scoped_runner(args.sprint)
+
+    count = getattr(args, "count", 1)
+    if count > 1:
+        try:
+            tickets, early_result = _next_tickets_or_result(
+                project,
+                sprint_runner,
+                count=count,
+                queue_name=queue_name,
+                disjoint_files=getattr(args, "disjoint_files", True),
+            )
+        except (OSError, ValueError) as exc:
+            return _report_next_error(exc) or 1
+        error_code = _report_next_error(early_result)
+        if error_code is not None:
+            return error_code
+        if fmt == "json":
+            print(json.dumps(tickets, indent=2, default=str))
+        else:
+            for t in tickets:
+                print(format_next_ticket(t, fmt=fmt))
+                print()
+        return 0
+
+    try:
+        ticket, early_result = _next_ticket_or_result(
+            project,
+            sprint_runner,
+            queue_name=queue_name,
+        )
+    except (OSError, ValueError) as exc:
+        return _report_next_error(exc) or 1
+    error_code = _report_next_error(early_result)
+    if error_code is not None:
+        return error_code
+
+    print(format_next_ticket(ticket, fmt=fmt))
+    return 0
+
+
+def _auto_queue_runners(interactive: bool) -> dict:
+    from koru.queue import (
+        default_human_prompt as _default_human_prompt,
+    )
+    from koru.queue import (
+        run_api_request as _queue_run_api_request,
+    )
+    from koru.queue import (
+        run_llm_request as _queue_run_llm_request,
+    )
+    from koru.queue import (
+        run_process as _queue_run_process,
+    )
+    from koru.queue import (
+        run_shell_command as _queue_run_shell_command,
+    )
+
+    return {
+        "planfile_runner": _queue_run_process,
+        "shell_runner": _queue_run_shell_command,
+        "api_runner": _queue_run_api_request,
+        "llm_runner": _queue_run_llm_request,
+        "prompt_runner": _default_human_prompt if interactive else _autonomous_human_prompt,
+    }
+
+
+def _ticket_auto(args: argparse.Namespace, project: Path, parser: argparse.ArgumentParser) -> int:
+    if args.ticket_id and ("/" in args.ticket_id or ":" in args.ticket_id):
+        parser.error("Use an exact GitHub issue URL with koru ticket URL; queue mode accepts local IDs only")
+    if args.dry_run and args.sync:
+        parser.error("--dry-run cannot be combined with --sync")
+    if args.sync and not _sync_github(project):
+        return 2
+
+    from koru.queue_cli_helpers import (
+        emit_queue_run_started,
+        open_queue_run_log,
+        run_queue_loop_mode,
+        run_queue_single_mode,
+    )
+
+    concurrency = max(1, getattr(args, "concurrency", 1))
+    queue_args = argparse.Namespace(
+        no_log=getattr(args, "no_log", False),
+        project=project,
+        queue=True,
+        queue_name=_queue_name(args),
+        actor="koru-ticket-auto",
+        dry_run=args.dry_run,
+        interactive=args.interactive,
+        loop=args.loop or (concurrency > 1),
+        concurrency=concurrency,
+        max_iterations=args.max_iterations,
+        ticket=args.ticket_id,
+        sprint=args.sprint,
+    )
+
+    emit_queue_run_started(queue_args)
+    run_log = open_queue_run_log(queue_args)
+    runners = _auto_queue_runners(args.interactive)
+
+    if queue_args.loop:
+        return run_queue_loop_mode(queue_args, run_log, **runners)
+    return run_queue_single_mode(queue_args, run_log, **runners)
+
+
 def ticket_main(argv: list[str]) -> int:
     parser = build_ticket_parser()
 
@@ -271,184 +469,16 @@ def ticket_main(argv: list[str]) -> int:
         effective_argv = ["auto", *effective_argv]
 
     args = parser.parse_args(effective_argv)
+    project = _resolve_project(args, parser)
 
-    if args.project is not None:
-        project = args.project.resolve()
-        if not _is_project_root(project):
-            parser.error(f"--project is not a Koru project root (no .planfile or koru.yaml): {project}")
-    else:
-        project = _find_project_root(Path.cwd())
-
-    if args.action == "list":
-        py = os.environ.get("PY") or sys.executable
-        return subprocess.run(
-            [py, "-m", "planfile.cli", "ticket", "list", "--status", args.status], cwd=project
-        ).returncode
-
-    if args.action == "waves":
-        fmt = getattr(args, "format", "text")
-        waves = []
-        try:
-            from planfile import Planfile
-
-            pf = Planfile.auto_discover(project)
-            if hasattr(pf, "execution_waves"):
-                waves = pf.execution_waves(sprint=args.sprint)
-        except Exception:
-            pass
-
-        if not waves:
-            py = os.environ.get("PY") or sys.executable
-            proc = subprocess.run(
-                [py, "-m", "planfile.cli", "ticket", "list", "--status", "open", "--format", "json"],
-                cwd=project,
-                capture_output=True,
-                text=True,
-            )
-            if proc.returncode == 0:
-                try:
-                    data = json.loads(proc.stdout)
-                    waves = [[str(t.get("id")) for t in data if isinstance(t, dict)]]
-                except Exception:
-                    waves = []
-
-        if fmt == "json":
-            print(json.dumps(waves, indent=2))
-        else:
-            if not waves:
-                print("No open ticket waves found.")
-            else:
-                print(f"Parallel Execution Waves ({len(waves)} waves):")
-                for idx, wave in enumerate(waves):
-                    print(f"  Wave {idx}: {', '.join(wave)}")
-        return 0
-
-    if args.action == "next":
-        fmt = "brief" if getattr(args, "brief", False) else getattr(args, "format", "text")
-        from koru.queue import run_process as _queue_run_process
-        from koru.queue.runner import _next_ticket_or_result, _next_tickets_or_result
-
-        queue_name = args.queue_name or os.environ.get("KORU_QUEUE_NAME") or "default"
-
-        def sprint_runner(command, cwd):
-            candidate_query = ["ticket", "list", "--status", "open", "--format", "json"]
-            if list(command[-len(candidate_query) :]) == candidate_query:
-                command = [*command, "--sprint", args.sprint]
-            return _queue_run_process(command, cwd)
-
-        count = getattr(args, "count", 1)
-        if count > 1:
-            try:
-                tickets, early_result = _next_tickets_or_result(
-                    project,
-                    sprint_runner,
-                    count=count,
-                    queue_name=queue_name,
-                    disjoint_files=getattr(args, "disjoint_files", True),
-                )
-            except (OSError, ValueError) as exc:
-                print(f"koru ticket next: error: {exc}", file=sys.stderr)
-                return 1
-            if early_result and early_result.status == "planfile_error":
-                print(f"koru ticket next: error: {early_result.message}", file=sys.stderr)
-                return early_result.exit_code or 1
-            if fmt == "json":
-                print(json.dumps(tickets, indent=2, default=str))
-            else:
-                for t in tickets:
-                    print(format_next_ticket(t, fmt=fmt))
-                    print()
-            return 0
-
-        queue_name = args.queue_name or os.environ.get("KORU_QUEUE_NAME") or "default"
-
-        def sprint_runner(command, cwd):
-            # Scope the resolver's candidate list while preserving its native
-            # readiness query across all sprints (archived dependencies matter).
-            candidate_query = ["ticket", "list", "--status", "open", "--format", "json"]
-            if list(command[-len(candidate_query) :]) == candidate_query:
-                command = [*command, "--sprint", args.sprint]
-            return _queue_run_process(command, cwd)
-
-        try:
-            ticket, early_result = _next_ticket_or_result(
-                project,
-                sprint_runner,
-                queue_name=queue_name,
-            )
-        except (OSError, ValueError) as exc:
-            print(f"koru ticket next: error: {exc}", file=sys.stderr)
-            return 1
-        if early_result and early_result.status == "planfile_error":
-            print(f"koru ticket next: error: {early_result.message}", file=sys.stderr)
-            return early_result.exit_code or 1
-
-        output = format_next_ticket(ticket, fmt=fmt)
-        print(output)
-        return 0
-
+    handlers = {
+        "list": _ticket_list,
+        "waves": _ticket_waves,
+        "next": _ticket_next,
+    }
     if args.action == "auto":
-        if args.ticket_id and ("/" in args.ticket_id or ":" in args.ticket_id):
-            parser.error("Use an exact GitHub issue URL with koru ticket URL; queue mode accepts local IDs only")
-        if args.dry_run and args.sync:
-            parser.error("--dry-run cannot be combined with --sync")
-        if args.sync and not _sync_github(project):
-            return 2
-        selected_ticket = args.ticket_id
-        concurrency = max(1, getattr(args, "concurrency", 1))
-        is_loop = args.loop or (concurrency > 1)
-
-        from koru.queue import (
-            default_human_prompt as _default_human_prompt,
-        )
-        from koru.queue import (
-            run_api_request as _queue_run_api_request,
-        )
-        from koru.queue import (
-            run_llm_request as _queue_run_llm_request,
-        )
-        from koru.queue import (
-            run_process as _queue_run_process,
-        )
-        from koru.queue import (
-            run_shell_command as _queue_run_shell_command,
-        )
-        from koru.queue_cli_helpers import (
-            emit_queue_run_started,
-            open_queue_run_log,
-            run_queue_loop_mode,
-            run_queue_single_mode,
-        )
-
-        queue_args = argparse.Namespace(
-            no_log=getattr(args, "no_log", False),
-            project=project,
-            queue=True,
-            queue_name=args.queue_name or os.environ.get("KORU_QUEUE_NAME") or "default",
-            actor="koru-ticket-auto",
-            dry_run=args.dry_run,
-            interactive=args.interactive,
-            loop=is_loop,
-            concurrency=concurrency,
-            max_iterations=args.max_iterations,
-            ticket=selected_ticket,
-            sprint=args.sprint,
-        )
-
-        prompt_runner = _default_human_prompt if args.interactive else _autonomous_human_prompt
-
-        emit_queue_run_started(queue_args)
-        run_log = open_queue_run_log(queue_args)
-        runners = {
-            "planfile_runner": _queue_run_process,
-            "shell_runner": _queue_run_shell_command,
-            "api_runner": _queue_run_api_request,
-            "llm_runner": _queue_run_llm_request,
-            "prompt_runner": prompt_runner,
-        }
-
-        if queue_args.loop:
-            return run_queue_loop_mode(queue_args, run_log, **runners)
-        return run_queue_single_mode(queue_args, run_log, **runners)
-
+        return _ticket_auto(args, project, parser)
+    handler = handlers.get(args.action)
+    if handler is not None:
+        return handler(args, project)
     return 0
