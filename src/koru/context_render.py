@@ -22,103 +22,102 @@ def render_header(project: str) -> list[str]:
 
 def render_environment(env: dict[str, Any], project: str) -> list[str]:
     """Render the detected environment section."""
-    lines: list[str] = []
     project_env = env.get("project") or {}
     markers = project_env.get("markers") or {}
     recommended = env.get("recommended_agent") or {}
 
-    lines.append("## Detected environment")
-    lines.append("")
-    lines.append(f"- **project**: `{project_env.get('name') or Path(project).name}`")
-    lines.append(f"- **cwd**: `{project_env.get('cwd') or project}`")
-    lines.append(f"- **python**: `{project_env.get('python', '?')}`")
     koru_runtime = project_env.get("koru") or {}
     koru_version = koru_runtime.get("version") or "unknown"
     koru_executable = koru_runtime.get("executable")
     koru_details = f" (`{koru_executable}`)" if koru_executable else ""
-    lines.append(f"- **koru**: `{koru_version}`{koru_details}")
     enabled_markers = [key for key, value in markers.items() if value]
     markers_text = ", ".join(f"`{marker}`" for marker in enabled_markers)
-    lines.append(f"- **markers**: {markers_text if markers_text else '`none`'}")
-    if recommended:
-        lines.append(f"- **recommended agent**: `{recommended.get('label')}`")
-    lines.append("")
-    return lines
+    return [
+        "## Detected environment",
+        "",
+        f"- **project**: `{project_env.get('name') or Path(project).name}`",
+        f"- **cwd**: `{project_env.get('cwd') or project}`",
+        f"- **python**: `{project_env.get('python', '?')}`",
+        f"- **koru**: `{koru_version}`{koru_details}",
+        f"- **markers**: {markers_text if markers_text else '`none`'}",
+        *([f"- **recommended agent**: `{recommended.get('label')}`"] if recommended else []),
+        "",
+    ]
 
 
 def render_agent_lanes(agents: list[dict[str, Any]]) -> list[str]:
     """Render the available LLM/IDE lanes section."""
-    lines = ["## Available LLM/IDE lanes", ""]
-    if agents:
-        lines.append("| lane | available | launchable | note |")
-        lines.append("| --- | --- | --- | --- |")
-        for agent in agents:
-            lines.append(
+    rows = (
+        [
+            "| lane | available | launchable | note |",
+            "| --- | --- | --- | --- |",
+            *(
                 f"| `{agent.get('id')}` | `{agent.get('available')}` | "
-                f"`{agent.get('launchable')}` | {agent.get('reason', '')} |",
-            )
-    else:
-        lines.append(
+                f"`{agent.get('launchable')}` | {agent.get('reason', '')} |"
+                for agent in agents
+            ),
+        ]
+        if agents
+        else [
             "No known LLM/IDE lanes detected. Paste this handoff into your preferred agent.",
-        )
-    lines.append("")
-    lines.append(
+        ]
+    )
+    return [
+        "## Available LLM/IDE lanes",
+        "",
+        *rows,
+        "",
         "Coverage note: koru only orchestrates lanes shown above (plus planfile/scan/queue). "
         "Other AI tools can still be used manually, but are not auto-driven by koru unless "
         "wrapped as shell/api/llm tickets.",
-    )
-    lines.append("")
-    return lines
+        "",
+    ]
 
 
 def render_autonomous_mode(*, planfile_initialised: bool) -> list[str]:
     """Render autonomous-mode instructions for LLM operators."""
-    lines = [
+    header = [
         "## Autonomous mode (one-command)",
         "",
     ]
     if not planfile_initialised:
-        lines.extend(
-            [
-                "Project is not initialized yet. Use one command:",
-                "",
-                "```bash",
-                "koru autonomous up --project . --max-cycles 1 --sleep-seconds 0 --no-autopilot",
-                "```",
-                "",
-                "This bootstraps `.planfile/` first, then runs one safe queue cycle.",
-                "",
-            ],
-        )
-        return lines
-
-    lines.extend(
-        [
-            "Use this when operator asks for unattended execution:",
+        return [
+            *header,
+            "Project is not initialized yet. Use one command:",
             "",
             "```bash",
-            "koru autonomous up --project .",
+            "koru autonomous up --project . --max-cycles 1 --sleep-seconds 0 --no-autopilot",
             "```",
             "",
-            "Useful flags:",
-            "- `--max-cycles 1 --sleep-seconds 0` for a smoke run",
-            "- `--ticket-sources all` to include scan intake",
-            "- `--no-autopilot` for queue/scan only",
-            "- `--autopilot-ide auto|windsurf|jetbrains|cursor|vscode|zed`",
+            "This bootstraps `.planfile/` first, then runs one safe queue cycle.",
             "",
-            "Multi-IDE / several chat panes on one machine:",
-            "- Set a **distinct** `KORU_AUTOPILOT_INSTANCE` per IDE window (e.g. `cursor-a`,",
-            "  `windsurf-b`) so each autopilot daemon gets its own Unix socket; or set",
-            "  `KORU_AUTOPILOT_SOCKET` to an absolute path.",
-            "- Queue drains for the same repo are **serialized** via "
-            "`.planfile/.koru/queue-runner.lock` (POSIX); disable only if you accept races:",
-            "  `KORU_QUEUE_RUNNER_LOCK=0`.",
-            "- Use a **unique** `--actor` / `ACTOR` per automated lane so `ticket claim`",
-            "  ownership is visible in planfile.",
-            "",
-        ],
-    )
-    return lines
+        ]
+
+    return [
+        *header,
+        "Use this when operator asks for unattended execution:",
+        "",
+        "```bash",
+        "koru autonomous up --project .",
+        "```",
+        "",
+        "Useful flags:",
+        "- `--max-cycles 1 --sleep-seconds 0` for a smoke run",
+        "- `--ticket-sources all` to include scan intake",
+        "- `--no-autopilot` for queue/scan only",
+        "- `--autopilot-ide auto|windsurf|jetbrains|cursor|vscode|zed`",
+        "",
+        "Multi-IDE / several chat panes on one machine:",
+        "- Set a **distinct** `KORU_AUTOPILOT_INSTANCE` per IDE window (e.g. `cursor-a`,",
+        "  `windsurf-b`) so each autopilot daemon gets its own Unix socket; or set",
+        "  `KORU_AUTOPILOT_SOCKET` to an absolute path.",
+        "- Queue drains for the same repo are **serialized** via "
+        "`.planfile/.koru/queue-runner.lock` (POSIX); disable only if you accept races:",
+        "  `KORU_QUEUE_RUNNER_LOCK=0`.",
+        "- Use a **unique** `--actor` / `ACTOR` per automated lane so `ticket claim`",
+        "  ownership is visible in planfile.",
+        "",
+    ]
 
 
 def render_ai_tool_support_2026() -> list[str]:
@@ -147,34 +146,41 @@ def render_ai_tool_support_2026() -> list[str]:
 
 def render_semcod_tools(semcod_tools: list[dict[str, Any]]) -> list[str]:
     """Render the available semcod tools section."""
-    lines: list[str] = []
     if not semcod_tools:
-        return lines
+        return []
 
     installed = [t for t in semcod_tools if t.get("available")]
     missing = [t for t in semcod_tools if not t.get("available")]
-    lines.append("## Available semcod tools")
-    lines.append("")
-    if installed:
-        lines.append("| tool | via | role | command |")
-        lines.append("| --- | --- | --- | --- |")
-        for tool in installed:
-            cfg = " (configured)" if tool.get("config_present") else ""
-            lines.append(
-                f"| `{tool.get('id')}` | `{tool.get('via')}`{cfg} | "
-                f"{tool.get('role', '')} | `{tool.get('command_hint', '')}` |",
-            )
-    else:
-        lines.append("_No semcod tools detected on this machine._")
-    if missing:
-        lines.append("")
-        missing_ids = ", ".join(f"`{t.get('id')}`" for t in missing)
-        lines.append(
-            f"_Not installed: {missing_ids}. Install with `pip install <name>` "
-            "or skip — koru will not invoke them automatically._",
-        )
-    lines.append("")
-    return lines
+    rows = (
+        [
+            "| tool | via | role | command |",
+            "| --- | --- | --- | --- |",
+            *(
+                f"| `{tool.get('id')}` | `{tool.get('via')}`"
+                f"{' (configured)' if tool.get('config_present') else ''} | "
+                f"{tool.get('role', '')} | `{tool.get('command_hint', '')}` |"
+                for tool in installed
+            ),
+        ]
+        if installed
+        else ["_No semcod tools detected on this machine._"]
+    )
+    missing_ids = ", ".join(f"`{t.get('id')}`" for t in missing)
+    return [
+        "## Available semcod tools",
+        "",
+        *rows,
+        *(
+            [
+                "",
+                f"_Not installed: {missing_ids}. Install with `pip install <name>` "
+                "or skip — koru will not invoke them automatically._",
+            ]
+            if missing
+            else []
+        ),
+        "",
+    ]
 
 
 def render_setup_required(project: str) -> list[str]:
@@ -199,25 +205,24 @@ def render_setup_required(project: str) -> list[str]:
 
 def render_active_ticket(ticket: dict[str, Any]) -> list[str]:
     """Render the active ticket section."""
-    lines: list[str] = []
     tid = ticket.get("id", "?")
     name = ticket.get("name", "")
     executor = (ticket.get("executor") or {}).get("kind", "?")
-    lines.append(f"## Active ticket: `{tid}` — {name}")
-    lines.append("")
-    lines.append(f"- **executor**: `{executor}`")
-    lines.append(f"- **status**: `{ticket.get('status', '?')}`")
     files = ticket.get("files") or []
-    if files:
-        lines.append(f"- **files in scope**: {', '.join(f'`{f}`' for f in files)}")
     prompt = (ticket.get("inputs") or {}).get("prompt")
-    if prompt:
-        lines.append("")
-        lines.append("### Prompt")
-        lines.append("")
-        lines.append(f"> {str(prompt).replace(chr(10), chr(10)+'> ')}")
-    lines.append("")
-    return lines
+    return [
+        f"## Active ticket: `{tid}` — {name}",
+        "",
+        f"- **executor**: `{executor}`",
+        f"- **status**: `{ticket.get('status', '?')}`",
+        *([f"- **files in scope**: {', '.join(f'`{f}`' for f in files)}"] if files else []),
+        *(
+            ["", "### Prompt", "", f"> {str(prompt).replace(chr(10), chr(10) + '> ')}"]
+            if prompt
+            else []
+        ),
+        "",
+    ]
 
 
 def _compact_ticket_error(ticket_error: str) -> str:
@@ -260,7 +265,8 @@ def render_gates(markers: dict[str, Any]) -> list[str]:
     if not any(gate_markers.values()):
         return []
 
-    lines = [
+    missing = [name for name, present in gate_markers.items() if not present]
+    return [
         "## On-change gates",
         "",
         "These packages run automatically (or on demand via "
@@ -280,100 +286,94 @@ def render_gates(markers: dict[str, Any]) -> list[str]:
         "behavioural HTTP probes (TOON YAML scenarios) | "
         "`testql run <scenario>` |",
         "",
+        *(
+            [
+                f"_Not yet configured: {', '.join(f'`{m}`' for m in missing)}. "
+                "Bootstrap any of them with `task template:install:wup` "
+                "(in koru) or follow `workflows/on-change-gates.md`._",
+                "",
+            ]
+            if missing
+            else []
+        ),
     ]
-    missing = [name for name, present in gate_markers.items() if not present]
-    if missing:
-        lines.append(
-            f"_Not yet configured: {', '.join(f'`{m}`' for m in missing)}. "
-            "Bootstrap any of them with `task template:install:wup` "
-            "(in koru) or follow `workflows/on-change-gates.md`._",
-        )
-        lines.append("")
-    return lines
 
 
 def render_project_pipeline(pipeline: dict[str, Any] | None) -> list[str]:
     if not pipeline:
         return []
-    lines = [
+    prof = pipeline.get("extends_profile")
+    phase_rows = [
+        row
+        for ph in pipeline.get("phases") or []
+        for row in [
+            (
+                f"### `{ph.get('id', '?')}` — {(ph.get('description') or '').strip()}"
+                if (ph.get("description") or "").strip()
+                else f"### `{ph.get('id', '?')}`"
+            ),
+            "",
+            *(f"- `{cmd}`" for cmd in ph.get("commands") or []),
+            "",
+        ]
+    ]
+    return [
         "## Project pipeline (`koru.yaml`)",
         "",
         f"Root file: `{pipeline.get('path', 'koru.yaml')}` "
         f"(schema `{pipeline.get('schema', '?')}`).",
         "",
+        *([f"Profile reference: `{prof}`", ""] if prof else []),
+        *phase_rows,
+        "_This section is advisory — koru does not execute these commands automatically._",
+        "",
     ]
-    prof = pipeline.get("extends_profile")
-    if prof:
-        lines.append(f"Profile reference: `{prof}`")
-        lines.append("")
-    for ph in pipeline.get("phases") or []:
-        pid = ph.get("id", "?")
-        desc = (ph.get("description") or "").strip()
-        if desc:
-            lines.append(f"### `{pid}` — {desc}")
-        else:
-            lines.append(f"### `{pid}`")
-        lines.append("")
-        for cmd in ph.get("commands") or []:
-            lines.append(f"- `{cmd}`")
-        lines.append("")
-    lines.append("_This section is advisory — koru does not execute these commands automatically._")
-    lines.append("")
-    return lines
 
 
 def render_policy(policy: dict[str, Any]) -> list[str]:
     """Render the policy section."""
-    lines = [
+    return [
         "## Policy (you MUST obey)",
         "",
         "| gate | value |",
         "| --- | --- |",
+        *(
+            f"| `{k}` | `{policy.get(k)}` |"
+            for k in (
+                "allow_commit",
+                "allow_push",
+                "allow_branch_create",
+                "allow_branch_switch",
+                "allow_tag",
+                "allow_destructive_shell",
+                "require_planfile_lifecycle",
+                "require_ci_pass_before_complete",
+            )
+        ),
+        *([f"| `ci_command` | `{policy['ci_command']}` |"] if policy.get("ci_command") else []),
+        "",
     ]
-    for k in (
-        "allow_commit",
-        "allow_push",
-        "allow_branch_create",
-        "allow_branch_switch",
-        "allow_tag",
-        "allow_destructive_shell",
-        "require_planfile_lifecycle",
-        "require_ci_pass_before_complete",
-    ):
-        lines.append(f"| `{k}` | `{policy.get(k)}` |")
-    if policy.get("ci_command"):
-        lines.append(f"| `ci_command` | `{policy['ci_command']}` |")
-    lines.append("")
-    return lines
 
 
 def render_rules(instructions: list[str]) -> list[str]:
     """Render the rules section."""
-    lines = ["## Rules", ""]
-    for rule in instructions:
-        lines.append(f"- {rule}")
-    lines.append("")
-    return lines
+    return ["## Rules", "", *(f"- {rule}" for rule in instructions), ""]
 
 
 def render_self_service(self_service: dict[str, Any]) -> list[str]:
     """Render the self-service commands section."""
-    lines = [
+    return [
         "## Self-service commands",
         "",
-    ]
-    for k, v in self_service.items():
-        lines.append(f"- **{k}**: `{v}`")
-    lines.append('- **add_nl_task**: `koru task "Describe the next change"`')
-    lines.append("- **agent_prompt**: `koru agent`")
-    lines.append("- **launch_agent**: `koru agent --launch`")
-    lines.append(
+        *(f"- **{k}**: `{v}`" for k, v in self_service.items()),
+        '- **add_nl_task**: `koru task "Describe the next change"`',
+        "- **agent_prompt**: `koru agent`",
+        "- **launch_agent**: `koru agent --launch`",
         "- **scan_repo**: `koru scan` (dry-run) / `koru scan --apply` "
         "(create tickets from pytest collect errors, TODO/FIXME, missing "
         "gates and semcod tools)",
-    )
-    lines.append("")
-    return lines
+        "",
+    ]
 
 
 def render_dashboard() -> list[str]:
@@ -404,32 +404,40 @@ def _autonomy_loop_block(ctx: dict[str, Any]) -> dict[str, Any]:
 
 def render_autonomy_loop_brief(ctx: dict[str, Any]) -> list[str]:
     autonomy_loop = _autonomy_loop_block(ctx)
-    lines: list[str] = ["## Autonomy loop (koru autonomous)", ""]
     snap = autonomy_loop.get("last_run_snapshot")
-    if isinstance(snap, dict) and snap:
-        lines.append("_Last completed cycle (`.planfile/.koru/autonomy-telemetry.json`):_")
-        lines.append("")
-        lines.append("```json")
-        lines.append(json.dumps(snap, indent=2, sort_keys=True))
-        lines.append("```")
-        lines.append("")
-    else:
-        lines.append(
+    snapshot_rows = (
+        [
+            "_Last completed cycle (`.planfile/.koru/autonomy-telemetry.json`):_",
+            "",
+            "```json",
+            json.dumps(snap, indent=2, sort_keys=True),
+            "```",
+            "",
+        ]
+        if isinstance(snap, dict) and snap
+        else [
             "_No autonomy telemetry file yet — it appears after at least one "
             "`koru autonomous up` cycle._",
-        )
-        lines.append("")
+            "",
+        ]
+    )
     hints = autonomy_loop.get("environment_hints") or {}
-    if hints:
-        lines.append("Relevant process environment (only non-empty keys):")
-        for key in sorted(hints):
-            lines.append(f"- `{key}`={hints[key]!r}")
-        lines.append("")
     tf = autonomy_loop.get("telemetry_file")
-    if tf:
-        lines.append(f"Telemetry path: `{tf}`")
-        lines.append("")
-    return lines
+    return [
+        "## Autonomy loop (koru autonomous)",
+        "",
+        *snapshot_rows,
+        *(
+            [
+                "Relevant process environment (only non-empty keys):",
+                *(f"- `{key}`={hints[key]!r}" for key in sorted(hints)),
+                "",
+            ]
+            if hints
+            else []
+        ),
+        *([f"Telemetry path: `{tf}`", ""] if tf else []),
+    ]
 
 
 @dataclass(frozen=True)
@@ -474,23 +482,22 @@ def render_markdown_handoff(context: dict[str, Any]) -> str:
     Designed to be pasted into an IDE chat or TILLM shell-client prompt to onboard
     the LLM with the policy and ticket scope in one shot.
     """
-    lines: list[str] = []
     parts = _handoff_render_parts(context)
+    sections = [
+        render_header(parts.project),
+        render_environment(parts.environment, parts.project),
+        render_autonomy_loop_brief(context),
+        render_agent_lanes(parts.agents),
+        render_semcod_tools(parts.semcod_tools),
+        _render_ticket_scope(context, parts),
+        render_autonomous_mode(planfile_initialised=parts.initialised),
+        render_ai_tool_support_2026(),
+        render_project_pipeline(context.get("project_pipeline")),
+        render_gates(parts.markers),
+        render_policy(parts.policy),
+        render_rules(context.get("instructions", [])),
+        render_self_service(context.get("self_service") or {}),
+        render_dashboard(),
+    ]
 
-    lines.extend(render_header(parts.project))
-    lines.extend(render_environment(parts.environment, parts.project))
-    lines.extend(render_autonomy_loop_brief(context))
-    lines.extend(render_agent_lanes(parts.agents))
-    lines.extend(render_semcod_tools(parts.semcod_tools))
-    lines.extend(_render_ticket_scope(context, parts))
-    lines.extend(render_autonomous_mode(planfile_initialised=parts.initialised))
-    lines.extend(render_ai_tool_support_2026())
-
-    lines.extend(render_project_pipeline(context.get("project_pipeline")))
-    lines.extend(render_gates(parts.markers))
-    lines.extend(render_policy(parts.policy))
-    lines.extend(render_rules(context.get("instructions", [])))
-    lines.extend(render_self_service(context.get("self_service") or {}))
-    lines.extend(render_dashboard())
-
-    return "\n".join(lines)
+    return "\n".join(line for section in sections for line in section)

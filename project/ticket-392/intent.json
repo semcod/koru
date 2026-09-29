@@ -1,0 +1,73 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-392",
+  "summary": "refactor(context-render): address shotgun surgery on lines variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-392/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/context_render.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d8c5c8b7e510746db41ae49702b5b414ac7f5f31",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on lines removed in context_render.py: all 12 render functions build sections with literal lists, comprehensions and unpacking instead of mutating a lines accumulator; render_markdown_handoff joins composed sections.",
+    "nonGoals": [
+      "Other smells in context_render.py",
+      "todo2code_tickets.py lines smell (PLF-066, separate ticket)",
+      "Rendered markdown content changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 35,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Pure compositional rendering: each section function returns a constructed list; the handoff flattens a list of sections.",
+      "components": [
+        {
+          "name": "context-render",
+          "paths": [
+            "src/koru/context_render.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; mechanical refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/ -k 'context or render or handoff' -x -q"
+        ],
+        "evidence": "Rendered markdown output bytes and section ordering unchanged."
+      }
+    ]
+  }
+}
