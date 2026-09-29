@@ -22,9 +22,9 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "0a41c0946d00ffdb16404f4943d94e8a42c8d6d0",
+    "acceptedBaseSha": "99db0950dedbead2e6d7426924732d8b3b7ba04e",
     "targetBranch": "main",
-    "outcome": "Connection lifecycle is centralized in _with_conn(db_path, fn); callers only define the operation, so the shotgun-surgery smell on 'conn' no longer spans the module.",
+    "outcome": "Connection lifecycle is centralized in _with_conn(db_path, fn); callers only define the operation, so the shotgun-surgery smell on 'conn' no longer spans the module. Follow-up commit switches _with_conn to PEP 695 type parameters (ruff UP047).",
     "nonGoals": [
       "Changing SQL, schema, transaction or staleness semantics",
       "Refactoring ProbeResult or contracts"
