@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-376",
+  "summary": "refactor(handlers-ack): address shotgun surgery on info variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-376/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/koruide/src/koruide/daemon/handlers_ack.py",
+    "tests/test_koruide_daemon_handlers_ack.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "50dc95067ecef1013ab466978a8ca04b85b09db6",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on 'info' removed: helpers return info additions (_drive_replay_info, _plugin_backend_defaults, _dsl_info_fields) or (handled, additions) tuples instead of mutating the shared dict; _send_plugin_ack_reply composes the final payload once.",
+    "nonGoals": [
+      "Changing ack payload keys, routes or daemon side effects",
+      "Refactoring DriveOrchestrator or other handler modules"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Mutating helpers converted to pure additions functions merged once at call sites; _persist_plugin_ack_dsl split into _record_recent_dsl (side effects) and _dsl_info_fields (payload additions).",
+      "components": [
+        {
+          "name": "koruide-daemon",
+          "paths": [
+            "packages/koruide/src/koruide/daemon/handlers_ack.py",
+            "tests/test_koruide_daemon_handlers_ack.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_koruide_daemon_handlers_ack.py tests/test_autopilot_daemon.py -x -q"
+        ],
+        "evidence": "Ack payload keys, replay artifacts, DSL buffer and audit records unchanged."
+      }
+    ]
+  }
+}
