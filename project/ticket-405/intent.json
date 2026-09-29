@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-405",
+  "summary": "refactor(healing-webhook): address shotgun surgery on outcome variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-405/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "services/healing-webhook/app.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "095a36685238603201ada02b76bfbeb5382cba3a",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on outcome removed in services/healing-webhook/app.py: shared result binding renamed per function (status/create_status/gate_status/improve_status/restore_status/validate_status/redup_status); metric label names and payload keys preserved.",
+    "nonGoals": [
+      "Webhook behavior",
+      "Other smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Local variable renamed per handler; prometheus label kwargs and dict keys unchanged.",
+      "components": [
+        {
+          "name": "healing-webhook",
+          "paths": [
+            "services/healing-webhook/app.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_healing_webhook_split.py -x -q"
+        ],
+        "evidence": "Healing webhook module contract preserved."
+      }
+    ]
+  }
+}
