@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-359",
+  "summary": "add plugins scope to application workstream",
+  "workstream": "integration",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-359/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".governance/manifest.json"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5ab2f8f854476358e16efd9d6658ab12d6145b04",
+    "targetBranch": "main",
+    "outcome": "Application workstream owns plugins/** so IDE autopilot plugin sources (TypeScript VSIX sources under plugins/koru-autopilot-*) can be delivered through ordinary application tickets.",
+    "nonGoals": [
+      "Changing plugin behavior or building VSIX artifacts",
+      "Modifying any other workstream ownership"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 5,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Append plugins/** to coordination.workstreams.application.ownedPaths; no other manifest keys change.",
+      "components": [
+        {
+          "name": "governance",
+          "paths": [
+            ".governance/manifest.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-359 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 .governance/ticket_storage.py scope --root . --workstream application --path plugins/koru-autopilot-windsurf/src/extension.ts"
+        ],
+        "evidence": "Scope validator accepts plugins/** under the application workstream."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}

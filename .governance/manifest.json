@@ -41,7 +41,8 @@
           "scripts/**/*.py",
           "services/**/*.py",
           "test/**",
-          "tests/**"
+          "tests/**",
+          "plugins/**"
         ]
       },
       "governance": {
