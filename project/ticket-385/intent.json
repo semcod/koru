@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-385",
+  "summary": "feat(governance): wire pinned docs validation into doc generation path",
+  "workstream": "governance",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-385/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    ".governance/docs_gate.py",
+    ".governance/tests/test_docs_gate.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "075ad632283c80c76043deb829a7dd3c04263260",
+    "targetBranch": "main",
+    "outcome": "docs_gate.py (1) pins the adopted standard 0.6.0 revision 9fb5fc4d declared by .governance/docs.json (was stale 0.5.0 artifacts, so any correct standard checkout failed closed), (2) feeds the .governance/docs managed-copy inventory from the adoption lock manifest.lock.json to the checker's --managed-copies flag so pinned external standard copies verify instead of being flagged as misplaced deliverables, and (3) adds a 'generate' phase that refuses to write before prepare_delivery succeeds, scaffolds a policy-derived compact skeleton at the plan-approved path only, updates the index, stages both, runs --complete against the saved plan receipt and rolls back every filesystem and index change on failure.",
+    "nonGoals": [
+      "Reimplementing or vendoring the canonical checker",
+      "Changing .governance/docs.json, manifest.lock.json or any managed file",
+      "Retrofitting legacy .governance/docs content beyond verified managed-copy exclusion"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Adapter remains a verified-runtime wrapper: digest pins move to the adopted 0.6.0 artifacts, managed-copy digests come from the independently pinned manifest.lock.json (never from document metadata), and the generate phase composes prepare -> write-at-plan-path -> git add -> complete -> rollback with no new trust surface.",
+      "components": [
+        {
+          "name": "docs-gate",
+          "paths": [
+            ".governance/docs_gate.py",
+            ".governance/tests/test_docs_gate.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "docs_gate.py gains a 'generate' phase; prepare/final CLI unchanged"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; the adapter returns to prepare/final only."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "KORU_DOCS_STANDARD_ROOT=<0.6.0 standard checkout> python3 -m pytest .governance/tests/test_docs_gate.py -x -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Canaries cover prepare/final plus generate success, prepare-blocked, bad-location and post-write-failure rollback paths."
+      }
+    ]
+  }
+}
