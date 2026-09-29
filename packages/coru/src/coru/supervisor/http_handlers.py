@@ -18,6 +18,10 @@ def _lane_instance_from_suffix(path: str, suffix: str) -> str:
     return unquote(path.removeprefix("/api/lanes/").removesuffix(suffix))
 
 
+def _body_instance(body: dict) -> str:
+    return str(body.get("instance") or "").strip()
+
+
 def handle_get_health(handler: BaseHTTPRequestHandler, service: SupervisorService) -> None:
     json_response(
         handler,
@@ -62,7 +66,7 @@ def handle_get_lane_health(
 
 def handle_put_active_lane(handler: BaseHTTPRequestHandler, service: SupervisorService) -> None:
     body = read_json_body(handler)
-    instance = str(body.get("instance") or "").strip()
+    instance = _body_instance(body)
     if not instance:
         json_response(handler, 400, {"ok": False, "error": "instance required"})
         return
@@ -77,7 +81,7 @@ def handle_put_active_lane(handler: BaseHTTPRequestHandler, service: SupervisorS
 def handle_post_register_lane(handler: BaseHTTPRequestHandler, service: SupervisorService) -> None:
     body = read_json_body(handler)
     ide = str(body.get("ide") or "").strip().lower()
-    instance = str(body.get("instance") or "").strip()
+    instance = _body_instance(body)
     if not ide or not instance:
         json_response(handler, 400, {"ok": False, "error": "ide and instance required"})
         return
@@ -153,8 +157,9 @@ def dispatch_get(handler: BaseHTTPRequestHandler, service: SupervisorService, pa
         handle_get_active_lane(handler, service)
         return True
     if normalized.startswith("/api/lanes/") and normalized.endswith("/health"):
-        instance = _lane_instance_from_suffix(normalized, "/health")
-        handle_get_lane_health(handler, service, instance=instance)
+        handle_get_lane_health(
+            handler, service, instance=_lane_instance_from_suffix(normalized, "/health")
+        )
         return True
     return False
 
@@ -173,16 +178,25 @@ def dispatch_post(handler: BaseHTTPRequestHandler, service: SupervisorService, p
         handle_post_register_lane(handler, service)
         return True
     if normalized.startswith("/api/lanes/") and normalized.endswith("/daemon/start"):
-        instance = _lane_instance_from_suffix(normalized, "/daemon/start")
-        handle_post_lane_daemon(handler, service, instance=instance, start=True)
+        handle_post_lane_daemon(
+            handler,
+            service,
+            instance=_lane_instance_from_suffix(normalized, "/daemon/start"),
+            start=True,
+        )
         return True
     if normalized.startswith("/api/lanes/") and normalized.endswith("/daemon/stop"):
-        instance = _lane_instance_from_suffix(normalized, "/daemon/stop")
-        handle_post_lane_daemon(handler, service, instance=instance, start=False)
+        handle_post_lane_daemon(
+            handler,
+            service,
+            instance=_lane_instance_from_suffix(normalized, "/daemon/stop"),
+            start=False,
+        )
         return True
     if normalized.startswith("/api/lanes/") and normalized.endswith("/reconnect"):
-        instance = _lane_instance_from_suffix(normalized, "/reconnect")
-        handle_post_lane_reconnect(handler, service, instance=instance)
+        handle_post_lane_reconnect(
+            handler, service, instance=_lane_instance_from_suffix(normalized, "/reconnect")
+        )
         return True
     if normalized == "/api/refresh":
         handle_post_refresh(handler, service)
@@ -193,7 +207,8 @@ def dispatch_post(handler: BaseHTTPRequestHandler, service: SupervisorService, p
 def dispatch_delete(handler: BaseHTTPRequestHandler, service: SupervisorService, path: str) -> bool:
     normalized = _normalize_path(path)
     if normalized.startswith("/api/lanes/"):
-        instance = unquote(normalized.removeprefix("/api/lanes/"))
-        handle_delete_lane(handler, service, instance=instance)
+        handle_delete_lane(
+            handler, service, instance=_lane_instance_from_suffix(normalized, "")
+        )
         return True
     return False
