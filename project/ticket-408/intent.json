@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-408",
+  "summary": "refactor(cli-parser): address shotgun surgery on parser variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-408/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli_parser.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6b08b0de6d0f97633e228069de66ad2197416cd0",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on parser removed in cli_parser.py: shared argparse param renamed per argument-group helper (common/queue/watch/bootstrap/doctor) and the builder local to built.",
+    "nonGoals": [
+      "CLI flag semantics",
+      "Other smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Param renamed per helper; call sites positional; public API unchanged.",
+      "components": [
+        {
+          "name": "cli-parser",
+          "paths": [
+            "src/koru/cli_parser.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_cli.py -x -q"
+        ],
+        "evidence": "CLI parser behavior preserved."
+      }
+    ]
+  }
+}
