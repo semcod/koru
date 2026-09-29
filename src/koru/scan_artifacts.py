@@ -96,10 +96,10 @@ def _load_yaml_mapping(project: Path, rel_paths: tuple[str, ...]) -> dict | None
     if yaml_artifact is None:
         return None
     try:
-        payload = yaml.safe_load(yaml_artifact[0].read_text(encoding="utf-8", errors="ignore"))
+        mapping = yaml.safe_load(yaml_artifact[0].read_text(encoding="utf-8", errors="ignore"))
     except (OSError, yaml.YAMLError):
         return None
-    return payload if isinstance(payload, dict) else None
+    return mapping if isinstance(mapping, dict) else None
 
 
 def _add_location(locations: dict[str, list[str]], alias: str, located: str) -> None:
@@ -124,12 +124,12 @@ def _location_from_cc_ticket(ticket: object) -> tuple[str, str] | None:
 
 def _code2llm_cc_locations(project: Path) -> dict[str, list[str]]:
     """Map a function name to the source file(s) that define it."""
-    payload = _load_yaml_mapping(project, _PLANFILE_TICKETS_ARTIFACT_PATHS)
-    if payload is None:
+    tickets_doc = _load_yaml_mapping(project, _PLANFILE_TICKETS_ARTIFACT_PATHS)
+    if tickets_doc is None:
         return {}
 
     locations: dict[str, list[str]] = {}
-    for ticket in payload.get("tickets") or []:
+    for ticket in tickets_doc.get("tickets") or []:
         result = _location_from_cc_ticket(ticket)
         if result is None:
             continue
@@ -155,11 +155,11 @@ def _resolve_module_path(project: Path, module: str) -> str | None:
 
 def _code2llm_module_paths(project: Path) -> dict[str, str]:
     """Map short module names from LAYERS rows to concrete source files."""
-    payload = _load_yaml_mapping(project, _CALLS_ARTIFACT_PATHS)
-    if payload is None:
+    calls_doc = _load_yaml_mapping(project, _CALLS_ARTIFACT_PATHS)
+    if calls_doc is None:
         return {}
 
-    nodes = payload.get("nodes")
+    nodes = calls_doc.get("nodes")
     if not isinstance(nodes, dict):
         return {}
 
@@ -185,8 +185,8 @@ def _code2llm_module_paths(project: Path) -> dict[str, str]:
 
 def _merge_call_graph_locations(project: Path, locations: dict[str, list[str]]) -> None:
     """Fill location gaps from the code2llm call graph."""
-    payload = _load_yaml_mapping(project, _CALLS_ARTIFACT_PATHS)
-    nodes = payload.get("nodes") if payload else None
+    graph_doc = _load_yaml_mapping(project, _CALLS_ARTIFACT_PATHS)
+    nodes = graph_doc.get("nodes") if graph_doc else None
     if not isinstance(nodes, dict):
         return
 
@@ -335,11 +335,11 @@ def _layers_dup_modules_are_extern_mirrors(text: str) -> bool | None:
 
 def _planfile_dup_groups_are_extern_mirrors(project: Path) -> bool | None:
     """Return whether every ``code2llm_dup`` planfile ticket is an extern mirror."""
-    payload = _load_yaml_mapping(project, _PLANFILE_TICKETS_ARTIFACT_PATHS)
-    if payload is None:
+    planfile_doc = _load_yaml_mapping(project, _PLANFILE_TICKETS_ARTIFACT_PATHS)
+    if planfile_doc is None:
         return None
     groups: list[tuple[str, ...]] = []
-    for ticket in payload.get("tickets") or []:
+    for ticket in planfile_doc.get("tickets") or []:
         if not isinstance(ticket, dict) or ticket.get("signal") != "code2llm_dup":
             continue
         group_files = tuple(str(f) for f in (ticket.get("files") or []) if f)
@@ -375,8 +375,8 @@ def _should_skip_code2llm_dup_ticket(
     if project is not None:
         plan = _planfile_dup_groups_are_extern_mirrors(project)
         if plan is True:
-            payload = _load_yaml_mapping(project, _PLANFILE_TICKETS_ARTIFACT_PATHS)
-            for ticket in (payload or {}).get("tickets") or []:
+            dup_doc = _load_yaml_mapping(project, _PLANFILE_TICKETS_ARTIFACT_PATHS)
+            for ticket in (dup_doc or {}).get("tickets") or []:
                 if not isinstance(ticket, dict) or ticket.get("signal") != "code2llm_dup":
                     continue
                 ticket_files = [str(f) for f in (ticket.get("files") or []) if f]
