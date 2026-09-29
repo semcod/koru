@@ -27,7 +27,7 @@ def _print_status_json(info: dict) -> None:
 def _print_status_explain_summary(info: dict, socket_path: object) -> None:
     """Print a compact human summary for shell operators."""
     daemon = info.get("daemon") if isinstance(info.get("daemon"), dict) else {}
-    plugins = _status_plugin_rows(info)
+    plugin_rows = _status_plugin_rows(info)
     plugin_labels = _status_plugin_labels(info)
     plugin_text = ", ".join(plugin_labels) if plugin_labels else "none"
     print("\n--- runtime ---", file=sys.stderr)
@@ -40,12 +40,12 @@ def _print_status_explain_summary(info: dict, socket_path: object) -> None:
         file=sys.stderr,
     )
     print(f"socket: {socket_path}", file=sys.stderr)
-    print(f"plugins: {len(plugins)} ({plugin_text})", file=sys.stderr)
+    print(f"plugins: {len(plugin_rows)} ({plugin_text})", file=sys.stderr)
 
 
 def _status_plugin_rows(info: dict) -> list[dict]:
-    plugins = info.get("plugins") if isinstance(info.get("plugins"), list) else []
-    return [row for row in plugins if isinstance(row, dict)]
+    plugin_list = info.get("plugins") if isinstance(info.get("plugins"), list) else []
+    return [row for row in plugin_list if isinstance(row, dict)]
 
 
 def _status_plugin_labels(info: dict) -> list[str]:
@@ -64,8 +64,8 @@ def _handle_systemmap_output(
     socket = str(getattr(client, "socket_path", "") or "")
     payload = format_autopilot_status_systemmap(info, socket_path=socket)
     print(json.dumps(payload, indent=2, sort_keys=True))
-    plugins = info.get("plugins") if isinstance(info.get("plugins"), list) else []
-    if not plugins:
+    plugin_list = info.get("plugins") if isinstance(info.get("plugins"), list) else []
+    if not plugin_list:
         instance = os.environ.get("KORU_AUTOPILOT_INSTANCE", "").strip()
         hint = (
             f"hint: no IDE plugin on socket {socket}; "
@@ -168,7 +168,7 @@ def action_status(
         _print_status_explain_summary(info, getattr(client, "socket_path", "-"))
 
     _maybe_print_empty_plugin_bridge_explain(args, info, client, normalize_ide_fn)
-    plugins = info.get("plugins") if isinstance(info, dict) and isinstance(info.get("plugins"), list) else []
+    plugin_list = info.get("plugins") if isinstance(info, dict) and isinstance(info.get("plugins"), list) else []
     emit_log(
         args,
         component="autopilot.status",
@@ -177,7 +177,7 @@ def action_status(
         result="ok",
         rc=0,
         socket=str(getattr(client, "socket_path", "")),
-        plugin_count=len(plugins),
+        plugin_count=len(plugin_list),
     )
     return 0
 
@@ -188,8 +188,8 @@ def _maybe_print_empty_plugin_bridge_explain(
     client: object,
     normalize_ide_fn: callable,
 ) -> None:
-    plugins = info.get("plugins") if isinstance(info, dict) else []
-    if not (args.explain and isinstance(plugins, list) and not plugins):
+    plugin_list = info.get("plugins") if isinstance(info, dict) else []
+    if not (args.explain and isinstance(plugin_list, list) and not plugin_list):
         return
     socket = getattr(client, "socket_path", None)
     if socket is None:
@@ -201,7 +201,7 @@ def _maybe_print_empty_plugin_bridge_explain(
         ide=ide,
         socket_path=socket,
         project=getattr(args, "project", Path.cwd()),
-        plugins=plugins,
+        plugins=plugin_list,
     )
     print("\n--- explain ---", file=sys.stderr)
     print(format_bridge_text(bridge, explain=True), file=sys.stderr)
