@@ -161,12 +161,12 @@ def _focused_near(after: bytes, sx: int, sy: int, *, tol: int = 160) -> bool:
     if hit is None:
         return False
     fx, fy, _n = hit
-    p = _session
-    if p is None:
+    session = _session
+    if session is None:
         return False
     from PIL import Image  # noqa: F401
     aw, ah = _png_size(after)
-    rsx, rsy = p.frame_to_stream(fx, fy, frame_w=aw, frame_h=ah)
+    rsx, rsy = session.frame_to_stream(fx, fy, frame_w=aw, frame_h=ah)
     return abs(rsx - sx) <= tol and abs(rsy - sy) <= tol
 
 
@@ -252,16 +252,16 @@ def calibrate_input_from_focus(*, ide: str = "jetbrains") -> dict[str, Any]:
     """One-time manual calibration: with the chat input CLICKED/focused by the
     user, detect its blue focus ring and cache the stream coords. Deterministic
     thereafter — no OCR variance."""
-    p = _get_session()
-    if p is None:
+    calib_session = _get_session()
+    if calib_session is None:
         return {"ok": False, "error": "portal unavailable"}
-    frame = p.grab_frame()
+    frame = calib_session.grab_frame()
     calib_w, calib_h = _png_size(frame)
     hit = _blue_ring_center(frame)
     if hit is None:
         return {"ok": False, "error": "no focus ring found — click inside the Qoder input first"}
     fx, fy, n = hit
-    sx, sy = p.frame_to_stream(fx, fy, frame_w=calib_w, frame_h=calib_h)
+    sx, sy = calib_session.frame_to_stream(fx, fy, frame_w=calib_w, frame_h=calib_h)
     _cache_input_xy(ide, (sx, sy))
     logger.info("PORTAL_CALIBRATED ide=%s frame=(%d,%d) stream=(%d,%d) ring_px=%d", ide, fx, fy, sx, sy, n)
     return {"ok": True, "ide": ide, "stream_xy": [sx, sy], "frame_xy": [fx, fy], "ring_px": n}
@@ -299,10 +299,10 @@ def _pending_action_present(frame: bytes) -> bool:
 def confirm_pending_via_portal(*, ide: str = "jetbrains") -> dict[str, Any]:
     """If Qoder is waiting on a 'Run Ctrl+Enter' action, focus the chat and press
     Ctrl+Enter to confirm it. Returns {confirmed: bool}."""
-    p = _get_session()
-    if p is None:
+    confirm_session = _get_session()
+    if confirm_session is None:
         return {"ok": False, "error": "portal unavailable"}
-    frame = p.grab_frame()
+    frame = confirm_session.grab_frame()
     if not _pending_action_present(frame):
         return {"ok": True, "confirmed": False, "reason": "no pending action"}
     cached = _cached_input_xy(ide)
@@ -311,14 +311,14 @@ def confirm_pending_via_portal(*, ide: str = "jetbrains") -> dict[str, Any]:
     import time
 
     sx, sy = cached
-    p.move_abs(sx, sy); time.sleep(0.3)  # noqa: E702
-    p.click(); time.sleep(0.4)                   # click the chat panel -> Qoder gets kb focus  # noqa: E702
+    confirm_session.move_abs(sx, sy); time.sleep(0.3)  # noqa: E702
+    confirm_session.click(); time.sleep(0.4)                   # click chat panel -> Qoder kb focus  # noqa: E702
     # light guard: a confirm sends no text, so we don't need the input focus
     # ring — just verify we're still on Qoder (the pending button is still there,
     # i.e. the click didn't switch to another app) before the Ctrl+Enter.
-    if not _pending_action_present(p.grab_frame()):
+    if not _pending_action_present(confirm_session.grab_frame()):
         return {"ok": False, "confirmed": False, "error": "pending action gone after click (not on Qoder?)"}
-    p.submit(mode="ctrl-enter")                  # Run Ctrl+Enter
+    confirm_session.submit(mode="ctrl-enter")                  # Run Ctrl+Enter
     logger.info("PORTAL_CONFIRM pressed Ctrl+Enter on pending action at (%d,%d)", sx, sy)
     return {"ok": True, "confirmed": True}
 
@@ -333,8 +333,8 @@ def autoconfirm_loop_via_portal(
     empty polls (agent truly idle) or ``duration_s``."""
     import time
 
-    p = _get_session()  # open once, reuse the session for the whole loop
-    if p is None:
+    loop_session = _get_session()  # open once, reuse the session for the whole loop
+    if loop_session is None:
         return {"ok": False, "error": "portal unavailable"}
     confirmed = 0
     empties = 0
@@ -342,7 +342,7 @@ def autoconfirm_loop_via_portal(
     start = time.monotonic()
     while time.monotonic() - start < duration_s and empties < idle_polls:
         try:
-            present = _pending_action_present(p.grab_frame())
+            present = _pending_action_present(loop_session.grab_frame())
         except Exception:
             present = False
         if present:
@@ -383,33 +383,33 @@ def _portal_type_result(
     return out
 
 
-def _maybe_autoremember_focused_input(p: Any, ide: str) -> None:
+def _maybe_autoremember_focused_input(input_session: Any, ide: str) -> None:
     """Opt-in: cache blue-ring focus position. Off by default (busy screens)."""
     if not _env_truthy("KORU_VDISPLAY_PORTAL_AUTOREMEMBER"):
         return
     try:
-        f0 = p.grab_frame()
+        f0 = input_session.grab_frame()
         ring = _blue_ring_center(f0)
         if ring is None:
             return
         fw0, fh0 = _png_size(f0)
-        rsx, rsy = p.frame_to_stream(ring[0], ring[1], frame_w=fw0, frame_h=fh0)
+        rsx, rsy = input_session.frame_to_stream(ring[0], ring[1], frame_w=fw0, frame_h=fh0)
         _cache_input_xy(ide, (rsx, rsy))
         logger.info("PORTAL_REMEMBER focused input at stream=(%d,%d)", rsx, rsy)
     except Exception:
         pass
 
 
-def _stream_target_from_ocr(p: Any, frame: bytes, ide: str) -> tuple[int, int] | None:
+def _stream_target_from_ocr(ocr_session: Any, frame: bytes, ide: str) -> tuple[int, int] | None:
     anchor_w, anchor_h = _png_size(frame)
     xy = _ocr_anchor_xy(frame, ide)  # placeholder anchor, then landmark
     if xy is None:
         return None
-    return p.frame_to_stream(xy[0], xy[1], frame_w=anchor_w, frame_h=anchor_h)
+    return ocr_session.frame_to_stream(xy[0], xy[1], frame_w=anchor_w, frame_h=anchor_h)
 
 
 def _type_at_stream_coords(
-    p: Any,
+    type_session: Any,
     text: str,
     *,
     sx: int,
@@ -422,7 +422,7 @@ def _type_at_stream_coords(
         # Focus guard: blue ring near target confirms the composer got focus.
         return _focused_near(after, sx, sy)
 
-    typed = p.type_into_input_verified(
+    typed = type_session.type_into_input_verified(
         sx,
         sy,
         text,
@@ -443,17 +443,17 @@ def _type_at_stream_coords(
     )
 
 
-def _precise_stream_xy(p: Any, frame: bytes, ide: str) -> tuple[int, int] | None:
+def _precise_stream_xy(precise_session: Any, frame: bytes, ide: str) -> tuple[int, int] | None:
     """Empty-input placeholder anchor in stream coords, or None."""
     precise_fx = _anchor_precise(frame, ide)
     if precise_fx is None:
         return None
     precise_w, precise_h = _png_size(frame)
-    return p.frame_to_stream(precise_fx[0], precise_fx[1], frame_w=precise_w, frame_h=precise_h)
+    return precise_session.frame_to_stream(precise_fx[0], precise_fx[1], frame_w=precise_w, frame_h=precise_h)
 
 
 def _clear_and_reanchor_stream_xy(
-    p: Any,
+    reanchor_session: Any,
     frame: bytes,
     ide: str,
 ) -> tuple[tuple[int, int] | None, str | None]:
@@ -465,42 +465,42 @@ def _clear_and_reanchor_stream_xy(
     import time
 
     # Prefer cached known-good position over flaky landmark.
-    rough = _cached_input_xy(ide) or _stream_target_from_ocr(p, frame, ide)
+    rough = _cached_input_xy(ide) or _stream_target_from_ocr(reanchor_session, frame, ide)
     if rough is None:
         return None, "chat input not found (no anchor/landmark/cache)"
     rx, ry = rough
-    p.move_abs(rx, ry)
+    reanchor_session.move_abs(rx, ry)
     time.sleep(0.35)
-    p.click()
+    reanchor_session.click()
     time.sleep(0.4)
     # Focus guard BEFORE destructive clear (up to 200 deletes).
-    if not _focused_near(p.grab_frame(), rx, ry):
+    if not _focused_near(reanchor_session.grab_frame(), rx, ry):
         return None, "click did not focus the chat input (guard rejected before clear)"
-    p.clear_input(200)
+    reanchor_session.clear_input(200)
     time.sleep(0.4)
-    frame = p.grab_frame()  # placeholder should be back now
+    frame = reanchor_session.grab_frame()  # placeholder should be back now
     re = _anchor_precise(frame, ide)
     if re is not None:
         reanchor_w, reanchor_h = _png_size(frame)
-        return p.frame_to_stream(re[0], re[1], frame_w=reanchor_w, frame_h=reanchor_h), None
+        return reanchor_session.frame_to_stream(re[0], re[1], frame_w=reanchor_w, frame_h=reanchor_h), None
     return _cached_input_xy(ide), None
 
 
 def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool = False) -> dict[str, Any]:
     """Full portal flow: locate the chat input on the portal's own frame and
     type (guarded). Returns a result dict."""
-    p = _get_session()
-    if p is None:
+    chat_session = _get_session()
+    if chat_session is None:
         return _portal_type_result(ok=False, method="portal", error="portal unavailable")
 
-    _maybe_autoremember_focused_input(p, ide)
+    _maybe_autoremember_focused_input(chat_session, ide)
 
     # Calibrated/cached coords beat flaky OCR — the composer doesn't move.
     cached = _cached_input_xy(ide)
     if cached is not None:
         sx, sy = cached
         return _type_at_stream_coords(
-            p,
+            chat_session,
             text,
             sx=sx,
             sy=sy,
@@ -509,24 +509,24 @@ def type_into_chat_via_portal(text: str, *, ide: str = "jetbrains", submit: bool
             log_label="PORTAL_INPUT(cached)",
         )
 
-    frame = p.grab_frame()
-    precise = _precise_stream_xy(p, frame, ide)
+    frame = chat_session.grab_frame()
+    precise = _precise_stream_xy(chat_session, frame, ide)
     if precise is not None:
         _cache_input_xy(ide, precise)  # seed: the input doesn't move
     else:
-        precise, err = _clear_and_reanchor_stream_xy(p, frame, ide)
+        precise, err = _clear_and_reanchor_stream_xy(chat_session, frame, ide)
         if err is not None:
             return _portal_type_result(ok=False, method="portal", error=err)
-        frame = p.grab_frame()
+        frame = chat_session.grab_frame()
 
-    sx_sy = precise or _stream_target_from_ocr(p, frame, ide)
+    sx_sy = precise or _stream_target_from_ocr(chat_session, frame, ide)
     if sx_sy is None:
         return _portal_type_result(
             ok=False, method="portal", error="chat input not found after clear"
         )
     sx, sy = sx_sy
     return _type_at_stream_coords(
-        p,
+        chat_session,
         text,
         sx=sx,
         sy=sy,
