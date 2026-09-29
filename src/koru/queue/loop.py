@@ -91,6 +91,105 @@ def _run_sequential_loop(
     return state.result()
 
 
+class _ParallelWorkers:
+    """Mutable worker pool state for one parallel queue drain."""
+
+    def __init__(
+        self,
+        state: _LoopState,
+        *,
+        run_kwargs: dict,
+        next_tickets,
+        file_scope,
+        interactive: bool,
+        progress_callback,
+        stop_callback,
+    ) -> None:
+        import threading
+
+        self.state = state
+        self.run_kwargs = run_kwargs
+        self.next_tickets = next_tickets
+        self.file_scope = file_scope
+        self.interactive = interactive
+        self.progress_callback = progress_callback
+        self.stop_callback = stop_callback
+        self.progress_lock = threading.Lock()
+        self.worker_counter = 0
+        self.active_futures = {}
+
+    def _execute_worker(
+        self, ticket_dict: dict[str, any], worker_num: int
+    ) -> QueueRunResult:
+        t_id = str(ticket_dict.get("id") or "")
+        kwargs = {
+            **self.run_kwargs,
+            "actor": f"{self.run_kwargs['actor']}-w{worker_num}",
+            "target_ticket_id": t_id,
+        }
+        return run_next_planfile_task(**kwargs)
+
+    def dispatch_batch(self, pool, slots_available: int) -> bool:
+        """Submit new disjoint tickets; returns True when the loop must stop."""
+        current_locked_files: set[str] = set()
+        current_running_ids: set[str] = set()
+        for t_id, f_set in self.active_futures.values():
+            current_running_ids.add(t_id)
+            current_locked_files.update(f_set)
+
+        new_tickets, batch_err = self.next_tickets(
+            self.run_kwargs["project"],
+            self.run_kwargs["planfile_runner"],
+            count=slots_available,
+            queue_name=self.run_kwargs["queue_name"],
+            disjoint_files=True,
+            interactive=self.interactive,
+            locked_files=current_locked_files,
+            exclude_ids=current_running_ids,
+        )
+        if batch_err is not None:
+            if not self.active_futures:
+                self.state.last_status = batch_err.status
+                self.state.last_message = batch_err.message
+                return True
+        elif new_tickets:
+            for t in new_tickets:
+                t_id = str(t.get("id") or "")
+                self.worker_counter += 1
+                fut = pool.submit(self._execute_worker, t, self.worker_counter)
+                self.active_futures[fut] = (t_id, self.file_scope(t))
+        return False
+
+    def resolve_future(self, fut) -> QueueRunResult:
+        t_id, _ = self.active_futures.pop(fut)
+        self.state.iterations += 1
+        try:
+            return fut.result()
+        except Exception as exc:
+            return QueueRunResult(
+                status="failed", message=str(exc), exit_code=1, ticket_id=t_id
+            )
+
+    def record_result(self, res: QueueRunResult) -> bool:
+        with self.progress_lock:
+            if self.progress_callback is not None:
+                self.progress_callback(res, self.state.iterations)
+            self.state.record(res)
+            if self.stop_callback is not None and self.stop_callback(
+                res, self.state.iterations
+            ):
+                return True
+            return res.status in _LOOP_TERMINAL_STATUSES
+
+    def record_done(self, done, max_iterations: int) -> bool:
+        should_stop = False
+        for fut in done:
+            res = self.resolve_future(fut)
+            if self.record_result(res) or self.state.iterations >= max_iterations:
+                should_stop = True
+        return should_stop
+
+
 def _run_parallel_loop(
     state: _LoopState,
     *,
@@ -102,107 +201,41 @@ def _run_parallel_loop(
     stop_callback: Callable[[QueueRunResult, int], bool] | None,
 ) -> QueueLoopResult:
     import concurrent.futures
-    import threading
 
     from koru.queue.runner import _next_tickets_or_result
     from koru.queue.ticket import ticket_file_scope
 
-    progress_lock = threading.Lock()
-    worker_counter = 0
-
-    def _execute_worker(ticket_dict: dict[str, any], worker_num: int) -> QueueRunResult:
-        t_id = str(ticket_dict.get("id") or "")
-        kwargs = {
-            **run_kwargs,
-            "actor": f"{run_kwargs['actor']}-w{worker_num}",
-            "target_ticket_id": t_id,
-        }
-        return run_next_planfile_task(**kwargs)
-
-    active_futures: dict[concurrent.futures.Future[QueueRunResult], tuple[str, set[str]]] = {}
-    worker_counter = 0
-
-    def _dispatch_batch(pool, slots_available: int) -> bool:
-        """Submit new disjoint tickets; returns True when the loop must stop."""
-        nonlocal worker_counter
-        current_locked_files: set[str] = set()
-        current_running_ids: set[str] = set()
-        for t_id, f_set in active_futures.values():
-            current_running_ids.add(t_id)
-            current_locked_files.update(f_set)
-
-        new_tickets, batch_err = _next_tickets_or_result(
-            run_kwargs["project"],
-            run_kwargs["planfile_runner"],
-            count=slots_available,
-            queue_name=run_kwargs["queue_name"],
-            disjoint_files=True,
-            interactive=interactive,
-            locked_files=current_locked_files,
-            exclude_ids=current_running_ids,
-        )
-        if batch_err is not None:
-            if not active_futures:
-                state.last_status = batch_err.status
-                state.last_message = batch_err.message
-                return True
-        elif new_tickets:
-            for t in new_tickets:
-                t_id = str(t.get("id") or "")
-                t_files = ticket_file_scope(t)
-                worker_counter += 1
-                fut = pool.submit(_execute_worker, t, worker_counter)
-                active_futures[fut] = (t_id, t_files)
-        return False
-
-    def _resolve_future(fut) -> QueueRunResult:
-        t_id, _ = active_futures.pop(fut)
-        state.iterations += 1
-        try:
-            return fut.result()
-        except Exception as exc:
-            return QueueRunResult(
-                status="failed", message=str(exc), exit_code=1, ticket_id=t_id
-            )
-
-    def _record_result(res: QueueRunResult) -> bool:
-        with progress_lock:
-            if progress_callback is not None:
-                progress_callback(res, state.iterations)
-            state.record(res)
-            if stop_callback is not None and stop_callback(res, state.iterations):
-                return True
-            return res.status in _LOOP_TERMINAL_STATUSES
-
+    workers = _ParallelWorkers(
+        state,
+        run_kwargs=run_kwargs,
+        next_tickets=_next_tickets_or_result,
+        file_scope=ticket_file_scope,
+        interactive=interactive,
+        progress_callback=progress_callback,
+        stop_callback=stop_callback,
+    )
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
         while state.iterations < max_iterations:
             slots_available = min(
-                concurrency - len(active_futures),
-                max_iterations - (state.iterations + len(active_futures)),
+                concurrency - len(workers.active_futures),
+                max_iterations - (state.iterations + len(workers.active_futures)),
             )
-            if slots_available > 0 and _dispatch_batch(pool, slots_available):
+            if slots_available > 0 and workers.dispatch_batch(
+                pool, slots_available
+            ):
                 break
 
-            if not active_futures:
+            if not workers.active_futures:
                 state.last_status = "idle"
                 state.last_message = "No runnable ticket found"
                 break
 
             done, _ = concurrent.futures.wait(
-                active_futures.keys(),
+                workers.active_futures.keys(),
                 return_when=concurrent.futures.FIRST_COMPLETED,
             )
-
-            should_stop = False
-            for fut in done:
-                res = _resolve_future(fut)
-                if _record_result(res):
-                    should_stop = True
-                if state.iterations >= max_iterations:
-                    should_stop = True
-
-            if should_stop:
-                for fut in active_futures:
+            if workers.record_done(done, max_iterations):
+                for fut in workers.active_futures:
                     fut.cancel()
                 break
 

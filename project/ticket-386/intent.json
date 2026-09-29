@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-386",
+  "summary": "refactor(queue-loop): reduce _run_parallel_loop god function",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-386/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/loop.py",
+    "tests/test_queue_concurrency.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "075ad632283c80c76043deb829a7dd3c04263260",
+    "targetBranch": "main",
+    "outcome": "_run_parallel_loop god function reduced: worker state extracted to _ParallelWorkers (_execute_worker/dispatch_batch/resolve_future/record_result/record_done); _run_parallel_loop becomes a thin dispatch/wait/record loop with identical concurrency, disjoint-file and callback semantics.",
+    "nonGoals": [
+      "Changing concurrency, callbacks, statuses, or ticket selection",
+      "Any change outside src/koru/queue/loop.py"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract per-drain worker state into a _ParallelWorkers class; keep lazy imports inside _run_parallel_loop.",
+      "components": [
+        {
+          "name": "queue-loop",
+          "paths": [
+            "src/koru/queue/loop.py"
+          ]
+        },
+        {
+          "name": "queue-concurrency-tests",
+          "paths": [
+            "tests/test_queue_concurrency.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure structural refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_queue_concurrency.py tests/test_planfile_queue.py tests/test_queue_pipelining.py -x -q"
+        ],
+        "evidence": "Parallel queue drain behavior (batching, disjoint files, callbacks, stop, failures, iteration limits) unchanged."
+      }
+    ]
+  }
+}
