@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-401",
+  "summary": "refactor(surface-capture): address shotgun surgery on out variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-401/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay/surface_capture.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d865e75c5213a90ddc4ef35746c7448b26e50082",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on out removed in surface_capture.py: the shared generic result parameter renamed to per-function semantic names (freshness_result/fallback_result/confirmed_result/capture_result/sidecar_result/persisted_result).",
+    "nonGoals": [
+      "Surface confirmation semantics",
+      "Other vdisplay module smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Positional result parameter renamed per function; signatures and facade exports unchanged.",
+      "components": [
+        {
+          "name": "vdisplay-surface-capture",
+          "paths": [
+            "src/koru/integrations/vdisplay/surface_capture.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_surface_capture_confirmation.py tests/test_photo_vql_drive.py -x -q"
+        ],
+        "evidence": "Surface capture confirmation behavior preserved."
+      }
+    ]
+  }
+}
