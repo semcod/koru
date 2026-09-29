@@ -11,6 +11,7 @@ from pathlib import Path
 
 from koru.ticket_command.profile import load_profile, no_symlinks, parse_issue
 from koru.ticket_command.service import _effect_guard, _save, execution_lock, github_backend, run_ticket
+from koru.ticket_command.workspace import preflight_workspace
 
 SCHEMA = "koru.issue-list-run/v1"
 
@@ -46,29 +47,57 @@ def _targets(profile: dict, backend, path: Path) -> list[str]:
     return _snapshot(profile, backend)
 
 
-def _sync_primary_planfile(profile: dict) -> None:
+def _sync_configured(profile: dict) -> bool:
     primary = profile.get("primary")
     if not primary:
-        return
+        return False
     planfile_dir = Path(primary) / ".planfile"
-    if not planfile_dir.exists():
-        return
-    has_github_config = (planfile_dir / "github.planfile.yaml").exists() or (
-        planfile_dir / "integrations.planfile.yaml"
-    ).exists()
-    if not has_github_config:
+    return planfile_dir.is_dir() and (
+        (planfile_dir / "github.planfile.yaml").exists()
+        or (planfile_dir / "integrations.planfile.yaml").exists()
+    )
+
+
+def _bound_ticket_ids(profile: dict, targets: list[str]) -> list[str]:
+    """Primary-backlog ticket ids bound to the selected GitHub issue URLs."""
+    urls = set(targets)
+    try:
+        from planfile import Planfile
+
+        pf = Planfile.auto_discover(Path(profile["primary"]))
+        return [
+            str(ticket.id)
+            for ticket in pf.list_tickets()
+            if ((getattr(ticket, "sync", None) or {}).get("github") or {}).get("url") in urls
+        ]
+    except Exception as exc:
+        raise RuntimeError(
+            "local Planfile bindings for the selected issues could not be read"
+        ) from exc
+
+
+def _sync_primary_planfile(profile: dict, ticket_ids: list[str]) -> None:
+    """Synchronize only the backlog tickets bound to the selected issues.
+
+    A configured but failed sync is a required-stage failure; callers must
+    surface it in the durable run result instead of reporting success.
+    """
+    primary = profile.get("primary")
+    if not primary or not ticket_ids or not _sync_configured(profile):
         return
     py = os.environ.get("PY") or sys.executable
+    command = [py, "-m", "planfile.cli", "sync", "github", "--direction", "both"]
+    for ticket_id in ticket_ids:
+        command += ["--ticket", ticket_id]
     try:
-        subprocess.run(
-            [py, "-m", "planfile.cli", "sync", "github", "--direction", "both"],
-            cwd=primary,
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-    except Exception:
-        pass
+        proc = subprocess.run(command, cwd=primary, capture_output=True, text=True, timeout=60)
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError("planfile sync github timed out after 60s") from exc
+    except OSError as exc:
+        raise RuntimeError(f"planfile sync github could not start: {exc}") from exc
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout or "").strip()[:2000]
+        raise RuntimeError(f"planfile sync github exited {proc.returncode}: {detail}")
 
 
 def run_issue_list(url: str, profiles: Path, *, dry_run=False, backend=None, runner=None) -> dict:
@@ -93,8 +122,30 @@ def run_issue_list(url: str, profiles: Path, *, dry_run=False, backend=None, run
         }
         if dry_run:
             return result
-        _sync_primary_planfile(profile)
         persisted = {"schema": SCHEMA, "profile_sha256": profile["profile_sha256"]}
+        sync_ticket_ids: list[str] = []
+        if targets and _sync_configured(profile):
+            try:
+                # A refused workspace is reported durably by the per-issue
+                # runner; the backlog sync must not mutate anything first.
+                preflight_workspace(profile)
+            except (ValueError, RuntimeError):
+                pass
+            else:
+                try:
+                    sync_ticket_ids = _bound_ticket_ids(profile, targets)
+                    _sync_primary_planfile(profile, sync_ticket_ids)
+                except RuntimeError as exc:
+                    result.update(
+                        state="stopped",
+                        message="Required planfile sync failed before issue execution",
+                    )
+                    persisted["diagnostic"] = {
+                        "type": type(exc).__name__,
+                        "message": str(exc)[:4000],
+                    }
+                    _save(path, {**persisted, **result})
+                    return result
         # Persist the selection before any ticket effect. A restart must not
         # forget an unfinished ticket just because GitHub closed it meanwhile.
         _save(path, {**persisted, **result, "state": "running"})
@@ -138,6 +189,19 @@ def run_issue_list(url: str, profiles: Path, *, dry_run=False, backend=None, run
                 )
                 persisted["diagnostic"] = {"type": type(exc).__name__, "message": str(exc)[:4000]}
                 break
+        # A stopped run (including a preflight refusal) must not touch the
+        # local or remote backlog again.
+        if result["state"] == "completed" and sync_ticket_ids:
+            try:
+                _sync_primary_planfile(profile, sync_ticket_ids)
+            except RuntimeError as exc:
+                result.update(
+                    state="stopped",
+                    message="Required planfile sync failed after issue reporting",
+                )
+                persisted["diagnostic"] = {
+                    "type": type(exc).__name__,
+                    "message": str(exc)[:4000],
+                }
         _save(path, {**persisted, **result})
-        _sync_primary_planfile(profile)
         return result
