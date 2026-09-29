@@ -20,8 +20,8 @@ def autopilot_debug_log_path() -> Path:
     return Path(os.environ.get("KORU_PLUGIN_DEBUG_LOG", "/tmp/koru-plugin-debug.log"))
 
 
-def read_recent_autopilot_debug_lines(path: Path, *, limit: int = 400) -> list[str]:
-    return path.read_text(encoding="utf-8", errors="replace").splitlines()[-limit:]
+def read_recent_autopilot_debug_lines(log_path: Path, *, limit: int = 400) -> list[str]:
+    return log_path.read_text(encoding="utf-8", errors="replace").splitlines()[-limit:]
 
 
 def autopilot_line_mentions_selected(
@@ -44,11 +44,11 @@ autopilot_debug_event_has = _chat_control.autopilot_debug_event_has
 
 
 def read_recent_autopilot_activity_lines(project: Path, *, limit: int = 600) -> list[str]:
-    path = runtime_dir(project) / "nfo-events.jsonl"
-    if not path.is_file():
+    events_path = runtime_dir(project) / "nfo-events.jsonl"
+    if not events_path.is_file():
         return []
     try:
-        rows = path.read_text(encoding="utf-8", errors="replace").splitlines()[-limit:]
+        rows = events_path.read_text(encoding="utf-8", errors="replace").splitlines()[-limit:]
     except OSError:
         return []
     activity: list[str] = []
@@ -87,19 +87,19 @@ def recent_autopilot_debug_context(
     line_matches: Callable[..., bool],
 ) -> AutopilotDebugContext:
     selected = selected_ide()
-    path = debug_log_path()
+    debug_path = debug_log_path()
     if not selected:
-        return AutopilotDebugContext(selected, path, "", [], "autopilot env unset")
-    if not path.is_file():
-        return AutopilotDebugContext(selected, path, "", [], f"{path} missing")
+        return AutopilotDebugContext(selected, debug_path, "", [], "autopilot env unset")
+    if not debug_path.is_file():
+        return AutopilotDebugContext(selected, debug_path, "", [], f"{debug_path} missing")
     socket_text = str(socket_resolver())
-    lines = read_lines(path)
+    lines = read_lines(debug_path)
     relevant = [
         line
         for line in lines
         if line_matches(line, selected=selected, socket_text=socket_text)
     ]
-    return AutopilotDebugContext(selected, path, socket_text, relevant, None)
+    return AutopilotDebugContext(selected, debug_path, socket_text, relevant, None)
 
 
 def check_autopilot_debug_log(
@@ -110,8 +110,8 @@ def check_autopilot_debug_log(
     try:
         context = recent_context()
     except OSError as exc:
-        path = debug_log_path()
-        return WARN, f"cannot read {path}: {exc}"
+        unreadable_path = debug_log_path()
+        return WARN, f"cannot read {unreadable_path}: {exc}"
     if context.skip_reason:
         return SKIP, context.skip_reason
     if not context.relevant:
@@ -156,8 +156,8 @@ def chat_control_context(
     try:
         context = recent_context()
     except OSError as exc:
-        path = debug_log_path()
-        return "", path, [], [], WARN, f"cannot read {path}: {exc}"
+        ctx_path = debug_log_path()
+        return "", ctx_path, [], [], WARN, f"cannot read {ctx_path}: {exc}"
 
     if context.skip_reason:
         return context.selected or "", context.path, context.relevant, [], SKIP, context.skip_reason
@@ -219,8 +219,8 @@ def check_windsurf_chat_column_control(
     try:
         context = recent_context()
     except OSError as exc:
-        path = debug_log_path()
-        return WARN, f"cannot read {path}: {exc}"
+        wind_path = debug_log_path()
+        return WARN, f"cannot read {wind_path}: {exc}"
     if context.skip_reason:
         return SKIP, context.skip_reason
     if context.selected != "windsurf":
