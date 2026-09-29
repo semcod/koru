@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-417",
+  "summary": "refactor(ide-doctor-cli): address shotgun surgery on payload variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-417/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/ide_doctor_cli.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "69d0d2d84467ac2348b8529e9ec37d891e8a8fb4",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on payload removed in ide_doctor_cli.py: result binding renamed per action (status_payload, history_payload, reload_payload, catalog_payload, schema_payload, validation_payload); entry.payload attribute and JSON keys unchanged.",
+    "nonGoals": [
+      "IDE doctor semantics",
+      "Other smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Token-level rename of payload locals to per-action semantic names; dict keys and entry.payload attribute access unchanged.",
+      "components": [
+        {
+          "name": "ide-doctor-cli",
+          "paths": [
+            "src/koru/ide_doctor_cli.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_ide_doctor_cli.py -x -q"
+        ],
+        "evidence": "IDE doctor CLI outputs preserved."
+      }
+    ]
+  }
+}
