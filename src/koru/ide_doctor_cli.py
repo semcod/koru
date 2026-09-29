@@ -429,7 +429,7 @@ def action_ide_doctor(args: argparse.Namespace) -> int:
         ]
     _record_bridge_repair_history(project=project, status=status, fix_requested=args.fix)
     if args.output_format == "json":
-        payload = {
+        status_payload = {
             "ide": status.ide,
             "socket": status.socket_path,
             "daemon_running": status.daemon_running,
@@ -453,13 +453,13 @@ def action_ide_doctor(args: argparse.Namespace) -> int:
             ],
         }
         if status.settings is not None:
-            payload["settings"] = {
+            status_payload["settings"] = {
                 "expected_socket": status.settings.expected_socket,
                 "user_socket": status.settings.user_socket,
                 "workspace_socket": status.settings.workspace_socket,
                 "mismatch": status.settings.mismatch,
             }
-        print(json.dumps(payload, indent=2, sort_keys=True))
+        print(json.dumps(status_payload, indent=2, sort_keys=True))
         return 0 if status.ready else 1
     print(format_bridge_text(status, explain=args.explain))
     return 0 if status.ready else 1
@@ -480,7 +480,7 @@ def action_ide_history(args: argparse.Namespace) -> int:
         LoadRepairHistoryQuery(subject=subject, limit=args.limit)
     )
     if args.output_format == "json":
-        payload = [
+        history_payload = [
             {
                 "sequence": entry.sequence,
                 "event_type": entry.event_type,
@@ -490,7 +490,7 @@ def action_ide_history(args: argparse.Namespace) -> int:
             }
             for entry in history
         ]
-        print(json.dumps(payload, indent=2, sort_keys=True))
+        print(json.dumps(history_payload, indent=2, sort_keys=True))
     else:
         print(format_repair_history_for_llm(history))
     return 0
@@ -517,7 +517,7 @@ def action_ide_reload(args: argparse.Namespace) -> int:
             dry_run=args.dry_run,
             connect_only=args.connect_only,
         )
-    payload = {
+    reload_payload = {
         "ide": reload_ide,
         "attempted": reload_result.attempted,
         "ok": reload_result.ok,
@@ -525,7 +525,7 @@ def action_ide_reload(args: argparse.Namespace) -> int:
         "detail": reload_result.detail,
     }
     if args.output_format == "json":
-        print(json.dumps(payload, indent=2, sort_keys=True))
+        print(json.dumps(reload_payload, indent=2, sort_keys=True))
     else:
         if reload_result.ok:
             print(f"koru ide reload: ok ({reload_result.method})")
@@ -672,14 +672,18 @@ def action_ide_commands(args: argparse.Namespace) -> int:
 
     catalog_ide = None if args.ide == "all" else args.ide
     try:
-        payload = command_catalog_for_llm(catalog_ide) if args.for_llm else build_ide_command_catalog(catalog_ide)
+        catalog_payload = (
+            command_catalog_for_llm(catalog_ide)
+            if args.for_llm
+            else build_ide_command_catalog(catalog_ide)
+        )
     except ValueError as exc:
         print(f"koru ide commands: {exc}", file=sys.stderr)
         return 2
     if args.output_format == "json":
-        print(json.dumps(payload, indent=2, sort_keys=True))
+        print(json.dumps(catalog_payload, indent=2, sort_keys=True))
     elif args.output_format == "yaml":
-        print(yaml.safe_dump(payload, sort_keys=False, allow_unicode=True))
+        print(yaml.safe_dump(catalog_payload, sort_keys=False, allow_unicode=True))
     else:
         print(format_command_catalog_text(catalog_ide, for_llm=args.for_llm))
     return 0
@@ -689,11 +693,11 @@ def action_ide_scenario_schema(args: argparse.Namespace) -> int:
     import yaml
     from koruide.command_scenario import ide_command_scenario_schema
 
-    payload = ide_command_scenario_schema()
+    schema_payload = ide_command_scenario_schema()
     if args.output_format == "yaml":
-        print(yaml.safe_dump(payload, sort_keys=False, allow_unicode=True))
+        print(yaml.safe_dump(schema_payload, sort_keys=False, allow_unicode=True))
     else:
-        print(json.dumps(payload, indent=2, sort_keys=True))
+        print(json.dumps(schema_payload, indent=2, sort_keys=True))
     return 0
 
 
@@ -720,11 +724,11 @@ def action_ide_scenario_validate(args: argparse.Namespace) -> int:
         print(f"koru ide scenario-validate: invalid YAML/JSON: {exc}", file=sys.stderr)
         return 2
     result = validate_ide_command_scenario(raw)
-    payload = result.to_dict()
+    validation_payload = result.to_dict()
     if args.output_format == "json":
-        print(json.dumps(payload, indent=2, sort_keys=True))
+        print(json.dumps(validation_payload, indent=2, sort_keys=True))
     elif args.output_format == "yaml":
-        print(yaml.safe_dump(payload, sort_keys=False, allow_unicode=True))
+        print(yaml.safe_dump(validation_payload, sort_keys=False, allow_unicode=True))
     else:
         status = "ok" if result.ok else "invalid"
         print(f"scenario {status}")
