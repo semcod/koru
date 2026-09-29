@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-402",
+  "summary": "refactor(drive-prepare): address shotgun surgery on out variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-402/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay/drive_prepare.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "c409857c519b32c8e5639b4972533017d34f2a05",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on out removed in drive_prepare.py: the shared generic accumulator renamed to per-function semantic names (abort_out/skeleton/warned_result/fallback_result/merged_result/guarded_result/matched_result/candidate/attempt_result/attempts_result/prepared); 'out' dict keys in returned payloads preserved.",
+    "nonGoals": [
+      "Prepare/retry/capture semantics",
+      "Other vdisplay module smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Parameter/local accumulator renamed per function; signatures and returned dict keys unchanged.",
+      "components": [
+        {
+          "name": "vdisplay-drive-prepare",
+          "paths": [
+            "src/koru/integrations/vdisplay/drive_prepare.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_photo_vql_drive.py tests/test_photo_vql_orchestrator.py tests/test_cycle_post_drive.py -x -q"
+        ],
+        "evidence": "Drive prepare behavior preserved."
+      }
+    ]
+  }
+}
