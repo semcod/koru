@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-419",
+  "summary": "refactor(scan-artifacts): address shotgun surgery on path variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-419/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/scan_artifacts.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "15d839befb65234d660f6dab608717232742557a",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on path removed in scan_artifacts.py: binding/param renamed per scanner (jscpd_path, file_path, raw_path, candidate_path, item_path, analysis_path, export_path, filtered_path, changed_path, probe_path, artifact_path, vallm_path, semcod_path, diag_path, pfix_path, metrun_path).",
+    "nonGoals": [
+      "Scan semantics",
+      "Other smells in the file"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Token-level rename of path locals/params to unique per-function names; all call sites positional.",
+      "components": [
+        {
+          "name": "scan-artifacts",
+          "paths": [
+            "src/koru/scan_artifacts.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_scan_artifacts.py -x -q"
+        ],
+        "evidence": "Artifact scanning preserved."
+      }
+    ]
+  }
+}
