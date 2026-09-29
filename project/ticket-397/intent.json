@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-397",
+  "summary": "refactor(operator-runtime): address shotgun surgery on os variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-397/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/operator/operator_runtime.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d7572ec05cd0a26cf796f94c94688e9db45e6f84",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on os removed in operator_runtime.py: env mutations centralized in _set_env/_pop_env/_restore_env helpers; os.environ writes no longer spread across eight functions.",
+    "nonGoals": [
+      "Env semantics changes",
+      "Other operator module smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Private _set_env/_pop_env/_restore_env helpers own all os.environ mutation; call sites delegate.",
+      "components": [
+        {
+          "name": "operator-runtime",
+          "paths": [
+            "src/koru/autonomy/operator/operator_runtime.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_autonomous.py -x -q"
+        ],
+        "evidence": "Autopilot env setup/restore behavior preserved."
+      }
+    ]
+  }
+}
