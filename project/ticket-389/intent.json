@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-389",
+  "summary": "refactor(handlers-ack): address shotgun surgery on info variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-389/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/koruide/src/koruide/daemon/handlers_ack.py",
+    "tests/test_koruide_daemon_handlers_ack.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e25e03b6bea373910164cdff08e82a97a5790df5",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on info removed in handlers_ack.py: _send_plugin_ack_reply no longer mutates the info parameter \u2014 the enriched payload binds to reply_info, dropping info mutators below the detection threshold.",
+    "nonGoals": [
+      "Changing ack payloads, telemetry, or reply contents",
+      "Refactoring remaining god functions in the daemon package"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Bind the enriched ack payload to reply_info instead of rebinding the info parameter; payload contents unchanged.",
+      "components": [
+        {
+          "name": "koruide-daemon",
+          "paths": [
+            "packages/koruide/src/koruide/daemon/handlers_ack.py",
+            "tests/test_koruide_daemon_handlers_ack.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; local-variable refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_koruide_daemon_handlers_ack.py -x -q"
+        ],
+        "evidence": "Ack reply payload, telemetry and DSL trace assertions unchanged."
+      }
+    ]
+  }
+}

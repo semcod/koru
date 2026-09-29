@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import Any, NamedTuple
 
 from gillm.injection.errors import InjectorError
-
 from koruide import host_hooks as _host_hooks
 from koruide.daemon.protocol import _Client, _daemon_package_version  # noqa: F401
 from koruide.drive_policy import DrivePolicy as DriveOrchestrator
@@ -473,7 +472,7 @@ def _send_plugin_ack_reply(
     original_text: str | None = None,
 ) -> None:
     """Send final plugin ack reply to CLI client with DSL trace."""
-    info = {
+    reply_info = {
         **_plugin_backend_defaults(info),
         **info,
         **_drive_replay_info(
@@ -485,17 +484,17 @@ def _send_plugin_ack_reply(
     }
     summary, route_summary, dsl_lines, final_dsl_line, operator_dsl_lines = _log_plugin_ack_trace(
         daemon,
-        info,
+        reply_info,
         plugin_ok=plugin_ok,
     )
     _record_recent_dsl(daemon, dsl_lines, final_dsl_line, operator_dsl_lines)
-    info = {**info, **_dsl_info_fields(dsl_lines, final_dsl_line, operator_dsl_lines)}
-    _record_plugin_ack_command_telemetry(daemon, fallback_ide, info)
+    reply_info = {**reply_info, **_dsl_info_fields(dsl_lines, final_dsl_line, operator_dsl_lines)}
+    _record_plugin_ack_command_telemetry(daemon, fallback_ide, reply_info)
     _record_plugin_ack_integration(
         daemon,
         corr=corr,
         target_ide=fallback_ide,
-        info=info,
+        info=reply_info,
         plugin_ok=plugin_ok,
         summary=summary,
         route_summary=route_summary,
@@ -503,20 +502,20 @@ def _send_plugin_ack_reply(
     daemon.audit.record(
         "drive",
         ide=fallback_ide,
-        backend=info.get("backend", "plugin"),
+        backend=reply_info.get("backend", "plugin"),
         chars=len(original_text or ""),
-        submit=bool(info.get("submitted")) or bool(info.get("attempted_submit")),
+        submit=bool(reply_info.get("submitted")) or bool(reply_info.get("attempted_submit")),
         ok=plugin_ok,
-        verification=info.get("verification"),
-        delivered=info.get("delivered"),
-        submitted=info.get("submitted"),
+        verification=reply_info.get("verification"),
+        delivered=reply_info.get("delivered"),
+        submitted=reply_info.get("submitted"),
         corr=corr,
     )
     _relay_plugin_ack_to_cli(
         daemon,
         cli_client,
         corr,
-        info=info,
+        info=reply_info,
         plugin_ok=plugin_ok,
     )
 
