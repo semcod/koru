@@ -301,6 +301,7 @@ def _terminate_existing_processes(
     *,
     stdio_format: str,
 ) -> None:
+    signaled: list[ExistingManagedProcess] = []
     for proc in processes:
         _stdio_info(
             f"koru autonomous: stopping existing {proc.kind} pid={proc.pid}",
@@ -315,21 +316,25 @@ def _terminate_existing_processes(
                 f"koru autonomous: no permission to stop existing {proc.kind} pid={proc.pid}",
                 fmt=stdio_format,
             )
+            continue
+        signaled.append(proc)
 
     deadline = time.monotonic() + 8
     while time.monotonic() < deadline:
         alive = []
-        for proc in processes:
+        for proc in signaled:
             try:
                 os.kill(proc.pid, 0)
             except ProcessLookupError:
                 continue
+            except PermissionError:
+                pass
             alive.append(proc)
         if not alive:
             return
         time.sleep(0.2)
 
-    for proc in processes:
+    for proc in signaled:
         try:
             os.kill(proc.pid, signal.SIGKILL)
             _stdio_info(

@@ -658,7 +658,9 @@ def _next_ticket_or_result(
                     return dict_t, None
                 elif hasattr(pf, "list_tickets"):
                     if not pf.list_tickets(status="open"):
-                        return None, None
+                        return None, QueueRunResult(
+                            status="idle", message="No runnable ticket found"
+                        )
         except Exception:
             pass
 
@@ -1056,7 +1058,8 @@ def _run_next_planfile_task_impl(
         )
         if early_result is not None:
             return early_result
-        assert ticket is not None
+        if ticket is None:
+            return QueueRunResult(status="idle", message="No runnable ticket found")
         ticket = hydrate_subactor_repair_ticket(ticket)
         ticket = hydrate_todo2code_ticket(ticket, project)
 
