@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-390",
+  "summary": "refactor(cli-calibration): address shotgun surgery on lines variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-390/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/coru/src/coru/cli_calibration.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d9496edcd1cb283b8f140484287d4e779e09d6e1",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on lines removed in cli_calibration.py: _append_desktop_focus_lines becomes the pure _desktop_focus_lines, capture line composition moves to _desktop_capture_line, report callers compose returned lists instead of binding lines; mutators drop 9 -> 2.",
+    "nonGoals": [
+      "Changing generated OQL/testql contents or report text",
+      "Refactoring other smells in packages/coru"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Pure list-returning helpers composed with unpacking replace shared lines accumulation across nine functions.",
+      "components": [
+        {
+          "name": "coru-cli",
+          "paths": [
+            "packages/coru/src/coru/cli_calibration.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; compositional refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/ -k calibration -x -q"
+        ],
+        "evidence": "Generated scenario bytes and calibration report lines unchanged."
+      }
+    ]
+  }
+}

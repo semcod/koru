@@ -51,10 +51,19 @@ def _calibration_desktop_template_path(ide: str, root: Path) -> Path | None:
     return None
 
 
-def _append_desktop_focus_lines(lines: list[str], focus_titles: Sequence[str]) -> None:
-    for title in focus_titles:
-        lines.append(f'DESKTOP_FOCUS "{title}"')
-        lines.append(f'DESKTOP_ASSERT_WINDOW "{title}"')
+def _desktop_focus_lines(focus_titles: Sequence[str]) -> list[str]:
+    return [
+        line
+        for title in focus_titles
+        for line in (
+            f'DESKTOP_FOCUS "{title}"',
+            f'DESKTOP_ASSERT_WINDOW "{title}"',
+        )
+    ]
+
+
+def _desktop_capture_line() -> list[str]:
+    return ['DESKTOP_CAPTURE "${capture_path}"'] if _desktop_capture_enabled() else []
 
 
 def _materialize_calibration_desktop_oql(
@@ -93,21 +102,18 @@ def _materialize_calibration_desktop_oql(
                 continue
             seen.add(title.casefold())
             extra.extend([f'DESKTOP_FOCUS "{title}"', f'DESKTOP_ASSERT_WINDOW "{title}"'])
-        lines = [body, *extra]
-        if _desktop_capture_enabled():
-            lines.append('DESKTOP_CAPTURE "${capture_path}"')
-        out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        scenario = [body, *extra, *_desktop_capture_line()]
+        out_path.write_text("\n".join(scenario) + "\n", encoding="utf-8")
         return out_path, f"template:{template.relative_to(root)}"
 
-    lines = [
+    scenario = [
         f"# generated for coru calibration ide={ide}",
         f'SET capture_path "{capture}"',
         "DESKTOP_LIST",
+        *_desktop_focus_lines(focus_titles),
+        *_desktop_capture_line(),
     ]
-    _append_desktop_focus_lines(lines, focus_titles)
-    if _desktop_capture_enabled():
-        lines.append('DESKTOP_CAPTURE "${capture_path}"')
-    out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    out_path.write_text("\n".join(scenario) + "\n", encoding="utf-8")
     return out_path, "generated"
 
 
@@ -134,7 +140,7 @@ def _write_calibration_bridge_testql(
     out_dir = root / ".planfile" / ".koru"
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / f"calibration-{ide}-bridge.testql.toon.yaml"
-    lines = [
+    scenario = [
         f"# generated for coru calibration ide={ide} instance={instance}",
         "# TYPE: cli",
         "CONFIG[3]{key, value}:",
@@ -146,7 +152,7 @@ def _write_calibration_bridge_testql(
         'SHELL "KORU_AUTOPILOT_INSTANCE=${instance} koru autopilot manage --ide ${ide} --format json" ${timeout_ms}',
         "ASSERT_EXIT_CODE 0",
     ]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path.write_text("\n".join(scenario) + "\n", encoding="utf-8")
     return path
 
 
@@ -291,14 +297,13 @@ def _run_calibration_desktop_preflight(
         focus_titles=focus_titles,
     )
     result = _testql_run_oql(oql_path, dry_run=False)
-    lines = _format_calibration_desktop_report(
+    return True, _format_calibration_desktop_report(
         result,
         ide=ide,
         focus_titles=focus_titles,
         oql_path=oql_path,
         oql_source=oql_source,
     )
-    return True, lines
 
 
 def _run_calibration_bridge_preflight(
@@ -323,13 +328,12 @@ def _run_calibration_bridge_preflight(
     root = _repo_root() or Path.cwd()
     scenario_path = _write_calibration_bridge_testql(ide=ide, instance=instance, root=root)
     result = _testql_run_scenario(scenario_path, dry_run=False)
-    lines = _format_calibration_bridge_report(
+    return True, _format_calibration_bridge_report(
         result,
         ide=ide,
         instance=instance,
         scenario_path=scenario_path,
     )
-    return True, lines
 
 
 def _parse_drive_json_from_stdout(raw: str) -> dict[str, Any] | None:
@@ -438,24 +442,23 @@ def _format_calibration_probe_report(drive: dict[str, Any] | None) -> tuple[bool
         return False, ["[coru] calibration: probe — no drive ack (daemon/plugin may be down)"]
 
     verification = _probe_report_verification(drive)
-    lines = _probe_report_header_lines(drive)
+    header = _probe_report_header_lines(drive)
     if (
         drive.get("ok") is True
         and verification not in {"submit_unverified", "intent_not_validated"}
         and drive.get("winning_focus_open")
         and drive.get("winning_paste")
     ):
-        return True, lines
+        return True, header
 
     if drive.get("ok") is True and verification not in {"submit_unverified", "intent_not_validated"}:
-        lines.append("  issue=missing winning focus/paste proof")
-        return False, lines
+        return False, [*header, "  issue=missing winning focus/paste proof"]
 
-    lines.append(f"  issue={_probe_report_failure_reason(drive)}")
+    tail = [f"  issue={_probe_report_failure_reason(drive)}"]
     hint = _probe_report_unverified_hint(verification)
     if hint:
-        lines.append(hint)
-    return False, lines
+        tail.append(hint)
+    return False, [*header, *tail]
 
 
 def _resolve_calibration_lane(
@@ -565,8 +568,8 @@ def _calibration_probe_drive(ide: str, instance: str, probe_prompt: str) -> int:
         probe_prompt,
         require_plugin=True,
     )
-    ok, lines = _format_calibration_probe_report(drive)
-    for line in lines:
+    ok, report = _format_calibration_probe_report(drive)
+    for line in report:
         print(line)
     if ok:
         print("[coru] calibration: PASS — focus/paste/submit path verified")

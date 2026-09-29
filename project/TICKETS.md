@@ -387,4 +387,5 @@ project analysis or human-owned ticket inputs.
 | **ticket-387** | [`README.md`](./ticket-387/README.md) | - | - | - | - | - |
 | **ticket-388** | [`README.md`](./ticket-388/README.md) | - | - | - | - | - |
 | **ticket-389** | [`README.md`](./ticket-389/README.md) | - | - | - | - | - |
+| **ticket-390** | [`README.md`](./ticket-390/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->
