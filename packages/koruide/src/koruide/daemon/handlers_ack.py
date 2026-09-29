@@ -59,39 +59,39 @@ def _safe_replay_name(corr: str) -> str:
     return safe or "drive"
 
 
-def _attach_drive_replay_commands(
+def _drive_replay_info(
     daemon: Any,
-    info: dict[str, Any],
     *,
     corr: str,
     ide: str,
     original_text: str | None,
-) -> None:
-    """Persist enough context for a copy-paste replay/validation DSL line."""
+) -> dict[str, Any]:
+    """Persist replay context and return the ``replay_*`` info additions."""
     project_raw = getattr(daemon, "project", None)
     if project_raw is None:
-        return
+        return {}
     project = Path(project_raw)
     if not original_text:
-        return
+        return {}
     replay_dir = project / ".planfile" / ".koru" / "replay"
     prompt_path = replay_dir / f"{_safe_replay_name(corr)}.prompt"
     try:
         replay_dir.mkdir(parents=True, exist_ok=True)
         prompt_path.write_text(original_text, encoding="utf-8")
     except OSError as exc:
-        info["replay_error"] = str(exc)
-        return
-    info["replay_artifact"] = str(prompt_path)
-    info["replay_command"] = (
-        f"KORU_AUTOPILOT_INSTANCE={shlex.quote(ide)} "
-        f"koru autopilot drive --ide {shlex.quote(ide)} "
-        f"--require-plugin --prompt-file {shlex.quote(str(prompt_path))}"
-    )
-    info["validate_command"] = (
-        "koru autopilot trace "
-        f"--project {shlex.quote(str(project))} --format drive-dsl --limit 30"
-    )
+        return {"replay_error": str(exc)}
+    return {
+        "replay_artifact": str(prompt_path),
+        "replay_command": (
+            f"KORU_AUTOPILOT_INSTANCE={shlex.quote(ide)} "
+            f"koru autopilot drive --ide {shlex.quote(ide)} "
+            f"--require-plugin --prompt-file {shlex.quote(str(prompt_path))}"
+        ),
+        "validate_command": (
+            "koru autopilot trace "
+            f"--project {shlex.quote(str(project))} --format drive-dsl --limit 30"
+        ),
+    }
 
 
 def _plugin_ack_needs_os_fallback(
@@ -118,19 +118,16 @@ def _relay_os_fallback_ack(
     plugin_ide: str,
     original_text: str,
     submit_requested: bool,
-    info: dict[str, Any],
-) -> bool:
-    """Relay OS fallback ack after plugin failure."""
+) -> tuple[bool, dict[str, Any]]:
+    """Relay OS fallback ack; return ``(handled, info additions)``."""
     try:
         # Same instance-method indirection as in ``_drive_via_keyboard`` so
         # the OS-fallback path remains monkey-patchable in tests.
         os_res = daemon._try_os_injector_drive(plugin_ide, original_text, submit_requested)
     except InjectorError as exc:
-        info["os_fallback"] = "failed"
-        info["os_fallback_error"] = str(exc)
-        return False
+        return False, {"os_fallback": "failed", "os_fallback_error": str(exc)}
     if os_res is None:
-        return False
+        return False, {}
     relay = ack(
         corr,
         ok=True,
@@ -144,7 +141,7 @@ def _relay_os_fallback_ack(
         },
     )
     daemon._send(cli_client, relay.encode())
-    return True
+    return True, {}
 
 
 def _strict_message_sent_completion_allowed(
@@ -352,7 +349,7 @@ def _relay_plugin_ack_os_fallback(
     submit_requested: bool,
     plugin_ide: str | None,
     require_plugin: bool,
-) -> bool:
+) -> tuple[bool, dict[str, Any]]:
     """Attempt OS fallback for failed plugin ack."""
     if not _plugin_ack_needs_os_fallback(
         plugin_ok=plugin_ok,
@@ -361,7 +358,7 @@ def _relay_plugin_ack_os_fallback(
         plugin_ide=plugin_ide,
         require_plugin=require_plugin,
     ):
-        return False
+        return False, {}
     return _relay_os_fallback_ack(
         daemon,
         cli_client,
@@ -369,13 +366,13 @@ def _relay_plugin_ack_os_fallback(
         fallback_ide,
         original_text,
         submit_requested,
-        info,
     )
 
 
-def _ensure_plugin_backend(info: dict[str, Any]) -> None:
+def _plugin_backend_defaults(info: dict[str, Any]) -> dict[str, Any]:
     if info.get("delivered") is True and "backend" not in info:
-        info["backend"] = "plugin"
+        return {"backend": "plugin"}
+    return {}
 
 
 def _log_plugin_ack_trace(
@@ -399,24 +396,32 @@ def _log_plugin_ack_trace(
     return summary, route_summary, dsl_lines + validation_dsl_lines, final_dsl_line, operator_dsl_lines
 
 
-def _persist_plugin_ack_dsl(
+def _record_recent_dsl(
     daemon: Any,
-    info: dict[str, Any],
-    *,
     dsl_lines: list[str],
     final_dsl_line: str,
     operator_dsl_lines: list[str],
 ) -> None:
+    """Append DSL lines to the daemon's recent buffer and persist them."""
     daemon._recent_dsl.extend(dsl_lines)
     daemon._recent_dsl.append(final_dsl_line)
     daemon._recent_dsl.extend(operator_dsl_lines)
     if len(daemon._recent_dsl) > 50:
         daemon._recent_dsl = daemon._recent_dsl[-50:]
     _persist_recent_dsl(daemon)
-    if dsl_lines:
-        info["drive_dsl"] = dsl_lines
-    info["drive_dsl_outcome"] = final_dsl_line
-    info["drive_dsl_operator"] = operator_dsl_lines
+
+
+def _dsl_info_fields(
+    dsl_lines: list[str],
+    final_dsl_line: str,
+    operator_dsl_lines: list[str],
+) -> dict[str, Any]:
+    """Return the ``drive_dsl*`` info additions for persisted DSL lines."""
+    return {
+        **({"drive_dsl": dsl_lines} if dsl_lines else {}),
+        "drive_dsl_outcome": final_dsl_line,
+        "drive_dsl_operator": operator_dsl_lines,
+    }
 
 
 def _record_plugin_ack_command_telemetry(
@@ -468,26 +473,23 @@ def _send_plugin_ack_reply(
     original_text: str | None = None,
 ) -> None:
     """Send final plugin ack reply to CLI client with DSL trace."""
-    _attach_drive_replay_commands(
-        daemon,
-        info,
-        corr=corr,
-        ide=fallback_ide,
-        original_text=original_text,
-    )
-    _ensure_plugin_backend(info)
+    info = {
+        **_plugin_backend_defaults(info),
+        **info,
+        **_drive_replay_info(
+            daemon,
+            corr=corr,
+            ide=fallback_ide,
+            original_text=original_text,
+        ),
+    }
     summary, route_summary, dsl_lines, final_dsl_line, operator_dsl_lines = _log_plugin_ack_trace(
         daemon,
         info,
         plugin_ok=plugin_ok,
     )
-    _persist_plugin_ack_dsl(
-        daemon,
-        info,
-        dsl_lines=dsl_lines,
-        final_dsl_line=final_dsl_line,
-        operator_dsl_lines=operator_dsl_lines,
-    )
+    _record_recent_dsl(daemon, dsl_lines, final_dsl_line, operator_dsl_lines)
+    info = {**info, **_dsl_info_fields(dsl_lines, final_dsl_line, operator_dsl_lines)}
     _record_plugin_ack_command_telemetry(daemon, fallback_ide, info)
     _record_plugin_ack_integration(
         daemon,
@@ -553,7 +555,7 @@ def _strict_plugin_ack_ok(
     plugin_ok: bool,
     submit_requested: bool,
     plugin_ide: str | None,
-) -> bool:
+) -> tuple[bool, dict[str, Any]]:
     """Apply strict plugin ack verification if enabled."""
     if not DriveOrchestrator.should_fail_strict_plugin_ack(
         info=info,
@@ -561,12 +563,13 @@ def _strict_plugin_ack_ok(
         submit_requested=submit_requested,
         plugin_ide=plugin_ide,
     ):
-        return plugin_ok
-    info["message"] = (
-        "strict plugin verification failed: expected full VS Code plugin "
-        "ack with winning_focus_open / winning_paste / winning_submit"
-    )
-    return False
+        return plugin_ok, {}
+    return False, {
+        "message": (
+            "strict plugin verification failed: expected full VS Code plugin "
+            "ack with winning_focus_open / winning_paste / winning_submit"
+        )
+    }
 
 
 def _record_plugin_ack_integration(
@@ -660,16 +663,17 @@ def handle_ack(daemon: Any, client: _Client, msg: Message) -> None:
             original_text=original_text,
         )
         return
-    plugin_ok = _strict_plugin_ack_ok(
+    plugin_ok, strict_extra = _strict_plugin_ack_ok(
         info,
         plugin_ok=raw_plugin_ok,
         submit_requested=submit_requested,
         plugin_ide=plugin_ide,
     )
+    info = {**info, **strict_extra}
     client.awaiting_plugin = None
     client.awaiting_plugin_info = None
     client.awaiting_plugin_timer = None
-    if _relay_plugin_ack_os_fallback(
+    handled, fallback_extra = _relay_plugin_ack_os_fallback(
         daemon,
         cli_client,
         corr,
@@ -680,14 +684,15 @@ def handle_ack(daemon: Any, client: _Client, msg: Message) -> None:
         submit_requested=submit_requested,
         plugin_ide=plugin_ide,
         require_plugin=require_plugin,
-    ):
+    )
+    if handled:
         return
     _send_plugin_ack_reply(
         daemon,
         cli_client,
         corr,
         fallback_ide,
-        info=info,
+        info={**info, **fallback_extra},
         plugin_ok=plugin_ok,
         original_text=original_text,
     )

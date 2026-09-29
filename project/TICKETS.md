@@ -370,4 +370,5 @@ project analysis or human-owned ticket inputs.
 | **ticket-371** | [`README.md`](./ticket-371/README.md) | - | - | - | - | - |
 | **ticket-372** | [`README.md`](./ticket-372/README.md) | - | - | - | - | - |
 | **ticket-373** | [`README.md`](./ticket-373/README.md) | - | - | - | - | - |
+| **ticket-374** | [`README.md`](./ticket-374/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->

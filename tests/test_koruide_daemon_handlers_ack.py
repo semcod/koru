@@ -15,7 +15,7 @@ from koruide.daemon.handlers_ack import (
     _strict_plugin_ack_ok,
     handle_ack,
 )
-from koruide.protocol import Message
+from koruide.protocol import Message, decode
 
 
 def test_plugin_ack_needs_os_fallback_check(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -53,7 +53,7 @@ def test_strict_plugin_ack_ok_when_not_strict(monkeypatch: pytest.MonkeyPatch) -
     )
     
     info = {"delivered": True}
-    result = _strict_plugin_ack_ok(
+    result, extra = _strict_plugin_ack_ok(
         info,
         plugin_ok=True,
         submit_requested=True,
@@ -61,6 +61,7 @@ def test_strict_plugin_ack_ok_when_not_strict(monkeypatch: pytest.MonkeyPatch) -
     )
     
     assert result is True
+    assert extra == {}
     assert "message" not in info
 
 
@@ -73,7 +74,7 @@ def test_strict_plugin_ack_ok_when_strict_fails(monkeypatch: pytest.MonkeyPatch)
     )
     
     info = {"delivered": True}
-    result = _strict_plugin_ack_ok(
+    result, extra = _strict_plugin_ack_ok(
         info,
         plugin_ok=True,
         submit_requested=True,
@@ -81,8 +82,8 @@ def test_strict_plugin_ack_ok_when_strict_fails(monkeypatch: pytest.MonkeyPatch)
     )
     
     assert result is False
-    assert "message" in info
-    assert "strict plugin verification failed" in info["message"]
+    assert "message" not in info
+    assert "strict plugin verification failed" in extra["message"]
 
 
 def test_annotated_plugin_ack_info_builds_metadata(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -453,8 +454,9 @@ def test_send_plugin_ack_reply_persists_operator_replay_dsl(
 
     replay_path = tmp_path / ".planfile" / ".koru" / "replay" / "corr-replay.prompt"
     assert replay_path.read_text(encoding="utf-8") == "hello from replay"
-    assert "--prompt-file" in info["replay_command"]
-    assert info["drive_dsl_operator"][0].startswith(
+    sent = decode(daemon._send.call_args[0][1])
+    assert "--prompt-file" in sent.data["replay_command"]
+    assert sent.data["drive_dsl_operator"][0].startswith(
         "#900 act=diagnose severity=error code=submit_not_verified",
     )
     assert any(line.startswith("#902 act=replay") for line in daemon._recent_dsl)
