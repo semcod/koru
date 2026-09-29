@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-418",
+  "summary": "refactor(dsl2koru-grammar): address shotgun surgery on payload variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-418/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/dsl2koru/src/dsl2koru/grammar.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "69d0d2d84467ac2348b8529e9ec37d891e8a8fb4",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on payload removed in dsl2koru grammar.py: parse/serialize params renamed per verb family (std_fields, history_fields, lane_fields, resolve_fields, repair_fields, ui_fields, parsed, values, std_values, history_values, lane_values, resolve_values, repair_values, ui_values, command).",
+    "nonGoals": [
+      "DSL grammar semantics",
+      "Other smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Token-level rename of the shared payload parameter to per-function semantic names; all call sites positional; to_text callers positional.",
+      "components": [
+        {
+          "name": "dsl2koru-grammar",
+          "paths": [
+            "packages/dsl2koru/src/dsl2koru/grammar.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest packages/dsl2koru/tests -x -q"
+        ],
+        "evidence": "Grammar parse/serialize round-trip preserved."
+      }
+    ]
+  }
+}

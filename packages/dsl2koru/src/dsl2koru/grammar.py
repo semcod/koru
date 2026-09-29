@@ -71,54 +71,54 @@ _VERB_SPECS: dict[str, VerbSpec] = {
 }
 
 
-def _parse_standard(verb: str, rest: list[str], payload: Payload, context: str | None) -> None:
+def _parse_standard(verb: str, rest: list[str], std_fields: Payload, context: str | None) -> None:
     fields, positional = _VERB_SPECS[verb]
     for name, is_boolean in fields:
         value = _flag(rest, name)
         if value:
-            payload[name] = True if is_boolean else value
-    if verb == "ENV" and "file" not in payload and context:
-        payload["file"] = context
+            std_fields[name] = True if is_boolean else value
+    if verb == "ENV" and "file" not in std_fields and context:
+        std_fields["file"] = context
     if positional and (args := _arguments(rest)):
-        payload[positional] = " ".join(args)
+        std_fields[positional] = " ".join(args)
 
 
-def _parse_query_repair_history(rest: list[str], payload: Payload, default_project: str | None) -> None:
-    payload["project"] = _flag(rest, "project") or default_project or "."
-    payload["limit"] = int(limit) if (limit := _flag(rest, "limit")) else 20
+def _parse_query_repair_history(rest: list[str], history_fields: Payload, default_project: str | None) -> None:
+    history_fields["project"] = _flag(rest, "project") or default_project or "."
+    history_fields["limit"] = int(limit) if (limit := _flag(rest, "limit")) else 20
     if code := _flag(rest, "code"):
-        payload["code"] = code
+        history_fields["code"] = code
 
 
-def _parse_lane_status(rest: list[str], payload: Payload, _context: str | None) -> None:
-    payload["ide"] = (_flag(rest, "ide") or rest[0]) if rest else "auto"
-    payload["instance"] = _flag(rest, "instance") or "default"
+def _parse_lane_status(rest: list[str], lane_fields: Payload, _context: str | None) -> None:
+    lane_fields["ide"] = (_flag(rest, "ide") or rest[0]) if rest else "auto"
+    lane_fields["instance"] = _flag(rest, "instance") or "default"
 
 
-def _parse_resolve(rest: list[str], payload: Payload, default_project: str | None) -> None:
+def _parse_resolve(rest: list[str], resolve_fields: Payload, default_project: str | None) -> None:
     stop = next((index for index, token in enumerate(rest) if token.upper() == "PROJECT"), len(rest))
-    payload["prompt"] = " ".join(rest[:stop]).strip('"')
+    resolve_fields["prompt"] = " ".join(rest[:stop]).strip('"')
     if project := _flag(rest, "project") or default_project:
-        payload["project"] = project
+        resolve_fields["project"] = project
 
 
-def _parse_repair_run(rest: list[str], payload: Payload, default_project: str | None) -> None:
+def _parse_repair_run(rest: list[str], repair_fields: Payload, default_project: str | None) -> None:
     canonical = default_project is not None or any(
         token.upper() in {"IDE", "INSTANCE", "PROJECT", "TRIGGER"} for token in rest
     )
     if _flag(rest, "fix"):
-        payload["fix"] = True
+        repair_fields["fix"] = True
     for name in ("ide", "instance"):
         if value := _flag(rest, name):
-            payload[name] = value
+            repair_fields[name] = value
     if canonical:
-        payload.setdefault(
+        repair_fields.setdefault(
             "ide",
             rest[0] if rest and rest[0].upper() not in {"IDE", "INSTANCE", "PROJECT", "TRIGGER"} else "auto",
         )
-        payload.setdefault("instance", "default")
-        payload["project"] = _flag(rest, "project") or default_project or "."
-        payload["trigger"] = _flag(rest, "trigger") or "manual"
+        repair_fields.setdefault("instance", "default")
+        repair_fields["project"] = _flag(rest, "project") or default_project or "."
+        repair_fields["trigger"] = _flag(rest, "trigger") or "manual"
 
 
 _SPECIAL_PARSERS: dict[str, Parser] = {
@@ -130,19 +130,19 @@ _SPECIAL_PARSERS: dict[str, Parser] = {
 }
 
 
-def _parse_ui(verb: str, rest: list[str], payload: Payload) -> None:
+def _parse_ui(verb: str, rest: list[str], ui_fields: Payload) -> None:
     for name in ("image", "window"):
         if value := _flag(rest, name):
-            payload[name] = value
-    payload["execute"] = not (_flag(rest, "execute") == "0" or _flag(rest, "dry_run"))
+            ui_fields[name] = value
+    ui_fields["execute"] = not (_flag(rest, "execute") == "0" or _flag(rest, "dry_run"))
     args = _ui_arguments(rest)
     if verb == "UI_TYPE":
         if len(args) >= 2 and args[0].upper() == "IN":
-            payload.update(value="", field=" ".join(args[1:]).strip('"'))
+            ui_fields.update(value="", field=" ".join(args[1:]).strip('"'))
         elif len(args) >= 3 and args[1].upper() == "IN":
-            payload.update(value=args[0].strip('"'), field=" ".join(args[2:]).strip('"'))
+            ui_fields.update(value=args[0].strip('"'), field=" ".join(args[2:]).strip('"'))
         elif args:
-            payload["value"] = args[0].strip('"')
+            ui_fields["value"] = args[0].strip('"')
     elif args:
         name, join = {
             "UI_KEY": ("keys", False),
@@ -150,7 +150,7 @@ def _parse_ui(verb: str, rest: list[str], payload: Payload) -> None:
             "UI_NL": ("prompt", True),
         }.get(verb, ("", False))
         if name:
-            payload[name] = (" ".join(args) if join else args[0]).strip('"')
+            ui_fields[name] = (" ".join(args) if join else args[0]).strip('"')
 
 
 def parse_line(
@@ -164,23 +164,23 @@ def parse_line(
         return {}
     raw_verb = tokens[0].upper()
     verb = normalize_verb(raw_verb)
-    payload: Payload = {"verb": verb}
+    parsed: Payload = {"verb": verb}
     if raw_verb.replace("-", "_") == "LANE_STATUS":
-        payload["lane_status"] = True
+        parsed["lane_status"] = True
     context = default_project if verb in _SPECIAL_PARSERS else default_file
     if verb.startswith("UI_"):
-        _parse_ui(verb, tokens[1:], payload)
+        _parse_ui(verb, tokens[1:], parsed)
     elif parser := _SPECIAL_PARSERS.get(verb):
-        parser(tokens[1:], payload, context)
+        parser(tokens[1:], parsed, context)
     elif verb in _VERB_SPECS:
-        _parse_standard(verb, tokens[1:], payload, context)
+        _parse_standard(verb, tokens[1:], parsed, context)
     else:
         raise ValueError(f"unknown DSL verb: {verb}")
-    return payload
+    return parsed
 
 
-def _append_field(fields: list[str], payload: Payload, name: str) -> None:
-    value = payload.get(name)
+def _append_field(fields: list[str], values: Payload, name: str) -> None:
+    value = values.get(name)
     flag = f"--{name.replace('_', '-')}"
     if value is True:
         fields.append(flag)
@@ -188,59 +188,66 @@ def _append_field(fields: list[str], payload: Payload, name: str) -> None:
         fields.extend([flag, str(value)])
 
 
-def _serialize_standard(verb: str, std_tokens: list[str], payload: Payload) -> None:
+def _serialize_standard(verb: str, std_tokens: list[str], std_values: Payload) -> None:
     fields, positional = _VERB_SPECS[verb]
-    if verb == "TEXT" and positional and payload.get(positional):
-        std_tokens.append(str(payload[positional]))
+    if verb == "TEXT" and positional and std_values.get(positional):
+        std_tokens.append(str(std_values[positional]))
     for name, _is_boolean in fields:
-        _append_field(std_tokens, payload, name)
-    if verb != "TEXT" and positional and payload.get(positional):
-        std_tokens.append(str(payload[positional]))
+        _append_field(std_tokens, std_values, name)
+    if verb != "TEXT" and positional and std_values.get(positional):
+        std_tokens.append(str(std_values[positional]))
 
 
-def _serialize_query_repair_history(history_tokens: list[str], payload: Payload) -> None:
-    history_tokens.extend(["PROJECT", str(payload.get("project", "."))])
-    if payload.get("limit") not in (None, 20):
-        history_tokens.extend(["LIMIT", str(payload["limit"])])
-    if payload.get("code"):
-        history_tokens.extend(["CODE", str(payload["code"])])
+def _serialize_query_repair_history(history_tokens: list[str], history_values: Payload) -> None:
+    history_tokens.extend(["PROJECT", str(history_values.get("project", "."))])
+    if history_values.get("limit") not in (None, 20):
+        history_tokens.extend(["LIMIT", str(history_values["limit"])])
+    if history_values.get("code"):
+        history_tokens.extend(["CODE", str(history_values["code"])])
 
 
-def _serialize_lane_status(lane_tokens: list[str], payload: Payload) -> None:
-    lane_tokens.extend(["IDE", str(payload.get("ide", "auto")), "INSTANCE", str(payload.get("instance", "default"))])
+def _serialize_lane_status(lane_tokens: list[str], lane_values: Payload) -> None:
+    lane_tokens.extend(
+        [
+            "IDE",
+            str(lane_values.get("ide", "auto")),
+            "INSTANCE",
+            str(lane_values.get("instance", "default")),
+        ]
+    )
 
 
-def _serialize_resolve(resolve_tokens: list[str], payload: Payload) -> None:
-    resolve_tokens.append(f'"{payload.get("prompt", "")}"')
-    if payload.get("project"):
-        resolve_tokens.extend(["PROJECT", str(payload["project"])])
+def _serialize_resolve(resolve_tokens: list[str], resolve_values: Payload) -> None:
+    resolve_tokens.append(f'"{resolve_values.get("prompt", "")}"')
+    if resolve_values.get("project"):
+        resolve_tokens.extend(["PROJECT", str(resolve_values["project"])])
 
 
-def _serialize_repair_run(repair_tokens: list[str], payload: Payload) -> None:
-    if "project" in payload or "trigger" in payload:
+def _serialize_repair_run(repair_tokens: list[str], repair_values: Payload) -> None:
+    if "project" in repair_values or "trigger" in repair_values:
         repair_tokens.extend(
-            ["IDE", str(payload.get("ide", "auto")), "INSTANCE", str(payload.get("instance", "default"))]
+            ["IDE", str(repair_values.get("ide", "auto")), "INSTANCE", str(repair_values.get("instance", "default"))]
         )
-        repair_tokens.extend(["PROJECT", str(payload.get("project", "."))])
-        if payload.get("trigger") not in (None, "manual"):
-            repair_tokens.extend(["TRIGGER", str(payload["trigger"])])
-        if payload.get("fix"):
+        repair_tokens.extend(["PROJECT", str(repair_values.get("project", "."))])
+        if repair_values.get("trigger") not in (None, "manual"):
+            repair_tokens.extend(["TRIGGER", str(repair_values["trigger"])])
+        if repair_values.get("fix"):
             repair_tokens.append("--fix")
         return
     for name in ("fix", "ide", "instance"):
-        _append_field(repair_tokens, payload, name)
+        _append_field(repair_tokens, repair_values, name)
 
 
-def _serialize_ui(verb: str, ui_tokens: list[str], payload: Payload) -> None:
+def _serialize_ui(verb: str, ui_tokens: list[str], ui_values: Payload) -> None:
     if verb == "UI_TYPE":
-        if payload.get("value") is not None:
-            ui_tokens.append(f'"{payload["value"]}"')
-        if payload.get("field"):
-            ui_tokens.extend(["IN", f'"{payload["field"]}"'])
+        if ui_values.get("value") is not None:
+            ui_tokens.append(f'"{ui_values["value"]}"')
+        if ui_values.get("field"):
+            ui_tokens.extend(["IN", f'"{ui_values["field"]}"'])
         return
     name = {"UI_KEY": "keys", "UI_CLICK": "target", "UI_NL": "prompt"}.get(verb)
-    if name and payload.get(name):
-        value = str(payload[name])
+    if name and ui_values.get(name):
+        value = str(ui_values[name])
         ui_tokens.append(value if verb == "UI_KEY" else f'"{value}"')
 
 
@@ -253,19 +260,19 @@ _SPECIAL_SERIALIZERS: dict[str, Callable[[list[str], Payload], None]] = {
 }
 
 
-def to_text(payload: Payload) -> str:
-    verb = normalize_verb(str(payload.get("verb", "")))
+def to_text(command: Payload) -> str:
+    verb = normalize_verb(str(command.get("verb", "")))
     serialized = [verb]
     if verb.startswith("UI_"):
         for name in ("image", "window"):
-            _append_field(serialized, payload, name)
-        if payload.get("execute") is False:
+            _append_field(serialized, command, name)
+        if command.get("execute") is False:
             serialized.extend(["EXECUTE", "0"])
-        _serialize_ui(verb, serialized, payload)
+        _serialize_ui(verb, serialized, command)
     elif serializer := _SPECIAL_SERIALIZERS.get(verb):
-        serializer(serialized, payload)
+        serializer(serialized, command)
     elif verb in _VERB_SPECS:
-        _serialize_standard(verb, serialized, payload)
+        _serialize_standard(verb, serialized, command)
     else:
         raise ValueError(f"cannot serialize verb: {verb}")
     return " ".join(serialized)
