@@ -1,0 +1,97 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-358",
+  "summary": "fix queue runner assert on empty queue and operator guard EPERM",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-358/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/operator/operator_processes.py",
+    "src/koru/queue/runner.py",
+    "tests/test_operator_processes.py",
+    "tests/test_queue_runner.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "802386dd081829b1d137c69aa7a1d2bfc7cb5606",
+    "targetBranch": "main",
+    "outcome": "Queue runner returns an idle QueueRunResult when the planfile fast path yields no ticket (empty queue) instead of crashing on assert; operator process guard no longer crashes on PermissionError while polling processes it cannot signal.",
+    "nonGoals": [
+      "Changing queue admission or ticket selection semantics",
+      "Changing termination behavior for processes owned by the current user"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Return QueueRunResult(status=idle) for the empty-queue fast path and guard the assert; in the operator guard only wait on processes that were actually signaled and tolerate PermissionError during liveness probes.",
+      "components": [
+        {
+          "name": "queue",
+          "paths": [
+            "src/koru/queue/runner.py",
+            "tests/test_queue_runner.py"
+          ]
+        },
+        {
+          "name": "autonomy",
+          "paths": [
+            "src/koru/autonomy/operator/operator_processes.py",
+            "tests/test_operator_processes.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-358 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          ".venv/bin/python -m pytest tests/test_queue_runner.py -q"
+        ],
+        "evidence": "Empty-queue fast path returns status idle without AssertionError."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          ".venv/bin/python -m pytest tests/test_operator_processes.py -q"
+        ],
+        "evidence": "SIGTERM/probe PermissionError paths do not raise and only signaled processes are awaited."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}
