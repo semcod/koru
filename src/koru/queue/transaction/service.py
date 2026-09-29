@@ -131,20 +131,25 @@ def _screen_before_plan(result: CommandResult) -> _ScreenedPatch:
     return screened
 
 
+def _journal_step(journal: RunJournal, phase: str, **kwargs) -> None:
+    """The single append point for run-journal events."""
+    journal.append(phase, **kwargs)
+
+
 def _refused(journal: RunJournal, outcome: PatchOutcome) -> PatchOutcome:
     """Journal a refusal decision and return the outcome unchanged."""
-    journal.append(PHASE_REFUSED, data={"code": outcome.code})
+    _journal_step(journal, PHASE_REFUSED, data={"code": outcome.code})
     return outcome
 
 
 def _journal_outcome(journal: RunJournal, phase: str, outcome: PatchOutcome) -> PatchOutcome:
     """Journal a terminal phase for an outcome and return it unchanged."""
-    journal.append(phase, data={"code": outcome.code})
+    _journal_step(journal, phase, data={"code": outcome.code})
     return outcome
 
 
 def _journal_frozen(journal: RunJournal, frozen: dict) -> None:
-    journal.append(PHASE_FROZEN, manifest_hash=frozen["manifest_hash"])
+    _journal_step(journal, PHASE_FROZEN, manifest_hash=frozen["manifest_hash"])
 
 
 def _freeze_and_journal(freeze: ManifestFreeze, journal: RunJournal) -> dict:
@@ -161,7 +166,8 @@ def _open_run_journal(
 ) -> RunJournal:
     """Give the run its identity and record what was resolved from the ticket."""
     journal = RunJournal(project, plan.run_id)
-    journal.append(
+    _journal_step(
+        journal,
         PHASE_RESOLVED,
         data={
             "mode": plan.mode,
@@ -199,7 +205,7 @@ def _deliver_artifact(
     """Artifact mode: freeze the patch and hand it over, touching no workspace."""
     frozen = _freeze_and_journal(freeze, journal)
     deliver_patch_artifact(plan, frozen)
-    journal.append(PHASE_COMPLETED, data={"delivery": "artifact"})
+    _journal_step(journal, PHASE_COMPLETED, data={"delivery": "artifact"})
     return PatchTransactionResult(result, None, plan=plan, manifest=freeze.manifest)
 
 
@@ -266,7 +272,8 @@ def _authorize(
     if refusal is not None:
         return _refused(journal, refusal)
     record = getattr(authorize, "record", None) or {}
-    journal.append(
+    _journal_step(
+        journal,
         PHASE_AUTHORIZED,
         manifest_hash=frozen.get("manifest_hash"),
         data={"jti": record.get("jti")} if record.get("jti") else None,
@@ -288,20 +295,20 @@ def _run_isolated(
     if refusal is not None:
         return refusal
 
-    journal.append(PHASE_STAGING, data={"mode": plan.mode})
+    _journal_step(journal, PHASE_STAGING, data={"mode": plan.mode})
     staged = stage_patch(plan, shell_runner)
     if not staged.isolated:
-        journal.append(PHASE_STAGING_UNAVAILABLE)
+        _journal_step(journal, PHASE_STAGING_UNAVAILABLE)
         return _without_isolation(plan, freeze, shell_runner, journal)
     if staged.outcome is not None:
         return _refused(journal, staged.outcome)
-    journal.append(PHASE_STAGED, data={"verified": True})
+    _journal_step(journal, PHASE_STAGED, data={"verified": True})
     if plan.mode == PROMOTION_BRANCH:
         # The verified result already lives on its own ref; deliberately nothing
         # is written to the shared working tree. The branch commit happened
         # under the ``staging`` intent, so ``staged`` closes it and ``promoted``
         # records where the result now lives.
-        journal.append(PHASE_PROMOTED, data={"branch": f"koru/run-{plan.run_id}"})
+        _journal_step(journal, PHASE_PROMOTED, data={"branch": f"koru/run-{plan.run_id}"})
         return None
 
     conflict = guard_promotion(plan, frozen)
@@ -383,7 +390,7 @@ def _apply_to_workspace(
     """Write the patch into the real tree, gate it if asked, then promote."""
     freeze.freeze()
 
-    journal.append(PHASE_APPLYING)
+    _journal_step(journal, PHASE_APPLYING)
     applied = apply_unified_diff(plan.project, plan.diff)
     if not applied.ok:
         return _refused(
@@ -395,7 +402,7 @@ def _apply_to_workspace(
                 diagnostics=applied.detail,
             ),
         )
-    journal.append(PHASE_APPLIED, data={"changed_files": sorted(applied.changed_files)})
+    _journal_step(journal, PHASE_APPLIED, data={"changed_files": sorted(applied.changed_files)})
 
     if verify:
         try:
@@ -406,13 +413,13 @@ def _apply_to_workspace(
             outcome = roll_back_failed_verify(plan, applied.changed_files, gate)
             phase = PHASE_ROLLED_BACK if outcome.workspace_left_untouched else PHASE_REFUSED
             return _journal_outcome(journal, phase, outcome)
-        journal.append(PHASE_VERIFIED)
+        _journal_step(journal, PHASE_VERIFIED)
 
     if plan.mode != PROMOTION_COMMIT:
         return None
-    journal.append(PHASE_PROMOTING, data={"mode": plan.mode})
+    _journal_step(journal, PHASE_PROMOTING, data={"mode": plan.mode})
     outcome = commit_if_requested(plan, applied.changed_files)
     if outcome is not None:
         return _journal_outcome(journal, PHASE_ROLLED_BACK, outcome)
-    journal.append(PHASE_PROMOTED, data={"mode": plan.mode})
+    _journal_step(journal, PHASE_PROMOTED, data={"mode": plan.mode})
     return None

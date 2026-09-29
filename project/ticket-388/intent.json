@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-388",
+  "summary": "refactor(queue-transaction): address shotgun surgery on journal variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-388/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/transaction/service.py",
+    "tests/test_queue_transaction_phases.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "4f0848e7f02747f0617325098a25edc87bafd593",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on journal removed: every direct journal.append routed through a single _journal_step append point; journal mutations drop to 3 functions (open + assign sites), preserving identical phase/event payloads and ordering.",
+    "nonGoals": [
+      "Changing journaled phases, payloads, or ordering",
+      "Refactoring other smells in the transaction package"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Introduce _journal_step(journal, phase, **kwargs) as the sole RunJournal.append call site in the service orchestrator.",
+      "components": [
+        {
+          "name": "queue-transaction",
+          "paths": [
+            "src/koru/queue/transaction/service.py",
+            "tests/test_queue_transaction_phases.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; mechanical routing refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_queue_transaction_phases.py tests/test_queue_journal.py -x -q"
+        ],
+        "evidence": "All journaled phases and their payloads unchanged across apply/artifact/isolated/direct/rollback paths."
+      }
+    ]
+  }
+}
