@@ -616,6 +616,38 @@ def _finalize_ticket(
     )
 
 
+def _is_native_runner(runner: Callable[[list[str], Path], CommandResult]) -> bool:
+    return runner is run_process or getattr(runner, "__name__", "") in {
+        "run_process",
+        "sprint_runner",
+    }
+
+
+def _model_dump(ticket: Any) -> dict[str, Any]:
+    if hasattr(ticket, "model_dump"):
+        return ticket.model_dump(mode="json", exclude_none=True)
+    return dict(ticket)
+
+
+def _planfile_list_error(next_result: CommandResult) -> QueueRunResult:
+    from koru.queue.ticket import planfile_module_missing
+
+    message = "planfile ticket list failed"
+    if planfile_module_missing(f"{next_result.stdout}\n{next_result.stderr}"):
+        message += (
+            " — planfile module missing in the resolved environment; "
+            "fix: pip install planfile into the project venv "
+            "(or pip install 'koru[planfile]')"
+        )
+    return QueueRunResult(
+        status="planfile_error",
+        message=message,
+        exit_code=next_result.returncode,
+        stdout=next_result.stdout,
+        stderr=next_result.stderr,
+    )
+
+
 def _next_ticket_or_result(
     project: Path,
     planfile_runner: Callable[[list[str], Path], CommandResult],
@@ -624,9 +656,7 @@ def _next_ticket_or_result(
     *,
     interactive: bool = False,
 ) -> tuple[dict[str, Any] | None, QueueRunResult | None]:
-    from koru.queue.runners import run_process
-
-    if planfile_runner is run_process or getattr(planfile_runner, "__name__", "") in {"run_process", "sprint_runner"}:
+    if _is_native_runner(planfile_runner):
         try:
             from planfile import Planfile
 
@@ -671,22 +701,7 @@ def _next_ticket_or_result(
         runner=planfile_runner,
     )
     if next_result.returncode != 0:
-        from koru.queue.ticket import planfile_module_missing
-
-        message = "planfile ticket list failed"
-        if planfile_module_missing(f"{next_result.stdout}\n{next_result.stderr}"):
-            message += (
-                " — planfile module missing in the resolved environment; "
-                "fix: pip install planfile into the project venv "
-                "(or pip install 'koru[planfile]')"
-            )
-        return None, QueueRunResult(
-            status="planfile_error",
-            message=message,
-            exit_code=next_result.returncode,
-            stdout=next_result.stdout,
-            stderr=next_result.stderr,
-        )
+        return None, _planfile_list_error(next_result)
 
     ticket = parse_next_ticket(
         next_result.stdout,
@@ -720,6 +735,113 @@ def _next_ticket_or_result(
     return ticket, None
 
 
+def _next_tickets_sdk(
+    project: Path,
+    planfile_runner: Callable[[list[str], Path], CommandResult],
+    *,
+    count: int,
+    queue_name: str | None,
+    target_ticket_id: str | None,
+    disjoint_files: bool,
+    interactive: bool,
+    locked_files: set[str] | None,
+    exclude_ids: set[str] | None,
+) -> tuple[list[dict[str, Any]] | None, bool]:
+    """Native Planfile fast path.
+
+    Returns ``(tickets, True)`` when the SDK path decided the outcome, or
+    ``(None, False)`` to fall through to the CLI transport.
+    """
+    try:
+        from planfile import Planfile
+
+        pf = Planfile.auto_discover(project)
+        if hasattr(pf, "next_tickets"):
+            kwargs: dict[str, Any] = {
+                "count": count,
+                "queue": queue_name,
+                "disjoint_files": disjoint_files,
+            }
+            if locked_files is not None:
+                kwargs["locked_files"] = locked_files
+            if exclude_ids is not None:
+                kwargs["exclude_ids"] = exclude_ids
+            native_tickets = pf.next_tickets(**kwargs)
+            if native_tickets:
+                return [_model_dump(t) for t in native_tickets], True
+        if (
+            count == 1
+            and hasattr(pf, "next_ticket")
+            and not interactive
+            and not locked_files
+            and not exclude_ids
+        ):
+            single = pf.next_ticket(queue=queue_name)
+            if single:
+                return [_model_dump(single)], True
+        if hasattr(pf, "list_tickets"):
+            listed = _next_tickets_sdk_list(
+                pf,
+                project,
+                planfile_runner,
+                count=count,
+                queue_name=queue_name,
+                target_ticket_id=target_ticket_id,
+                disjoint_files=disjoint_files,
+                interactive=interactive,
+            )
+            if listed is not None:
+                return listed, True
+    except Exception:
+        pass
+    return None, False
+
+
+def _next_tickets_sdk_list(
+    pf: Any,
+    project: Path,
+    planfile_runner: Callable[[list[str], Path], CommandResult],
+    *,
+    count: int,
+    queue_name: str | None,
+    target_ticket_id: str | None,
+    disjoint_files: bool,
+    interactive: bool,
+) -> list[dict[str, Any]] | None:
+    """SDK ``list_tickets`` fallback; ``None`` defers to the CLI transport."""
+    open_tickets = pf.list_tickets(status="open")
+    if not open_tickets:
+        return []
+    raw_tickets = [_model_dump(t) for t in open_tickets]
+    tickets = parse_next_tickets(
+        json.dumps(raw_tickets),
+        count=count,
+        queue_name=queue_name,
+        ticket_id=target_ticket_id,
+        interactive=interactive,
+        disjoint_files=disjoint_files,
+    )
+    if not tickets:
+        return None
+    try:
+        payload = admitted_payload(
+            project, json.dumps(tickets), runner=planfile_runner, queue_name=queue_name
+        )
+        admitted_tickets = parse_next_tickets(
+            payload,
+            count=count,
+            queue_name=queue_name,
+            ticket_id=target_ticket_id,
+            interactive=interactive,
+            disjoint_files=disjoint_files,
+        )
+        if admitted_tickets:
+            return admitted_tickets
+    except ValueError:
+        pass
+    return None
+
+
 def _next_tickets_or_result(
     project: Path,
     planfile_runner: Callable[[list[str], Path], CommandResult],
@@ -749,72 +871,20 @@ def _next_tickets_or_result(
         return ([single_t] if single_t else []), None
 
     # Fast path: native Planfile API with graph/critical-path prioritization
-    if planfile_runner is run_process or getattr(planfile_runner, "__name__", "") in {"run_process", "sprint_runner"}:
-        try:
-            from planfile import Planfile
-
-            pf = Planfile.auto_discover(project)
-            if hasattr(pf, "next_tickets"):
-                kwargs: dict[str, Any] = {
-                    "count": count,
-                    "queue": queue_name,
-                    "disjoint_files": disjoint_files,
-                }
-                if locked_files is not None:
-                    kwargs["locked_files"] = locked_files
-                if exclude_ids is not None:
-                    kwargs["exclude_ids"] = exclude_ids
-                native_tickets = pf.next_tickets(**kwargs)
-                if native_tickets:
-                    dict_tickets = [
-                        t.model_dump(mode="json", exclude_none=True) if hasattr(t, "model_dump") else dict(t)
-                        for t in native_tickets
-                    ]
-                    return dict_tickets, None
-            if count == 1 and hasattr(pf, "next_ticket") and not interactive and not locked_files and not exclude_ids:
-                single = pf.next_ticket(queue=queue_name)
-                if single:
-                    dict_ticket = (
-                        single.model_dump(mode="json", exclude_none=True)
-                        if hasattr(single, "model_dump")
-                        else dict(single)
-                    )
-                    return [dict_ticket], None
-            if hasattr(pf, "list_tickets"):
-                open_tickets = pf.list_tickets(status="open")
-                if not open_tickets:
-                    return [], None
-                raw_tickets = [
-                    t.model_dump(mode="json", exclude_none=True) if hasattr(t, "model_dump") else dict(t)
-                    for t in open_tickets
-                ]
-                tickets = parse_next_tickets(
-                    json.dumps(raw_tickets),
-                    count=count,
-                    queue_name=queue_name,
-                    ticket_id=target_ticket_id,
-                    interactive=interactive,
-                    disjoint_files=disjoint_files,
-                )
-                if tickets:
-                    try:
-                        payload = admitted_payload(
-                            project, json.dumps(tickets), runner=planfile_runner, queue_name=queue_name
-                        )
-                        admitted_tickets = parse_next_tickets(
-                            payload,
-                            count=count,
-                            queue_name=queue_name,
-                            ticket_id=target_ticket_id,
-                            interactive=interactive,
-                            disjoint_files=disjoint_files,
-                        )
-                        if admitted_tickets:
-                            return admitted_tickets, None
-                    except ValueError:
-                        pass
-        except Exception:
-            pass
+    if _is_native_runner(planfile_runner):
+        sdk_tickets, sdk_handled = _next_tickets_sdk(
+            project,
+            planfile_runner,
+            count=count,
+            queue_name=queue_name,
+            target_ticket_id=target_ticket_id,
+            disjoint_files=disjoint_files,
+            interactive=interactive,
+            locked_files=locked_files,
+            exclude_ids=exclude_ids,
+        )
+        if sdk_handled:
+            return sdk_tickets or [], None
 
     next_result = planfile_command(
         project,
@@ -822,22 +892,7 @@ def _next_tickets_or_result(
         runner=planfile_runner,
     )
     if next_result.returncode != 0:
-        from koru.queue.ticket import planfile_module_missing
-
-        message = "planfile ticket list failed"
-        if planfile_module_missing(f"{next_result.stdout}\n{next_result.stderr}"):
-            message += (
-                " — planfile module missing in the resolved environment; "
-                "fix: pip install planfile into the project venv "
-                "(or pip install 'koru[planfile]')"
-            )
-        return [], QueueRunResult(
-            status="planfile_error",
-            message=message,
-            exit_code=next_result.returncode,
-            stdout=next_result.stdout,
-            stderr=next_result.stderr,
-        )
+        return [], _planfile_list_error(next_result)
 
     tickets = parse_next_tickets(
         next_result.stdout,

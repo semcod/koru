@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-368",
+  "summary": "refactor(queue-runner): reduce _next_tickets_or_result cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-368/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/runner.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0a41c0946d00ffdb16404f4943d94e8a42c8d6d0",
+    "targetBranch": "main",
+    "outcome": "_next_tickets_or_result is a thin orchestrator (CC<=15): the native Planfile SDK fast path, the list_tickets fallback and the shared list-error result live in dedicated helpers; behavior and error contracts unchanged.",
+    "nonGoals": [
+      "Changing ticket selection, admission or error semantics",
+      "Refactoring other runner internals beyond the shared helpers"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 40,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _is_native_runner, _model_dump, _planfile_list_error, _next_tickets_sdk and _next_tickets_sdk_list; keep _next_tickets_or_result signature and CLI fallback order.",
+      "components": [
+        {
+          "name": "queue-runner",
+          "paths": [
+            "src/koru/queue/runner.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_queue_concurrency.py tests/test_queue_pipelining.py tests/test_planfile_queue.py -x -q"
+        ],
+        "evidence": "Queue selection and concurrency tests pass on SDK and CLI paths; _next_tickets_or_result CC<=15."
+      }
+    ]
+  }
+}
