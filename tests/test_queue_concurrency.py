@@ -147,6 +147,84 @@ def test_run_planfile_queue_loop_concurrent(tmp_path: Path) -> None:
             assert set(progress_results) == {"PAR-1", "PAR-2"}
 
 
+def test_run_planfile_queue_loop_worker_exception(tmp_path: Path) -> None:
+    tickets = [{"id": "FAIL-1", "status": "open", "priority": "high", "files": ["x.py"]}]
+
+    def fake_next_tickets(*args, **kwargs):
+        nonlocal tickets
+        if tickets:
+            batch = list(tickets)
+            tickets = []
+            return batch, None
+        return [], None
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("worker exploded")
+
+    with patch("koru.queue.runner._next_tickets_or_result", side_effect=fake_next_tickets):
+        with patch("koru.queue.loop.run_next_planfile_task", side_effect=boom):
+            loop_res = run_planfile_queue_loop(
+                project=tmp_path,
+                concurrency=2,
+                max_iterations=10,
+                planfile_runner=MagicMock(),
+                shell_runner=MagicMock(),
+                api_runner=MagicMock(),
+                llm_runner=MagicMock(),
+                prompt_runner=MagicMock(),
+            )
+
+    assert loop_res.failed == ["FAIL-1"]
+    assert loop_res.completed == []
+    assert loop_res.iterations == 1
+    assert loop_res.last_status == "idle"
+
+
+def test_run_planfile_queue_loop_terminal_status_stops(tmp_path: Path) -> None:
+    tickets = [{"id": "STOP-1", "status": "open", "priority": "high", "files": ["a.py"]}]
+    dispatched = []
+
+    def fake_next_tickets(*args, **kwargs):
+        nonlocal tickets
+        if tickets:
+            batch = list(tickets)
+            tickets = []
+            return batch, None
+        return [], None
+
+    def fake_run_task(*args, **kwargs):
+        target_id = kwargs.get("target_ticket_id") or "unknown"
+        return QueueRunResult(
+            status="waiting_input",
+            ticket_id=target_id,
+            executor_kind="shell",
+            message="needs input",
+        )
+
+    def stop_cb(res, it):
+        dispatched.append(res.ticket_id)
+        return False
+
+    with patch("koru.queue.runner._next_tickets_or_result", side_effect=fake_next_tickets):
+        with patch("koru.queue.loop.run_next_planfile_task", side_effect=fake_run_task):
+            loop_res = run_planfile_queue_loop(
+                project=tmp_path,
+                concurrency=2,
+                max_iterations=10,
+                stop_callback=stop_cb,
+                planfile_runner=MagicMock(),
+                shell_runner=MagicMock(),
+                api_runner=MagicMock(),
+                llm_runner=MagicMock(),
+                prompt_runner=MagicMock(),
+            )
+
+    assert loop_res.iterations == 1
+    assert loop_res.waiting == ["STOP-1"]
+    assert loop_res.last_status == "waiting_input"
+    assert dispatched == ["STOP-1"]
+
+
 def test_cli_waves_action(tmp_path: Path, capsys) -> None:
     (tmp_path / ".planfile").mkdir()
     with patch("subprocess.run") as mock_sub:
