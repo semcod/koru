@@ -17,6 +17,21 @@ from koru.env_flags import env_disabled as _env_disabled
 from koru.env_flags import env_truthy as _env_truthy
 
 
+def _set_env(key: str, value: str) -> None:
+    os.environ[key] = value
+
+
+def _pop_env(key: str) -> None:
+    os.environ.pop(key, None)
+
+
+def _restore_env(key: str, previous: str | None) -> None:
+    if previous is None:
+        _pop_env(key)
+    else:
+        _set_env(key, previous)
+
+
 def setup_autonomous_session(
     args: Any,
     *,
@@ -67,7 +82,7 @@ def setup_autonomous_session(
         stdio_info(line, fmt=args.emit_events)
     _log_runtime_readiness_gate(args, project, stdio_info=stdio_info)
     guard_rc = guard_existing_processes(args, project)
-    os.environ["KORU_STDIO_FORMAT"] = args.emit_events
+    _set_env("KORU_STDIO_FORMAT", args.emit_events)
     if args.emit_events == "jsonl":
         write_event(
             sys.stdout,
@@ -219,7 +234,7 @@ def _run_editable_koru_sync(
     pip = local_venv / "bin" / "pip"
     if not pip.is_file():
         return None
-    os.environ["KORU_CLI_SYNC_DONE"] = "1"
+    _set_env("KORU_CLI_SYNC_DONE", "1")
     proc = subprocess.run(
         [str(pip), "install", "-e", str(project.resolve())],
         capture_output=True,
@@ -325,20 +340,14 @@ def _socket_path_for_lane(default_socket_path: Any, lane: str | None) -> Path:
     previous_socket = os.environ.get("KORU_AUTOPILOT_SOCKET")
     try:
         if lane:
-            os.environ["KORU_AUTOPILOT_INSTANCE"] = lane
+            _set_env("KORU_AUTOPILOT_INSTANCE", lane)
         else:
-            os.environ.pop("KORU_AUTOPILOT_INSTANCE", None)
-        os.environ.pop("KORU_AUTOPILOT_SOCKET", None)
+            _pop_env("KORU_AUTOPILOT_INSTANCE")
+        _pop_env("KORU_AUTOPILOT_SOCKET")
         return default_socket_path().resolve()
     finally:
-        if previous_instance is None:
-            os.environ.pop("KORU_AUTOPILOT_INSTANCE", None)
-        else:
-            os.environ["KORU_AUTOPILOT_INSTANCE"] = previous_instance
-        if previous_socket is None:
-            os.environ.pop("KORU_AUTOPILOT_SOCKET", None)
-        else:
-            os.environ["KORU_AUTOPILOT_SOCKET"] = previous_socket
+        _restore_env("KORU_AUTOPILOT_INSTANCE", previous_instance)
+        _restore_env("KORU_AUTOPILOT_SOCKET", previous_socket)
 
 
 def _resolve_autopilot_lane(
@@ -356,15 +365,15 @@ def _resolve_autopilot_lane(
     if autopilot_ide and autopilot_ide != "auto":
         if not lane or lane == "auto":
             lane = default_autopilot_instance_for_ide(autopilot_ide)
-            os.environ["KORU_AUTOPILOT_INSTANCE"] = lane
+            _set_env("KORU_AUTOPILOT_INSTANCE", lane)
         elif lane == autopilot_ide:
             lane = default_autopilot_instance_for_ide(autopilot_ide)
-            os.environ["KORU_AUTOPILOT_INSTANCE"] = lane
+            _set_env("KORU_AUTOPILOT_INSTANCE", lane)
         elif lane.startswith(f"{autopilot_ide}-"):
             pass
         else:
             lane = default_autopilot_instance_for_ide(autopilot_ide)
-            os.environ["KORU_AUTOPILOT_INSTANCE"] = lane
+            _set_env("KORU_AUTOPILOT_INSTANCE", lane)
     return lane, autopilot_ide
 
 
@@ -415,7 +424,7 @@ def _decide_autopilot_socket(
         if env_socket_path == socket_path and lane and env_socket_instance == lane:
             socket_path = env_socket_path
         else:
-            os.environ["KORU_AUTOPILOT_SOCKET"] = str(socket_path)
+            _set_env("KORU_AUTOPILOT_SOCKET", str(socket_path))
     return AutopilotSocketDecision(
         lane=lane,
         autopilot_ide=autopilot_ide,
@@ -607,10 +616,7 @@ def cleanup_autonomous_session(
     *,
     stop_process: Any,
 ) -> None:
-    if previous_stdio_format_env is None:
-        os.environ.pop("KORU_STDIO_FORMAT", None)
-    else:
-        os.environ["KORU_STDIO_FORMAT"] = previous_stdio_format_env
+    _restore_env("KORU_STDIO_FORMAT", previous_stdio_format_env)
     signal.signal(signal.SIGTERM, previous_sigterm)
     if daemon is not None:
         daemon.stop()
@@ -633,9 +639,9 @@ def restore_autonomous_env_vars(snapshot: dict[str, tuple[bool, str | None]]) ->
     """Restore environment variables after autonomous mode."""
     for key, (was_set, value) in snapshot.items():
         if was_set:
-            os.environ[key] = value or ""
+            _set_env(key, value or "")
         else:
-            os.environ.pop(key, None)
+            _pop_env(key)
 
 
 @dataclass
@@ -666,12 +672,12 @@ def build_and_log_startup_probe(
     )
     ide = getattr(startup_probe, "resolved_autopilot_ide", None)
     if instance:
-        os.environ["KORU_AUTOPILOT_INSTANCE"] = instance
+        _set_env("KORU_AUTOPILOT_INSTANCE", instance)
     if ide:
-        os.environ["KORU_AUTOPILOT_IDE"] = ide
+        _set_env("KORU_AUTOPILOT_IDE", ide)
     expected_socket = getattr(startup_probe, "socket_path", None)
     if expected_socket:
-        os.environ["KORU_AUTOPILOT_SOCKET"] = str(expected_socket)
+        _set_env("KORU_AUTOPILOT_SOCKET", str(expected_socket))
     for line in format_startup_banner(startup_probe):
         stdio_info(line, fmt=args.emit_events)
     return startup_probe
