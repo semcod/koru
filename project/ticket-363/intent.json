@@ -1,0 +1,71 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-363",
+  "summary": "Stop GitHub issue-list sync before preflight refusal and report its errors (STARTER-603)",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-363/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/ticket_command/batch.py",
+    "tests/test_ticket_command_batch.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "eb0a7dc2cdb83d8c76d4adfce7a51abe1e0a1ebf",
+    "targetBranch": "main",
+    "outcome": "Issue-list runs sync the primary planfile backlog only after workspace preflight passes, only for tickets bound to the selected issues, never after a stopped run, and a failed or timed-out required sync stops the run with a persisted diagnostic.",
+    "nonGoals": [
+      "Changing per-issue ledger synchronization inside run_ticket",
+      "Changing the issue snapshot, receipt resume or comment-replay semantics",
+      "Planfile sync implementation changes outside the koru CLI boundary"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Gate the backlog sync behind preflight_workspace, scope it via planfile --ticket flags bound to the selected issue URLs, skip it for empty/dry-run/stopped runs, and surface nonzero exits and timeouts as RuntimeError recorded in the persisted queue result.",
+      "components": [
+        {
+          "name": "issue-list-batch",
+          "paths": ["src/koru/ticket_command/batch.py", "tests/test_ticket_command_batch.py"]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the ticket branch; the change is confined to batch sync ordering, scoping and error reporting."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": ["python3 -m pytest tests/test_ticket_command_batch.py -x -q"],
+        "evidence": "Dirty main, dry-run, empty list and stopped runs invoke zero backlog syncs; post-refusal no sync is attempted."
+      },
+      {
+        "criterion": "AC-2",
+        "commands": ["python3 -m pytest tests/test_ticket_command_batch.py -x -q"],
+        "evidence": "Sync commands carry --ticket ids bound to the selected issues only; nonzero exit and timeout stop the run with a persisted diagnostic instead of reporting completed."
+      }
+    ]
+  }
+}

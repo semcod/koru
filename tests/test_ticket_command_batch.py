@@ -328,30 +328,173 @@ def test_disabled_list_does_not_read_github_or_create_working_data(repo, monkeyp
         run_issue_list(LIST, profiles)
     assert not (root / ".subactor").exists()
 
+def _sync_spy(monkeypatch, returncode=0, failure=None):
+    """Count `planfile sync github` invocations while leaving other commands real."""
+    sync_calls = []
+    import subprocess as _sp
+
+    real_run = _sp.run
+
+    def fake_run(cmd, *args, **kwargs):
+        if isinstance(cmd, list) and "planfile.cli" in cmd and "sync" in cmd:
+            sync_calls.append(cmd)
+            if failure is not None:
+                raise failure
+            return SimpleNamespace(returncode=returncode, stdout="", stderr="boom" if returncode else "")
+        return real_run(cmd, *args, **kwargs)
+
+    monkeypatch.setattr("subprocess.run", fake_run)
+    return sync_calls
+
+
+def _configure_sync(root, monkeypatch, batch, ticket_ids=("GITHUB-12",)):
+    planfile_dir = root / ".planfile"
+    planfile_dir.mkdir(parents=True, exist_ok=True)
+    (planfile_dir / "github.planfile.yaml").write_text("sync: true\n")
+    monkeypatch.setattr(batch, "_bound_ticket_ids", lambda p, t: list(ticket_ids))
+
+
 def test_issue_list_synchronizes_primary_planfile_when_configured(repo, monkeypatch):
     import koru.ticket_command.batch as batch
 
     root, profiles = repo
-    planfile_dir = root / ".planfile"
-    planfile_dir.mkdir(parents=True, exist_ok=True)
-    (planfile_dir / "github.planfile.yaml").write_text("sync: true\n")
+    _configure_sync(root, monkeypatch, batch)
+    sync_calls = _sync_spy(monkeypatch)
 
-    sync_calls = []
-
-    import subprocess as _sp
-    real_run = _sp.run
-
-    def fake_run(cmd, *args, **kwargs):
-        if isinstance(cmd, list) and "planfile.cli" in cmd:
-            sync_calls.append((cmd, kwargs.get("cwd")))
-            return SimpleNamespace(returncode=0, stdout="")
-        return real_run(cmd, *args, **kwargs)
-
-    monkeypatch.setattr("subprocess.run", fake_run)
     backend, _ = backend_for([[issue(12)]])
     monkeypatch.setattr(batch, "run_ticket", lambda *a, **kw: {"state": "reported"})
     result = run_issue_list(LIST + "*", profiles, backend=backend)
     assert result["state"] == "completed"
     assert len(sync_calls) == 2
-    assert sync_calls[0][1] == root
-    assert "sync" in sync_calls[0][0] and "github" in sync_calls[0][0]
+    for cmd in sync_calls:
+        assert "--ticket" in cmd and "GITHUB-12" in cmd
+        assert "sync" in cmd and "github" in cmd
+
+
+def test_dirty_main_never_syncs_backlog(repo, monkeypatch):
+    import koru.ticket_command.batch as batch
+
+    root, profiles = repo
+    _configure_sync(root, monkeypatch, batch)
+    sync_calls = _sync_spy(monkeypatch)
+    (root / "value.py").write_text("Other session\n")
+
+    backend, _ = backend_for([[issue(12), issue(13)]])
+    result = run_issue_list(LIST, profiles, backend=backend)
+    assert result["state"] == "stopped"
+    assert sync_calls == []
+
+
+def test_empty_issue_list_never_syncs_backlog(repo, monkeypatch):
+    import koru.ticket_command.batch as batch
+
+    root, profiles = repo
+    _configure_sync(root, monkeypatch, batch)
+    sync_calls = _sync_spy(monkeypatch)
+
+    backend, _ = backend_for([[]])
+    result = run_issue_list(LIST, profiles, backend=backend)
+    assert result["state"] == "completed" and result["results"] == []
+    assert sync_calls == []
+
+
+def test_dry_run_issue_list_never_syncs_backlog(repo, monkeypatch):
+    import koru.ticket_command.batch as batch
+
+    root, profiles = repo
+    _configure_sync(root, monkeypatch, batch)
+    sync_calls = _sync_spy(monkeypatch)
+
+    backend, _ = backend_for([[issue(12)]])
+    result = run_issue_list(LIST, profiles, dry_run=True, backend=backend)
+    assert result["state"] == "planned"
+    assert sync_calls == []
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        SimpleNamespace(returncode=7, stdout="", stderr="sync exploded"),
+        "timeout",
+    ],
+)
+def test_required_sync_failure_stops_before_any_ticket(repo, monkeypatch, failure):
+    import koru.ticket_command.batch as batch
+
+    root, profiles = repo
+    _configure_sync(root, monkeypatch, batch)
+    import subprocess as _sp
+
+    sync_calls = _sync_spy(
+        monkeypatch,
+        returncode=failure.returncode if failure != "timeout" else 0,
+        failure=_sp.TimeoutExpired(["planfile"], 60) if failure == "timeout" else None,
+    )
+
+    backend, _ = backend_for([[issue(12), issue(13)]])
+    monkeypatch.setattr(batch, "run_ticket", lambda *a, **kw: pytest.fail("sync failure still ran a ticket"))
+    result = run_issue_list(LIST, profiles, backend=backend)
+    assert result["state"] == "stopped"
+    assert "sync" in result["message"]
+    assert len(sync_calls) == 1
+    persisted = json.loads((root / ".subactor/cache/koru-tickets/queue.json").read_text())
+    assert persisted["state"] == "stopped"
+    assert "sync" in persisted["diagnostic"]["message"] or "timed out" in persisted["diagnostic"]["message"]
+
+
+def test_stopped_run_does_not_sync_again(repo, monkeypatch):
+    import koru.ticket_command.batch as batch
+
+    root, profiles = repo
+    _configure_sync(root, monkeypatch, batch)
+    sync_calls = _sync_spy(monkeypatch)
+
+    backend, _ = backend_for([[issue(12), issue(13)]])
+    monkeypatch.setattr(batch, "run_ticket", lambda *a, **kw: {"state": "blocked"})
+    result = run_issue_list(LIST, profiles, backend=backend)
+    assert result["state"] == "stopped"
+    assert len(sync_calls) == 1
+
+
+def test_bound_ticket_ids_resolve_only_selected_issues(repo):
+    import koru.ticket_command.batch as batch
+
+    planfile = pytest.importorskip("planfile")
+    root, profiles = repo
+    pf = planfile.Planfile(str(root))
+    bound = pf.create_ticket(name="bound", sync={"github": {"url": LIST + "12", "id": "12"}})
+    pf.create_ticket(name="other", sync={"github": {"url": LIST + "99", "id": "99"}})
+    pf.create_ticket(name="plain")
+
+    profile = load_profile(LIST, profiles)
+    assert batch._bound_ticket_ids(profile, [LIST + "12"]) == [bound.id]
+
+
+def test_post_run_sync_failure_is_reported_not_completed(repo, monkeypatch):
+    import koru.ticket_command.batch as batch
+
+    root, profiles = repo
+    _configure_sync(root, monkeypatch, batch)
+    outcomes = iter([SimpleNamespace(returncode=0, stdout="", stderr=""),
+                     SimpleNamespace(returncode=7, stdout="", stderr="late failure")])
+
+    import subprocess as _sp
+    real_run = _sp.run
+    sync_calls = []
+
+    def fake_run(cmd, *args, **kwargs):
+        if isinstance(cmd, list) and "planfile.cli" in cmd and "sync" in cmd:
+            sync_calls.append(cmd)
+            return next(outcomes)
+        return real_run(cmd, *args, **kwargs)
+
+    monkeypatch.setattr("subprocess.run", fake_run)
+    backend, _ = backend_for([[issue(12)]])
+    monkeypatch.setattr(batch, "run_ticket", lambda *a, **kw: {"state": "reported"})
+    result = run_issue_list(LIST, profiles, backend=backend)
+    assert result["state"] == "stopped"
+    assert "sync" in result["message"]
+    persisted = json.loads((root / ".subactor/cache/koru-tickets/queue.json").read_text())
+    assert persisted["state"] == "stopped"
+    assert "late failure" in persisted["diagnostic"]["message"]
+    assert len(sync_calls) == 2
