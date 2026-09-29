@@ -6,11 +6,8 @@ import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TypeVar
 
 from .contracts import ProbeResult
-
-_T = TypeVar("_T")
 
 
 def current_local_day() -> str:
@@ -51,7 +48,7 @@ def init_db(db_path: Path) -> sqlite3.Connection:
     return conn
 
 
-def _with_conn(db_path: Path, fn: Callable[[sqlite3.Connection], _T]) -> _T:
+def _with_conn[T](db_path: Path, fn: Callable[[sqlite3.Connection], T]) -> T:
     """Run ``fn`` on a freshly initialized connection, always closing it."""
     conn = init_db(db_path)
     try:
