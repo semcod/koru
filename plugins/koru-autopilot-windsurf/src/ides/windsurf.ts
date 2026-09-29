@@ -8,8 +8,17 @@ import { registerStrategy } from "./registry";
 
 const ID = "windsurf";
 
+// Devin Desktop is a Windsurf-derived host that reports
+// ``vscode.env.appName`` as "Devin"; it runs the windsurf lane.
+const HOST_TOKENS = ["windsurf", "devin"];
+
+export function isWindsurfLaneHost(appName: string): boolean {
+  const lowered = appName.toLowerCase();
+  return HOST_TOKENS.some((token) => lowered.includes(token));
+}
+
 function detect(appName: string): string | undefined {
-  return appName.toLowerCase().includes("windsurf") ? ID : undefined;
+  return isWindsurfLaneHost(appName) ? ID : undefined;
 }
 
 function pasteDirectCommandsPrefix(): string[] {
