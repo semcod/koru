@@ -46,11 +46,11 @@ def surface_confirms_ide_capture(
     return stack in {"jetbrains_xwayland", "wayland_native", "x11", "xwayland"}
 
 
-def clear_surface_overridden_vql_staleness(out: dict[str, Any]) -> None:
+def clear_surface_overridden_vql_staleness(freshness_result: dict[str, Any]) -> None:
     """Do not reject a real VQL only because OCR missed a Wayland/XWayland title."""
-    if int(out.get("main_vql_layers") or out.get("elements") or 0) <= 0:
+    if int(freshness_result.get("main_vql_layers") or freshness_result.get("elements") or 0) <= 0:
         return
-    freshness = out.get("freshness")
+    freshness = freshness_result.get("freshness")
     if not isinstance(freshness, dict):
         return
     reasons = [str(item) for item in freshness.get("reasons") or []]
@@ -69,45 +69,45 @@ def clear_surface_overridden_vql_staleness(out: dict[str, Any]) -> None:
     freshness["stale"] = bool(remaining)
     if not remaining:
         freshness.pop("ide_window_warning", None)
-    out["sidecar_stale"] = bool(remaining)
+    freshness_result["sidecar_stale"] = bool(remaining)
 
 
-def apply_surface_capture_error_fallback(out: dict[str, Any], best_prov: dict[str, Any]) -> None:
+def apply_surface_capture_error_fallback(fallback_result: dict[str, Any], best_prov: dict[str, Any]) -> None:
     """Surface-only confirmation when the capture itself errored (no confirmed pixels)."""
-    out["capture_confirmed"] = False
-    out["capture_matches_ide"] = False
-    out["capture_confirmation_source"] = "ide_surface_best_surface_only"
-    out["surface_probe_confirmed"] = True
-    out["surface_only_fallback"] = True
-    prov = dict(out.get("capture_provenance") or {})
+    fallback_result["capture_confirmed"] = False
+    fallback_result["capture_matches_ide"] = False
+    fallback_result["capture_confirmation_source"] = "ide_surface_best_surface_only"
+    fallback_result["surface_probe_confirmed"] = True
+    fallback_result["surface_only_fallback"] = True
+    prov = dict(fallback_result.get("capture_provenance") or {})
     prov["capture_confirmed"] = False
     prov["surface_confirmed"] = True
     prov["surface_probe_confirmed"] = True
     if best_prov:
         prov["ide_surface_best"] = best_prov
-    out["capture_provenance"] = prov
-    out["capture_ready"] = False
+    fallback_result["capture_provenance"] = prov
+    fallback_result["capture_ready"] = False
     os.environ["KORU_VDISPLAY_SURFACE_ONLY_FALLBACK"] = "1"
     os.environ.pop("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", None)
 
 
-def apply_surface_capture_confirmed(out: dict[str, Any], best_prov: dict[str, Any]) -> None:
+def apply_surface_capture_confirmed(confirmed_result: dict[str, Any], best_prov: dict[str, Any]) -> None:
     """Mark the capture as surface-confirmed for the requested IDE."""
-    out["capture_confirmed"] = True
-    out["capture_matches_ide"] = True
-    out["capture_confirmation_source"] = "ide_surface_best"
-    prov = dict(out.get("capture_provenance") or {})
+    confirmed_result["capture_confirmed"] = True
+    confirmed_result["capture_matches_ide"] = True
+    confirmed_result["capture_confirmation_source"] = "ide_surface_best"
+    prov = dict(confirmed_result.get("capture_provenance") or {})
     prov["capture_confirmed"] = True
     prov["surface_confirmed"] = True
     if best_prov:
         prov["ide_surface_best"] = best_prov
-    out["capture_provenance"] = prov
-    out.pop("ide_window_warning", None)
+    confirmed_result["capture_provenance"] = prov
+    confirmed_result.pop("ide_window_warning", None)
     os.environ["KORU_VDISPLAY_CAPTURE_MATCHES_IDE"] = "1"
-    if out.get("png"):
-        out["ok"] = True
-        out.pop("error", None)
-    clear_surface_overridden_vql_staleness(out)
+    if confirmed_result.get("png"):
+        confirmed_result["ok"] = True
+        confirmed_result.pop("error", None)
+    clear_surface_overridden_vql_staleness(confirmed_result)
 
 
 def _surface_best_provenance(desktop_probe: dict[str, Any]) -> dict[str, Any]:
@@ -123,22 +123,22 @@ def _surface_best_provenance(desktop_probe: dict[str, Any]) -> dict[str, Any]:
 
 
 def apply_surface_capture_confirmation(
-    out: dict[str, Any],
+    capture_result: dict[str, Any],
     *,
     ide: str,
     source: str,
     desktop_probe: dict[str, Any],
     capture_error: bool = False,
 ) -> None:
-    if out.get("capture_confirmed") is True and not capture_error:
+    if capture_result.get("capture_confirmed") is True and not capture_error:
         return
-    if out.get("competing_ide"):
+    if capture_result.get("competing_ide"):
         return
-    warn = out.get("ide_window_warning")
+    warn = capture_result.get("ide_window_warning")
     if isinstance(warn, dict) and warn.get("system_overlay"):
-        out["capture_confirmed"] = False
-        out["capture_matches_ide"] = False
-        out["capture_ready"] = False
+        capture_result["capture_confirmed"] = False
+        capture_result["capture_matches_ide"] = False
+        capture_result["capture_ready"] = False
         os.environ.pop("KORU_VDISPLAY_CAPTURE_MATCHES_IDE", None)
         return
     if isinstance(warn, dict) and warn.get("competing_detected"):
@@ -147,13 +147,13 @@ def apply_surface_capture_confirmation(
         return
     best_prov = _surface_best_provenance(desktop_probe)
     if capture_error:
-        apply_surface_capture_error_fallback(out, best_prov)
+        apply_surface_capture_error_fallback(capture_result, best_prov)
         return
-    apply_surface_capture_confirmed(out, best_prov)
+    apply_surface_capture_confirmed(capture_result, best_prov)
 
 
 def write_surface_capture_confirmation_sidecar(
-    out: dict[str, Any], *, ide: str, vql_path: str
+    sidecar_result: dict[str, Any], *, ide: str, vql_path: str
 ) -> None:
     """Rewrite the VQL sidecar metadata with the surface-confirmed capture validation."""
     with open(vql_path, encoding="utf-8") as fh:
@@ -166,7 +166,8 @@ def write_surface_capture_confirmation_sidecar(
         if isinstance(metadata.get("capture_validation"), dict)
         else None
     )
-    provenance = out.get("capture_provenance") if isinstance(out.get("capture_provenance"), dict) else {}
+    raw_provenance = sidecar_result.get("capture_provenance")
+    provenance = raw_provenance if isinstance(raw_provenance, dict) else {}
     surface = (
         provenance.get("ide_surface_best")
         if isinstance(provenance.get("ide_surface_best"), dict)
@@ -198,24 +199,24 @@ def write_surface_capture_confirmation_sidecar(
     data["metadata"] = metadata
     with open(vql_path, "w", encoding="utf-8") as fh:
         json.dump(data, fh, ensure_ascii=False, indent=2)
-    out["capture_validation"] = validation
-    out["vql_surface_confirmation_persisted"] = True
+    sidecar_result["capture_validation"] = validation
+    sidecar_result["vql_surface_confirmation_persisted"] = True
 
 
-def persist_surface_capture_confirmation_to_vql(out: dict[str, Any], *, ide: str) -> None:
+def persist_surface_capture_confirmation_to_vql(persisted_result: dict[str, Any], *, ide: str) -> None:
     """Persist surface-confirmed IDE match into the observe VQL sidecar for later processes."""
-    if out.get("capture_confirmation_source") != "ide_surface_best":
+    if persisted_result.get("capture_confirmation_source") != "ide_surface_best":
         return
-    warn = out.get("ide_window_warning")
+    warn = persisted_result.get("ide_window_warning")
     if isinstance(warn, dict) and warn.get("system_overlay"):
         return
-    vql_path = str(out.get("vql") or "").strip()
+    vql_path = str(persisted_result.get("vql") or "").strip()
     if not vql_path or not os.path.isfile(vql_path):
         return
     try:
-        write_surface_capture_confirmation_sidecar(out, ide=ide, vql_path=vql_path)
+        write_surface_capture_confirmation_sidecar(persisted_result, ide=ide, vql_path=vql_path)
     except Exception as exc:
-        out["vql_surface_confirmation_persist_error"] = str(exc)
+        persisted_result["vql_surface_confirmation_persist_error"] = str(exc)
 
 
 # Historical private names (vdisplay_client re-exports).
