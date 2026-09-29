@@ -1,0 +1,73 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-373",
+  "summary": "refactor(ticket-templates): address shotgun surgery on inputs variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-373/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/ticket_templates.py",
+    "tests/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ae705e42a668d5501f5285ba030e00ba8e1a9dad",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on 'inputs' is removed: _enforce_todo2code_executor_authority/_ensure_todo2code_verify_command became pure resolvers; hydrate_todo2code_ticket assembles inputs once via dict merge.",
+    "nonGoals": [
+      "Changing hydration semantics, executor authority rules or verify-command precedence",
+      "Refactoring _resolve_hydrated_inputs or render_* functions"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Replace in-place inputs mutation in helpers with pure resolvers (_todo2code_executor_override, _default_todo2code_verify_command); hydrate_todo2code_ticket composes the final dict.",
+      "components": [
+        {
+          "name": "ticket-templates",
+          "paths": [
+            "src/koru/queue/ticket_templates.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_todo2code_autonomous_gate.py tests/test_subactor_repair_ticket_template.py tests/test_subactor_bridge_e2e.py -x -q"
+        ],
+        "evidence": "Hydration/executor-authority/verify-command semantics preserved."
+      }
+    ]
+  }
+}
