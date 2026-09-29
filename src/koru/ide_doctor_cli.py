@@ -505,13 +505,13 @@ def action_ide_reload(args: argparse.Namespace) -> int:
     reload_ide = _resolve_ide(args.ide) or args.ide
     project = args.project.expanduser().resolve()
     if args.detached:
-        outcome = spawn_detached_ide_reload(
+        reload_result = spawn_detached_ide_reload(
             reload_ide,
             project=project,
             connect_only=args.connect_only,
         )
     else:
-        outcome = try_reload_vscode_family_ide(
+        reload_result = try_reload_vscode_family_ide(
             reload_ide,
             project=project,
             dry_run=args.dry_run,
@@ -519,21 +519,21 @@ def action_ide_reload(args: argparse.Namespace) -> int:
         )
     payload = {
         "ide": reload_ide,
-        "attempted": outcome.attempted,
-        "ok": outcome.ok,
-        "method": outcome.method,
-        "detail": outcome.detail,
+        "attempted": reload_result.attempted,
+        "ok": reload_result.ok,
+        "method": reload_result.method,
+        "detail": reload_result.detail,
     }
     if args.output_format == "json":
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
-        if outcome.ok:
-            print(f"koru ide reload: ok ({outcome.method})")
-        elif outcome.attempted:
-            print(f"koru ide reload: failed ({outcome.method}): {outcome.detail}", file=sys.stderr)
+        if reload_result.ok:
+            print(f"koru ide reload: ok ({reload_result.method})")
+        elif reload_result.attempted:
+            print(f"koru ide reload: failed ({reload_result.method}): {reload_result.detail}", file=sys.stderr)
         else:
-            print(f"koru ide reload: skipped: {outcome.detail}", file=sys.stderr)
-    return 0 if outcome.ok else 1
+            print(f"koru ide reload: skipped: {reload_result.detail}", file=sys.stderr)
+    return 0 if reload_result.ok else 1
 
 
 def action_ide_discover(args: argparse.Namespace) -> int:
@@ -544,7 +544,7 @@ def action_ide_discover(args: argparse.Namespace) -> int:
     )
 
     excludes = tuple(args.exclude) if args.exclude else DEFAULT_EXCLUDES
-    outcome = run_code2llm_discovery(
+    discovery = run_code2llm_discovery(
         args.project.expanduser().resolve(),
         output_subdir=args.output_subdir,
         formats=args.formats,
@@ -557,18 +557,18 @@ def action_ide_discover(args: argparse.Namespace) -> int:
         force=args.force,
     )
     if args.output_format == "json":
-        print(json.dumps(outcome.to_dict(), indent=2, sort_keys=True))
+        print(json.dumps(discovery.to_dict(), indent=2, sort_keys=True))
     else:
-        print(format_discovery_summary(outcome))
-        if outcome.applied_titles:
+        print(format_discovery_summary(discovery))
+        if discovery.applied_titles:
             print("applied tickets:")
-            for title in outcome.applied_titles:
+            for title in discovery.applied_titles:
                 print(f"  · {title}")
-        if outcome.error:
+        if discovery.error:
             return 1
-    if outcome.error:
+    if discovery.error:
         return 1
-    if not outcome.ran and not outcome.applied_titles:
+    if not discovery.ran and not discovery.applied_titles:
         return 2  # nothing happened — caller should know
     return 0
 
@@ -579,7 +579,7 @@ def action_ide_discover_todo2code(args: argparse.Namespace) -> int:
         run_todo2code_discovery,
     )
 
-    outcome = run_todo2code_discovery(
+    todo2code_result = run_todo2code_discovery(
         args.project.expanduser().resolve(),
         apply_planfile=args.apply_planfile,
         planfile_source=args.source,
@@ -589,18 +589,18 @@ def action_ide_discover_todo2code(args: argparse.Namespace) -> int:
         force=args.force,
     )
     if args.output_format == "json":
-        print(json.dumps(outcome.to_dict(), indent=2, sort_keys=True))
+        print(json.dumps(todo2code_result.to_dict(), indent=2, sort_keys=True))
     else:
-        print(format_todo2code_summary(outcome))
-        if outcome.applied_titles:
+        print(format_todo2code_summary(todo2code_result))
+        if todo2code_result.applied_titles:
             print("applied tickets:")
-            for title in outcome.applied_titles:
+            for title in todo2code_result.applied_titles:
                 print(f"  · {title}")
-        if outcome.filtered_out_count:
-            print(f"filtered non-useful plans: {outcome.filtered_out_count}")
-    if outcome.error:
+        if todo2code_result.filtered_out_count:
+            print(f"filtered non-useful plans: {todo2code_result.filtered_out_count}")
+    if todo2code_result.error:
         return 1
-    if not outcome.ran and not outcome.applied_titles and not outcome.useful_plans_count:
+    if not todo2code_result.ran and not todo2code_result.applied_titles and not todo2code_result.useful_plans_count:
         return 2
     return 0
 
@@ -608,25 +608,25 @@ def action_ide_discover_todo2code(args: argparse.Namespace) -> int:
 def action_ide_ticket2dsl(args: argparse.Namespace) -> int:
     from koru.autonomy.ticket2dsl import format_ticket2dsl_summary, run_ticket2dsl
 
-    outcome = run_ticket2dsl(
+    ticket2dsl_result = run_ticket2dsl(
         args.project.expanduser().resolve(),
         sprint=args.sprint,
         max_units=args.limit,
         only_todo2code=bool(args.only_todo2code),
     )
     if args.output_format == "json":
-        print(json.dumps(outcome.to_dict(), indent=2, sort_keys=True))
+        print(json.dumps(ticket2dsl_result.to_dict(), indent=2, sort_keys=True))
     else:
-        print(format_ticket2dsl_summary(outcome))
-        if outcome.ticket_ids:
+        print(format_ticket2dsl_summary(ticket2dsl_result))
+        if ticket2dsl_result.ticket_ids:
             print("work units:")
-            for ticket_id in outcome.ticket_ids:
+            for ticket_id in ticket2dsl_result.ticket_ids:
                 print(f"  · {ticket_id}")
-        if outcome.dsl_path:
-            print(f"planfile dsl: {outcome.dsl_path}")
-    if outcome.error:
+        if ticket2dsl_result.dsl_path:
+            print(f"planfile dsl: {ticket2dsl_result.dsl_path}")
+    if ticket2dsl_result.error:
         return 1
-    if not outcome.units_count:
+    if not ticket2dsl_result.units_count:
         return 2
     return 0
 
@@ -637,7 +637,7 @@ def action_ide_code_change_autonomy(args: argparse.Namespace) -> int:
         run_code_change_autonomy,
     )
 
-    outcome = run_code_change_autonomy(
+    autonomy_result = run_code_change_autonomy(
         args.project.expanduser().resolve(),
         sprint=args.sprint,
         hygiene=not args.no_hygiene,
@@ -645,19 +645,19 @@ def action_ide_code_change_autonomy(args: argparse.Namespace) -> int:
         ticket2dsl=not args.no_ticket2dsl,
     )
     if args.output_format == "json":
-        print(json.dumps(outcome.to_dict(), indent=2, sort_keys=True))
+        print(json.dumps(autonomy_result.to_dict(), indent=2, sort_keys=True))
     else:
-        print(format_autonomy_summary(outcome))
-        if outcome.applied_patches:
+        print(format_autonomy_summary(autonomy_result))
+        if autonomy_result.applied_patches:
             print("patch results:")
-            for item in outcome.applied_patches:
+            for item in autonomy_result.applied_patches:
                 print(f"  · {item}")
-        archived = (outcome.hygiene or {}).get("archived") or []
+        archived = (autonomy_result.hygiene or {}).get("archived") or []
         if archived:
             print("archived junk tickets:")
             for item in archived[:20]:
                 print(f"  · {item}")
-    if outcome.error:
+    if autonomy_result.error:
         return 1
     return 0
 

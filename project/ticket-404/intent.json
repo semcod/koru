@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-404",
+  "summary": "refactor(ide-doctor): address shotgun surgery on outcome variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-404/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/ide_doctor_cli.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "095a36685238603201ada02b76bfbeb5382cba3a",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on outcome removed in ide_doctor_cli.py: local result binding renamed per action (reload_result/discovery/todo2code_result/ticket2dsl_result/autonomy_result).",
+    "nonGoals": [
+      "CLI action semantics",
+      "Other smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Local variable renamed per action function; no signature or behavior changes.",
+      "components": [
+        {
+          "name": "ide-doctor-cli",
+          "paths": [
+            "src/koru/ide_doctor_cli.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_ide_doctor_cli.py -x -q"
+        ],
+        "evidence": "IDE doctor CLI behavior preserved."
+      }
+    ]
+  }
+}
