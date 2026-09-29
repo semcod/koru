@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-375",
+  "summary": "refactor(coru-http): address shotgun surgery on instance variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-375/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/coru/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "371e2db945a2ce3f38866d840bf4f7975c665adb",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on 'instance' removed: dispatchers pass the lane instance as a kwarg via _lane_instance_from_suffix; body parsing is centralized in _body_instance.",
+    "nonGoals": [
+      "Changing routes, status codes or response payloads",
+      "Refactoring registry or service layers"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Dispatchers no longer bind a local 'instance'; _lane_instance_from_suffix handles /api/lanes/<id><suffix> extraction (empty suffix for delete), _body_instance centralizes body parsing.",
+      "components": [
+        {
+          "name": "coru-supervisor",
+          "paths": [
+            "packages/coru/src/coru/supervisor/http_handlers.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest packages/coru/tests/test_supervisor.py -x -q"
+        ],
+        "evidence": "Supervisor HTTP routes and lane handlers behave identically."
+      }
+    ]
+  }
+}
