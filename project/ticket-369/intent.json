@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-369",
+  "summary": "refactor(nl-control): address shotgun surgery on config variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-369/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/configurator/nl_control.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0a41c0946d00ffdb16404f4943d94e8a42c8d6d0",
+    "targetBranch": "main",
+    "outcome": "Config mutations are centralized in _persist_mutation/_replace_config; individual NL handlers only compute key-path and message, so the shotgun-surgery smell on 'config' no longer spans eight functions.",
+    "nonGoals": [
+      "Changing NL command syntax, messages or persisted config schema",
+      "Touching feature-toggle delegation (toggle_feature_sections)"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Introduce _persist_mutation(key_path, value) and _replace_config helpers so every handler delegates the mutate+save sequence to a single place.",
+      "components": [
+        {
+          "name": "nl-control",
+          "paths": [
+            "src/koru/configurator/nl_control.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_configurator_nl.py tests/test_configurator_nl_control.py -x -q"
+        ],
+        "evidence": "NL configurator tests pass; 'config' mutations confined to two helpers."
+      }
+    ]
+  }
+}

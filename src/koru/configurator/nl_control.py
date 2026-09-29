@@ -93,6 +93,34 @@ def _apply_single_nl_command(
     )
 
 
+
+def _persist_mutation(
+    config: dict[str, Any],
+    project_path: Any,
+    key_path: tuple[str, ...],
+    value: Any,
+    message: str,
+) -> ConfigMutationResult:
+    """Set one config key-path, persist, and return a success result."""
+    node = config
+    for key in key_path[:-1]:
+        node = node.setdefault(key, {})
+    node[key_path[-1]] = value
+    save_project_config(project_path, config)
+    return ConfigMutationResult(
+        success=True, message=message, updated=True, config=config
+    )
+
+
+def _replace_config(
+    config: dict[str, Any], working: dict[str, Any], project_path: Any
+) -> None:
+    """Swap the whole config payload and persist it."""
+    config.clear()
+    config.update(working)
+    save_project_config(project_path, working)
+
+
 def _apply_ide_command(
     config: dict[str, Any], text: str, project_path: Any,
 ) -> ConfigMutationResult | None:
@@ -103,13 +131,9 @@ def _apply_ide_command(
         normalized = normalize_ide_id(candidate) or candidate
         valid_choices = autopilot_ide_choices()
         if normalized in valid_choices:
-            config["ide"] = normalized
-            save_project_config(project_path, config)
-            return ConfigMutationResult(
-                success=True,
-                message=f"Zmieniono IDE na: {normalized}",
-                updated=True,
-                config=config,
+            return _persist_mutation(
+                config, project_path, ("ide",), normalized,
+                f"Zmieniono IDE na: {normalized}",
             )
         return ConfigMutationResult(
             success=False,
@@ -126,14 +150,9 @@ def _apply_port_command(
     m_port = re.search(r"(?:zmien\s+)?port(?:\s+(?:na|to|=))?\s+(\d+)", text)
     if m_port:
         port_num = int(m_port.group(1))
-        serve = config.setdefault("serve", {})
-        serve["port"] = port_num
-        save_project_config(project_path, config)
-        return ConfigMutationResult(
-            success=True,
-            message=f"Zmieniono port dashboardu na: {port_num}",
-            updated=True,
-            config=config,
+        return _persist_mutation(
+            config, project_path, ("serve", "port"), port_num,
+            f"Zmieniono port dashboardu na: {port_num}",
         )
     return None
 
@@ -145,14 +164,9 @@ def _apply_host_command(
     m_host = re.search(r"(?:zmien\s+)?host(?:\s+(?:na|to|=))?\s+([0-9a-z\.-]+)", text)
     if m_host:
         host_str = m_host.group(1).strip()
-        serve = config.setdefault("serve", {})
-        serve["host"] = host_str
-        save_project_config(project_path, config)
-        return ConfigMutationResult(
-            success=True,
-            message=f"Zmieniono host dashboardu na: {host_str}",
-            updated=True,
-            config=config,
+        return _persist_mutation(
+            config, project_path, ("serve", "host"), host_str,
+            f"Zmieniono host dashboardu na: {host_str}",
         )
     return None
 
@@ -167,27 +181,17 @@ def _apply_model_command(
     )
     if m_simple_model:
         model_name = m_simple_model.group(1).strip()
-        models = config.setdefault("models", {})
-        models["simple"] = model_name
-        save_project_config(project_path, config)
-        return ConfigMutationResult(
-            success=True,
-            message=f"Zmieniono prosty/szybki model (tier Flash) na: {model_name}",
-            updated=True,
-            config=config,
+        return _persist_mutation(
+            config, project_path, ("models", "simple"), model_name,
+            f"Zmieniono prosty/szybki model (tier Flash) na: {model_name}",
         )
 
     m_model = re.search(r"(?:zmien\s+)?(?:glowny\s+)?model(?:\s+(?:na|to|=))?\s+([a-z0-9_.:/-]+)", text)
     if m_model and not text.startswith("ide"):
         model_name = m_model.group(1).strip()
-        models = config.setdefault("models", {})
-        models["default"] = model_name
-        save_project_config(project_path, config)
-        return ConfigMutationResult(
-            success=True,
-            message=f"Zmieniono domyślny model LLM na: {model_name}",
-            updated=True,
-            config=config,
+        return _persist_mutation(
+            config, project_path, ("models", "default"), model_name,
+            f"Zmieniono domyślny model LLM na: {model_name}",
         )
     return None
 
@@ -199,13 +203,9 @@ def _apply_queue_command(
     m_queue = re.search(r"(?:zmien\s+)?(?:kolejka|queue|kolejke)(?:\s+(?:na|to|=))?\s+([a-z0-9_-]+)", text)
     if m_queue:
         q_name = m_queue.group(1).strip()
-        config["queue_name"] = q_name
-        save_project_config(project_path, config)
-        return ConfigMutationResult(
-            success=True,
-            message=f"Zmieniono domyślną kolejkę na: {q_name}",
-            updated=True,
-            config=config,
+        return _persist_mutation(
+            config, project_path, ("queue_name",), q_name,
+            f"Zmieniono domyślną kolejkę na: {q_name}",
         )
     return None
 
@@ -215,24 +215,14 @@ def _apply_lan_command(
 ) -> ConfigMutationResult | None:
     # 5. LAN toggle: "wlacz lan", "wylacz lan", "enable lan", "disable lan", "lan on/off"
     if any(k in text for k in ("wlacz lan", "enable lan", "lan on", "lan true", "lan tak")):
-        serve = config.setdefault("serve", {})
-        serve["lan"] = True
-        save_project_config(project_path, config)
-        return ConfigMutationResult(
-            success=True,
-            message="Włączono dostęp LAN do dashboardu (lan=True)",
-            updated=True,
-            config=config,
+        return _persist_mutation(
+            config, project_path, ("serve", "lan"), True,
+            "Włączono dostęp LAN do dashboardu (lan=True)",
         )
     if any(k in text for k in ("wylacz lan", "disable lan", "lan off", "lan false", "lan nie")):
-        serve = config.setdefault("serve", {})
-        serve["lan"] = False
-        save_project_config(project_path, config)
-        return ConfigMutationResult(
-            success=True,
-            message="Wyłączono dostęp LAN do dashboardu (lan=False)",
-            updated=True,
-            config=config,
+        return _persist_mutation(
+            config, project_path, ("serve", "lan"), False,
+            "Wyłączono dostęp LAN do dashboardu (lan=False)",
         )
     return None
 
@@ -244,25 +234,15 @@ def _apply_auto_port_command(
     clean_no_hyphen = text.replace("-", " ")
     on_patterns = ("wlacz auto port", "wlacz autoport", "enable auto port", "auto port on", "autoport on")
     if any(k in clean_no_hyphen for k in on_patterns):
-        serve = config.setdefault("serve", {})
-        serve["auto_port"] = True
-        save_project_config(project_path, config)
-        return ConfigMutationResult(
-            success=True,
-            message="Włączono auto-port (auto_port=True)",
-            updated=True,
-            config=config,
+        return _persist_mutation(
+            config, project_path, ("serve", "auto_port"), True,
+            "Włączono auto-port (auto_port=True)",
         )
     off_patterns = ("wylacz auto port", "wylacz autoport", "disable auto port", "auto port off", "autoport off")
     if any(k in clean_no_hyphen for k in off_patterns):
-        serve = config.setdefault("serve", {})
-        serve["auto_port"] = False
-        save_project_config(project_path, config)
-        return ConfigMutationResult(
-            success=True,
-            message="Wyłączono auto-port (auto_port=False)",
-            updated=True,
-            config=config,
+        return _persist_mutation(
+            config, project_path, ("serve", "auto_port"), False,
+            "Wyłączono auto-port (auto_port=False)",
         )
     return None
 
@@ -321,9 +301,7 @@ def apply_nl_config_command(
         messages.append(sub_res.message)
 
     if any_updated:
-        config.clear()
-        config.update(working_config)
-        save_project_config(project_path, working_config)
+        _replace_config(config, working_config, project_path)
 
     return ConfigMutationResult(
         success=True,
