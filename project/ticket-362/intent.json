@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-362",
+  "summary": "Fix local queue project and dry-run boundaries (STARTER-602)",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-362/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli_ticket_queue.py",
+    "src/koru/queue/loop.py",
+    "src/koru/queue/runner.py",
+    "src/koru/queue_cli_helpers.py",
+    "tests/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9073d8956f06d940f83b69dc9212f47286dfe577",
+    "targetBranch": "main",
+    "outcome": "Explicit --project must be a real project root (no parent escalation); --dry-run produces no claim/start/block/lock/manager effects in single and loop modes.",
+    "nonGoals": [
+      "Changing executor dispatch behavior for real (non-preview) runs",
+      "GitHub sync ordering or error reporting (covered by STARTER-603)",
+      "Planfile SDK auto-discovery semantics outside the CLI boundary"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Validate explicit --project at the CLI boundary; make the queue runner's mutation sites (lifecycle block, runner lock, run-log) conditional on not dry-run; skip local-manager session in preview modes.",
+      "components": [
+        {
+          "name": "queue-cli",
+          "paths": [
+            "src/koru/cli_ticket_queue.py",
+            "src/koru/queue_cli_helpers.py",
+            "tests/test_ticket_command_queue.py",
+            "tests/test_queue_cli_helpers.py",
+            "tests/test_queue_concurrency.py"
+          ]
+        },
+        {
+          "name": "queue-runner",
+          "paths": [
+            "src/koru/queue/runner.py",
+            "src/koru/queue/loop.py",
+            "tests/test_queue_runner.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {"impact": "none", "states": [], "evidence": []},
+      "rollback": "Revert the ticket branch; the change is confined to CLI validation and dry-run guards."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": ["python3 -m pytest tests/test_ticket_command_queue.py -x -q"],
+        "evidence": "Explicit --project without .planfile/koru.yaml exits 2; a marker-bearing child project is used verbatim."
+      },
+      {
+        "criterion": "AC-2",
+        "commands": [
+          "python3 -m pytest tests/test_ticket_command_queue.py tests/test_queue_cli_helpers.py tests/test_queue_runner.py -x -q"
+        ],
+        "evidence": "Single and loop dry-run invoke no lifecycle command, no runner lock artifacts and no local-manager session, including incomplete tickets."
+      }
+    ]
+  }
+}

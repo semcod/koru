@@ -148,6 +148,7 @@ def test_run_planfile_queue_loop_concurrent(tmp_path: Path) -> None:
 
 
 def test_cli_waves_action(tmp_path: Path, capsys) -> None:
+    (tmp_path / ".planfile").mkdir()
     with patch("subprocess.run") as mock_sub:
         mock_sub.return_value = MagicMock(
             returncode=0,

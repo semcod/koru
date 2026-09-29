@@ -7,6 +7,8 @@ def test_local_queue_preserved_without_fabricated_human_approval(tmp_path, monke
     import koru.cli_ticket_queue as queue
     import koru.queue_cli_helpers as helpers
 
+    (tmp_path / ".planfile").mkdir()
+
     observed = []
     monkeypatch.setattr(queue, "_sync_github", lambda *_: pytest.fail("implicit backlog synchronization"))
     monkeypatch.setattr(helpers, "emit_queue_run_started", lambda *_: None)
@@ -35,6 +37,7 @@ def test_auto_url_uses_exact_issue_executor(monkeypatch):
 def test_queue_dry_run_cannot_synchronize_or_execute(tmp_path, monkeypatch):
     import koru.cli_ticket_queue as queue
 
+    (tmp_path / ".planfile").mkdir()
     monkeypatch.setattr(queue, "_sync_github", lambda *_: pytest.fail("dry-run synchronized backlog"))
     with pytest.raises(SystemExit) as caught:
         ticket_main(["auto", "--project", str(tmp_path), "--dry-run", "--sync"])
@@ -62,6 +65,7 @@ def test_ticket_next_displays_ticket_text_and_brief(tmp_path, monkeypatch, capsy
         "files": ["src/parser.py"],
         "description": "Clean up cyclomatic complexity in parser.",
     }
+    (tmp_path / ".planfile").mkdir()
     monkeypatch.setattr(runner, "_next_ticket_or_result", lambda *a, **kw: (sample, None))
 
     assert ticket_main(["next", "--project", str(tmp_path)]) == 0
@@ -92,6 +96,7 @@ def test_ticket_next_json_and_markdown_formats(tmp_path, monkeypatch, capsys):
         "files": ["src/feature.py"],
         "description": "Detailed description of feature X.",
     }
+    (tmp_path / ".planfile").mkdir()
     monkeypatch.setattr(runner, "_next_ticket_or_result", lambda *a, **kw: (sample, None))
 
     assert ticket_main(["next", "--project", str(tmp_path), "--format", "json"]) == 0
@@ -111,6 +116,7 @@ def test_ticket_next_idle_queue(tmp_path, monkeypatch, capsys):
 
     import koru.queue.runner as runner
 
+    (tmp_path / ".planfile").mkdir()
     monkeypatch.setattr(runner, "_next_ticket_or_result", lambda *a, **kw: (None, None))
 
     assert ticket_main(["next", "--project", str(tmp_path)]) == 0
@@ -131,6 +137,7 @@ def test_ticket_next_error_handling(tmp_path, monkeypatch, capsys):
     import koru.queue.runner as runner
 
     error_res = SimpleNamespace(status="planfile_error", message="Syntax error in sprint file", exit_code=1)
+    (tmp_path / ".planfile").mkdir()
     monkeypatch.setattr(runner, "_next_ticket_or_result", lambda *a, **kw: (None, error_res))
 
     assert ticket_main(["next", "--project", str(tmp_path)]) == 1
@@ -145,6 +152,13 @@ def test_next_scopes_candidates_but_reads_archived_dependencies(tmp_path, monkey
 
     import koru.queue as queue
     import koru.queue.ticket as transport
+
+    planfile = pytest.importorskip("planfile")
+
+    def no_sdk(*_):
+        raise RuntimeError("subprocess transport must be exercised")
+
+    monkeypatch.setattr(planfile.Planfile, "auto_discover", staticmethod(no_sdk))
 
     (tmp_path / ".planfile").mkdir()
     calls = []
@@ -199,6 +213,7 @@ def test_next_transport_and_parse_failures_are_nonzero(tmp_path, monkeypatch, ca
     def fail(*args, **kwargs):
         raise failure
 
+    (tmp_path / ".planfile").mkdir()
     monkeypatch.setattr(runner, "_next_ticket_or_result", fail)
     assert ticket_main(["next", "--project", str(tmp_path)]) == 1
     assert str(failure) in capsys.readouterr().err
@@ -218,7 +233,7 @@ def test_next_explicit_project_is_not_replaced_by_parent_project(tmp_path, monke
 
     (tmp_path / ".planfile").mkdir()
     child = tmp_path / "child"
-    child.mkdir()
+    (child / ".planfile").mkdir(parents=True)
 
     def inspect(project, *args, **kwargs):
         assert project == child
@@ -227,3 +242,88 @@ def test_next_explicit_project_is_not_replaced_by_parent_project(tmp_path, monke
     monkeypatch.setattr(runner, "_next_ticket_or_result", inspect)
     assert ticket_main(["next", "--project", str(child), "--brief"]) == 0
     assert "no runnable ticket" in capsys.readouterr().out
+
+
+def test_explicit_project_without_markers_is_rejected_instead_of_escalating(tmp_path, capsys):
+    (tmp_path / ".planfile").mkdir()
+    child = tmp_path / "child"
+    child.mkdir()
+
+    with pytest.raises(SystemExit) as caught:
+        ticket_main(["auto", "--project", str(child)])
+    assert caught.value.code == 2
+    assert "project root" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("kind", ["missing", "file", "git-only"])
+def test_explicit_project_rejects_non_project_paths(tmp_path, capsys, kind):
+    if kind == "missing":
+        target = tmp_path / "missing"
+    elif kind == "file":
+        target = tmp_path / "plain.txt"
+        target.write_text("not a project")
+    else:
+        target = tmp_path / "repo"
+        (target / ".git").mkdir(parents=True)
+
+    with pytest.raises(SystemExit) as caught:
+        ticket_main(["auto", "--project", str(target)])
+    assert caught.value.code == 2
+    assert "project root" in capsys.readouterr().err
+
+
+def test_auto_dry_run_reaches_loop_without_local_manager(tmp_path, monkeypatch):
+    import koru.queue_cli_helpers as helpers
+    from koru.queue.types import QueueLoopResult
+
+    (tmp_path / ".planfile").mkdir()
+    monkeypatch.setattr(
+        helpers, "queue_local_manager_session",
+        lambda *_: pytest.fail("dry-run opened a local manager session"),
+    )
+    monkeypatch.setattr(helpers, "emit_queue_run_started", lambda *_: None)
+
+    observed = []
+
+    def run(*args, **kwargs):
+        observed.append(kwargs.get("dry_run"))
+        return QueueLoopResult(
+            iterations=1, completed=[], failed=[], waiting=[], last_status="dry_run"
+        )
+
+    monkeypatch.setattr(helpers, "run_planfile_queue_loop", run)
+    assert ticket_main(["auto", "--dry-run", "--loop", "--project", str(tmp_path)]) == 0
+    assert observed == [True]
+
+
+def test_auto_dry_run_does_not_block_incomplete_ticket(tmp_path, monkeypatch):
+    import koru.queue.runner as runner
+    from koru.queue.types import QueueRunResult
+
+    (tmp_path / ".planfile").mkdir()
+    ticket = {
+        "id": "PLF-DRY",
+        "name": "Incomplete task",
+        "status": "open",
+        "executor": {"kind": "llm"},
+        "inputs": {},
+    }
+    monkeypatch.setattr(runner, "_next_ticket_or_result", lambda *a, **kw: (ticket, None))
+
+    lifecycle = []
+    monkeypatch.setattr(
+        runner, "planfile_lifecycle_command",
+        lambda *a, **kw: lifecycle.append((a, kw)),
+    )
+
+    result = runner._run_next_planfile_task_impl(
+        project=tmp_path,
+        actor="tester",
+        queue_name=None,
+        planfile_runner=lambda *a, **kw: None,
+        dry_run=True,
+    )
+    assert isinstance(result, QueueRunResult)
+    assert lifecycle == []
+    assert result.status in {"dry_run", "waiting_input"}
+    assert not (tmp_path / ".planfile" / ".koru").exists()

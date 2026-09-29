@@ -136,7 +136,8 @@ def run_queue_loop_mode(
     if getattr(args, "ticket", None):
         print("koru queue: --ticket targets one task and cannot be combined with --loop")
         return 2
-    manager = queue_local_manager_session(args)
+    # A preview registers no worker and claims no action in the local manager.
+    manager = None if getattr(args, "dry_run", False) else queue_local_manager_session(args)
     early_exit = queue_manager_start(args, manager)
     if early_exit is not None:
         print(f"koru queue: {early_exit.message}")
@@ -224,7 +225,8 @@ def run_queue_single_mode(
     llm_runner: Callable[..., Any],
     prompt_runner: Callable[..., Any],
 ) -> int:
-    manager = queue_local_manager_session(args)
+    # A preview registers no worker and claims no action in the local manager.
+    manager = None if getattr(args, "dry_run", False) else queue_local_manager_session(args)
     early_exit = queue_manager_start(args, manager)
     if early_exit is not None:
         print(f"koru queue: {early_exit.message}")

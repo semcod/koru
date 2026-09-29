@@ -358,4 +358,6 @@ project analysis or human-owned ticket inputs.
 | **ticket-356** | [`README.md`](./ticket-356/README.md) | - | - | - | - | - |
 | **ticket-358** | [`README.md`](./ticket-358/README.md) | - | - | - | - | - |
 | **ticket-359** | [`README.md`](./ticket-359/README.md) | - | - | - | - | - |
+| **ticket-360** | [`README.md`](./ticket-360/README.md) | - | - | - | - | - |
+| **ticket-362** | [`README.md`](./ticket-362/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->
