@@ -167,16 +167,15 @@ def ticket_file_scope(ticket: dict[str, Any]) -> set[str]:
     elif isinstance(raw_files, str) and raw_files:
         _add_file_entry(files, raw_files)
 
-    inputs = ticket.get("inputs")
-    if isinstance(inputs, dict):
-        in_files = inputs.get("files")
-        if isinstance(in_files, list):
-            for f in in_files:
-                _add_file_entry(files, f)
-        elif isinstance(in_files, str) and in_files:
-            _add_file_entry(files, in_files)
-        if in_file := inputs.get("file"):
-            _add_file_entry(files, in_file)
+    inputs = _ticket_inputs(ticket)
+    in_files = inputs.get("files")
+    if isinstance(in_files, list):
+        for f in in_files:
+            _add_file_entry(files, f)
+    elif isinstance(in_files, str) and in_files:
+        _add_file_entry(files, in_files)
+    if in_file := inputs.get("file"):
+        _add_file_entry(files, in_file)
 
     source = ticket.get("source")
     if isinstance(source, dict):
@@ -291,11 +290,15 @@ def _should_skip_deferred_human(ticket: dict) -> bool:
     return queue == "operator" or "operator" in labels
 
 
+def _ticket_inputs(ticket: dict[str, Any]) -> dict[str, Any]:
+    """Ticket ``inputs`` mapping, or an empty dict when absent or malformed."""
+    inputs = ticket.get("inputs")
+    return inputs if isinstance(inputs, dict) else {}
+
+
 def ticket_command(ticket: dict) -> str | None:
     """Extract the command/script from a ticket."""
-    inputs = ticket.get("inputs") or {}
-    handler = (ticket.get("executor") or {}).get("handler")
-    return inputs.get("script") or handler
+    return _ticket_inputs(ticket).get("script") or (ticket.get("executor") or {}).get("handler")
 
 
 def ticket_llm_request(ticket: dict) -> dict[str, Any] | None:
@@ -313,7 +316,10 @@ def ticket_llm_request(ticket: dict) -> dict[str, Any] | None:
       context_globs           – glob patterns relative to the project root.
       max_context_chars       – optional explicit cap on assembled context.
     """
-    inputs = ticket.get("inputs") or {}
+    return _build_llm_request(_ticket_inputs(ticket), ticket)
+
+
+def _build_llm_request(inputs: dict[str, Any], ticket: dict) -> dict[str, Any] | None:
     prompt = inputs.get("prompt") or ticket.get("description") or ticket.get("name")
     if not prompt:
         return None
@@ -348,7 +354,10 @@ def ticket_llm_request(ticket: dict) -> dict[str, Any] | None:
 
 def ticket_api_request(ticket: dict) -> dict[str, Any] | None:
     """Translate an executor.kind=api ticket into an HTTP call spec."""
-    inputs = ticket.get("inputs") or {}
+    return _build_api_request(_ticket_inputs(ticket), ticket)
+
+
+def _build_api_request(inputs: dict[str, Any], ticket: dict) -> dict[str, Any] | None:
     handler = (ticket.get("executor") or {}).get("handler")
     endpoint = inputs.get("api_endpoint") or handler
     if not endpoint:
@@ -369,7 +378,10 @@ def ticket_taskand_request(ticket: dict) -> dict[str, Any] | None:
     Returns None when the ticket lacks the minimum signal (a process URI or DAG plan),
     so the queue runner can block the ticket with a descriptive reason.
     """
-    inputs = ticket.get("inputs") or {}
+    return _build_taskand_request(_ticket_inputs(ticket), ticket)
+
+
+def _build_taskand_request(inputs: dict[str, Any], ticket: dict) -> dict[str, Any] | None:
     handler = (ticket.get("executor") or {}).get("handler")
 
     uri = (

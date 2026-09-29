@@ -1,0 +1,73 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-374",
+  "summary": "refactor(queue-ticket): address shotgun surgery on inputs variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-374/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/ticket.py",
+    "tests/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "371e2db945a2ce3f38866d840bf4f7975c665adb",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on 'inputs' removed: _ticket_inputs is the single binding site; request building moved to _build_llm_request/_build_api_request/_build_taskand_request taking inputs as a parameter.",
+    "nonGoals": [
+      "Changing request shapes, defaults, or env fallbacks",
+      "Refactoring planfile CLI discovery helpers"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Public ticket_*_request functions delegate to private builders that receive the extracted inputs dict; _ticket_inputs is the only place binding ticket['inputs'].",
+      "components": [
+        {
+          "name": "queue-ticket",
+          "paths": [
+            "src/koru/queue/ticket.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_ticket_command_queue.py tests/test_queue_concurrency.py -x -q"
+        ],
+        "evidence": "Queue ticket parsing and request building semantics preserved."
+      }
+    ]
+  }
+}
