@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-415",
+  "summary": "refactor(handlers-drive): address shotgun surgery on preview variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-415/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/koruide/src/koruide/daemon/handlers_drive.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e614ceed2defad61c77ef5948ed96c85e840d9b6",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on preview removed in koruide handlers_drive.py: binding/param renamed to chat_preview across 7 functions incl. internal call-site kwargs.",
+    "nonGoals": [
+      "Drive/backend semantics",
+      "Other smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Token-level rename of preview locals/params to chat_preview; tuple return shape and external kwargs unchanged.",
+      "components": [
+        {
+          "name": "koruide-handlers-drive",
+          "paths": [
+            "packages/koruide/src/koruide/daemon/handlers_drive.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_koruide_daemon_handlers_drive.py tests/test_autonomous_cycle_drive_retry.py -x -q"
+        ],
+        "evidence": "Drive handlers preserved."
+      }
+    ]
+  }
+}
