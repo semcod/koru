@@ -19,11 +19,11 @@ from koru.scan_types import Suggestion
 
 
 def _scan_jscpd_report(project: Path) -> list[Suggestion]:
-    path = project / ".jscpd" / "jscpd-report.json"
-    if not path.is_file():
+    jscpd_path = project / ".jscpd" / "jscpd-report.json"
+    if not jscpd_path.is_file():
         return []
     try:
-        report = json.loads(path.read_text(encoding="utf-8"))
+        report = json.loads(jscpd_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
     total = (report.get("statistics") or {}).get("total") or {}
@@ -32,7 +32,7 @@ def _scan_jscpd_report(project: Path) -> list[Suggestion]:
         return []
     pct = float(total.get("percentage") or 0)
     clones = int(total.get("clones") or 0)
-    rel = str(path.relative_to(project))
+    rel = str(jscpd_path.relative_to(project))
     pr = "high" if pct >= 15.0 or dup_lines >= 50_000 else "normal"
     return [
         Suggestion(
@@ -209,14 +209,14 @@ def _merge_call_graph_locations(project: Path, locations: dict[str, list[str]]) 
             _add_location(locations, alias, located)
 
 
-def _file_evidence(project: Path, path: Path, rel: str | None = None) -> dict[str, object]:
+def _file_evidence(project: Path, file_path: Path, rel: str | None = None) -> dict[str, object]:
     try:
-        stat = path.stat()
-        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        stat = file_path.stat()
+        digest = hashlib.sha256(file_path.read_bytes()).hexdigest()
     except OSError:
         return {}
     return {
-        "path": rel or str(path.relative_to(project)),
+        "path": rel or str(file_path.relative_to(project)),
         "size_bytes": stat.st_size,
         "mtime_ns": stat.st_mtime_ns,
         "sha256": digest,
@@ -262,13 +262,13 @@ def _with_source_context(suggestion: Suggestion, context: dict[str, object] | No
     )
 
 
-def _norm_repo_path(path: str) -> str:
-    return path.replace("\\", "/").lstrip("./")
+def _norm_repo_path(raw_path: str) -> str:
+    return raw_path.replace("\\", "/").lstrip("./")
 
 
-def _is_extern_vendored_path(path: str) -> bool:
+def _is_extern_vendored_path(candidate_path: str) -> bool:
     """True for paths under an ``extern/`` vendored tree."""
-    norm = _norm_repo_path(path).lower()
+    norm = _norm_repo_path(candidate_path).lower()
     return norm == "extern" or norm.startswith("extern/")
 
 
@@ -355,9 +355,9 @@ def _files_byte_identical(project: Path, files: Sequence[str]) -> bool:
     digests: set[str] = set()
     seen = 0
     for rel in files:
-        path = project / rel
+        item_path = project / rel
         try:
-            digests.add(hashlib.sha256(path.read_bytes()).hexdigest())
+            digests.add(hashlib.sha256(item_path.read_bytes()).hexdigest())
             seen += 1
         except OSError:
             continue
@@ -660,15 +660,15 @@ def _parse_layer_hotspot_suggestions(
 
 
 def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
-    path, rel = _find_analysis_file(project)
-    if path is None:
+    analysis_path, rel = _find_analysis_file(project)
+    if analysis_path is None:
         return []
     try:
-        text = path.read_text(encoding="utf-8", errors="ignore")
+        text = analysis_path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
         return []
 
-    source_context = _code2llm_source_context(project, path, rel)
+    source_context = _code2llm_source_context(project, analysis_path, rel)
     skip_mirror_dups = _should_skip_code2llm_dup_ticket(text, project=project)
     suggestions: list[Suggestion] = []
     suggestions.extend(
@@ -709,17 +709,17 @@ def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
 
 
 def _scan_testql_export(project: Path) -> list[Suggestion]:
-    path = project / "testql_api_results.json"
-    if not path.is_file():
+    export_path = project / "testql_api_results.json"
+    if not export_path.is_file():
         return []
     try:
-        text = path.read_text(encoding="utf-8", errors="ignore")
+        text = export_path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
         return []
     failed_scenarios = len(re.findall(r"(?m)^❌\s+\S+\.(?:yaml|yml)", text))
     if failed_scenarios < 3:
         return []
-    rel = str(path.relative_to(project))
+    rel = str(export_path.relative_to(project))
     pr = "high" if failed_scenarios >= 15 else "normal"
     return [
         Suggestion(
@@ -737,11 +737,11 @@ def _scan_testql_export(project: Path) -> list[Suggestion]:
 
 
 def _scan_redup_filtered(project: Path) -> list[Suggestion]:
-    path = project / ".redup" / "check.filtered.json"
-    if not path.is_file():
+    filtered_path = project / ".redup" / "check.filtered.json"
+    if not filtered_path.is_file():
         return []
     try:
-        redup_payload = json.loads(path.read_text(encoding="utf-8"))
+        redup_payload = json.loads(filtered_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
     groups = (
@@ -751,7 +751,7 @@ def _scan_redup_filtered(project: Path) -> list[Suggestion]:
     )
     if not isinstance(groups, list) or len(groups) < 20:
         return []
-    rel = str(path.relative_to(project))
+    rel = str(filtered_path.relative_to(project))
     return [
         Suggestion(
             signal="redup_filtered",
@@ -768,11 +768,11 @@ def _scan_redup_filtered(project: Path) -> list[Suggestion]:
 
 
 def _scan_redup_changed(project: Path) -> list[Suggestion]:
-    path = project / ".redup" / "wup-changed.json"
-    if not path.is_file():
+    changed_path = project / ".redup" / "wup-changed.json"
+    if not changed_path.is_file():
         return []
     try:
-        redup_payload = json.loads(path.read_text(encoding="utf-8"))
+        redup_payload = json.loads(changed_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
     groups = (
@@ -782,7 +782,7 @@ def _scan_redup_changed(project: Path) -> list[Suggestion]:
     )
     if not isinstance(groups, list) or not groups:
         return []
-    rel = str(path.relative_to(project))
+    rel = str(changed_path.relative_to(project))
     return [
         Suggestion(
             signal="redup_changed",
@@ -800,18 +800,18 @@ def _scan_redup_changed(project: Path) -> list[Suggestion]:
 
 def _first_existing_artifact(project: Path, candidates: Sequence[str]) -> tuple[Path, str] | None:
     for candidate in candidates:
-        path = project / candidate
-        if path.is_file():
-            return path, candidate
+        probe_path = project / candidate
+        if probe_path.is_file():
+            return probe_path, candidate
     return None
 
 
-def _load_structured_artifact(path: Path) -> Any:
+def _load_structured_artifact(artifact_path: Path) -> Any:
     try:
-        text = path.read_text(encoding="utf-8", errors="ignore")
+        text = artifact_path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
         return None
-    if path.suffix.lower() == ".json":
+    if artifact_path.suffix.lower() == ".json":
         try:
             return json.loads(text)
         except json.JSONDecodeError:
@@ -878,9 +878,9 @@ def _scan_vallm_validation(project: Path) -> list[Suggestion]:
     )
     if validation_artifact is None:
         return []
-    path, rel = validation_artifact
+    vallm_path, rel = validation_artifact
     try:
-        text = path.read_text(encoding="utf-8", errors="ignore")
+        text = vallm_path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
         return []
     errors = 0
@@ -924,8 +924,8 @@ def _scan_structured_semcod_report(
     report_artifact = _first_existing_artifact(project, candidates)
     if report_artifact is None:
         return []
-    path, rel = report_artifact
-    artifact = _load_structured_artifact(path)
+    semcod_path, rel = report_artifact
+    artifact = _load_structured_artifact(semcod_path)
     if artifact is None:
         return []
     count = _sum_structured_counts(artifact, keys)
@@ -1077,9 +1077,9 @@ def _count_pfix_diagnose_issues(data: object) -> tuple[int, tuple[str, ...]]:
         if status not in _PFIX_FAIL_STATUSES:
             continue
         count += 1
-        path = str(item.get("abs_path") or item.get("file") or "").strip()
-        if path:
-            failed_paths.append(path.replace("\\", "/"))
+        diag_path = str(item.get("abs_path") or item.get("file") or "").strip()
+        if diag_path:
+            failed_paths.append(diag_path.replace("\\", "/"))
     return count, tuple(dict.fromkeys(failed_paths))
 
 
@@ -1094,8 +1094,8 @@ def _scan_pfix_report(project: Path) -> list[Suggestion]:
     )
     if diagnose_artifact is None:
         return []
-    path, rel = diagnose_artifact
-    artifact = _load_structured_artifact(path)
+    pfix_path, rel = diagnose_artifact
+    artifact = _load_structured_artifact(pfix_path)
     if artifact is None:
         return []
     count, failed_paths = _count_pfix_diagnose_issues(artifact)
@@ -1146,9 +1146,9 @@ def _scan_metrun_report(project: Path) -> list[Suggestion]:
     )
     if metrun_artifact is None:
         return []
-    path, rel = metrun_artifact
+    metrun_path, rel = metrun_artifact
     try:
-        text = path.read_text(encoding="utf-8", errors="ignore")
+        text = metrun_path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
         return []
     count_match = _METRUN_BOTTLENECKS_RE.search(text)
