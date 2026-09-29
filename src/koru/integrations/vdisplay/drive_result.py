@@ -73,25 +73,24 @@ def _photo_vql_drive_verified_false_blocks(photo_res: dict[str, Any], policy: Dr
     )
 
 
-def _apply_photo_vql_capture_confirmed(
-    out: dict[str, Any], photo_res: dict[str, Any], policy: DriveResultPolicy
-) -> None:
+def _photo_vql_capture_confirmed_patch(
+    photo_res: dict[str, Any], policy: DriveResultPolicy
+) -> dict[str, Any]:
     """Propagate capture_confirmed from the drive result, gating ok on unconfirmed captures."""
     if photo_res.get("capture_confirmed") is False:
         map_id = _photo_vql_drive_map_target_id(photo_res)
         edit_ok = bool((photo_res.get("edit") or {}).get("ok"))
         if not (policy.trusted_visual_target_id(map_id) and edit_ok and policy.allow_capture_mismatch()):
-            out["ok"] = False
-            out["capture_confirmed"] = False
-        else:
-            out["capture_confirmed"] = False
-    elif photo_res.get("capture_confirmed") is True:
-        out["capture_confirmed"] = True
+            return {"ok": False, "capture_confirmed": False}
+        return {"capture_confirmed": False}
+    if photo_res.get("capture_confirmed") is True:
+        return {"capture_confirmed": True}
+    return {}
 
 
-def _apply_photo_vql_plan_inference_gate(
-    out: dict[str, Any], photo_res: dict[str, Any], policy: DriveResultPolicy
-) -> None:
+def _photo_vql_plan_inference_patch(
+    photo_res: dict[str, Any], policy: DriveResultPolicy
+) -> dict[str, Any]:
     """Force ok=False when the command plan's inference failed without a trusted override."""
     plan = photo_res.get("vql_command_plan") or {}
     surface_trusted = policy.surface_target_safe(
@@ -104,66 +103,79 @@ def _apply_photo_vql_plan_inference_gate(
         and not policy.allow_capture_mismatch()
         and not (surface_trusted and bool((photo_res.get("edit") or {}).get("ok")))
     ):
-        out["ok"] = False
+        return {"ok": False}
+    return {}
 
 
-def _apply_photo_vql_map_mismatch_gate(
-    out: dict[str, Any], photo_res: dict[str, Any], policy: DriveResultPolicy
-) -> None:
+def _photo_vql_map_mismatch_patch(
+    photo_res: dict[str, Any], policy: DriveResultPolicy
+) -> dict[str, Any]:
     """Force ok=False and surface the mismatch when the map targets a different monitor."""
     plan = photo_res.get("vql_command_plan") or {}
     map_source_mismatch = photo_res.get("map_capture_mismatch") or plan.get("map_capture_mismatch")
     if map_source_mismatch and not policy.allow_map_source_mismatch():
-        out["ok"] = False
-        out["map_capture_mismatch"] = map_source_mismatch
-        out["message"] = str(
-            (map_source_mismatch or {}).get("message") or "photo-VQL map is calibrated for a different monitor"
-        )
+        return {
+            "ok": False,
+            "map_capture_mismatch": map_source_mismatch,
+            "message": str(
+                (map_source_mismatch or {}).get("message")
+                or "photo-VQL map is calibrated for a different monitor"
+            ),
+        }
+    return {}
 
 
-def _apply_photo_vql_provenance_and_verification(out: dict[str, Any], photo_res: dict[str, Any]) -> None:
+def _photo_vql_provenance_patch(
+    photo_res: dict[str, Any], capture_confirmed: Any
+) -> dict[str, Any]:
     """Copy capture provenance and verification fields into the normalized result."""
-    if photo_res.get("capture_provenance"):
-        out["capture_provenance"] = photo_res.get("capture_provenance")
-        if out.get("capture_confirmed") is None:
-            out["capture_confirmed"] = out["capture_provenance"].get("capture_confirmed")
+    patch: dict[str, Any] = {}
+    provenance = photo_res.get("capture_provenance")
+    if provenance:
+        patch["capture_provenance"] = provenance
+        if capture_confirmed is None:
+            patch["capture_confirmed"] = provenance.get("capture_confirmed")
     if photo_res.get("verification"):
-        out["verification"] = photo_res.get("verification")
-        out["verified"] = photo_res.get("verified")
+        patch["verification"] = photo_res.get("verification")
+        patch["verified"] = photo_res.get("verified")
+    return patch
 
 
-def _apply_photo_vql_submit_fields(out: dict[str, Any], photo_res: dict[str, Any], submit: bool) -> None:
+def _photo_vql_submit_patch(
+    photo_res: dict[str, Any], submit: bool, message: Any
+) -> dict[str, Any]:
     """Copy submitted/submit_result fields and annotate the message on submit."""
-    out["submitted"] = bool(photo_res.get("submitted"))
+    patch: dict[str, Any] = {"submitted": bool(photo_res.get("submitted"))}
     submit_result = photo_res.get("submit")
     if submit_result is not None:
-        out["submit_result"] = submit_result
-    if submit and out.get("submitted"):
-        out["message"] = f"{out['message']} (submitted)"
+        patch["submit_result"] = submit_result
+    if submit and patch["submitted"]:
+        patch["message"] = f"{message} (submitted)"
+    return patch
 
 
 def normalize_drive_result(
     photo_res: dict[str, Any], *, ide: str, submit: bool, policy: DriveResultPolicy
 ) -> dict[str, Any]:
     """Map perform_photo_vql_focus_and_edit output to send_chat response shape."""
-    out = _photo_vql_drive_out_base(photo_res, ide=ide, submit=submit)
+    res = _photo_vql_drive_out_base(photo_res, ide=ide, submit=submit)
     if photo_res.get("llm_used"):
-        out["llm_used"] = True
-        out["llm_decision"] = photo_res.get("llm_decision")
+        res["llm_used"] = True
+        res["llm_decision"] = photo_res.get("llm_decision")
     if photo_res.get("vql_command_plan"):
-        out["vql_command_plan"] = photo_res.get("vql_command_plan")
+        res["vql_command_plan"] = photo_res.get("vql_command_plan")
     if photo_res.get("ide_window_warning"):
-        out["ide_window_warning"] = photo_res.get("ide_window_warning")
+        res["ide_window_warning"] = photo_res.get("ide_window_warning")
         if not policy.allow_capture_mismatch():
-            out["ok"] = False
-            out["capture_confirmed"] = False
+            res["ok"] = False
+            res["capture_confirmed"] = False
     if _photo_vql_drive_verified_false_blocks(photo_res, policy):
-        out["ok"] = False
-    _apply_photo_vql_capture_confirmed(out, photo_res, policy)
-    _apply_photo_vql_plan_inference_gate(out, photo_res, policy)
-    _apply_photo_vql_map_mismatch_gate(out, photo_res, policy)
-    _apply_photo_vql_provenance_and_verification(out, photo_res)
-    _apply_photo_vql_submit_fields(out, photo_res, submit)
+        res["ok"] = False
+    res.update(_photo_vql_capture_confirmed_patch(photo_res, policy))
+    res.update(_photo_vql_plan_inference_patch(photo_res, policy))
+    res.update(_photo_vql_map_mismatch_patch(photo_res, policy))
+    res.update(_photo_vql_provenance_patch(photo_res, res.get("capture_confirmed")))
+    res.update(_photo_vql_submit_patch(photo_res, submit, res.get("message")))
     if photo_res.get("is_code_edit") and (photo_res.get("edit") or {}).get("ok"):
-        out["ok"] = True
-    return out
+        res["ok"] = True
+    return res
