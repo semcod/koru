@@ -14,7 +14,7 @@ from .queue.routing.contracts import Task, TaskClass
 from .queue.routing.ledger import current_local_day, get_campaign_history, get_latest_daily_probes
 
 
-def benchmark_main(argv: list[str]) -> int:
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="koru benchmark",
         description="Daily verified benchmark routing and campaign inspection.",
@@ -50,100 +50,120 @@ def benchmark_main(argv: list[str]) -> int:
     schedule_p = subparsers.add_parser("schedule", help="Inspect or install daily benchmark timer.")
     schedule_p.add_argument("--project", type=Path, default=Path.cwd(), help="Project root directory.")
 
-    args = parser.parse_args(argv)
+    return parser
 
-    if args.action == "run":
-        result = run_daily_benchmark_campaign(project_root=args.project, force=args.force)
-        if getattr(args, "format", "text") == "json":
-            print(json.dumps(result, indent=2))
-        else:
-            print(f"Benchmark status: {result['status']} (day: {result.get('day')})")
-            if "results" in result:
-                for k, v in result["results"].items():
-                    print(f"  • {k}: {v['status']} ({v.get('duration_ms', 0)}ms)")
-            elif "message" in result:
-                print(f"  {result['message']}")
-        return 0
 
-    if args.action == "today":
-        db_path = get_benchmark_db_path(args.project)
-        day = current_local_day()
-        probes = get_latest_daily_probes(db_path, day)
-        if args.format == "json":
-            data = {
-                "day": day,
-                "probes": {
-                    k: {
-                        "status": p.status,
-                        "duration_ms": p.duration_ms,
-                        "validator_digest": p.validator_digest,
-                        "cost": p.cost,
-                        "detail": p.detail,
-                    }
-                    for k, p in probes.items()
-                },
-            }
-            print(json.dumps(data, indent=2))
-        else:
-            print(f"Daily benchmark evidence for {day}:")
-            if not probes:
-                print("  No verified probes recorded today yet. Run `koru benchmark run` to execute.")
-            else:
-                for k, p in sorted(probes.items()):
-                    if ":" in k:  # only display specific task:candidate pairs
-                        print(f"  • {k}: {p.status} in {p.duration_ms}ms ({p.detail})")
-        return 0
-
-    if args.action == "explain":
-        diff_enum = TaskClass(args.difficulty)
-        task = Task(difficulty=diff_enum, kind=args.task_kind, reason="cli_explain")
-        decision = resolve_task_route(task, project_root=args.project, explicit_choice=args.model)
-        if args.format == "json":
-            out = {
-                "task": task.key,
-                "candidate": decision.candidate.id if decision.candidate else None,
-                "client": decision.candidate.client if decision.candidate else None,
-                "model": decision.candidate.model if decision.candidate else None,
-                "reason": decision.reason,
-                "confidence": "high" if not decision.low_confidence else "low",
-                "evidence_date": decision.evidence_date,
-            }
-            print(json.dumps(out, indent=2))
-        else:
-            print(f"Routing explanation for {task.key}:")
-            if decision.candidate:
-                cand = decision.candidate
-                model_name = cand.model or "default"
-                print(f"  • Selected: {cand.id} (client={cand.client}, model={model_name})")
-                print(f"  • Reason: {decision.reason}")
-                print(f"  • Confidence: {'high' if not decision.low_confidence else 'low (default fallback)'}")
-                if decision.evidence_date:
-                    print(f"  • Evidence date: {decision.evidence_date}")
-            else:
-                print("  • No candidate found to satisfy task requirements.")
-        return 0
-
-    if args.action == "history":
-        db_path = get_benchmark_db_path(args.project)
-        history = get_campaign_history(db_path, limit=args.limit)
-        if args.format == "json":
-            print(json.dumps(history, indent=2))
-        else:
-            print(f"Benchmark campaign history (last {args.limit} records):")
-            if not history:
-                print("  No campaigns recorded yet.")
-            else:
-                for h in history:
-                    fin = h['finished_at'] or 'pending'
-                    print(f"  • {h['day']}: {h['status']} ({h['probe_count']} probes, finished={fin})")
-        return 0
-
-    if args.action == "schedule":
-        proj_dir = str(args.project.resolve())
-        print("Daily benchmark timer recommendation:")
-        print("  Add to crontab (once daily at 04:00):")
-        print(f"    0 4 * * * cd {proj_dir} && koru benchmark run >> .planfile/benchmark.log 2>&1")
-        print("  Or run `python scripts/install-benchmark-timer.py` to configure systemd user service.")
-        return 0
-
+def _cmd_run(args: argparse.Namespace) -> int:
+    result = run_daily_benchmark_campaign(project_root=args.project, force=args.force)
+    if getattr(args, "format", "text") == "json":
+        print(json.dumps(result, indent=2))
+    else:
+        print(f"Benchmark status: {result['status']} (day: {result.get('day')})")
+        if "results" in result:
+            for k, v in result["results"].items():
+                print(f"  • {k}: {v['status']} ({v.get('duration_ms', 0)}ms)")
+        elif "message" in result:
+            print(f"  {result['message']}")
     return 0
+
+
+def _cmd_today(args: argparse.Namespace) -> int:
+    db_path = get_benchmark_db_path(args.project)
+    day = current_local_day()
+    probes = get_latest_daily_probes(db_path, day)
+    if args.format == "json":
+        data = {
+            "day": day,
+            "probes": {
+                k: {
+                    "status": p.status,
+                    "duration_ms": p.duration_ms,
+                    "validator_digest": p.validator_digest,
+                    "cost": p.cost,
+                    "detail": p.detail,
+                }
+                for k, p in probes.items()
+            },
+        }
+        print(json.dumps(data, indent=2))
+    else:
+        print(f"Daily benchmark evidence for {day}:")
+        if not probes:
+            print("  No verified probes recorded today yet. Run `koru benchmark run` to execute.")
+        else:
+            for k, p in sorted(probes.items()):
+                if ":" in k:  # only display specific task:candidate pairs
+                    print(f"  • {k}: {p.status} in {p.duration_ms}ms ({p.detail})")
+    return 0
+
+
+def _cmd_explain(args: argparse.Namespace) -> int:
+    diff_enum = TaskClass(args.difficulty)
+    task = Task(difficulty=diff_enum, kind=args.task_kind, reason="cli_explain")
+    decision = resolve_task_route(task, project_root=args.project, explicit_choice=args.model)
+    if args.format == "json":
+        out = {
+            "task": task.key,
+            "candidate": decision.candidate.id if decision.candidate else None,
+            "client": decision.candidate.client if decision.candidate else None,
+            "model": decision.candidate.model if decision.candidate else None,
+            "reason": decision.reason,
+            "confidence": "high" if not decision.low_confidence else "low",
+            "evidence_date": decision.evidence_date,
+        }
+        print(json.dumps(out, indent=2))
+    else:
+        print(f"Routing explanation for {task.key}:")
+        if decision.candidate:
+            cand = decision.candidate
+            model_name = cand.model or "default"
+            print(f"  • Selected: {cand.id} (client={cand.client}, model={model_name})")
+            print(f"  • Reason: {decision.reason}")
+            print(f"  • Confidence: {'high' if not decision.low_confidence else 'low (default fallback)'}")
+            if decision.evidence_date:
+                print(f"  • Evidence date: {decision.evidence_date}")
+        else:
+            print("  • No candidate found to satisfy task requirements.")
+    return 0
+
+
+def _cmd_history(args: argparse.Namespace) -> int:
+    db_path = get_benchmark_db_path(args.project)
+    history = get_campaign_history(db_path, limit=args.limit)
+    if args.format == "json":
+        print(json.dumps(history, indent=2))
+    else:
+        print(f"Benchmark campaign history (last {args.limit} records):")
+        if not history:
+            print("  No campaigns recorded yet.")
+        else:
+            for h in history:
+                fin = h['finished_at'] or 'pending'
+                print(f"  • {h['day']}: {h['status']} ({h['probe_count']} probes, finished={fin})")
+    return 0
+
+
+def _cmd_schedule(args: argparse.Namespace) -> int:
+    proj_dir = str(args.project.resolve())
+    print("Daily benchmark timer recommendation:")
+    print("  Add to crontab (once daily at 04:00):")
+    print(f"    0 4 * * * cd {proj_dir} && koru benchmark run >> .planfile/benchmark.log 2>&1")
+    print("  Or run `python scripts/install-benchmark-timer.py` to configure systemd user service.")
+    return 0
+
+
+_ACTIONS = {
+    "run": _cmd_run,
+    "today": _cmd_today,
+    "explain": _cmd_explain,
+    "history": _cmd_history,
+    "schedule": _cmd_schedule,
+}
+
+
+def benchmark_main(argv: list[str]) -> int:
+    args = _build_parser().parse_args(argv)
+    handler = _ACTIONS.get(args.action)
+    if handler is None:
+        return 0
+    return handler(args)
