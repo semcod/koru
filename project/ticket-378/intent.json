@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-378",
+  "summary": "refactor(readiness): address shotgun surgery on issues variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-378/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/readiness/readiness.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "bd3eb672a15d6bd0bd0fc4f0a29143988f61f4c0",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on 'issues' removed: mutable accumulator lists replaced by _present_issues composition and single-issue predicate functions (_socket_health_issue, _daemon_pid_issue, _socket_inode_drift_issue, _daemon_project_mismatch_issue, _daemon_python_mismatch_issue, _queue_runner_lock_issue).",
+    "nonGoals": [
+      "Changing issue codes, severities, messages or fix commands",
+      "Refactoring evaluate_autonomous_readiness or facade re-exports"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Each conditional issues.append becomes a function returning ReadinessIssue|None; aggregators compose via _present_issues. Facade re-export names (_append_issue, _check_socket_health_issues) preserved for monkeypatch compatibility.",
+      "components": [
+        {
+          "name": "autonomy-readiness",
+          "paths": [
+            "src/koru/autonomy/readiness/readiness.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_autonomous_readiness.py tests/test_facade_late_binding_contract.py -x -q"
+        ],
+        "evidence": "Readiness issues, severities, fix commands and result payloads unchanged."
+      }
+    ]
+  }
+}
