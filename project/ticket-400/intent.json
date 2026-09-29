@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-400",
+  "summary": "refactor(drive-result): address shotgun surgery on out variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-400/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay/drive_result.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d865e75c5213a90ddc4ef35746c7448b26e50082",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on out removed in drive_result.py: four _apply_photo_vql_* mutators converted to pure *_patch dict functions; normalize_drive_result composes the result via a single res accumulator.",
+    "nonGoals": [
+      "Drive result field semantics",
+      "Other vdisplay module smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Gate/provenance/submit helpers return patch dicts; normalize_drive_result merges them onto res in order.",
+      "components": [
+        {
+          "name": "vdisplay-drive-result",
+          "paths": [
+            "src/koru/integrations/vdisplay/drive_result.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_vdisplay_drive_result.py tests/test_photo_vql_drive.py tests/test_photo_vql_orchestrator.py tests/test_autonomy_drive_result.py -x -q"
+        ],
+        "evidence": "Drive result shape and gating behavior preserved."
+      }
+    ]
+  }
+}
