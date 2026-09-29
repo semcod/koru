@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-394",
+  "summary": "refactor(vql-sidecar): address shotgun surgery on meta variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-394/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay/vql_sidecar.py",
+    "src/koru/integrations/vdisplay_client.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "01d301fcbc9b39e6edd1e32f0a4df8609152272a",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on meta reduced in vql_sidecar.py: capture-mismatch metadata loading extracted to _capture_mismatch_meta, PNG resolution logic extracted to _png_path_from_vql_meta, remaining loaders bind renamed locals; meta mutating scopes drop 6 -> 3. Facade vdisplay_client re-exports the two new helpers per module-split contract.",
+    "nonGoals": [
+      "vql_sidecar out smell (PLF-074, separate ticket)",
+      "Behavior changes in capture/refresh paths"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Metadata loading consolidated in helpers; direct meta rebinding removed from four functions.",
+      "components": [
+        {
+          "name": "vql-sidecar",
+          "paths": [
+            "src/koru/integrations/vdisplay/vql_sidecar.py",
+            "src/koru/integrations/vdisplay_client.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_photo_vql_orchestrator.py tests/test_photo_vql_drive.py tests/test_vdisplay_module_split.py -x -q"
+        ],
+        "evidence": "Photo-VQL capture/refresh behavior preserved."
+      }
+    ]
+  }
+}

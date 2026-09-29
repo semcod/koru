@@ -100,22 +100,27 @@ def _photo_vql_ide_window_warning(*, ide: str, meta: dict) -> dict[str, Any] | N
     )
 
 
-def _photo_vql_ide_capture_mismatch(*, ide: str) -> dict[str, Any] | None:
-    """Return warning dict when the current photo-VQL sidecar does not match the requested IDE."""
-    meta: dict[str, Any] | None = None
+def _capture_mismatch_meta() -> dict[str, Any] | None:
+    """Sidecar metadata for the capture-mismatch check: session observe path, else latest."""
     session = _vdc()._autonomy_session.active_session_dir()
     if session is not None:
         _png, vql = _vdc()._autonomy_session.session_observe_paths(session)
         if vql.is_file():
             meta = _vdc().load_vql_metadata(str(vql), allow_stale=True)
-    if meta is None or not (meta.get("ui_elements") or meta.get("layers")):
-        try:
-            meta = _vdc().load_vql_metadata(allow_stale=True)
-        except Exception:
-            return None
-    if meta.get("error"):
+            if meta.get("ui_elements") or meta.get("layers"):
+                return meta
+    try:
+        return _vdc().load_vql_metadata(allow_stale=True)
+    except Exception:
         return None
-    return _vdc()._photo_vql_ide_window_warning(ide=ide, meta=meta)
+
+
+def _photo_vql_ide_capture_mismatch(*, ide: str) -> dict[str, Any] | None:
+    """Return warning dict when the current photo-VQL sidecar does not match the requested IDE."""
+    sidecar_meta = _capture_mismatch_meta()
+    if sidecar_meta is None or sidecar_meta.get("error"):
+        return None
+    return _vdc()._photo_vql_ide_window_warning(ide=ide, meta=sidecar_meta)
 
 
 def _observe_vql_sidecar_path(*, source: str | None = None) -> str | None:
@@ -181,21 +186,25 @@ def _photo_png_from_vql_sidecar_path(cand_vql: str) -> str | None:
     return None
 
 
+def _png_path_from_vql_meta(metadata: dict[str, Any]) -> str | None:
+    """PNG path from VQL metadata data_locations / scene URL."""
+    dl = metadata.get("data_locations") if isinstance(metadata.get("data_locations"), dict) else {}
+    png_from_meta = (dl or {}).get("png") if isinstance(dl, dict) else None
+    if png_from_meta and os.path.isfile(png_from_meta):
+        return png_from_meta
+    scene = metadata.get("scene") if isinstance(metadata.get("scene"), dict) else {}
+    url = str((scene or {}).get("url") or "")
+    if url.startswith("file://") and os.path.isfile(url[7:]):
+        return url[7:]
+    return None
+
+
 def _photo_png_from_vql_metadata(cand_vql: str) -> str | None:
     """Resolve the PNG path from VQL metadata data_locations / scene URL."""
     try:
-        meta = _vdc().load_vql_metadata(cand_vql or None)
-        dl = meta.get("data_locations") if isinstance(meta.get("data_locations"), dict) else {}
-        png_from_meta = (dl or {}).get("png") if isinstance(dl, dict) else None
-        if png_from_meta and os.path.isfile(png_from_meta):
-            return png_from_meta
-        scene = meta.get("scene") if isinstance(meta.get("scene"), dict) else {}
-        url = str((scene or {}).get("url") or "")
-        if url.startswith("file://") and os.path.isfile(url[7:]):
-            return url[7:]
+        return _png_path_from_vql_meta(_vdc().load_vql_metadata(cand_vql or None))
     except Exception:
-        pass
-    return None
+        return None
 
 
 def _resolve_photo_png_path_from_vql(
@@ -270,9 +279,9 @@ def photo_vql_sidecar_needs_refresh(*, source: str | None = None, ide: str = "au
     vql = png.with_suffix(png.suffix + ".vql.json")
     if not png.is_file() or not vql.is_file():
         return True
-    meta = _vdc().load_vql_metadata(str(vql), allow_stale=True)
-    layers = meta.get("ui_elements") or meta.get("layers") or []
-    warn = _vdc()._photo_vql_ide_window_warning(ide=ide, meta=meta)
+    sidecar_meta = _vdc().load_vql_metadata(str(vql), allow_stale=True)
+    layers = sidecar_meta.get("ui_elements") or sidecar_meta.get("layers") or []
+    warn = _vdc()._photo_vql_ide_window_warning(ide=ide, meta=sidecar_meta)
     stale, _info = _vdc()._autonomy_session.vql_sidecar_is_stale(
         vql,
         png,
@@ -341,10 +350,10 @@ def _photo_vql_refresh_screenshot(src: str, png: Path, ide: str) -> dict[str, An
 
 def _photo_vql_reload_sidecar_meta(vql: Path) -> dict[str, Any]:
     """Fresh (meta, elements, main_layers) context loaded from the VQL sidecar."""
-    meta = _vdc().load_vql_metadata(str(vql), allow_stale=True)
+    loaded = _vdc().load_vql_metadata(str(vql), allow_stale=True)
     return {
-        "meta": meta,
-        "elements": meta.get("ui_elements") or meta.get("layers") or [],
+        "meta": loaded,
+        "elements": loaded.get("ui_elements") or loaded.get("layers") or [],
         "main_layers": _vdc()._main_vql_layer_count(vql),
     }
 
