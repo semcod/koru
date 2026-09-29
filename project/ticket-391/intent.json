@@ -1,0 +1,73 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-391",
+  "summary": "refactor(readiness): address shotgun surgery on issues variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-391/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/readiness/readiness.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "62a29196a60c4c1c9845e31c1e1c6ea76520ad92",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on issues removed in readiness.py: check_daemon_client_alignment and check_lane_terminal_socket_alignment compose lists via unpacking instead of mutating a bound issues variable; mutating function scopes drop 5 -> 3.",
+    "nonGoals": [
+      "Removing the facade-exported _append_issue helper",
+      "Changing readiness issue contents or severities",
+      "Other readiness smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Compositional list building replaces in-place issues mutation at the two remaining mutation sites; facade contract (_append_issue export) preserved.",
+      "components": [
+        {
+          "name": "readiness",
+          "paths": [
+            "src/koru/autonomy/readiness/readiness.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module compositional refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/ -k readiness -x -q"
+        ],
+        "evidence": "Readiness results keep identical issue ordering and primary_fix selection."
+      }
+    ]
+  }
+}

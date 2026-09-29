@@ -432,10 +432,14 @@ def check_daemon_client_alignment(
     socket_path: Path | None = None,
 ) -> ReadinessResult:
     """Detect daemon version/build drift vs the current koru process."""
-    issues = _present_issues(_check_daemon_version_issue(status))
-    if project is not None and socket_path is not None:
-        issues += _check_daemon_meta_project_python_issues(status, project, socket_path)
-    return _build_readiness_result(issues)
+    meta_issues = (
+        _check_daemon_meta_project_python_issues(status, project, socket_path)
+        if project is not None and socket_path is not None
+        else ()
+    )
+    return _build_readiness_result(
+        [*_present_issues(_check_daemon_version_issue(status)), *meta_issues]
+    )
 
 
 def _pid_alive(pid: int) -> bool:
@@ -890,13 +894,16 @@ def check_lane_terminal_socket_alignment(
         terminal_integrated=terminal_integrated,
         terminal_kind=terminal_kind,
     )
-    issues, primary_fix = _terminal_lane_mismatch_issues(ctx)
-    issues += _present_issues(
-        _lane_ide_mismatch_issue(ctx),
-        _socket_lane_mismatch_issue(socket_path, ctx),
-    )
+    mismatch, primary_fix = _terminal_lane_mismatch_issues(ctx)
+    fired = [
+        *mismatch,
+        *_present_issues(
+            _lane_ide_mismatch_issue(ctx),
+            _socket_lane_mismatch_issue(socket_path, ctx),
+        ),
+    ]
 
-    return _build_readiness_result(issues, primary_fix=primary_fix or _first_fix_command(issues))
+    return _build_readiness_result(fired, primary_fix=primary_fix or _first_fix_command(fired))
 
 
 def _queue_runner_lock_issue(project: Path) -> ReadinessIssue | None:

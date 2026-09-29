@@ -382,8 +382,6 @@ project analysis or human-owned ticket inputs.
 | **ticket-382** | [`README.md`](./ticket-382/README.md) | - | - | - | - | - |
 | **ticket-383** | [`README.md`](./ticket-383/README.md) | - | - | - | - | - |
 | **ticket-384** | [`README.md`](./ticket-384/README.md) | - | - | - | - | - |
-| **ticket-385** | [`README.md`](./ticket-385/README.md) | - | - | - | - | - |
-| **ticket-386** | [`README.md`](./ticket-386/README.md) | - | - | - | - | - |
 | **ticket-387** | [`README.md`](./ticket-387/README.md) | - | - | - | - | - |
 | **ticket-388** | [`README.md`](./ticket-388/README.md) | - | - | - | - | - |
 | **ticket-389** | [`README.md`](./ticket-389/README.md) | - | - | - | - | - |
