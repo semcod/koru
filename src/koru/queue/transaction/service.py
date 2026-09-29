@@ -97,7 +97,11 @@ def execute_patch_transaction(
         return PatchTransactionResult(result, screened.refusal)
 
     plan = build_patch_plan(
-        project, ticket, screened.diff, manifest, proposal=screened.proposal,
+        project,
+        ticket,
+        screened.diff,
+        manifest,
+        proposal=screened.proposal,
     )
     journal = _open_run_journal(project, plan, screened.proposal)
     if plan.verify_error is not None:
@@ -127,6 +131,29 @@ def _screen_before_plan(result: CommandResult) -> _ScreenedPatch:
     return screened
 
 
+def _refused(journal: RunJournal, outcome: PatchOutcome) -> PatchOutcome:
+    """Journal a refusal decision and return the outcome unchanged."""
+    journal.append(PHASE_REFUSED, data={"code": outcome.code})
+    return outcome
+
+
+def _journal_outcome(journal: RunJournal, phase: str, outcome: PatchOutcome) -> PatchOutcome:
+    """Journal a terminal phase for an outcome and return it unchanged."""
+    journal.append(phase, data={"code": outcome.code})
+    return outcome
+
+
+def _journal_frozen(journal: RunJournal, frozen: dict) -> None:
+    journal.append(PHASE_FROZEN, manifest_hash=frozen["manifest_hash"])
+
+
+def _freeze_and_journal(freeze: ManifestFreeze, journal: RunJournal) -> dict:
+    """Persist the manifest and journal the freeze, returning the frozen payload."""
+    frozen = freeze.freeze()
+    _journal_frozen(journal, frozen)
+    return frozen
+
+
 def _open_run_journal(
     project: Path,
     plan: PatchPlan,
@@ -153,10 +180,12 @@ def _refuse_invalid_verify_profile(
     journal: RunJournal,
 ) -> PatchTransactionResult:
     """Refuse, as a journaled decision, a run whose declared gate cannot run."""
-    journal.append(PHASE_REFUSED, data={"code": VERIFY_PROFILE_INVALID})
     return PatchTransactionResult(
         result,
-        PatchOutcome(code=VERIFY_PROFILE_INVALID, message=plan.verify_error),
+        _refused(
+            journal,
+            PatchOutcome(code=VERIFY_PROFILE_INVALID, message=plan.verify_error),
+        ),
         plan=plan,
     )
 
@@ -168,8 +197,7 @@ def _deliver_artifact(
     journal: RunJournal,
 ) -> PatchTransactionResult:
     """Artifact mode: freeze the patch and hand it over, touching no workspace."""
-    frozen = freeze.freeze()
-    journal.append(PHASE_FROZEN, manifest_hash=frozen["manifest_hash"])
+    frozen = _freeze_and_journal(freeze, journal)
     deliver_patch_artifact(plan, frozen)
     journal.append(PHASE_COMPLETED, data={"delivery": "artifact"})
     return PatchTransactionResult(result, None, plan=plan, manifest=freeze.manifest)
@@ -184,23 +212,24 @@ def _screen_promotion_gates(plan: PatchPlan, journal: RunJournal) -> PatchOutcom
     """
     refusal = screen_promotion_preconditions(plan)
     if refusal is not None:
-        journal.append(PHASE_REFUSED, data={"code": refusal.code})
-        return refusal
+        return _refused(journal, refusal)
     if plan.mode != PROMOTION_BRANCH or plan.isolated:
         return None
     # Branch promises a verified commit and an untouched shared tree; a run
     # that cannot isolate (no gate to verify with, or no worktree support)
     # cannot keep either promise. Falling back to writing the workspace
     # would be the silent downgrade the mode exists to rule out.
-    journal.append(PHASE_REFUSED, data={"code": PROMOTION_FAILED})
-    return PatchOutcome(
-        code=PROMOTION_FAILED,
-        message=(
-            "promotion_mode=branch requires a verify gate and worktree "
-            "isolation, and this run has neither a resolvable verify command "
-            "nor an isolatable checkout. Name a verify profile (or command), "
-            "or explicitly choose promotion_mode=apply for an unverified "
-            "local application."
+    return _refused(
+        journal,
+        PatchOutcome(
+            code=PROMOTION_FAILED,
+            message=(
+                "promotion_mode=branch requires a verify gate and worktree "
+                "isolation, and this run has neither a resolvable verify "
+                "command nor an isolatable checkout. Name a verify profile "
+                "(or command), or explicitly choose promotion_mode=apply "
+                "for an unverified local application."
+            ),
         ),
     )
 
@@ -235,8 +264,7 @@ def _authorize(
         return None
     refusal = authorize(plan, frozen)
     if refusal is not None:
-        journal.append(PHASE_REFUSED, data={"code": refusal.code})
-        return refusal
+        return _refused(journal, refusal)
     record = getattr(authorize, "record", None) or {}
     journal.append(
         PHASE_AUTHORIZED,
@@ -255,8 +283,7 @@ def _run_isolated(
     authorize: Authorizer | None = None,
 ) -> PatchOutcome | None:
     """Verify in a worktree first; only a proven patch reaches the workspace."""
-    frozen = freeze.freeze()
-    journal.append(PHASE_FROZEN, manifest_hash=frozen["manifest_hash"])
+    frozen = _freeze_and_journal(freeze, journal)
     refusal = _authorize(plan, frozen, journal, authorize)
     if refusal is not None:
         return refusal
@@ -267,22 +294,19 @@ def _run_isolated(
         journal.append(PHASE_STAGING_UNAVAILABLE)
         return _without_isolation(plan, freeze, shell_runner, journal)
     if staged.outcome is not None:
-        journal.append(PHASE_REFUSED, data={"code": staged.outcome.code})
-        return staged.outcome
+        return _refused(journal, staged.outcome)
+    journal.append(PHASE_STAGED, data={"verified": True})
     if plan.mode == PROMOTION_BRANCH:
         # The verified result already lives on its own ref; deliberately nothing
         # is written to the shared working tree. The branch commit happened
         # under the ``staging`` intent, so ``staged`` closes it and ``promoted``
         # records where the result now lives.
-        journal.append(PHASE_STAGED, data={"verified": True})
         journal.append(PHASE_PROMOTED, data={"branch": f"koru/run-{plan.run_id}"})
         return None
-    journal.append(PHASE_STAGED, data={"verified": True})
 
     conflict = guard_promotion(plan, frozen)
     if conflict is not None:
-        journal.append(PHASE_REFUSED, data={"code": conflict.code})
-        return conflict
+        return _refused(journal, conflict)
     # Already verified in isolation — re-running the gate here would only
     # re-prove it against a workspace the manifest just confirmed unchanged.
     return _apply_to_workspace(plan, freeze, shell_runner, journal, verify=False)
@@ -303,14 +327,16 @@ def _without_isolation(
     its own dirty-file guard and runs the gate in the workspace itself.
     """
     if plan.mode == PROMOTION_BRANCH:
-        journal.append(PHASE_REFUSED, data={"code": PROMOTION_FAILED})
-        return PatchOutcome(
-            code=PROMOTION_FAILED,
-            message=(
-                "promotion_mode=branch needs a staging worktree to commit into, and "
-                "one could not be created here — a read-only checkout is the usual "
-                "reason. Nothing was applied. Re-run with promotion_mode=apply to "
-                "patch the workspace directly, or from a writable checkout."
+        return _refused(
+            journal,
+            PatchOutcome(
+                code=PROMOTION_FAILED,
+                message=(
+                    "promotion_mode=branch needs a staging worktree to commit into, and "
+                    "one could not be created here — a read-only checkout is the usual "
+                    "reason. Nothing was applied. Re-run with promotion_mode=apply to "
+                    "patch the workspace directly, or from a writable checkout."
+                ),
             ),
         )
     # The isolated path already journaled `frozen`; re-announcing it here
@@ -330,16 +356,19 @@ def _run_direct(
     """Patch the workspace in place, reversing the exact diff on failed verification."""
     refusal = screen_direct_apply(plan)
     if refusal is not None:
-        journal.append(PHASE_REFUSED, data={"code": refusal.code})
-        return refusal
+        return _refused(journal, refusal)
     frozen = freeze.freeze()
     if not frozen_journaled:
-        journal.append(PHASE_FROZEN, manifest_hash=frozen["manifest_hash"])
+        _journal_frozen(journal, frozen)
         refusal = _authorize(plan, frozen, journal, authorize)
         if refusal is not None:
             return refusal
     return _apply_to_workspace(
-        plan, freeze, shell_runner, journal, verify=bool(plan.verify_command),
+        plan,
+        freeze,
+        shell_runner,
+        journal,
+        verify=bool(plan.verify_command),
     )
 
 
@@ -357,12 +386,14 @@ def _apply_to_workspace(
     journal.append(PHASE_APPLYING)
     applied = apply_unified_diff(plan.project, plan.diff)
     if not applied.ok:
-        journal.append(PHASE_REFUSED, data={"code": PATCH_DOES_NOT_APPLY})
-        return PatchOutcome(
-            code=PATCH_DOES_NOT_APPLY,
-            message=applied.detail,
-            retryable=True,
-            diagnostics=applied.detail,
+        return _refused(
+            journal,
+            PatchOutcome(
+                code=PATCH_DOES_NOT_APPLY,
+                message=applied.detail,
+                retryable=True,
+                diagnostics=applied.detail,
+            ),
         )
     journal.append(PHASE_APPLIED, data={"changed_files": sorted(applied.changed_files)})
 
@@ -374,8 +405,7 @@ def _apply_to_workspace(
         if gate.returncode != 0:
             outcome = roll_back_failed_verify(plan, applied.changed_files, gate)
             phase = PHASE_ROLLED_BACK if outcome.workspace_left_untouched else PHASE_REFUSED
-            journal.append(phase, data={"code": outcome.code})
-            return outcome
+            return _journal_outcome(journal, phase, outcome)
         journal.append(PHASE_VERIFIED)
 
     if plan.mode != PROMOTION_COMMIT:
@@ -383,7 +413,6 @@ def _apply_to_workspace(
     journal.append(PHASE_PROMOTING, data={"mode": plan.mode})
     outcome = commit_if_requested(plan, applied.changed_files)
     if outcome is not None:
-        journal.append(PHASE_ROLLED_BACK, data={"code": outcome.code})
-        return outcome
+        return _journal_outcome(journal, PHASE_ROLLED_BACK, outcome)
     journal.append(PHASE_PROMOTED, data={"mode": plan.mode})
     return None

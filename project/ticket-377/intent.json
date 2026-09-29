@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-377",
+  "summary": "refactor(queue-transaction): address shotgun surgery on journal variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-377/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/transaction/service.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "bd3eb672a15d6bd0bd0fc4f0a29143988f61f4c0",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on 'journal' reduced: refusal/freeze/outcome journaling centralized in _refused, _journal_outcome, _journal_frozen, _freeze_and_journal; call sites stop repeating the PHASE_REFUSED data={'code': ...} idiom.",
+    "nonGoals": [
+      "Changing journal event phases, payload keys or ordering",
+      "Refactoring RunJournal or other queue modules"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Repeated journal.append idioms extracted into named helpers (_refused, _journal_outcome, _journal_frozen, _freeze_and_journal); event phases, payloads and ordering unchanged.",
+      "components": [
+        {
+          "name": "queue-transaction",
+          "paths": [
+            "src/koru/queue/transaction/service.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_queue_transaction_phases.py -x -q"
+        ],
+        "evidence": "Journal event sequence and transaction outcomes unchanged."
+      }
+    ]
+  }
+}
