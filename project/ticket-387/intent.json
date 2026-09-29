@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-387",
+  "summary": "refactor(handlers-ack): reduce handle_ack god function",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-387/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/koruide/src/koruide/daemon/handlers_ack.py",
+    "tests/test_koruide_daemon_handlers_ack.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "4f0848e7f02747f0617325098a25edc87bafd593",
+    "targetBranch": "main",
+    "outcome": "handle_ack god function reduced: pending-match, defer/strict resolution, awaiting-state clearing and fallback/reply completion extracted into _resolve_plugin_ack/_clear_awaiting_plugin/_complete_plugin_ack; handle_ack becomes a thin correlation + dispatch.",
+    "nonGoals": [
+      "Changing ack protocol behavior, defer rules, or reply payloads",
+      "PLF-061 info shotgun surgery in the same file"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Split handle_ack into resolve/clear/complete helpers preserving exact ordering (defer before clearing awaiting state, clear before fallback relay).",
+      "components": [
+        {
+          "name": "koruide-daemon",
+          "paths": [
+            "packages/koruide/src/koruide/daemon/handlers_ack.py",
+            "tests/test_koruide_daemon_handlers_ack.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_koruide_daemon_handlers_ack.py -x -q"
+        ],
+        "evidence": "Ack handling contract tests (correlation match, defer submit_unverified, strict ok, OS fallback relay, reply payload) unchanged."
+      }
+    ]
+  }
+}

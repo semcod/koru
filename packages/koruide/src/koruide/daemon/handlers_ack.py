@@ -12,7 +12,7 @@ import re
 import shlex
 import threading
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from gillm.injection.errors import InjectorError
 
@@ -627,72 +627,116 @@ def _record_plugin_ack_integration(
     )
 
 
-def handle_ack(daemon: Any, client: _Client, msg: Message) -> None:
-    """Handle plugin acknowledgment message."""
-    from koruide.daemon.handlers import _cli_client_still_connected  # noqa: F401
+class _PendingPluginAck(NamedTuple):
+    """Decoded ``client.awaiting_plugin`` correlation tuple."""
 
-    pending = client.awaiting_plugin
-    if pending is None:
-        return
-    cli_client, corr, submit_requested, plugin_ide, original_text, require_plugin = pending
-    if msg.id != corr:
-        return
+    cli_client: Any
+    corr: Any
+    submit_requested: Any
+    plugin_ide: Any
+    original_text: Any
+    require_plugin: Any
+
+    @property
+    def fallback_ide(self) -> str:
+        return self.plugin_ide or "auto"
+
+
+class _PluginAckResolution(NamedTuple):
+    """Resolved ack outcome ready for relay/reply."""
+
+    ctx: _PendingPluginAck
+    plugin_ok: bool
+    info: dict[str, Any]
+
+
+def _resolve_plugin_ack(
+    daemon: Any,
+    client: _Client,
+    msg: Message,
+    ctx: _PendingPluginAck,
+) -> _PluginAckResolution | None:
+    """Resolve the ack outcome or defer the reply (returns None)."""
     raw_plugin_ok = bool(msg.data.get("ok", True))
     info = _annotated_plugin_ack_info(
         client,
         msg,
         plugin_ok=raw_plugin_ok,
-        submit_requested=submit_requested,
-        plugin_ide=plugin_ide,
+        submit_requested=ctx.submit_requested,
+        plugin_ide=ctx.plugin_ide,
     )
-    fallback_ide = plugin_ide or "auto"
     if DriveOrchestrator.should_defer_submit_unverified_for_message_sent(
         info=info,
         plugin_ok=raw_plugin_ok,
-        submit_requested=submit_requested,
-        plugin_ide=plugin_ide,
+        submit_requested=ctx.submit_requested,
+        plugin_ide=ctx.plugin_ide,
     ):
         _defer_submit_unverified_reply(
             daemon,
             client,
-            cli_client,
-            corr,
-            fallback_ide,
+            ctx.cli_client,
+            ctx.corr,
+            ctx.fallback_ide,
             info=info,
             plugin_ok=False,
-            original_text=original_text,
+            original_text=ctx.original_text,
         )
-        return
-    plugin_ok, strict_extra = _strict_plugin_ack_ok(
+        return None
+    strict = _strict_plugin_ack_ok(
         info,
         plugin_ok=raw_plugin_ok,
-        submit_requested=submit_requested,
-        plugin_ide=plugin_ide,
+        submit_requested=ctx.submit_requested,
+        plugin_ide=ctx.plugin_ide,
     )
-    info = {**info, **strict_extra}
+    return _PluginAckResolution(
+        ctx=ctx, plugin_ok=strict[0], info={**info, **strict[1]}
+    )
+
+
+def _clear_awaiting_plugin(client: _Client) -> None:
     client.awaiting_plugin = None
     client.awaiting_plugin_info = None
     client.awaiting_plugin_timer = None
-    handled, fallback_extra = _relay_plugin_ack_os_fallback(
+
+
+def _complete_plugin_ack(daemon: Any, res: _PluginAckResolution) -> None:
+    """Relay the OS fallback or send the plugin ack reply."""
+    relay = _relay_plugin_ack_os_fallback(
         daemon,
-        cli_client,
-        corr,
-        fallback_ide,
-        original_text,
-        info=info,
-        plugin_ok=plugin_ok,
-        submit_requested=submit_requested,
-        plugin_ide=plugin_ide,
-        require_plugin=require_plugin,
+        res.ctx.cli_client,
+        res.ctx.corr,
+        res.ctx.fallback_ide,
+        res.ctx.original_text,
+        info=res.info,
+        plugin_ok=res.plugin_ok,
+        submit_requested=res.ctx.submit_requested,
+        plugin_ide=res.ctx.plugin_ide,
+        require_plugin=res.ctx.require_plugin,
     )
-    if handled:
+    if relay[0]:
         return
     _send_plugin_ack_reply(
         daemon,
-        cli_client,
-        corr,
-        fallback_ide,
-        info={**info, **fallback_extra},
-        plugin_ok=plugin_ok,
-        original_text=original_text,
+        res.ctx.cli_client,
+        res.ctx.corr,
+        res.ctx.fallback_ide,
+        info={**res.info, **relay[1]},
+        plugin_ok=res.plugin_ok,
+        original_text=res.ctx.original_text,
     )
+
+
+def handle_ack(daemon: Any, client: _Client, msg: Message) -> None:
+    """Handle plugin acknowledgment message."""
+    from koruide.daemon.handlers import _cli_client_still_connected  # noqa: F401
+
+    pending = client.awaiting_plugin
+    if pending is None or msg.id != pending[1]:
+        return
+    resolved = _resolve_plugin_ack(
+        daemon, client, msg, _PendingPluginAck(*pending)
+    )
+    if resolved is None:
+        return
+    _clear_awaiting_plugin(client)
+    _complete_plugin_ack(daemon, resolved)
