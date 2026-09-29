@@ -16,8 +16,8 @@
     "semcod/koru"
   ],
   "evidence": [
-    ".governance/standard-adoption.json",
-    ".governance/docs.json",
+    "repo://semcod/koru/.governance/standard-adoption.json",
+    "repo://semcod/koru/.governance/docs.json",
     "https://github.com/semcod/koru/issues/540",
     "https://github.com/semcod/koru/issues/541",
     "https://github.com/semcod/koru/issues/169",
@@ -27,15 +27,39 @@
 ---
 # Audyt adopcji standardow wellmanifest (STARTER-605)
 
+<!-- docs:section question -->
+## Question
+
+Jaki jest stan adopcji standardow `wellmanifest/*` w tym repozytorium
+wzgledem observowanych upstream HEAD, czy mapowanie Planfile ID <-> GitHub
+issue jest deterministyczne i czy deklarowane bramki sa faktycznie
+egzekwowane w protected CI.
+
+<!-- docs:section scope -->
+## Scope
+
 Data audytu: 2026-09-29. Zakres: tylko to repozytorium; dokument aktualizuje
 obserwacje z audytu 2026-09-15. Porownanie dotyczy HEAD galezi domyslnej
 repozytoriow `wellmanifest/*` observowanych przez `git ls-remote` + `VERSION`,
 nie jest dowodem, ze kazda zmiana wymaga podbicia pina.
 
-## Deklaracje adopcji vs observowany upstream
+<!-- docs:section method -->
+## Method
+
+Odczyt deklaracji z `.governance/standard-adoption.json` (mode=enforce,
+profile=baseline) oraz `.governance/docs.json`, porownanie z `git ls-remote`
+HEAD i plikami VERSION upstream repozytoriow, przeglad rekordow Planfile
+i zwiazanych issue GitHub oraz observacja ostatnich merge'y validatora.
+
+<!-- docs:section evidence -->
+## Evidence
 
 Zrodlo deklaracji: `.governance/standard-adoption.json` (mode=enforce,
-profile=baseline) oraz `.governance/docs.json` dla wellmanifest/docs.
+profile=baseline) oraz `.governance/docs.json` dla wellmanifest/docs;
+identyfikatory issue i PR w polu `evidence` metadanych.
+
+<!-- docs:section facts -->
+## Facts
 
 | Standard | Adopted revision | Adopted version | Upstream HEAD | Upstream VERSION | Status |
 |---|---|---|---|---|---|
@@ -60,7 +84,7 @@ Zmiany wzgledem audytu 2026-09-15:
 - merge, validation-attestation, docs: pin-differs przy tym samym numerze
   wersji — przeglad tresciowych roznic przed ewentualnym podbiciem.
 
-## Planfile ID <-> GitHub issue: mapowanie i deduplikacja
+### Planfile ID <-> GitHub issue: mapowanie i deduplikacja
 
 - Kazdy rekord Planfile (`PLF-*`, `STARTER-*`) ma `source.context.dedupe_key`
   postaci `code2llm:smell:<kind>:<path>` albo jawny klucz w tresci issue
@@ -75,7 +99,7 @@ Zmiany wzgledem audytu 2026-09-15:
   powiazanie dziala w kierunku issue->planfile_id. Brak dowodu na
   zdublowane issue dla tego samego klucza w observowanej probie.
 
-## Deklarowane vs egzekwowane (protected CI)
+### Deklarowane vs egzekwowane (protected CI)
 
 - Lokalna bramka `./project/governance-check.sh` przechodzi (GOV-PASS) na tym
   ticketcie; CI "governance / enforce" + "standard packs / conformance"
@@ -85,7 +109,28 @@ Zmiany wzgledem audytu 2026-09-15:
   OneDev->Validator dziala; cykliczne `retry_cooldown`/`onedev_pending`
   sa normalne przy przesuwajacym sie main.
 
-## Niezrealizowane / przekazane
+<!-- docs:section hypotheses -->
+## Hypotheses
+
+- ticket-lifecycle (0.2.0-dev) i logs (0.5.0) to kandydaci na osobne bounded
+  tickety adopcji przez managed adopter; merge, validation-attestation i docs
+  wymagaja przegladu tresciowych roznic przed ewentualnym podbiciem.
+- Rekordy Planfile bez pola `sync` sugeruja, ze powiazanie dziala jedynie
+  w kierunku issue->planfile_id; w observowanej probie nie ma dowodu na
+  zdublowane issue dla tego samego klucza.
+
+<!-- docs:section limitations -->
+## Limitations
+
+- Porownanie upstream opiera sie na `ls-remote` i VERSION — nie udowadnia,
+  ze kazda rozbieznosc wymaga podbicia pina.
+- Deduplikacja sprawdzona na probie apparentnych duplikatow (#540/#541),
+  nie na pelnym skanie wszystkich issue.
+- Observacje merge'y sa chwilowe; `retry_cooldown`/`onedev_pending` przy
+  przesuwajacym sie main sa normalne.
+
+<!-- docs:section recommendations -->
+## Recommendations
 
 - Podbicie pinow (ticket-lifecycle 0.2.0-dev, logs 0.5.0, new-project
   0.20.54) — osobne bounded tickety przez managed adopter; poza zakresem
