@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-365",
+  "summary": "refactor(queue-routing): reduce classify_task cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-365/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/routing/classifier.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "7f5f907f7f934b19aa64544d90601c405de655a3",
+    "targetBranch": "main",
+    "outcome": "classify_task stays a thin classification dispatcher (CC<=15) with metadata normalization and safety checks extracted into pure helpers; classification results unchanged.",
+    "nonGoals": [
+      "Changing classification semantics, thresholds or Task contract",
+      "Refactoring callers outside classifier.py"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _mapping/_str_list/_labels/_routing/_complexity_level normalization helpers and _is_bounded_safe_ruff path/code safety checks; keep classify_task public signature and decision order.",
+      "components": [
+        {
+          "name": "routing-classifier",
+          "paths": [
+            "src/koru/queue/routing/classifier.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_benchmark_router.py -x -q"
+        ],
+        "evidence": "Benchmark router tests exercising classify_task pass; classify_task CC<=15."
+      }
+    ]
+  }
+}

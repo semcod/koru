@@ -6,36 +6,79 @@ from .contracts import Task, TaskClass
 
 _SAFE_RUFF = {"F401", "F541", "I001", "UP017", "UP035"}
 _COMPLEX = {"security", "governance", "architecture", "dependencies", "refactor", "cqrs"}
+_COMPLEX_LEVELS = {"M", "L", "XL", "COMPLEX"}
+_DOCS_KINDS = {"docs", "doc_fix", "documentation"}
+_SMALL_CODING_KINDS = {"code_change", "quick_fix", "small_task", "typing_fix"}
+_EXPLICIT_COMPLEX_KINDS = {"coding", "complex_refactor"}
+
+
+def _mapping(value: object) -> Mapping:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _str_list(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return value if all(isinstance(f, str) for f in value) else []
+
+
+def _labels(value: object) -> set[str]:
+    if not isinstance(value, list):
+        return set()
+    return {v.lower() for v in value if isinstance(v, str)}
+
+
+def _routing(task: Mapping, inputs: Mapping) -> Mapping:
+    context = _mapping(_mapping(task.get("source")).get("context"))
+    routing = context.get("model_routing")
+    return routing if isinstance(routing, Mapping) else inputs
+
+
+def _complexity_level(task: Mapping, routing: Mapping) -> str:
+    return str(routing.get("complexity") or task.get("complexity") or "").upper()
+
+
+def _is_safe_ruff_path(name: str) -> bool:
+    path = PurePosixPath(name)
+    return (
+        not path.is_absolute()
+        and ".." not in path.parts
+        and path.suffix == ".py"
+        and not any(c in name for c in "*?[]\\")
+    )
+
+
+def _is_bounded_safe_ruff(routing: Mapping, kind: object, files: list[str]) -> bool:
+    codes = routing.get("ruff_codes")
+    return (
+        kind == "lint_fix"
+        and len(files) == 1
+        and isinstance(codes, list)
+        and bool(codes)
+        and _is_safe_ruff_path(files[0])
+        and all(isinstance(c, str) and c in _SAFE_RUFF for c in codes)
+    )
 
 
 def classify_task(task: Mapping | None) -> Task:
     if not isinstance(task, Mapping):
         return Task(TaskClass.OTHER, "unknown", "missing_metadata")
-    inputs = task.get("inputs")
-    inputs = inputs if isinstance(inputs, Mapping) else {}
-    source = task.get("source")
-    context = source.get("context") if isinstance(source, Mapping) else None
-    routing = context.get("model_routing") if isinstance(context, Mapping) else None
-    routing = routing if isinstance(routing, Mapping) else inputs
-    files = task.get("files")
-    files = files if isinstance(files, list) and all(isinstance(f, str) for f in files) else []
-    labels = task.get("labels")
-    labels = {v.lower() for v in labels if isinstance(v, str)} if isinstance(labels, list) else set()
-    kind = routing.get("task_kind") or routing.get("llm_task_kind")
-    complexity = str(routing.get("complexity") or task.get("complexity") or "").upper()
-    if labels & _COMPLEX or len(files) > 2 or complexity in {"M", "L", "XL", "COMPLEX"}:
+    inputs = _mapping(task.get("inputs"))
+    routing = _routing(task, inputs)
+    files = _str_list(task.get("files"))
+    if (
+        _labels(task.get("labels")) & _COMPLEX
+        or len(files) > 2
+        or _complexity_level(task, routing) in _COMPLEX_LEVELS
+    ):
         return Task(TaskClass.COMPLEX, "coding", "broad_or_sensitive_scope")
-    codes = routing.get("ruff_codes")
-    if kind == "lint_fix" and len(files) == 1 and isinstance(codes, list) and codes:
-        path = PurePosixPath(files[0])
-        if (not path.is_absolute() and ".." not in path.parts and path.suffix == ".py"
-                and not any(c in files[0] for c in "*?[]\\")
-                and all(isinstance(c, str) and c in _SAFE_RUFF for c in codes)):
-            return Task(TaskClass.SIMPLE, "ruff", "bounded_safe_ruff")
-    if kind in {"docs", "doc_fix", "documentation"}:
+    kind = routing.get("task_kind") or routing.get("llm_task_kind")
+    if _is_bounded_safe_ruff(routing, kind, files):
+        return Task(TaskClass.SIMPLE, "ruff", "bounded_safe_ruff")
+    if kind in _DOCS_KINDS:
         return Task(TaskClass.OTHER, "docs", "explicit_documentation")
-    if kind in {"code_change", "quick_fix", "small_task", "typing_fix"} and files:
+    if kind in _SMALL_CODING_KINDS and files:
         return Task(TaskClass.SIMPLE, "coding", "explicit_small_coding")
-    if kind in {"coding", "complex_refactor"}:
+    if kind in _EXPLICIT_COMPLEX_KINDS:
         return Task(TaskClass.COMPLEX, "coding", "explicit_coding")
     return Task(TaskClass.OTHER, "unknown", "unclassified_metadata")
