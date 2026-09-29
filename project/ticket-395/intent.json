@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-395",
+  "summary": "refactor(cycle-drive-retry): address shotgun surgery on msg variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-395/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/cycle/cycle_drive_retry.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "658645bd19b75b89dfea7ba96cb661f2ca93f1ff",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on msg removed in cycle_drive_retry.py: reply message normalization centralized in _reply_message_text and inline use replaces the repeated msg = str(reply.get('message')).lower() idiom across six functions; Shotgun Surgery: ok also drops below threshold on the same file.",
+    "nonGoals": [
+      "Retry decision logic changes",
+      "Other cycle module smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Shared _reply_message_text helper owns reply.message normalization; predicates consume it directly.",
+      "components": [
+        {
+          "name": "cycle-drive-retry",
+          "paths": [
+            "src/koru/autonomy/cycle/cycle_drive_retry.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_autonomous_cycle_drive_retry.py tests/test_cycle_drive_missing.py -x -q"
+        ],
+        "evidence": "Retry predicates and failure signature output preserved."
+      }
+    ]
+  }
+}

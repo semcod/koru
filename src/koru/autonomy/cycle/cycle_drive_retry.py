@@ -69,10 +69,13 @@ def _drive_failure_signature(reply: dict[str, Any]) -> str:
     discriminating fields and breaking the loop as soon as the same signature
     appears twice in a row.
     """
-    msg = str(reply.get("message") or "").strip().lower()
     verification = str(reply.get("verification") or "").strip().lower()
     reason = str(reply.get("reason") or "").strip().lower()
-    return f"{verification}|{reason}|{msg[:200]}"
+    return f"{verification}|{reason}|{_reply_message_text(reply).strip()[:200]}"
+
+
+def _reply_message_text(reply: dict[str, Any]) -> str:
+    return str(reply.get("message") or "").lower()
 
 
 def _active_decision_engine(project: Path, autopilot_ide: str) -> EnvironmentDecisionEngine:
@@ -842,21 +845,20 @@ def _reply_chat_input_busy(reply: dict[str, Any]) -> bool:
 
 
 def _reply_needs_focus_retry(reply: dict[str, Any]) -> bool:
-    msg = str(reply.get("message") or "").lower()
-    return "focus" in msg
+    return "focus" in _reply_message_text(reply)
 
 
 def _reply_needs_plugin_retry(reply: dict[str, Any]) -> bool:
-    msg = str(reply.get("message") or "").lower()
-    if "no connected autopilot plugin" in msg:
+    message = _reply_message_text(reply)
+    if "no connected autopilot plugin" in message:
         return False
-    if "focus" in msg:
+    if "focus" in message:
         return False
     return (
-        "plugin_error" in msg
-        or "connection" in msg
-        or "verification" in msg
-        or "connected" in msg
+        "plugin_error" in message
+        or "connection" in message
+        or "verification" in message
+        or "connected" in message
         or str(reply.get("verification") or "").lower() == "plugin_error"
     )
 
@@ -876,13 +878,12 @@ def _reply_needs_submit_retry(reply: dict[str, Any]) -> bool:
         reply.get("attempted_submit") or reply.get("winning_paste") or reply.get("submit_failure_reason")
     ):
         return True
-    msg = str(reply.get("message") or "").lower()
-    return "submit could not be verified" in msg or "submit failed" in msg
+    message = _reply_message_text(reply)
+    return "submit could not be verified" in message or "submit failed" in message
 
 
 def _reply_requires_manual_chat_focus(reply: dict[str, Any]) -> bool:
-    msg = str(reply.get("message") or "").lower()
-    if "chat input is not focused/open" not in msg:
+    if "chat input is not focused/open" not in _reply_message_text(reply):
         return False
     diagnostics = reply.get("diagnostics")
     if not isinstance(diagnostics, dict):
@@ -1065,7 +1066,6 @@ def _log_autopilot_result(
                 f"  autopilot: skipped(manual_focus) ({reply.get('message', 'unknown error')}, kind={decision_kind})",
             )
         else:
-            msg = reply.get("message", "unknown error")
             _hp(
-                f"  autopilot: failed ({msg}, kind={decision_kind})",
+                f"  autopilot: failed ({reply.get('message', 'unknown error')}, kind={decision_kind})",
             )
