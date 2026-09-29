@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-366",
+  "summary": "refactor(queue-admission): reduce admitted_payload cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-366/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/admission.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "7f5f907f7f934b19aa64544d90601c405de655a3",
+    "targetBranch": "main",
+    "outcome": "admitted_payload is a thin orchestrator (CC<=15): SDK fast-path, CLI readiness query and payload filtering live in dedicated helpers; behavior and error contracts unchanged.",
+    "nonGoals": [
+      "Changing readiness semantics, Planfile SDK usage or error messages",
+      "Refactoring callers outside admission.py"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _is_sdk_runner, _servable_ids validation, _filter_tickets, _sdk_admitted_payload fast path and _cli_servable_ids subprocess path; keep admitted_payload public signature and error contract.",
+      "components": [
+        {
+          "name": "queue-admission",
+          "paths": [
+            "src/koru/queue/admission.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_queue_admission.py tests/test_planfile_queue.py -x -q"
+        ],
+        "evidence": "Admission tests pass on both SDK fast-path and CLI fallback; admitted_payload CC<=15."
+      }
+    ]
+  }
+}
