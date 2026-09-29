@@ -100,16 +100,20 @@ _IDE_WINDOW_NAMES: dict[str, str] = {
 }
 
 
+def _normalized_ide_or_lower(raw: str | None) -> str:
+    """Return the canonical IDE id, falling back to the lowercased raw value."""
+    return normalize_ide_id(raw) or (raw or "").strip().lower()
+
+
 def ide_binary_candidates(ide: str) -> tuple[str, ...]:
     """Executable names that may provide ``ide`` on PATH."""
-    normalized = normalize_ide_id(ide) or (ide or "").strip().lower()
-    return _IDE_BINARY_CANDIDATES.get(normalized, (normalized,) if normalized else ())
+    ide_id = _normalized_ide_or_lower(ide)
+    return _IDE_BINARY_CANDIDATES.get(ide_id, (ide_id,) if ide_id else ())
 
 
 def ide_window_name(ide: str) -> str:
     """Window title token for desktop window managers (wmctrl/xdotool)."""
-    normalized = normalize_ide_id(ide) or ide
-    return _IDE_WINDOW_NAMES.get(normalized, ide)
+    return _IDE_WINDOW_NAMES.get(normalize_ide_id(ide) or ide, ide)
 
 
 def normalize_ide_id(raw: str | None) -> str | None:
@@ -123,9 +127,9 @@ def normalize_ide_id(raw: str | None) -> str | None:
     alias = " ".join(alias.replace("_", "-").split())
     candidates = (alias, alias.replace(" - ", "-").replace(" ", "-"))
     for candidate in candidates:
-        normalized = _IDE_ALIASES.get(candidate)
-        if normalized is not None:
-            return normalized
+        alias_hit = _IDE_ALIASES.get(candidate)
+        if alias_hit is not None:
+            return alias_hit
     return alias
 
 
@@ -146,21 +150,21 @@ def vscode_extension_plugin_ide_ids() -> frozenset[str]:
 
 def supports_vscode_extension_plugin(ide: str | None) -> bool:
     """True when ``ide`` can run the bundled VS Code-family extension."""
-    normalized = normalize_ide_id(ide)
-    return bool(normalized and normalized in _VSCODE_EXTENSION_PLUGIN_IDES)
+    canon = normalize_ide_id(ide)
+    return bool(canon and canon in _VSCODE_EXTENSION_PLUGIN_IDES)
 
 
 def canonical_autopilot_ide_id(raw: str) -> str:
     """Map lane/instance slugs (e.g. ``cursor-main``) to canonical IDE ids."""
-    normalized = normalize_ide_id(raw) or (raw or "").strip().lower()
-    if normalized in _SUPPORTED_AUTOPILOT_IDES and normalized != "auto":
-        return normalized
+    canon = _normalized_ide_or_lower(raw)
+    if canon in _SUPPORTED_AUTOPILOT_IDES and canon != "auto":
+        return canon
     for ide_id in _AUTOPILOT_IDE_ORDER:
         if ide_id == "auto":
             continue
-        if normalized == ide_id or normalized.startswith(f"{ide_id}-"):
+        if canon == ide_id or canon.startswith(f"{ide_id}-"):
             return ide_id
-    return normalized
+    return canon
 
 
 @dataclass(frozen=True)
@@ -975,9 +979,9 @@ def resolve_drive_target(
     profile_check = has_profile or _has_os_injector_profile
     stripped_profile = (os_profile or "").strip()
     raw = (ide_arg or "").strip()
-    normalized = normalize_ide_id(raw)
-    is_auto = not raw or normalized == "auto"
-    prefer = None if is_auto else (normalized or raw.lower())
+    canon = normalize_ide_id(raw)
+    is_auto = not raw or canon == "auto"
+    prefer = None if is_auto else (canon or raw.lower())
     detected = detect_running_ides()
     target = pick_target(detected, prefer=prefer)
 
