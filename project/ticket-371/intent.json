@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-371",
+  "summary": "refactor(routing-ledger): address shotgun surgery on conn variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-371/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/routing/ledger.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0a41c0946d00ffdb16404f4943d94e8a42c8d6d0",
+    "targetBranch": "main",
+    "outcome": "Connection lifecycle is centralized in _with_conn(db_path, fn); callers only define the operation, so the shotgun-surgery smell on 'conn' no longer spans the module.",
+    "nonGoals": [
+      "Changing SQL, schema, transaction or staleness semantics",
+      "Refactoring ProbeResult or contracts"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Introduce _with_conn(db_path, fn) owning init_db+close; each public function passes its operation as a closure.",
+      "components": [
+        {
+          "name": "routing-ledger",
+          "paths": [
+            "src/koru/queue/routing/ledger.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_benchmark_daily.py tests/test_benchmark_router.py -x -q"
+        ],
+        "evidence": "Ledger-backed benchmark tests pass; conn lifecycle in one helper."
+      }
+    ]
+  }
+}

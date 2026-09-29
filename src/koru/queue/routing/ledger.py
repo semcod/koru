@@ -3,10 +3,14 @@ from __future__ import annotations
 
 import sqlite3
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TypeVar
 
 from .contracts import ProbeResult
+
+_T = TypeVar("_T")
 
 
 def current_local_day() -> str:
@@ -47,6 +51,15 @@ def init_db(db_path: Path) -> sqlite3.Connection:
     return conn
 
 
+def _with_conn(db_path: Path, fn: Callable[[sqlite3.Connection], _T]) -> _T:
+    """Run ``fn`` on a freshly initialized connection, always closing it."""
+    conn = init_db(db_path)
+    try:
+        return fn(conn)
+    finally:
+        conn.close()
+
+
 def claim_daily_campaign(
     db_path: Path,
     day: str | None = None,
@@ -62,52 +75,52 @@ def claim_daily_campaign(
     token = claim_token or uuid.uuid4().hex
     now_iso = datetime.now(UTC).isoformat()
 
-    conn = init_db(db_path)
-    try:
-        conn.execute("BEGIN IMMEDIATE")
-        cursor = conn.execute("SELECT status, claim_token, claimed_at FROM campaigns WHERE day = ?", (day,))
-        row = cursor.fetchone()
+    def _claim(conn: sqlite3.Connection) -> tuple[bool, str]:
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            cursor = conn.execute("SELECT status, claim_token, claimed_at FROM campaigns WHERE day = ?", (day,))
+            row = cursor.fetchone()
 
-        if row is not None:
-            status, existing_token, claimed_at = row
-            if status == "completed":
+            if row is not None:
+                status, existing_token, claimed_at = row
+                if status == "completed":
+                    conn.execute("COMMIT")
+                    return False, existing_token
+
+                # Check if previous claim is stale
+                try:
+                    claimed_dt = datetime.fromisoformat(claimed_at)
+                    age = (datetime.now(UTC) - claimed_dt).total_seconds()
+                except Exception:
+                    age = stale_timeout_seconds + 1
+
+                if age > stale_timeout_seconds:
+                    # Stale claim takeover
+                    conn.execute(
+                        "UPDATE campaigns SET status = 'claimed', claim_token = ?, claimed_at = ? WHERE day = ?",
+                        (token, now_iso, day),
+                    )
+                    conn.execute("COMMIT")
+                    return True, token
+
                 conn.execute("COMMIT")
                 return False, existing_token
 
-            # Check if previous claim is stale
-            try:
-                claimed_dt = datetime.fromisoformat(claimed_at)
-                age = (datetime.now(UTC) - claimed_dt).total_seconds()
-            except Exception:
-                age = stale_timeout_seconds + 1
-
-            if age > stale_timeout_seconds:
-                # Stale claim takeover
-                conn.execute(
-                    "UPDATE campaigns SET status = 'claimed', claim_token = ?, claimed_at = ? WHERE day = ?",
-                    (token, now_iso, day),
-                )
-                conn.execute("COMMIT")
-                return True, token
-
+            # Unclaimed day: insert new record
+            conn.execute(
+                "INSERT INTO campaigns (day, status, claim_token, claimed_at) VALUES (?, 'claimed', ?, ?)",
+                (day, token, now_iso),
+            )
             conn.execute("COMMIT")
-            return False, existing_token
-
-        # Unclaimed day: insert new record
-        conn.execute(
-            "INSERT INTO campaigns (day, status, claim_token, claimed_at) VALUES (?, 'claimed', ?, ?)",
-            (day, token, now_iso),
-        )
-        conn.execute("COMMIT")
-        return True, token
-    except Exception:
-        try:
-            conn.execute("ROLLBACK")
+            return True, token
         except Exception:
-            pass
-        return False, token
-    finally:
-        conn.close()
+            try:
+                conn.execute("ROLLBACK")
+            except Exception:
+                pass
+            return False, token
+
+    return _with_conn(db_path, _claim)
 
 
 def complete_daily_campaign(
@@ -119,8 +132,8 @@ def complete_daily_campaign(
     """Mark daily campaign finished."""
     day = day or current_local_day()
     now_iso = datetime.now(UTC).isoformat()
-    conn = init_db(db_path)
-    try:
+
+    def _complete(conn: sqlite3.Connection) -> None:
         if claim_token:
             conn.execute(
                 "UPDATE campaigns SET status = ?, finished_at = ? WHERE day = ? AND claim_token = ?",
@@ -131,8 +144,8 @@ def complete_daily_campaign(
                 "UPDATE campaigns SET status = ?, finished_at = ? WHERE day = ?",
                 (status, now_iso, day),
             )
-    finally:
-        conn.close()
+
+    _with_conn(db_path, _complete)
 
 
 def record_probe(
@@ -144,8 +157,8 @@ def record_probe(
 ) -> None:
     """Record a verified or failed probe outcome."""
     now_iso = datetime.now(UTC).isoformat()
-    conn = init_db(db_path)
-    try:
+
+    def _record(conn: sqlite3.Connection) -> None:
         conn.execute(
             """
             INSERT INTO probes (
@@ -166,8 +179,8 @@ def record_probe(
                 now_iso,
             ),
         )
-    finally:
-        conn.close()
+
+    _with_conn(db_path, _record)
 
 
 def get_latest_daily_probes(
@@ -179,8 +192,7 @@ def get_latest_daily_probes(
     if not db_path.exists():
         return {}
 
-    conn = init_db(db_path)
-    try:
+    def _load(conn: sqlite3.Connection) -> dict[str, ProbeResult]:
         cursor = conn.execute(
             """
             SELECT candidate_id, task_key, status, duration_ms, validator_digest, tokens, cost, detail
@@ -205,8 +217,8 @@ def get_latest_daily_probes(
             evidence[f"{cand_id}:{task_key}"] = res
             evidence[cand_id] = res
         return evidence
-    finally:
-        conn.close()
+
+    return _with_conn(db_path, _load)
 
 
 def get_campaign_history(
@@ -217,8 +229,7 @@ def get_campaign_history(
     if not db_path.exists():
         return []
 
-    conn = init_db(db_path)
-    try:
+    def _history(conn: sqlite3.Connection) -> list[dict[str, object]]:
         cursor = conn.execute(
             """
             SELECT c.day, c.status, c.claimed_at, c.finished_at, COUNT(p.id) as probe_count
@@ -241,5 +252,5 @@ def get_campaign_history(
                 "probe_count": probe_count,
             })
         return history
-    finally:
-        conn.close()
+
+    return _with_conn(db_path, _history)
