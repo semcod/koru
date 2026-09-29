@@ -31,7 +31,6 @@ from koru.doctor_runtime_checks import (
 Severity = Literal["fail", "warn"]
 
 
-
 @dataclass(frozen=True)
 class ReadinessIssue:
     code: str
@@ -142,10 +141,7 @@ def _python_executable_mismatch_issue(
         code="python_executable_mismatch",
         severity=_runtime_issue_severity(strict),
         message=f"active Python {launcher_path} != repo .venv {venv_path}",
-        fix_command=(
-            f"PATH=\"{project / '.venv' / 'bin'}:$PATH\" "
-            f"{project / '.venv' / 'bin' / 'koru'} auto"
-        ),
+        fix_command=(f'PATH="{project / ".venv" / "bin"}:$PATH" {project / ".venv" / "bin" / "koru"} auto'),
     )
 
 
@@ -179,11 +175,10 @@ def _planfile_availability_issue(project: Path, *, strict: bool) -> ReadinessIss
     cmd = resolve_planfile_base_command(project)
     pip = project / ".venv" / "bin" / "pip"
     planfile_install_cmd = (
-        f"{pip} install planfile"
-        if pip.is_file()
-        else "pip install planfile  # or: pip install 'koru[planfile]'"
+        f"{pip} install planfile" if pip.is_file() else "pip install planfile  # or: pip install 'koru[planfile]'"
     )
     from koru import autonomous_readiness as _readiness_facade
+
     returncode, output = _readiness_facade._probe_planfile_version(tuple(cmd), str(project))
     if returncode == 0:
         return None
@@ -251,9 +246,7 @@ def _koru_runtime_identity_issue(
     )
     if status == "pass":
         return None
-    bit_fix_command = next(
-        (bit.removeprefix("fix=") for bit in bits if bit.startswith("fix=")), None
-    )
+    bit_fix_command = next((bit.removeprefix("fix=") for bit in bits if bit.startswith("fix=")), None)
     return ReadinessIssue(
         code="koru_runtime_identity",
         severity=_runtime_issue_severity(strict),
@@ -308,6 +301,11 @@ def _build_readiness_result(
     )
 
 
+def _present_issues(*issues: ReadinessIssue | None) -> list[ReadinessIssue]:
+    """Collect the issues that fired, dropping ``None`` checks."""
+    return [issue for issue in issues if issue is not None]
+
+
 def _append_issue(
     issues: list[ReadinessIssue],
     issue: ReadinessIssue | None,
@@ -324,8 +322,6 @@ def check_runtime_consistency(
 ) -> ReadinessResult:
     """Compare Python/koru executables and package version to repo ``.venv``."""
     project = project.resolve()
-    issues: list[ReadinessIssue] = []
-
     venv_python = _project_venv_python(project)
     project_koru = _project_venv_koru(project)
     launcher = Path(launcher_executable or sys.executable)
@@ -333,38 +329,31 @@ def check_runtime_consistency(
     source_version = _read_koru_source_version(project / "pyproject.toml")
     path_koru = shutil.which("koru")
 
-    _append_issue(
-        issues,
-        _python_executable_mismatch_issue(
-            project,
-            launcher,
-            venv_python,
-            strict=strict,
-        ),
+    return _build_readiness_result(
+        _present_issues(
+            _python_executable_mismatch_issue(
+                project,
+                launcher,
+                venv_python,
+                strict=strict,
+            ),
+            _venv_alignment_issue(project, strict=strict),
+            _planfile_availability_issue(project, strict=strict),
+            _koru_runtime_identity_issue(
+                project_koru,
+                path_koru,
+                package_version,
+                source_version,
+                strict=strict,
+            ),
+            _package_version_drift_issue(
+                project,
+                package_version,
+                source_version,
+                strict=strict,
+            ),
+        )
     )
-    _append_issue(issues, _venv_alignment_issue(project, strict=strict))
-    _append_issue(issues, _planfile_availability_issue(project, strict=strict))
-    _append_issue(
-        issues,
-        _koru_runtime_identity_issue(
-            project_koru,
-            path_koru,
-            package_version,
-            source_version,
-            strict=strict,
-        ),
-    )
-    _append_issue(
-        issues,
-        _package_version_drift_issue(
-            project,
-            package_version,
-            source_version,
-            strict=strict,
-        ),
-    )
-
-    return _build_readiness_result(issues)
 
 
 def _check_daemon_version_issue(status: Mapping[str, Any] | None) -> ReadinessIssue | None:
@@ -376,8 +365,7 @@ def _check_daemon_version_issue(status: Mapping[str, Any] | None) -> ReadinessIs
     if compatible:
         return None
     fix_command = (
-        f"KORU_AUTOPILOT_INSTANCE={os.environ.get('KORU_AUTOPILOT_INSTANCE', '')} "
-        "koru autopilot shutdown && koru auto"
+        f"KORU_AUTOPILOT_INSTANCE={os.environ.get('KORU_AUTOPILOT_INSTANCE', '')} koru autopilot shutdown && koru auto"
         if os.environ.get("KORU_AUTOPILOT_INSTANCE")
         else "koru autopilot shutdown && koru auto"
     )
@@ -389,48 +377,52 @@ def _check_daemon_version_issue(status: Mapping[str, Any] | None) -> ReadinessIs
     )
 
 
+def _daemon_project_mismatch_issue(
+    meta: dict[str, Any],
+    project: Path,
+) -> ReadinessIssue | None:
+    meta_project = str(meta.get("project") or "").strip()
+    if not meta_project:
+        return None
+    from koru.autonomy.operator.operator_runtime import projects_equivalent
+
+    try:
+        if projects_equivalent(meta_project, project):
+            return None
+    except OSError:
+        return None
+    return ReadinessIssue(
+        code="daemon_project_mismatch",
+        severity="fail",
+        message=(f"daemon metadata project={meta_project} != {project.resolve()}"),
+        fix_command="koru autopilot shutdown && koru auto",
+    )
+
+
+def _daemon_python_mismatch_issue(meta: dict[str, Any]) -> ReadinessIssue | None:
+    meta_py = str(meta.get("python_executable") or "").strip()
+    if not meta_py or _python_executables_equivalent(meta_py, sys.executable):
+        return None
+    return ReadinessIssue(
+        code="daemon_python_mismatch",
+        severity="warn",
+        message=(f"daemon python={meta_py} != client python={sys.executable}"),
+        fix_command="koru autopilot shutdown && koru auto",
+    )
+
+
 def _check_daemon_meta_project_python_issues(
     status: Mapping[str, Any] | None,
     project: Path,
     socket_path: Path,
 ) -> list[ReadinessIssue]:
-    issues: list[ReadinessIssue] = []
     meta = _effective_daemon_metadata(status, project, socket_path)
     if not meta:
-        return issues
-    meta_project = str(meta.get("project") or "").strip()
-    if meta_project:
-        from koru.autonomy.operator.operator_runtime import projects_equivalent
-
-        try:
-            if not projects_equivalent(meta_project, project):
-                issues.append(
-                    ReadinessIssue(
-                        code="daemon_project_mismatch",
-                        severity="fail",
-                        message=(
-                            f"daemon metadata project={meta_project} "
-                            f"!= {project.resolve()}"
-                        ),
-                        fix_command="koru autopilot shutdown && koru auto",
-                    )
-                )
-        except OSError:
-            pass
-    meta_py = str(meta.get("python_executable") or "").strip()
-    if meta_py and not _python_executables_equivalent(meta_py, sys.executable):
-        issues.append(
-            ReadinessIssue(
-                code="daemon_python_mismatch",
-                severity="warn",
-                message=(
-                    f"daemon python={meta_py} != "
-                    f"client python={sys.executable}"
-                ),
-                fix_command="koru autopilot shutdown && koru auto",
-            )
-        )
-    return issues
+        return []
+    return _present_issues(
+        _daemon_project_mismatch_issue(meta, project),
+        _daemon_python_mismatch_issue(meta),
+    )
 
 
 def check_daemon_client_alignment(
@@ -440,14 +432,9 @@ def check_daemon_client_alignment(
     socket_path: Path | None = None,
 ) -> ReadinessResult:
     """Detect daemon version/build drift vs the current koru process."""
-    issues: list[ReadinessIssue] = []
-    version_issue = _check_daemon_version_issue(status)
-    if version_issue is not None:
-        issues.append(version_issue)
-
+    issues = _present_issues(_check_daemon_version_issue(status))
     if project is not None and socket_path is not None:
-        issues.extend(_check_daemon_meta_project_python_issues(status, project, socket_path))
-
+        issues += _check_daemon_meta_project_python_issues(status, project, socket_path)
     return _build_readiness_result(issues)
 
 
@@ -505,9 +492,7 @@ def _effective_daemon_metadata(
     return read_daemon_metadata(daemon_metadata_path(project, socket_path))
 
 
-def _find_project_in_workspace_folders(
-    folders: list[Any], project_path: str, connected: list[str]
-) -> bool:
+def _find_project_in_workspace_folders(folders: list[Any], project_path: str, connected: list[str]) -> bool:
     for folder in folders:
         if not isinstance(folder, str):
             continue
@@ -553,40 +538,68 @@ def plugin_workspace_covers_project(
     return False, "connected plugin has no workspaceFolders"
 
 
-def _check_socket_health_issues(
-    socket_health: Any, socket_path: Path, status_available: bool
-) -> list[ReadinessIssue]:
-    issues: list[ReadinessIssue] = []
+def _socket_health_issue(socket_health: Any, socket_path: Path, status_available: bool) -> ReadinessIssue | None:
     if socket_health.stale and status_available:
-        issues.append(
-            ReadinessIssue(
-                code="socket_probe_stale_with_status",
-                severity="warn",
-                message=(
-                    f"socket probe reports no listener at {socket_path}, "
-                    "but daemon status is available; keeping socket in place"
-                ),
-            )
+        return ReadinessIssue(
+            code="socket_probe_stale_with_status",
+            severity="warn",
+            message=(
+                f"socket probe reports no listener at {socket_path}, "
+                "but daemon status is available; keeping socket in place"
+            ),
         )
-    elif socket_health.stale:
-        issues.append(
-            ReadinessIssue(
-                code="socket_stale",
-                severity="fail",
-                message=f"stale autopilot socket (no listener): {socket_path}",
-                fix_command=f"rm -f {socket_path} && koru autopilot shutdown",
-            )
+    if socket_health.stale:
+        return ReadinessIssue(
+            code="socket_stale",
+            severity="fail",
+            message=f"stale autopilot socket (no listener): {socket_path}",
+            fix_command=f"rm -f {socket_path} && koru autopilot shutdown",
         )
-    elif socket_health.exists and not socket_health.listening:
-        issues.append(
-            ReadinessIssue(
-                code="socket_not_listening",
-                severity="warn",
-                message=f"socket exists but is not accepting connections: {socket_path}",
-                fix_command=f"rm -f {socket_path}",
-            )
+    if socket_health.exists and not socket_health.listening:
+        return ReadinessIssue(
+            code="socket_not_listening",
+            severity="warn",
+            message=f"socket exists but is not accepting connections: {socket_path}",
+            fix_command=f"rm -f {socket_path}",
         )
-    return issues
+    return None
+
+
+def _check_socket_health_issues(socket_health: Any, socket_path: Path, status_available: bool) -> list[ReadinessIssue]:
+    return _present_issues(_socket_health_issue(socket_health, socket_path, status_available))
+
+
+def _daemon_pid_issue(
+    meta: dict[str, Any],
+    socket_health: Any,
+    socket_path: Path,
+    meta_path: Path,
+) -> ReadinessIssue | None:
+    meta_pid = meta.get("pid")
+    if not (isinstance(meta_pid, int) and socket_health.listening and not _pid_alive(meta_pid)):
+        return None
+    return ReadinessIssue(
+        code="daemon_pid_dead",
+        severity="fail",
+        message=f"daemon metadata pid={meta_pid} is not alive",
+        fix_command=f"rm -f {socket_path} {meta_path}",
+    )
+
+
+def _socket_inode_drift_issue(
+    meta: dict[str, Any],
+    socket_path: Path,
+) -> ReadinessIssue | None:
+    meta_inode = meta.get("socket_inode")
+    live_inode = _socket_inode(socket_path)
+    if not (isinstance(meta_inode, int) and live_inode is not None and meta_inode != live_inode):
+        return None
+    return ReadinessIssue(
+        code="socket_inode_drift",
+        severity="fail",
+        message=(f"socket inode {live_inode} != metadata inode {meta_inode}"),
+        fix_command=f"rm -f {socket_path}",
+    )
 
 
 def _check_daemon_meta_issues(
@@ -595,37 +608,12 @@ def _check_daemon_meta_issues(
     socket_path: Path,
     meta_path: Path,
 ) -> list[ReadinessIssue]:
-    issues: list[ReadinessIssue] = []
     if not meta:
-        return issues
-    meta_pid = meta.get("pid")
-    if isinstance(meta_pid, int) and socket_health.listening and not _pid_alive(meta_pid):
-        issues.append(
-            ReadinessIssue(
-                code="daemon_pid_dead",
-                severity="fail",
-                message=f"daemon metadata pid={meta_pid} is not alive",
-                fix_command=f"rm -f {socket_path} {meta_path}",
-            )
-        )
-    meta_inode = meta.get("socket_inode")
-    live_inode = _socket_inode(socket_path)
-    if (
-        isinstance(meta_inode, int)
-        and live_inode is not None
-        and meta_inode != live_inode
-    ):
-        issues.append(
-            ReadinessIssue(
-                code="socket_inode_drift",
-                severity="fail",
-                message=(
-                    f"socket inode {live_inode} != metadata inode {meta_inode}"
-                ),
-                fix_command=f"rm -f {socket_path}",
-            )
-        )
-    return issues
+        return []
+    return _present_issues(
+        _daemon_pid_issue(meta, socket_health, socket_path, meta_path),
+        _socket_inode_drift_issue(meta, socket_path),
+    )
 
 
 def _check_plugin_workspace_issues(
@@ -633,23 +621,19 @@ def _check_plugin_workspace_issues(
     autopilot_ide: str,
     project: Path,
 ) -> list[ReadinessIssue]:
-    issues: list[ReadinessIssue] = []
     if not isinstance(status, dict) or not status.get("plugins"):
-        return issues
+        return []
     ok_ws, ws_reason = plugin_workspace_covers_project(status, autopilot_ide, project)
-    if not ok_ws:
-        issues.append(
-            ReadinessIssue(
-                code="plugin_workspace_mismatch",
-                severity="fail",
-                message=ws_reason,
-                fix_command=(
-                    f"open {project} in {autopilot_ide}, then "
-                    "'koru: Connect autopilot daemon'"
-                ),
-            )
+    if ok_ws:
+        return []
+    return [
+        ReadinessIssue(
+            code="plugin_workspace_mismatch",
+            severity="fail",
+            message=ws_reason,
+            fix_command=(f"open {project} in {autopilot_ide}, then 'koru: Connect autopilot daemon'"),
         )
-    return issues
+    ]
 
 
 def check_workspace_socket_ownership(
@@ -662,20 +646,20 @@ def check_workspace_socket_ownership(
     """Detect stale sockets, dead daemon PIDs, and workspace mismatches."""
     project = project.resolve()
     from koru import autonomous_readiness as _readiness_facade
+
     socket_health = _readiness_facade.probe_socket_health(socket_path)
     status_available = isinstance(status, Mapping)
 
-    issues: list[ReadinessIssue] = []
-    issues.extend(_check_socket_health_issues(socket_health, socket_path, status_available))
-    issues.extend(
-        _check_daemon_meta_issues(
+    issues = [
+        *_check_socket_health_issues(socket_health, socket_path, status_available),
+        *_check_daemon_meta_issues(
             _effective_daemon_metadata(status, project, socket_path),
             socket_health,
             socket_path,
             daemon_metadata_path(project, socket_path),
-        )
-    )
-    issues.extend(_check_plugin_workspace_issues(status, autopilot_ide, project))
+        ),
+        *_check_plugin_workspace_issues(status, autopilot_ide, project),
+    ]
 
     return _build_readiness_result(issues)
 
@@ -692,6 +676,7 @@ def apply_socket_ownership_repairs(
     codes = {i.code for i in readiness.issues}
     if codes.intersection({"socket_stale", "socket_inode_drift", "daemon_pid_dead"}):
         from koru import autonomous_readiness as _readiness_facade
+
         health = _readiness_facade.probe_socket_health(socket_path)
         if health.stale or "socket_inode_drift" in codes or "daemon_pid_dead" in codes:
             result = remove_stale_socket(health, dry_run=dry_run)
@@ -805,10 +790,8 @@ def _terminal_lane_mismatch_issues(
         terminal_kind=ctx.terminal_kind or "system",
         lane=ctx.lane or None,
     )
-    message = (
-        f"terminal host is {ctx.terminal} ({kind_label}), "
-        f"but autopilot target is {ide_label(ctx.wanted)}"
-        + (f" (lane={ctx.lane})" if ctx.lane else "")
+    message = f"terminal host is {ctx.terminal} ({kind_label}), but autopilot target is {ide_label(ctx.wanted)}" + (
+        f" (lane={ctx.lane})" if ctx.lane else ""
     )
     fix_command = (
         f"run `coru {ctx.wanted} auto` from {ide_label(ctx.wanted)}'s integrated terminal, "
@@ -821,16 +804,16 @@ def _terminal_lane_mismatch_issues(
             severity=severity,
             message=message,
             fix_command=fix_command,
-        )
+        ),
+        *(
+            ReadinessIssue(
+                code="terminal_lane_operator_hint",
+                severity="warn",
+                message=step,
+            )
+            for step in operator_steps[:3]
+        ),
     ]
-    issues.extend(
-        ReadinessIssue(
-            code="terminal_lane_operator_hint",
-            severity="warn",
-            message=step,
-        )
-        for step in operator_steps[:3]
-    )
     return issues, fix_command
 
 
@@ -843,14 +826,8 @@ def _lane_ide_mismatch_issue(ctx: _TerminalLaneContext) -> ReadinessIssue | None
     return ReadinessIssue(
         code="lane_ide_mismatch",
         severity="fail",
-        message=(
-            f"lane instance {ctx.lane!r} resolves to ide={lane_ide}, "
-            f"but autopilot target is {ctx.wanted}"
-        ),
-        fix_command=(
-            f"export KORU_AUTOPILOT_INSTANCE={ctx.wanted}-main "
-            f"and restart koru auto / coru"
-        ),
+        message=(f"lane instance {ctx.lane!r} resolves to ide={lane_ide}, but autopilot target is {ctx.wanted}"),
+        fix_command=(f"export KORU_AUTOPILOT_INSTANCE={ctx.wanted}-main and restart koru auto / coru"),
     )
 
 
@@ -881,12 +858,11 @@ def _socket_lane_mismatch_issue(
     return ReadinessIssue(
         code="socket_lane_mismatch",
         severity="fail",
-        message=(
-            f"socket {socket_path.name} is lane {socket_instance!r}, "
-            f"but configured instance is {ctx.lane!r}"
-        ),
+        message=(f"socket {socket_path.name} is lane {socket_instance!r}, but configured instance is {ctx.lane!r}"),
         fix_command="koru autopilot shutdown && koru auto",
     )
+
+
 def check_lane_terminal_socket_alignment(
     *,
     autopilot_ide: str,
@@ -915,24 +891,16 @@ def check_lane_terminal_socket_alignment(
         terminal_kind=terminal_kind,
     )
     issues, primary_fix = _terminal_lane_mismatch_issues(ctx)
-    _append_issue(issues, _lane_ide_mismatch_issue(ctx))
-    _append_issue(issues, _socket_lane_mismatch_issue(socket_path, ctx))
-
-    return _build_readiness_result(
-        issues, primary_fix=primary_fix or _first_fix_command(issues)
+    issues += _present_issues(
+        _lane_ide_mismatch_issue(ctx),
+        _socket_lane_mismatch_issue(socket_path, ctx),
     )
 
+    return _build_readiness_result(issues, primary_fix=primary_fix or _first_fix_command(issues))
 
-def check_queue_runner_contention(project: Path) -> ReadinessResult:
-    """Detect another process holding the per-project queue runner lock."""
-    issues: list[ReadinessIssue] = []
-    if os.name != "posix":
-        return ReadinessResult(ok=True, issues=())
-    from koru.queue.locking import queue_lock_wanted
 
-    if not queue_lock_wanted():
-        return ReadinessResult(ok=True, issues=())
-
+def _queue_runner_lock_issue(project: Path) -> ReadinessIssue | None:
+    """Probe the per-project queue runner lock; issue when held elsewhere."""
     lock_path = project.resolve() / ".planfile" / ".koru" / "queue-runner.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     import fcntl
@@ -942,26 +910,34 @@ def check_queue_runner_contention(project: Path) -> ReadinessResult:
         try:
             fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
-            issues.append(
-                ReadinessIssue(
-                    code="queue_runner_lock_held",
-                    severity="warn",
-                    message=(
-                        "another process holds the planfile queue runner lock; "
-                        "parallel koru auto loops may fight over tickets"
-                    ),
-                    fix_command=(
-                        "stop duplicate koru auto for this project "
-                        "(--replace-existing) or set KORU_QUEUE_RUNNER_LOCK=0"
-                    ),
-                )
+            return ReadinessIssue(
+                code="queue_runner_lock_held",
+                severity="warn",
+                message=(
+                    "another process holds the planfile queue runner lock; "
+                    "parallel koru auto loops may fight over tickets"
+                ),
+                fix_command=(
+                    "stop duplicate koru auto for this project (--replace-existing) or set KORU_QUEUE_RUNNER_LOCK=0"
+                ),
             )
         else:
             fcntl.flock(fd, fcntl.LOCK_UN)
     finally:
         os.close(fd)
+    return None
 
-    return _build_readiness_result(issues)
+
+def check_queue_runner_contention(project: Path) -> ReadinessResult:
+    """Detect another process holding the per-project queue runner lock."""
+    if os.name != "posix":
+        return ReadinessResult(ok=True, issues=())
+    from koru.queue.locking import queue_lock_wanted
+
+    if not queue_lock_wanted():
+        return ReadinessResult(ok=True, issues=())
+
+    return _build_readiness_result(_present_issues(_queue_runner_lock_issue(project)))
 
 
 def warn_pre_drive_queue_without_plugin(
