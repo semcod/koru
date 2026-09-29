@@ -125,14 +125,14 @@ def _rate_limit_ok() -> bool:
     return len(_recent_actions) < MAX_ACTIONS_PER_HOUR
 
 
-def _record_action(action: str, outcome: str, component: str, detail: dict) -> None:
-    ACTIONS.labels(action=action, outcome=outcome, component=component).inc()
+def _record_action(action: str, status: str, component: str, detail: dict) -> None:
+    ACTIONS.labels(action=action, outcome=status, component=component).inc()
     LAST_ACTION_TS.labels(action=action).set(time.time())
     history.appendleft(
         {
             "ts": time.time(),
             "action": action,
-            "outcome": outcome,
+            "outcome": status,
             "component": component,
             "detail": detail,
             "dry_run": DRY_RUN,
@@ -211,12 +211,12 @@ def _execute_planfile_create(cmd: list[str], severity: str) -> dict:
         proc = subprocess.run(
             cmd, capture_output=True, text=True, cwd=REPO_PATH, timeout=15
         )
-        outcome = "success" if proc.returncode == 0 else "failed"
-        TICKETS_CREATED.labels(severity=severity, outcome=outcome).inc()
+        create_status = "success" if proc.returncode == 0 else "failed"
+        TICKETS_CREATED.labels(severity=severity, outcome=create_status).inc()
         new_id = _extract_ticket_id_from_stdout(proc.stdout or "")
-        log.info("planfile ticket create -> %s (%s)", outcome, new_id or "?")
+        log.info("planfile ticket create -> %s (%s)", create_status, new_id or "?")
         return {
-            "outcome": outcome,
+            "outcome": create_status,
             "ticket_id": new_id,
             "stdout": (proc.stdout or "")[-300:],
             "stderr": (proc.stderr or "")[-300:],
@@ -289,14 +289,14 @@ def heal_redsl_gate(component: str, detail: dict) -> dict:
         REDSL_IMAGE,
         ["python", "-m", "redsl", "gate", "check", "/mnt/project"],
     )
-    outcome = "success" if code == 0 else "violations"
+    gate_status = "success" if code == 0 else "violations"
     _record_action(
         "redsl_gate",
-        outcome,
+        gate_status,
         component,
         {"exit": code, "stdout": out[-500:], "stderr": err[-500:]},
     )
-    return {"action": "redsl_gate", "exit": code, "outcome": outcome}
+    return {"action": "redsl_gate", "exit": code, "outcome": gate_status}
 
 
 def heal_redsl_improve(component: str, detail: dict) -> dict:
@@ -325,14 +325,14 @@ def heal_redsl_improve(component: str, detail: dict) -> dict:
         ),
         timeout=300,
     )
-    outcome = "success" if code == 0 else "failed"
+    improve_status = "success" if code == 0 else "failed"
     _record_action(
         "redsl_improve",
-        outcome,
+        improve_status,
         component,
         {"exit": code, "stdout": out[-500:], "stderr": err[-500:]},
     )
-    return {"action": "redsl_improve", "exit": code, "outcome": outcome}
+    return {"action": "redsl_improve", "exit": code, "outcome": improve_status}
 
 
 def heal_rebuild_restore(component: str, detail: dict) -> dict:
@@ -349,14 +349,14 @@ def heal_rebuild_restore(component: str, detail: dict) -> dict:
         ),
         timeout=600,
     )
-    outcome = "success" if code == 0 else "failed"
+    restore_status = "success" if code == 0 else "failed"
     _record_action(
         "rebuild_restore",
-        outcome,
+        restore_status,
         component,
         {"endpoint": endpoint, "exit": code, "stdout": out[-500:], "stderr": err[-500:]},
     )
-    return {"action": "rebuild_restore", "exit": code, "outcome": outcome, "endpoint": endpoint}
+    return {"action": "rebuild_restore", "exit": code, "outcome": restore_status, "endpoint": endpoint}
 
 
 def heal_annotate(component: str, detail: dict) -> dict:
@@ -488,10 +488,10 @@ def heal_vallm_validate(component: str, detail: dict) -> dict:
     failures = [r for r in results if not r.get("ok")]
     avg_score = sum(r.get("score", 0.0) for r in results) / max(len(results), 1)
 
-    outcome = "pass" if not failures else "violations"
+    validate_status = "pass" if not failures else "violations"
     _record_action(
         "vallm_validate",
-        outcome,
+        validate_status,
         component,
         {
             "files_checked": len(files),
@@ -505,7 +505,7 @@ def heal_vallm_validate(component: str, detail: dict) -> dict:
     )
     return {
         "action": "vallm_validate",
-        "outcome": outcome,
+        "outcome": validate_status,
         "files_checked": len(files),
         "failures": len(failures),
         "avg_score": round(avg_score, 3),
@@ -607,10 +607,10 @@ def heal_redup_check(component: str, detail: dict) -> dict:
         _record_action("redup_check", "skipped", component, {"reason": result["skipped"]})
         return {"action": "redup_check", "outcome": "skipped"}
 
-    outcome = "budget_breached" if result.get("breach") else "within_budget"
+    redup_status = "budget_breached" if result.get("breach") else "within_budget"
     _record_action(
         "redup_check",
-        outcome,
+        redup_status,
         component,
         {
             "groups": result.get("groups"),
@@ -620,7 +620,7 @@ def heal_redup_check(component: str, detail: dict) -> dict:
     )
     return {
         "action": "redup_check",
-        "outcome": outcome,
+        "outcome": redup_status,
         "groups": result.get("groups"),
         "saved_lines": result.get("saved_lines"),
         "top_groups_count": len(result.get("top_groups", [])),
