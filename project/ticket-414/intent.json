@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-414",
+  "summary": "refactor(vql-sidecar): address shotgun surgery on png variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-414/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay/vql_sidecar.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e614ceed2defad61c77ef5948ed96c85e840d9b6",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on png removed in vql_sidecar.py: binding renamed per function (photo_png, png_candidate, sidecar_png, session_png, png_path) incl. keyword params with call-site updates.",
+    "nonGoals": [
+      "VQL/PNG resolution semantics",
+      "Other smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Token-level rename of png locals/params; dict keys, kwargs of external callees and response fields unchanged.",
+      "components": [
+        {
+          "name": "vdisplay-vql-sidecar",
+          "paths": [
+            "src/koru/integrations/vdisplay/vql_sidecar.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_photo_vql_drive.py tests/test_photo_vql_orchestrator.py tests/test_vdisplay_module_split.py -x -q"
+        ],
+        "evidence": "VQL sidecar refresh and PNG resolution preserved."
+      }
+    ]
+  }
+}
