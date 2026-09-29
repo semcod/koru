@@ -171,13 +171,7 @@ def _autonomous_human_prompt(prompt: str, ticket_id: str) -> str | None:
     return None
 
 
-def build_ticket_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="koru ticket",
-        description="Planfile ticket commands and autonomous executor for Koru.",
-    )
-    sub = parser.add_subparsers(dest="action", required=False)
-
+def _add_auto_parser(sub: argparse._SubParsersAction) -> None:
     auto_p = sub.add_parser(
         "auto",
         help="Select and execute a local actionable Planfile ticket.",
@@ -207,10 +201,14 @@ def build_ticket_parser() -> argparse.ArgumentParser:
         "--interactive", action="store_true", help="Prompt for human input; automatic mode leaves approvals pending."
     )
 
+
+def _add_list_parser(sub: argparse._SubParsersAction) -> None:
     list_p = sub.add_parser("list", help="List open planfile tickets.")
     list_p.add_argument("--project", type=Path, default=None)
     list_p.add_argument("--status", default="open")
 
+
+def _add_next_parser(sub: argparse._SubParsersAction) -> None:
     next_p = sub.add_parser(
         "next",
         help="Show the next runnable Planfile ticket for this project.",
@@ -244,6 +242,8 @@ def build_ticket_parser() -> argparse.ArgumentParser:
         help="Shorthand for --format brief.",
     )
 
+
+def _add_waves_parser(sub: argparse._SubParsersAction) -> None:
     waves_p = sub.add_parser(
         "waves",
         help="Display parallel execution waves based on dependency toposort.",
@@ -258,6 +258,17 @@ def build_ticket_parser() -> argparse.ArgumentParser:
         help="Output format (default: text).",
     )
 
+
+def build_ticket_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="koru ticket",
+        description="Planfile ticket commands and autonomous executor for Koru.",
+    )
+    sub = parser.add_subparsers(dest="action", required=False)
+    _add_auto_parser(sub)
+    _add_list_parser(sub)
+    _add_next_parser(sub)
+    _add_waves_parser(sub)
     return parser
 
 

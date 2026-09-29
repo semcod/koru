@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-381",
+  "summary": "refactor(cli-ticket-queue): reduce build_ticket_parser size",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-381/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli_ticket_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "25ee1af05a8fe91cb0cd3dccf5ba8c4d5fcda73c",
+    "targetBranch": "main",
+    "outcome": "build_ticket_parser size reduced: per-subcommand registration moved to _add_auto_parser/_add_list_parser/_add_next_parser/_add_waves_parser; builder only constructs the root parser and dispatches to subparser helpers (mutations 33 -> <=11 per function).",
+    "nonGoals": [
+      "Changing CLI flags, subcommand names, help text, or defaults",
+      "Refactoring ticket_main or format_next_ticket"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Split parser construction into one helper per subcommand; build_ticket_parser wires them.",
+      "components": [
+        {
+          "name": "cli-ticket-queue",
+          "paths": [
+            "src/koru/cli_ticket_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_ticket_command_queue.py tests/test_queue_cli_helpers.py tests/test_queue_concurrency.py -x -q"
+        ],
+        "evidence": "Identical argparse surface: subcommands, flags, defaults and help text unchanged."
+      }
+    ]
+  }
+}
