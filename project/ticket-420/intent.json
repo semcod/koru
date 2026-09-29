@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-420",
+  "summary": "refactor(scan-artifacts): address shotgun surgery on payload variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-420/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/scan_artifacts.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6b77629ea08055f0ead65ce3c3ad8653bf258f63",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on payload removed in scan_artifacts.py: YAML-mapping binding renamed per loader (mapping, tickets_doc, calls_doc, graph_doc, planfile_doc, dup_doc).",
+    "nonGoals": [
+      "Scan semantics",
+      "Other smells in the file"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Token-level rename of payload locals to per-function names; dict keys unchanged.",
+      "components": [
+        {
+          "name": "scan-artifacts",
+          "paths": [
+            "src/koru/scan_artifacts.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_scan_artifacts.py tests/test_scan.py -x -q"
+        ],
+        "evidence": "Artifact scanning preserved."
+      }
+    ]
+  }
+}
