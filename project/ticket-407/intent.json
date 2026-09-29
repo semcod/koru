@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-407",
+  "summary": "refactor(portal-input): address shotgun surgery on p variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-407/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay/portal_input.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6b08b0de6d0f97633e228069de66ad2197416cd0",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on p removed in portal_input.py: one-letter session binding/param renamed to per-function names (session/calib_session/confirm_session/loop_session/input_session/ocr_session/type_session/precise_session/reanchor_session/chat_session).",
+    "nonGoals": [
+      "Portal input semantics",
+      "Other smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Local/param renamed per function; signatures positional-compatible; public behavior unchanged.",
+      "components": [
+        {
+          "name": "vdisplay-portal-input",
+          "paths": [
+            "src/koru/integrations/vdisplay/portal_input.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_portal_input.py -x -q"
+        ],
+        "evidence": "Portal input behavior preserved."
+      }
+    ]
+  }
+}
