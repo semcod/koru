@@ -10,6 +10,10 @@ import sys
 from pathlib import Path
 
 
+def _is_project_root(path: Path) -> bool:
+    return path.is_dir() and ((path / ".planfile").exists() or (path / "koru.yaml").exists())
+
+
 def _find_project_root(start: Path) -> Path:
     current = start.resolve()
     for directory in [current, *current.parents]:
@@ -240,7 +244,14 @@ def ticket_main(argv: list[str]) -> int:
 
     args = parser.parse_args(effective_argv)
 
-    project = args.project.resolve() if args.project is not None else _find_project_root(Path.cwd())
+    if args.project is not None:
+        project = args.project.resolve()
+        if not _is_project_root(project):
+            parser.error(
+                f"--project is not a Koru project root (no .planfile or koru.yaml): {project}"
+            )
+    else:
+        project = _find_project_root(Path.cwd())
 
     if args.action == "list":
         py = os.environ.get("PY") or sys.executable

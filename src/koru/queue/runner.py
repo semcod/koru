@@ -1,6 +1,7 @@
 """Main queue runner logic for executing planfile tickets."""
 
 
+import contextlib
 import hashlib
 import json
 import logging
@@ -908,11 +909,12 @@ def _resolve_action_or_result(
     if executor_kind == "shell" and not interactive and not dry_run:
         return "true", None
 
-    planfile_lifecycle_command(
-        project,
-        ["ticket", "block", ticket_id, "--reason", missing_prompt],
-        runner=planfile_runner,
-    )
+    if not dry_run:
+        planfile_lifecycle_command(
+            project,
+            ["ticket", "block", ticket_id, "--reason", missing_prompt],
+            runner=planfile_runner,
+        )
     return None, QueueRunResult(
         status="waiting_input",
         ticket_id=ticket_id,
@@ -1048,7 +1050,9 @@ def _run_next_planfile_task_impl(
     """
     project = project.resolve()
 
-    with queue_runner_lock(project):
+    # A preview must not create the lock directory or serialize against it.
+    selection_lock = contextlib.nullcontext() if dry_run else queue_runner_lock(project)
+    with selection_lock:
         ticket, early_result = _next_ticket_or_result(
             project,
             planfile_runner,
@@ -1064,7 +1068,8 @@ def _run_next_planfile_task_impl(
         ticket = hydrate_todo2code_ticket(ticket, project)
 
         ticket_id = str(ticket["id"])
-        _log_queue_ticket_start(ticket, ticket_id)
+        if not dry_run:
+            _log_queue_ticket_start(ticket, ticket_id)
 
         executor_kind = _resolve_executor_kind(ticket, interactive, dry_run)
 
