@@ -95,7 +95,7 @@ def desktop_uri_plan(
             return _imgl_plan_payload(prompt)
         return {"ok": False, "error": str(exc), "prompt": prompt}
     plan_dict = plan.to_dict()
-    payload: dict[str, Any] = {
+    plan_payload: dict[str, Any] = {
         "ok": True,
         "prompt": prompt,
         "platform": service._host().value,
@@ -103,14 +103,14 @@ def desktop_uri_plan(
     }
     control_plan = plan_dict.get("control_plan")
     if control_plan:
-        payload["control_plan"] = control_plan
-        payload["control_surface"] = _control_surface_hint(plan.uri)
+        plan_payload["control_plan"] = control_plan
+        plan_payload["control_surface"] = _control_surface_hint(plan.uri)
     intent_ir = _intent_ir_metadata(prompt)
     if intent_ir:
-        payload["nlp_bridge"] = intent_ir
+        plan_payload["nlp_bridge"] = intent_ir
     if is_ui_prompt(prompt):
-        payload["suggested_transport"] = "imgl"
-    return payload
+        plan_payload["suggested_transport"] = "imgl"
+    return plan_payload
 
 
 def _control_surface_hint(uri: str) -> str | None:
@@ -202,16 +202,16 @@ def desktop_uri_control_plan(
     locale: str | None = None,
 ) -> dict[str, Any]:
     """Resolve NL prompt to a Koru IDE control plan (koru.control.v1)."""
-    payload = desktop_uri_plan(prompt, platform=platform, locale=locale)
-    if not payload.get("ok"):
-        return payload
-    control_plan = payload.get("control_plan") or payload.get("plan", {}).get("control_plan")
+    plan_result = desktop_uri_plan(prompt, platform=platform, locale=locale)
+    if not plan_result.get("ok"):
+        return plan_result
+    control_plan = plan_result.get("control_plan") or plan_result.get("plan", {}).get("control_plan")
     if not control_plan:
-        payload["control_plan"] = None
-        payload["control_error"] = "prompt did not resolve to an IDE control URI"
-        return payload
-    payload["control_plan"] = control_plan
-    return payload
+        plan_result["control_plan"] = None
+        plan_result["control_error"] = "prompt did not resolve to an IDE control URI"
+        return plan_result
+    plan_result["control_plan"] = control_plan
+    return plan_result
 
 
 def desktop_uri_list_koru_ide_uris(
@@ -225,9 +225,9 @@ def desktop_uri_list_koru_ide_uris(
 
     host = _resolve_platform(None)
     service = NLP2URIService.for_platform(host) if host else NLP2URIService.default()
-    payload = service.list_koru_ide_uris(status, socket_path=socket_path or "")
-    payload["ok"] = True
-    return payload
+    uri_list = service.list_koru_ide_uris(status, socket_path=socket_path or "")
+    uri_list["ok"] = True
+    return uri_list
 
 
 def desktop_uri_direct_ide_chat_execute(
@@ -459,7 +459,7 @@ def desktop_uri_imgl_execute(
         dry_run=dry_run,
         with_diagnostics=with_diagnostics,
     )
-    payload: dict[str, Any] = {
+    imgl_result: dict[str, Any] = {
         "ok": bool(result.get("ok")),
         "prompt": prompt,
         "transport": "imgl",
@@ -467,9 +467,9 @@ def desktop_uri_imgl_execute(
         "dry_run": dry_run,
     }
     if result.get("diagnostics"):
-        payload["diagnostics"] = result["diagnostics"]
-        payload["verdict"] = result["diagnostics"].get("verdict")
-    return payload
+        imgl_result["diagnostics"] = result["diagnostics"]
+        imgl_result["verdict"] = result["diagnostics"].get("verdict")
+    return imgl_result
 
 
 def _should_route_to_imgl(
@@ -493,7 +493,7 @@ def _payload_with_intent(
     plan: dict[str, Any],
     result: Any,
 ) -> dict[str, Any]:
-    payload: dict[str, Any] = {
+    enriched: dict[str, Any] = {
         "prompt": prompt,
         "platform": platform,
         "plan": plan,
@@ -501,8 +501,8 @@ def _payload_with_intent(
     }
     intent_ir = _intent_ir_metadata(prompt)
     if intent_ir:
-        payload["nlp_bridge"] = intent_ir
-    return payload
+        enriched["nlp_bridge"] = intent_ir
+    return enriched
 
 
 def _handle_explicit_capture_uri(
@@ -618,8 +618,8 @@ def desktop_uri_list_getv(*, getv_home: str | None = None) -> dict[str, Any]:
     if not _NLP2URI_AVAILABLE:
         return {"ok": False, "error": nlp2uri_missing_message()}
     try:
-        payload = _service().list_getv_uris(getv_home=getv_home)
-        return {"ok": True, **payload}
+        getv_list = _service().list_getv_uris(getv_home=getv_home)
+        return {"ok": True, **getv_list}
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
 
@@ -629,8 +629,8 @@ def desktop_uri_resolve_getv(prompt: str, *, getv_home: str | None = None) -> di
     if not _NLP2URI_AVAILABLE:
         return {"ok": False, "error": nlp2uri_missing_message()}
     try:
-        payload = _service().resolve_getv(prompt, getv_home=getv_home)
-        return {"ok": payload.get("uri") is not None, **payload}
+        resolved = _service().resolve_getv(prompt, getv_home=getv_home)
+        return {"ok": resolved.get("uri") is not None, **resolved}
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
 
@@ -640,8 +640,8 @@ def desktop_uri_get_getv_var(uri: str) -> dict[str, Any]:
     if not _NLP2URI_AVAILABLE:
         return {"ok": False, "error": nlp2uri_missing_message()}
     try:
-        payload = _service().read_getv_var(uri)
-        return {"ok": bool(payload.get("found")), **payload}
+        var_result = _service().read_getv_var(uri)
+        return {"ok": bool(var_result.get("found")), **var_result}
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
 
@@ -670,12 +670,12 @@ def desktop_uri_resolve_system_map(
         })
         host = _resolve_platform(platform)
         service = NLP2URIService.for_platform(host) if host else NLP2URIService.default()
-        payload = service.resolve_system_map(
+        map_result = service.resolve_system_map(
             prompt,
             ir,
             fallback_desktop=fallback_desktop,
         )
-        return {"ok": payload.get("uri") is not None, **payload}
+        return {"ok": map_result.get("uri") is not None, **map_result}
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
 
@@ -699,7 +699,7 @@ def desktop_uri_list_system_uris(
             "example_id": example_id,
             "system_map": system_map,
         })
-        payload = _service().list_system_uris(ir)
-        return {"ok": True, **payload}
+        system_uris = _service().list_system_uris(ir)
+        return {"ok": True, **system_uris}
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
