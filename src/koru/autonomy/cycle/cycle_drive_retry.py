@@ -136,9 +136,9 @@ def _client_has_usable_plugin(
     if plugins is None:
         return True, ""
 
-    ok, reason = plugin_status_decision(status, autopilot_ide)
-    if not ok:
-        return ok, reason
+    plugin_ok, reason = plugin_status_decision(status, autopilot_ide)
+    if not plugin_ok:
+        return plugin_ok, reason
     if project is not None and not _workspace_mismatch_override():
         conflict = _plugin_workspace_conflict(status, autopilot_ide, project)
         if conflict:
@@ -661,9 +661,9 @@ def _shell_drive_editor_rescue(
     )
     if result is None:
         return None
-    rescued, ok = result
+    rescued, rescue_ok = result
     rescued.setdefault("shell_client_rescued_from", client_id)
-    return rescued, ok
+    return rescued, rescue_ok
 
 
 def _invoke_client_autopilot_drive(
@@ -691,9 +691,9 @@ def _invoke_client_autopilot_drive(
                 "executed": False,
                 "prompt": prompt,
             }, False
-        reply, ok = _drive_shell_client(shell_client, prompt=prompt, project=project, task=task)
-        if ok:
-            return reply, ok
+        reply, invoke_ok = _drive_shell_client(shell_client, prompt=prompt, project=project, task=task)
+        if invoke_ok:
+            return reply, invoke_ok
         if reply.get("diagnostic_code") == "shell_workspace_not_admitted":
             return reply, False
         rescue = _shell_drive_editor_rescue(
@@ -705,7 +705,7 @@ def _invoke_client_autopilot_drive(
         )
         if rescue is not None:
             return rescue
-        return reply, ok
+        return reply, invoke_ok
 
     drive_kwargs = _build_drive_kwargs(
         submit=submit,
@@ -726,9 +726,9 @@ def _invoke_client_autopilot_drive(
         return pre
 
     reply = client.drive(prompt, **drive_kwargs)
-    ok = bool(reply.get("ok", True))
-    if ok or require_plugin:
-        return reply, ok
+    invoke_ok = bool(reply.get("ok", True))
+    if invoke_ok or require_plugin:
+        return reply, invoke_ok
 
     post = _post_drive_fallback_chain(
         prompt=prompt,
@@ -740,7 +740,7 @@ def _invoke_client_autopilot_drive(
     if post is not None:
         return post
 
-    return reply, ok
+    return reply, invoke_ok
 
 
 def _waiting_ticket_closed_skip_result(
@@ -908,7 +908,7 @@ def _run_drive_retry_loop(
 ) -> tuple[dict[str, Any], bool]:
     previous_signature: str | None = None
     for attempt in range(attempts):
-        reply, ok = _invoke_client_autopilot_drive(
+        reply, attempt_ok = _invoke_client_autopilot_drive(
             client,
             prompt=prompt,
             submit=submit,
@@ -918,7 +918,7 @@ def _run_drive_retry_loop(
             project=project,
             **({"task": task} if task else {}),
         )
-        if ok:
+        if attempt_ok:
             break
         signature = engine.llm_strategy.failure_signature(reply)
         if previous_signature is not None and signature == previous_signature:
@@ -935,7 +935,7 @@ def _run_drive_retry_loop(
             engine=engine,
         ):
             break
-    return reply, ok
+    return reply, attempt_ok
 
 
 def _execute_autopilot_drive(
@@ -988,7 +988,7 @@ def _execute_autopilot_drive(
     from koru.tillm_bridge import shell_drive_client_id
 
     task = load_routing_task(project, routing_ticket) if shell_drive_client_id(autopilot_ide) else {}
-    reply, ok = _run_drive_retry_loop(
+    reply, drive_ok = _run_drive_retry_loop(
         client,
         prompt=decision.prompt,
         submit=submit,
@@ -1002,28 +1002,28 @@ def _execute_autopilot_drive(
         _hp=_hp,
     )
 
-    return reply, ok, decision.kind, idle_prompt_kind
+    return reply, drive_ok, decision.kind, idle_prompt_kind
 
 
 def _update_autopilot_state(
     state: AutoloopState,
-    ok: bool,
+    succeeded: bool,
     decision_kind: str,
     autopilot_drive_kind: str,
     decision_prompt: str,
 ) -> None:
     """Update autoloop state based on autopilot result."""
-    if ok and autopilot_drive_kind == "idle_ticket_prompt":
+    if succeeded and autopilot_drive_kind == "idle_ticket_prompt":
         ticket_id = extract_ticket_id_from_text(decision_prompt)
         if ticket_id:
             state.pending_ide_verify_id = ticket_id
-    if ok and decision_kind == "escalation_prompt":
+    if succeeded and decision_kind == "escalation_prompt":
         state.stagnation_streak = 0
         state.previous_signature = ""
 
 
 def _log_autopilot_result(
-    ok: bool,
+    passed: bool,
     queue_result: QueueLoopResult,
     autopilot_ide: str,
     decision_kind: str,
@@ -1031,7 +1031,7 @@ def _log_autopilot_result(
     _hp: Callable[..., Any],
 ) -> None:
     """Log autopilot result."""
-    if ok:
+    if passed:
         backend = reply.get("backend", "?")
         verification = reply.get("verification", "-")
         if backend in (None, "?") and verification == "-" and not reply.get("event"):

@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-409",
+  "summary": "refactor(cycle-drive-retry): address shotgun surgery on ok variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-409/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/cycle/cycle_drive_retry.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "95d9f4811ac1673e57e60ae3b55973ab30c1cc5b",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on ok removed in cycle_drive_retry.py: boolean flag renamed per stage (plugin_ok/rescue_ok/invoke_ok/attempt_ok/drive_ok/succeeded/passed); payload keys and printed text preserved.",
+    "nonGoals": [
+      "Retry semantics",
+      "Other smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Local/param renamed per function via token-level rewrite; dict keys and log text unchanged.",
+      "components": [
+        {
+          "name": "cycle-drive-retry",
+          "paths": [
+            "src/koru/autonomy/cycle/cycle_drive_retry.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_cycle_post_drive.py tests/test_photo_vql_drive.py -x -q"
+        ],
+        "evidence": "Drive retry behavior preserved."
+      }
+    ]
+  }
+}
