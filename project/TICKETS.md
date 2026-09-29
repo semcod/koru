@@ -366,9 +366,12 @@ project analysis or human-owned ticket inputs.
 | **ticket-366** | [`README.md`](./ticket-366/README.md) | - | - | - | - | - |
 | **ticket-367** | [`README.md`](./ticket-367/README.md) | - | - | - | - | - |
 | **ticket-368** | [`README.md`](./ticket-368/README.md) | - | - | - | - | - |
+| **ticket-369** | [`README.md`](./ticket-369/README.md) | - | - | - | - | - |
 | **ticket-370** | [`README.md`](./ticket-370/README.md) | - | - | - | - | - |
 | **ticket-371** | [`README.md`](./ticket-371/README.md) | - | - | - | - | - |
 | **ticket-372** | [`README.md`](./ticket-372/README.md) | - | - | - | - | - |
 | **ticket-373** | [`README.md`](./ticket-373/README.md) | - | - | - | - | - |
 | **ticket-374** | [`README.md`](./ticket-374/README.md) | - | - | - | - | - |
+| **ticket-375** | [`README.md`](./ticket-375/README.md) | - | - | - | - | - |
+| **ticket-376** | [`README.md`](./ticket-376/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->

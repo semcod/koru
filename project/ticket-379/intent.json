@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-379",
+  "summary": "refactor(cli-ticket-queue): reduce format_next_ticket cyclomatic complexity",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-379/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/cli_ticket_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6cb3c3bc13c851b3625a1c577a7008b49fefe46c",
+    "targetBranch": "main",
+    "outcome": "format_next_ticket CC reduced: field extraction moved to _TicketView/_ticket_view; per-format renderers _format_idle/_format_markdown_ticket/_format_text_ticket; dispatcher is a thin switch.",
+    "nonGoals": [
+      "Changing rendered output for any format",
+      "Refactoring ticket_main or build_ticket_parser"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract normalized ticket fields once into _TicketView; markdown/text bodies become pure renderers; format_next_ticket only dispatches.",
+      "components": [
+        {
+          "name": "cli-ticket-queue",
+          "paths": [
+            "src/koru/cli_ticket_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_ticket_command_queue.py tests/test_queue_concurrency.py -x -q"
+        ],
+        "evidence": "Formatted output for text/brief/markdown/json formats unchanged."
+      }
+    ]
+  }
+}

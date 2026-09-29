@@ -8,6 +8,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import NamedTuple
 
 
 def _is_project_root(path: Path) -> bool:
@@ -22,87 +23,114 @@ def _find_project_root(start: Path) -> Path:
     return current
 
 
-def format_next_ticket(ticket: dict | None, fmt: str = "text") -> str:
-    """Format the next runnable ticket for terminal or programmatic consumption."""
-    if ticket is None:
-        if fmt == "json":
-            return json.dumps({"status": "idle", "ticket": None}, indent=2)
-        if fmt == "brief":
-            return "(no runnable ticket)"
-        if fmt == "markdown":
-            return "*No runnable ticket found in queue (queue is idle).*"
-        return "ℹ️  No runnable ticket found in queue (queue is idle)."
+class _TicketView(NamedTuple):
+    """Normalized ticket fields shared by the text/brief/markdown renderers."""
 
+    ticket_id: str
+    title: str
+    status: str
+    priority: str
+    executor_kind: str
+    queue: str
+    labels: str
+    files: str
+    description: str
+
+
+def _format_idle(fmt: str) -> str:
     if fmt == "json":
-        return json.dumps(ticket, indent=2)
+        return json.dumps({"status": "idle", "ticket": None}, indent=2)
+    if fmt == "brief":
+        return "(no runnable ticket)"
+    if fmt == "markdown":
+        return "*No runnable ticket found in queue (queue is idle).*"
+    return "ℹ️  No runnable ticket found in queue (queue is idle)."
 
-    ticket_id = ticket.get("id") or "UNKNOWN"
-    title = ticket.get("name") or ticket.get("title") or ""
-    status = ticket.get("status") or "open"
-    priority = ticket.get("priority") or "normal"
+
+def _ticket_view(ticket: dict) -> _TicketView:
     executor = ticket.get("executor")
-    executor_kind = executor.get("kind") if isinstance(executor, dict) else (executor or "human")
     execution = ticket.get("execution") if isinstance(ticket.get("execution"), dict) else {}
-    queue = execution.get("queue") or "default"
-    labels = ", ".join(ticket.get("labels") or []) or "none"
-    files = ", ".join(ticket.get("files") or []) or "none"
     description = (ticket.get("description") or "").strip()
     if len(description) > 300:
         description = description[:297] + "..."
+    return _TicketView(
+        ticket_id=ticket.get("id") or "UNKNOWN",
+        title=ticket.get("name") or ticket.get("title") or "",
+        status=ticket.get("status") or "open",
+        priority=ticket.get("priority") or "normal",
+        executor_kind=(executor.get("kind") if isinstance(executor, dict) else (executor or "human")),
+        queue=execution.get("queue") or "default",
+        labels=", ".join(ticket.get("labels") or []) or "none",
+        files=", ".join(ticket.get("files") or []) or "none",
+        description=description,
+    )
 
-    if fmt == "brief":
-        return f"{ticket_id}: {title}" if title else ticket_id
 
-    if fmt == "markdown":
-        lines = [
-            f"### Next Ticket: {ticket_id} — {title}",
+def _format_markdown_ticket(view: _TicketView) -> str:
+    lines = [
+        f"### Next Ticket: {view.ticket_id} — {view.title}",
+        "",
+        f"- **Status**: `{view.status}`",
+        f"- **Priority**: `{view.priority}`",
+        f"- **Executor**: `{view.executor_kind}`",
+        f"- **Queue**: `{view.queue}`",
+        f"- **Labels**: {view.labels}",
+        f"- **Files**: {view.files}",
+    ]
+    if view.description:
+        lines.extend(["", "#### Description", view.description])
+    lines.extend(
+        [
             "",
-            f"- **Status**: `{status}`",
-            f"- **Priority**: `{priority}`",
-            f"- **Executor**: `{executor_kind}`",
-            f"- **Queue**: `{queue}`",
-            f"- **Labels**: {labels}",
-            f"- **Files**: `{files}`",
+            "#### Quick Actions",
+            f"- Run: `koru ticket auto {view.ticket_id}`",
+            f"- Agent brief: `koru --context --ticket {view.ticket_id}`",
+            f"- Mark done: `planfile ticket done {view.ticket_id}`",
         ]
-        if description:
-            lines.extend(["", "#### Description", description])
-        lines.extend(
-            [
-                "",
-                "#### Quick Actions",
-                f"- Run: `koru ticket auto {ticket_id}`",
-                f"- Agent brief: `koru --context --ticket {ticket_id}`",
-                f"- Mark done: `planfile ticket done {ticket_id}`",
-            ]
-        )
-        return "\n".join(lines)
+    )
+    return "\n".join(lines)
 
-    # default: text format
+
+def _format_text_ticket(view: _TicketView) -> str:
     box_lines = [
         "Next runnable ticket in queue:",
         "┌─────────────────────────────────────────────────────────────",
-        f"│ ID:          {ticket_id}",
-        f"│ Title:       {title}",
-        f"│ Priority:    {priority}",
-        f"│ Status:      {status}",
-        f"│ Executor:    {executor_kind}",
-        f"│ Queue:       {queue}",
-        f"│ Labels:      {labels}",
-        f"│ Files:       {files}",
+        f"│ ID:          {view.ticket_id}",
+        f"│ Title:       {view.title}",
+        f"│ Priority:    {view.priority}",
+        f"│ Status:      {view.status}",
+        f"│ Executor:    {view.executor_kind}",
+        f"│ Queue:       {view.queue}",
+        f"│ Labels:      {view.labels}",
+        f"│ Files:       {view.files}",
         "└─────────────────────────────────────────────────────────────",
     ]
-    if description:
-        box_lines.extend(["Description:", f"  {description}"])
+    if view.description:
+        box_lines.extend(["Description:", f"  {view.description}"])
     box_lines.extend(
         [
             "",
             "Quick actions:",
-            f"  • Run ticket:       koru ticket auto {ticket_id}",
-            f"  • Agent brief:      koru --context --ticket {ticket_id}",
-            f"  • Mark done:        planfile ticket done {ticket_id}",
+            f"  • Run ticket:       koru ticket auto {view.ticket_id}",
+            f"  • Agent brief:      koru --context --ticket {view.ticket_id}",
+            f"  • Mark done:        planfile ticket done {view.ticket_id}",
         ]
     )
     return "\n".join(box_lines)
+
+
+def format_next_ticket(ticket: dict | None, fmt: str = "text") -> str:
+    """Format the next runnable ticket for terminal or programmatic consumption."""
+    if ticket is None:
+        return _format_idle(fmt)
+    if fmt == "json":
+        return json.dumps(ticket, indent=2)
+    view = _ticket_view(ticket)
+    if fmt == "brief":
+        return f"{view.ticket_id}: {view.title}" if view.title else view.ticket_id
+    if fmt == "markdown":
+        return _format_markdown_ticket(view)
+    return _format_text_ticket(view)
 
 
 def _sync_github(project: Path, timeout: int = 60) -> bool:
@@ -247,9 +275,7 @@ def ticket_main(argv: list[str]) -> int:
     if args.project is not None:
         project = args.project.resolve()
         if not _is_project_root(project):
-            parser.error(
-                f"--project is not a Koru project root (no .planfile or koru.yaml): {project}"
-            )
+            parser.error(f"--project is not a Koru project root (no .planfile or koru.yaml): {project}")
     else:
         project = _find_project_root(Path.cwd())
 
@@ -264,6 +290,7 @@ def ticket_main(argv: list[str]) -> int:
         waves = []
         try:
             from planfile import Planfile
+
             pf = Planfile.auto_discover(project)
             if hasattr(pf, "execution_waves"):
                 waves = pf.execution_waves(sprint=args.sprint)
