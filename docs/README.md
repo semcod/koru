@@ -47,6 +47,7 @@ changes are recorded in `CHANGELOG.md`.
 - **[`architecture/adr/`](./architecture/adr/README.md)** — ADR stubs AD-001…AD-006 (namespaces, SSOT, ExecutionPlan, grant/manifest, worktree, remote mTLS).
 - **[`architecture/documentation-conformance.toon.yaml`](./architecture/documentation-conformance.toon.yaml)** — reproducible `sumd`/`docval`/`code2docs` baseline and ordered documentation-refresh queue.
 - **[`analysis/simple-task-model-routing.md`](./analysis/simple-task-model-routing.md)** (PL) — routing prostych zadań na model Flash, pilotaż i historia użycia modeli; v5: audyt wyścigu exact-head przy scaleniu PR361 (STARTER-735) — CAS nieegzekwowany w operacji scalenia.
+- **[`analysis/wellmanifest-adoption-audit-2026-09.md`](./analysis/wellmanifest-adoption-audit-2026-09.md)** (PL) — audyt adopcji standardów wellmanifest vs upstream HEAD, mapowanie Planfile↔GitHub issue i deduplikacja (STARTER-605).
 
 - **[`koru fleet`](information/koru-fleet.md)** (canonical `information/koru-fleet.md`;
   legacy [`koru-fleet.md`](./koru-fleet.md) now redirects there) — `koru fleet

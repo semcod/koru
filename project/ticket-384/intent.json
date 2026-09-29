@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-384",
+  "summary": "docs(audit): reconcile wellmanifest adoption pins and planfile delivery",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-384/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "docs/analysis/wellmanifest-adoption-audit-2026-09.md",
+    "docs/README.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8bd8687abd5684b6e8f50b7ff85c8c7215c922be",
+    "targetBranch": "main",
+    "outcome": "STARTER-605 audit delivered as docs/analysis/wellmanifest-adoption-audit-2026-09.md: fresh adoption-vs-upstream comparison for 8 wellmanifest packs, Planfile<->GitHub issue mapping/dedup verification, declared-vs-protected-CI coverage, and items deferred to bounded follow-ups.",
+    "nonGoals": [
+      "Bumping any adoption pin (separate bounded tickets via managed adopter)",
+      "Modifying source code or deployed runtimes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Audit result lands in the canonical docs/analysis location per wellmanifest/docs placement and is indexed in docs/README.md.",
+      "components": [
+        {
+          "name": "docs",
+          "paths": [
+            "docs/analysis/wellmanifest-adoption-audit-2026-09.md",
+            "docs/README.md"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; documentation-only change."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Document indexed; adoption comparison refreshed against live upstream HEADs on 2026-09-29."
+      }
+    ]
+  }
+}
