@@ -56,6 +56,22 @@ def emit_phase(*args: Any, **kwargs: Any) -> Any:
     return _host_hooks.emit_phase(*args, **kwargs)
 
 
+def _result_fields(
+    result: dict[str, Any], keys: tuple[str, ...], *, truthy: bool = False
+) -> dict[str, Any]:
+    """Copy selected keys from a backend result into an ack info payload."""
+    if truthy:
+        return {key: result[key] for key in keys if result.get(key)}
+    return {key: result[key] for key in keys if key in result}
+
+
+def _send_info_ack(
+    daemon: Any, client: _Client, corr: str, info: dict[str, Any], *, ok: bool = True
+) -> None:
+    """Send a drive ACK carrying the given info payload."""
+    daemon._send(client, ack(corr, ok=ok, info=info).encode())
+
+
 def _prefer_keyboard_drive() -> bool:
     """Check if keyboard drive is preferred over plugin."""
     from koruide.daemon.handlers import _env_truthy
@@ -505,7 +521,7 @@ def _reject_overlapping_plugin_drive(
         "pending_submit": pending_submit,
         "pending_chars": len(pending_text or ""),
     }
-    daemon._send(client, ack(corr, ok=False, info=info).encode())
+    _send_info_ack(daemon, client, corr, info, ok=False)
     daemon.log(f"drive_via_plugin: blocked overlapping drive: {message}")
     daemon.audit.record(
         "drive",
@@ -776,17 +792,12 @@ def _ack_vdisplay_drive_success(
         "submitted": bool(result.get("submitted", submit)),
         "verification": result.get("verification") or "photo_vql",
         "tool_id": target_id,
+        **_result_fields(
+            result,
+            ("photo_vql_observe", "vql_context", "vql_note", "desktop_preflight", "click_center"),
+        ),
     }
-    for key in (
-        "photo_vql_observe",
-        "vql_context",
-        "vql_note",
-        "desktop_preflight",
-        "click_center",
-    ):
-        if key in result:
-            info[key] = result[key]
-    daemon._send(client, ack(msg.id or "", info=info).encode())
+    _send_info_ack(daemon, client, msg.id or "", info)
     daemon.log(f"drive → {target_id} via {backend} ({len(text)} chars, submit={submit})")
     daemon.audit.record(
         "drive",
@@ -889,12 +900,9 @@ def _drive_via_imgl_backend(
         "submitted": bool(result.get("submitted", submit)),
         "verification": "vision",
         "tool_id": target_id,
+        **_result_fields(result, ("type_step", "key_step"), truthy=True),
     }
-    if result.get("type_step"):
-        info["type_step"] = result["type_step"]
-    if result.get("key_step"):
-        info["key_step"] = result["key_step"]
-    daemon._send(client, ack(msg.id or "", info=info).encode())
+    _send_info_ack(daemon, client, msg.id or "", info)
     daemon.log(f"drive → {target_id} via imgl ({len(text)} chars, submit={submit})")
     daemon.audit.record(
         "drive",
@@ -1014,7 +1022,7 @@ def _drive_via_os_injector_backend(
     )
     target_dict = target.to_dict() if target is not None else None
     info = format_os_injector_ack(os_res, submit=submit, target=target_dict)
-    daemon._send(client, ack(msg.id or "", info=info).encode())
+    _send_info_ack(daemon, client, msg.id or "", info)
     daemon.log(
         f"drive → {target_id} via {info['backend']}"
         f" ({len(text)} chars, submit={submit})",
@@ -1068,10 +1076,12 @@ def _drive_via_keyboard_backend(
             error=str(exc),
         )
         return
-    info = {"backend": result.backend, "submitted": result.submitted}
-    if target is not None:
-        info["ide"] = target.to_dict()
-    daemon._send(client, ack(msg.id or "", info=info).encode())
+    info = {
+        "backend": result.backend,
+        "submitted": result.submitted,
+        **({"ide": target.to_dict()} if target is not None else {}),
+    }
+    _send_info_ack(daemon, client, msg.id or "", info)
     daemon.log(f"drive → {target_id} via {result.backend} ({len(text)} chars, submit={submit})")
     daemon.audit.record(
         "drive",

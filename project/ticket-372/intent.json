@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-372",
+  "summary": "refactor(handlers-drive): address shotgun surgery on info variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-372/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/koruide/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ae705e42a668d5501f5285ba030e00ba8e1a9dad",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on 'info' is removed: all drive ACK info payloads are sent through _send_info_ack and optional result keys are copied via _result_fields; 'info' is constructed once, never mutated.",
+    "nonGoals": [
+      "Changing ACK message content, ordering or audit semantics",
+      "Refactoring unrelated drive routing or calibration logic"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Introduce _send_info_ack(daemon, client, corr, info, ok=) and _result_fields(result, keys, truthy=); replace info-mutation loops with dict construction.",
+      "components": [
+        {
+          "name": "koruide-daemon",
+          "paths": [
+            "packages/koruide/src/koruide/daemon/handlers_drive.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_koruide_daemon_handlers_drive.py tests/test_autopilot_daemon.py -x -q"
+        ],
+        "evidence": "Daemon drive handler tests pass; ack payloads unchanged."
+      }
+    ]
+  }
+}
