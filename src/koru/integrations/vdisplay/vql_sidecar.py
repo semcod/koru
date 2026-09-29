@@ -143,29 +143,29 @@ def _observe_vql_sidecar_path(*, source: str | None = None) -> str | None:
     return None
 
 
-def _annotate_png_artifact_state(out: dict[str, Any]) -> dict[str, Any]:
-    raw = str(out.get("png") or "").strip()
+def _annotate_png_artifact_state(state: dict[str, Any]) -> dict[str, Any]:
+    raw = str(state.get("png") or "").strip()
     if not raw:
-        out.setdefault("png_exists", False)
-        return out
+        state.setdefault("png_exists", False)
+        return state
     # A failed capture/refresh must never inherit a file already sitting at the
     # requested path — that stale screenshot (e.g. /tmp/capture.png from a prior
     # session) would false-positive as a fresh confirmation and let koru actuate
     # on the wrong screen. Distrust the path whenever the step reported failure.
-    capture_failed = bool(out.get("ok") is False or out.get("error") or out.get("returncode"))
+    capture_failed = bool(state.get("ok") is False or state.get("error") or state.get("returncode"))
     path = Path(raw).expanduser()
     exists = path.is_file()
     if capture_failed:
-        out["png_exists"] = False
-        out.setdefault("requested_png_path", raw)
-        out["png"] = None
-        return out
-    out["png_exists"] = exists
+        state["png_exists"] = False
+        state.setdefault("requested_png_path", raw)
+        state["png"] = None
+        return state
+    state["png_exists"] = exists
     if exists:
-        out["png"] = str(path.resolve())
-        return out
-    out.setdefault("requested_png_path", raw)
-    return out
+        state["png"] = str(path.resolve())
+        return state
+    state.setdefault("requested_png_path", raw)
+    return state
 
 
 def _photo_png_from_vql_sidecar_path(cand_vql: str) -> str | None:
@@ -297,17 +297,17 @@ def _photo_vql_refresh_dry_run_out(
 ) -> dict[str, Any]:
     """Dry-run result for refresh_photo_vql_sidecar (no capture performed)."""
     os.environ["KORU_VDISPLAY_VQL_PATH"] = str(vql)
-    out = {
+    dry_run = {
         "ok": True,
-        "dry_run": True,
+        "out": True,
         "source": src,
         "png": str(png),
         "vql": str(vql),
         "elements": 0,
     }
     if session is not None:
-        out["session_dir"] = str(session)
-    return out
+        dry_run["session_dir"] = str(session)
+    return dry_run
 
 
 def _photo_vql_refresh_screenshot(src: str, png: Path, ide: str) -> dict[str, Any] | None:
@@ -391,7 +391,7 @@ def _photo_vql_observe_when_empty(
             )
             loaded = _vdc()._photo_vql_reload_sidecar_meta(vql)
     except Exception as exc:
-        out = {
+        early = {
             "ok": True,
             "source": src,
             "png": str(png.resolve()),
@@ -402,27 +402,27 @@ def _photo_vql_observe_when_empty(
             "observe_fallback_error": str(exc),
         }
         if session is not None:
-            out["session_dir"] = str(session)
-        return {**loaded, "observe_subprocess": observe_subprocess, "early_out": out}
+            early["session_dir"] = str(session)
+        return {**loaded, "observe_subprocess": observe_subprocess, "early_out": early}
     return {**loaded, "observe_subprocess": observe_subprocess, "early_out": None}
 
 
 def _photo_vql_refresh_annotate_observe(
-    out: dict[str, Any], main_layers: int, observe_subprocess: dict[str, Any] | None
+    refreshed: dict[str, Any], main_layers: int, observe_subprocess: dict[str, Any] | None
 ) -> None:
     """Attach the observe-subprocess summary to the refresh result."""
     if main_layers > 0 and observe_subprocess is not None and observe_subprocess.get("ok"):
-        out["observe_subprocess"] = {
+        refreshed["observe_subprocess"] = {
             "ok": True,
             "method": observe_subprocess.get("method"),
             "returncode": observe_subprocess.get("returncode"),
         }
     elif main_layers == 0 and observe_subprocess is not None:
-        out["observe_subprocess"] = observe_subprocess
+        refreshed["observe_subprocess"] = observe_subprocess
 
 
 def _photo_vql_refresh_finalize_out(
-    out: dict[str, Any],
+    finalized: dict[str, Any],
     *,
     ide: str,
     meta: dict[str, Any],
@@ -433,25 +433,25 @@ def _photo_vql_refresh_finalize_out(
     """Warnings, provenance and session artifact copies for the refresh result."""
     warn = _vdc()._photo_vql_ide_window_warning(ide=ide, meta=meta)
     if warn:
-        out["ide_window_warning"] = warn
+        finalized["ide_window_warning"] = warn
     if meta.get("capture_validation"):
-        out["capture_validation"] = meta["capture_validation"]
-    out["capture_provenance"] = _vdc()._capture_provenance(
+        finalized["capture_validation"] = meta["capture_validation"]
+    finalized["capture_provenance"] = _vdc()._capture_provenance(
         ide=ide, png_path=str(png), vql_path=str(vql), meta=meta
     )
-    out["capture_confirmed"] = out["capture_provenance"].get("capture_confirmed")
+    finalized["capture_confirmed"] = finalized["capture_provenance"].get("capture_confirmed")
     if session is not None:
-        out["session_dir"] = str(session)
+        finalized["session_dir"] = str(session)
         if png.is_file() and vql.is_file():
             copied = _vdc()._autonomy_session.copy_observe_artifacts_to_session(
                 session,
                 png=png,
                 vql=vql,
             )
-            out["observe_session_paths"] = copied
-            out["png"] = copied["png"]
-            out["vql"] = copied["vql"]
-    return out
+            finalized["observe_session_paths"] = copied
+            finalized["png"] = copied["png"]
+            finalized["vql"] = copied["vql"]
+    return finalized
 
 
 def _photo_vql_refresh_context(*, source: str | None, ide: str) -> dict[str, Any]:
@@ -520,7 +520,7 @@ def _photo_vql_refresh_stale_out(ctx: dict[str, Any]) -> dict[str, Any]:
         window_mismatch=_vdc()._photo_vql_ide_window_warning(ide=ctx["ide"], meta=ctx["meta"]),
         capture_validation=ctx["meta"].get("capture_validation"),
     )
-    out: dict[str, Any] = {
+    stale: dict[str, Any] = {
         "ok": True,
         "source": ctx["src"],
         "png": str(ctx["png"].resolve()) if ctx["png"].is_file() else str(ctx["png"]),
@@ -531,8 +531,8 @@ def _photo_vql_refresh_stale_out(ctx: dict[str, Any]) -> dict[str, Any]:
         "freshness": freshness,
         "sidecar_stale": stale,
     }
-    _vdc()._photo_vql_refresh_annotate_observe(out, ctx["main_layers"], ctx["observe_subprocess"])
-    return out
+    _vdc()._photo_vql_refresh_annotate_observe(stale, ctx["main_layers"], ctx["observe_subprocess"])
+    return stale
 
 
 def refresh_photo_vql_sidecar(*, source: str | None = None, ide: str = "auto") -> dict[str, Any]:
@@ -541,9 +541,9 @@ def refresh_photo_vql_sidecar(*, source: str | None = None, ide: str = "auto") -
     early_out = _vdc()._photo_vql_refresh_capture(ctx)
     if early_out is not None:
         return early_out
-    out = _vdc()._photo_vql_refresh_stale_out(ctx)
+    result = _vdc()._photo_vql_refresh_stale_out(ctx)
     return _vdc()._photo_vql_refresh_finalize_out(
-        out, ide=ctx["ide"], meta=ctx["meta"], png=ctx["png"], vql=ctx["vql"], session=ctx["session"]
+        result, ide=ctx["ide"], meta=ctx["meta"], png=ctx["png"], vql=ctx["vql"], session=ctx["session"]
     )
 
 

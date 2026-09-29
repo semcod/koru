@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-403",
+  "summary": "refactor(vql-sidecar): address shotgun surgery on out variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-403/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay/vql_sidecar.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "095a36685238603201ada02b76bfbeb5382cba3a",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on out removed in vql_sidecar.py: shared accumulator renamed to per-function semantic names (state/dry_run/early/refreshed/finalized/stale/result); returned payload dict keys preserved.",
+    "nonGoals": [
+      "Refresh/capture semantics",
+      "Other vdisplay module smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Parameter/local accumulator renamed per function; signatures and dict keys unchanged.",
+      "components": [
+        {
+          "name": "vdisplay-vql-sidecar",
+          "paths": [
+            "src/koru/integrations/vdisplay/vql_sidecar.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_photo_vql_drive.py tests/test_surface_capture_confirmation.py -x -q"
+        ],
+        "evidence": "Sidecar refresh behavior preserved."
+      }
+    ]
+  }
+}
