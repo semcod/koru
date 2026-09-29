@@ -108,7 +108,7 @@ def _preflight(
     project: Path,
     *,
     now: Callable[[], float],
-    outcome: NxdoDiscoveryOutcome,
+    draft: NxdoDiscoveryOutcome,
 ) -> _Preflight:
     """Run the guard checks; record the resolved binary/repo on ``outcome``.
 
@@ -120,7 +120,7 @@ def _preflight(
     binary = _nxdo_executable(project)
     if binary is None:
         return _Preflight("nxdo not on PATH (set KORU_NXDO_BIN)", None, None, 0.0)
-    outcome.nxdo_path = binary
+    draft.nxdo_path = binary
     if not _api_key_available(project):
         return _Preflight("no OPENROUTER_API_KEY/OPENAI_API_KEY (env or project .env)", None, None, 0.0)
     started = now()
@@ -132,7 +132,7 @@ def _preflight(
             None,
             0.0,
         )
-    outcome.target_repo = str(selection.repo)
+    draft.target_repo = str(selection.repo)
     return _Preflight(None, binary, selection.repo, started)
 
 
@@ -153,7 +153,7 @@ def _execute(
     project: Path,
     *,
     runner: Runner,
-    outcome: NxdoDiscoveryOutcome,
+    run_state: NxdoDiscoveryOutcome,
 ) -> subprocess.CompletedProcess[str] | None:
     """Run ``nxdo plan`` and time it; record duration (and exec errors).
 
@@ -166,12 +166,12 @@ def _execute(
     try:
         result = runner(cmd, project)
     except subprocess.TimeoutExpired as exc:
-        outcome.error = f"nxdo timed out after {exc.timeout}s"
+        run_state.error = f"nxdo timed out after {exc.timeout}s"
     except (OSError, ValueError) as exc:
-        outcome.error = f"nxdo exec failed: {exc}"
+        run_state.error = f"nxdo exec failed: {exc}"
     finally:
-        outcome.nxdo_duration_s = time.monotonic() - start
-    if outcome.error is not None:
+        run_state.nxdo_duration_s = time.monotonic() - start
+    if run_state.error is not None:
         return None
     return result
 
@@ -182,15 +182,15 @@ def _record_attempt(
     started: float,
     result: subprocess.CompletedProcess[str],
     *,
-    outcome: NxdoDiscoveryOutcome,
+    attempt: NxdoDiscoveryOutcome,
 ) -> None:
     """Record the run on ``outcome`` and stamp the per-repo cooldown.
 
     The attempt is stamped even on failure: a failing repo must not burn an
     LLM call every idle cycle.
     """
-    outcome.nxdo_returncode = result.returncode
-    outcome.ran = True
+    attempt.nxdo_returncode = result.returncode
+    attempt.ran = True
     stamps = _load_stamps(project)
     stamps[str(repo)] = started
     _save_stamps(project, stamps)
@@ -207,15 +207,15 @@ def _interpret_plan(
     repo: Path,
     result: subprocess.CompletedProcess[str],
     *,
-    outcome: NxdoDiscoveryOutcome,
+    resolved: NxdoDiscoveryOutcome,
 ) -> None:
     """Turn a completed ``nxdo`` run into error or ticket fields."""
     if result.returncode != 0:
-        outcome.error = _failure_message(result)
+        resolved.error = _failure_message(result)
         return
     plan = _plan_from_output(result.stdout)
     if plan is None:
-        outcome.error = "nxdo produced no parseable TaskPlan JSON"
+        resolved.error = "nxdo produced no parseable TaskPlan JSON"
         return
     filed = _apply_plan_tickets(
         project,
@@ -223,8 +223,8 @@ def _interpret_plan(
         plan,
         limit=max(1, _env_int("KORU_NXDO_MAX_TICKETS", DEFAULT_MAX_TICKETS, project)),
     )
-    outcome.applied_titles = filed.applied
-    outcome.skipped_titles = filed.skipped
+    resolved.applied_titles = filed.applied
+    resolved.skipped_titles = filed.skipped
 
 
 def run_nxdo_discovery(
@@ -241,33 +241,33 @@ def run_nxdo_discovery(
     project = project.resolve()
     outcome = NxdoDiscoveryOutcome()
 
-    pre = _preflight(project, now=now, outcome=outcome)
+    pre = _preflight(project, now=now, draft=outcome)
     if pre.reason is not None:
         outcome.skipped_reason = pre.reason
         return outcome
 
-    result = _execute(pre, project, runner=runner, outcome=outcome)
+    result = _execute(pre, project, runner=runner, run_state=outcome)
     if result is None:
         return outcome
 
-    _record_attempt(project, pre.repo, pre.started, result, outcome=outcome)
-    _interpret_plan(project, pre.repo, result, outcome=outcome)
+    _record_attempt(project, pre.repo, pre.started, result, attempt=outcome)
+    _interpret_plan(project, pre.repo, result, resolved=outcome)
     return outcome
 
 
-def format_nxdo_summary(outcome: NxdoDiscoveryOutcome) -> str:
+def format_nxdo_summary(res: NxdoDiscoveryOutcome) -> str:
     """One-line summary suitable for the koru activity log."""
-    if outcome.skipped_reason and not outcome.ran:
-        return f"nxdo discovery skipped: {outcome.skipped_reason}"
-    if outcome.error:
-        return f"nxdo discovery error: {outcome.error}"
+    if res.skipped_reason and not res.ran:
+        return f"nxdo discovery skipped: {res.skipped_reason}"
+    if res.error:
+        return f"nxdo discovery error: {res.error}"
     pieces: list[str] = []
-    if outcome.nxdo_duration_s is not None:
-        pieces.append(f"nxdo {outcome.nxdo_duration_s:.1f}s")
-    if outcome.target_repo:
-        pieces.append(f"repo={outcome.target_repo}")
-    pieces.append(f"applied={len(outcome.applied_titles)}")
-    pieces.append(f"skipped={len(outcome.skipped_titles)}")
+    if res.nxdo_duration_s is not None:
+        pieces.append(f"nxdo {res.nxdo_duration_s:.1f}s")
+    if res.target_repo:
+        pieces.append(f"repo={res.target_repo}")
+    pieces.append(f"applied={len(res.applied_titles)}")
+    pieces.append(f"skipped={len(res.skipped_titles)}")
     return "nxdo discovery: " + " ".join(pieces)
 
 
