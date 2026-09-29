@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-398",
+  "summary": "fix(vdisplay-client): wrap overlong facade import line",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-398/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay_client.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d7572ec05cd0a26cf796f94c94688e9db45e6f84",
+    "targetBranch": "main",
+    "outcome": "Fix E501 in vdisplay_client.py facade import (regression from PLF-067 facade re-export) so smoke lint passes on main.",
+    "nonGoals": [
+      "Facade restructure",
+      "Other lint baseline fixes"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Wrap the overlong import continuation line; no symbol changes.",
+      "components": [
+        {
+          "name": "vdisplay-client",
+          "paths": [
+            "src/koru/integrations/vdisplay_client.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m ruff check src/koru/integrations/vdisplay_client.py"
+        ],
+        "evidence": "ruff clean on the facade file."
+      }
+    ]
+  }
+}
