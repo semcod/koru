@@ -298,20 +298,15 @@ def _todo2code_contract(inputs: dict[str, Any], project: Path) -> str:
     ).strip()
 
 
-def _enforce_todo2code_executor_authority(
-    out: dict[str, Any], inputs: dict[str, Any], contract: str
-) -> None:
+def _todo2code_executor_override(executor: Any, contract: str) -> dict[str, str] | None:
     """Demote legacy llm executors that lack a capability contract."""
-    executor = out.get("executor") if isinstance(out.get("executor"), dict) else {}
+    executor = executor if isinstance(executor, dict) else {}
     if str(executor.get("kind") or "human").lower() != "llm" or contract:
-        return
+        return None
     # Older imported tickets may already say llm/automatic. Do not let a
     # lossy Planfile round-trip turn that historical value into authority:
     # autonomous todo2code patches require a target-owned capability contract.
-    out["executor"] = {"kind": "human", "mode": "interactive"}
-    inputs["governance_block_reason"] = (
-        "todo2code LLM execution requires KORU_TODO2CODE_CONTRACT"
-    )
+    return {"kind": "human", "mode": "interactive"}
 
 
 def _todo2code_diagnostic_ids(source: dict[str, Any]) -> list[str]:
@@ -323,15 +318,13 @@ def _todo2code_diagnostic_ids(source: dict[str, Any]) -> list[str]:
     ]
 
 
-def _ensure_todo2code_verify_command(
+def _default_todo2code_verify_command(
     inputs: dict[str, Any], project: Path, diagnostic_ids: list[str]
-) -> None:
-    """Fill the Koru gate command unless the ticket already carries one."""
+) -> str | None:
+    """Koru gate command unless the ticket already carries one."""
     if str(inputs.get("verify_command") or "").strip():
-        return
-    verify_command = _todo2code_verify_command(project, diagnostic_ids)
-    if verify_command:
-        inputs["verify_command"] = verify_command
+        return None
+    return _todo2code_verify_command(project, diagnostic_ids)
 
 
 def _todo2code_labels(labels: list[str]) -> list[str]:
@@ -349,12 +342,29 @@ def hydrate_todo2code_ticket(ticket: dict[str, Any], project: Path) -> dict[str,
         return ticket
 
     out = dict(ticket)
-    inputs = _todo2code_inputs(ticket)
-    contract = _todo2code_contract(inputs, project)
-    if contract:
-        inputs["contract"] = contract
-    _enforce_todo2code_executor_authority(out, inputs, contract)
-    _ensure_todo2code_verify_command(inputs, project, _todo2code_diagnostic_ids(source))
+    base_inputs = _todo2code_inputs(ticket)
+    contract = _todo2code_contract(base_inputs, project)
+    executor_override = _todo2code_executor_override(out.get("executor"), contract)
+    if executor_override is not None:
+        out["executor"] = executor_override
+    inputs = {
+        **base_inputs,
+        **({"contract": contract} if contract else {}),
+        **(
+            {
+                "governance_block_reason": (
+                    "todo2code LLM execution requires KORU_TODO2CODE_CONTRACT"
+                )
+            }
+            if executor_override is not None
+            else {}
+        ),
+    }
+    verify_command = _default_todo2code_verify_command(
+        inputs, project, _todo2code_diagnostic_ids(source)
+    )
+    if verify_command:
+        inputs = {**inputs, "verify_command": verify_command}
     out["labels"] = _todo2code_labels(labels)
     out["inputs"] = inputs
     return out
