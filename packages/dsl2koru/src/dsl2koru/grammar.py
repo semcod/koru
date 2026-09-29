@@ -179,67 +179,69 @@ def parse_line(
     return payload
 
 
-def _append_field(parts: list[str], payload: Payload, name: str) -> None:
+def _append_field(fields: list[str], payload: Payload, name: str) -> None:
     value = payload.get(name)
     flag = f"--{name.replace('_', '-')}"
     if value is True:
-        parts.append(flag)
+        fields.append(flag)
     elif value not in (None, "", False):
-        parts.extend([flag, str(value)])
+        fields.extend([flag, str(value)])
 
 
-def _serialize_standard(verb: str, parts: list[str], payload: Payload) -> None:
+def _serialize_standard(verb: str, std_tokens: list[str], payload: Payload) -> None:
     fields, positional = _VERB_SPECS[verb]
     if verb == "TEXT" and positional and payload.get(positional):
-        parts.append(str(payload[positional]))
+        std_tokens.append(str(payload[positional]))
     for name, _is_boolean in fields:
-        _append_field(parts, payload, name)
+        _append_field(std_tokens, payload, name)
     if verb != "TEXT" and positional and payload.get(positional):
-        parts.append(str(payload[positional]))
+        std_tokens.append(str(payload[positional]))
 
 
-def _serialize_query_repair_history(parts: list[str], payload: Payload) -> None:
-    parts.extend(["PROJECT", str(payload.get("project", "."))])
+def _serialize_query_repair_history(history_tokens: list[str], payload: Payload) -> None:
+    history_tokens.extend(["PROJECT", str(payload.get("project", "."))])
     if payload.get("limit") not in (None, 20):
-        parts.extend(["LIMIT", str(payload["limit"])])
+        history_tokens.extend(["LIMIT", str(payload["limit"])])
     if payload.get("code"):
-        parts.extend(["CODE", str(payload["code"])])
+        history_tokens.extend(["CODE", str(payload["code"])])
 
 
-def _serialize_lane_status(parts: list[str], payload: Payload) -> None:
-    parts.extend(["IDE", str(payload.get("ide", "auto")), "INSTANCE", str(payload.get("instance", "default"))])
+def _serialize_lane_status(lane_tokens: list[str], payload: Payload) -> None:
+    lane_tokens.extend(["IDE", str(payload.get("ide", "auto")), "INSTANCE", str(payload.get("instance", "default"))])
 
 
-def _serialize_resolve(parts: list[str], payload: Payload) -> None:
-    parts.append(f'"{payload.get("prompt", "")}"')
+def _serialize_resolve(resolve_tokens: list[str], payload: Payload) -> None:
+    resolve_tokens.append(f'"{payload.get("prompt", "")}"')
     if payload.get("project"):
-        parts.extend(["PROJECT", str(payload["project"])])
+        resolve_tokens.extend(["PROJECT", str(payload["project"])])
 
 
-def _serialize_repair_run(parts: list[str], payload: Payload) -> None:
+def _serialize_repair_run(repair_tokens: list[str], payload: Payload) -> None:
     if "project" in payload or "trigger" in payload:
-        parts.extend(["IDE", str(payload.get("ide", "auto")), "INSTANCE", str(payload.get("instance", "default"))])
-        parts.extend(["PROJECT", str(payload.get("project", "."))])
+        repair_tokens.extend(
+            ["IDE", str(payload.get("ide", "auto")), "INSTANCE", str(payload.get("instance", "default"))]
+        )
+        repair_tokens.extend(["PROJECT", str(payload.get("project", "."))])
         if payload.get("trigger") not in (None, "manual"):
-            parts.extend(["TRIGGER", str(payload["trigger"])])
+            repair_tokens.extend(["TRIGGER", str(payload["trigger"])])
         if payload.get("fix"):
-            parts.append("--fix")
+            repair_tokens.append("--fix")
         return
     for name in ("fix", "ide", "instance"):
-        _append_field(parts, payload, name)
+        _append_field(repair_tokens, payload, name)
 
 
-def _serialize_ui(verb: str, parts: list[str], payload: Payload) -> None:
+def _serialize_ui(verb: str, ui_tokens: list[str], payload: Payload) -> None:
     if verb == "UI_TYPE":
         if payload.get("value") is not None:
-            parts.append(f'"{payload["value"]}"')
+            ui_tokens.append(f'"{payload["value"]}"')
         if payload.get("field"):
-            parts.extend(["IN", f'"{payload["field"]}"'])
+            ui_tokens.extend(["IN", f'"{payload["field"]}"'])
         return
     name = {"UI_KEY": "keys", "UI_CLICK": "target", "UI_NL": "prompt"}.get(verb)
     if name and payload.get(name):
         value = str(payload[name])
-        parts.append(value if verb == "UI_KEY" else f'"{value}"')
+        ui_tokens.append(value if verb == "UI_KEY" else f'"{value}"')
 
 
 _SPECIAL_SERIALIZERS: dict[str, Callable[[list[str], Payload], None]] = {
@@ -253,17 +255,17 @@ _SPECIAL_SERIALIZERS: dict[str, Callable[[list[str], Payload], None]] = {
 
 def to_text(payload: Payload) -> str:
     verb = normalize_verb(str(payload.get("verb", "")))
-    parts = [verb]
+    serialized = [verb]
     if verb.startswith("UI_"):
         for name in ("image", "window"):
-            _append_field(parts, payload, name)
+            _append_field(serialized, payload, name)
         if payload.get("execute") is False:
-            parts.extend(["EXECUTE", "0"])
-        _serialize_ui(verb, parts, payload)
+            serialized.extend(["EXECUTE", "0"])
+        _serialize_ui(verb, serialized, payload)
     elif serializer := _SPECIAL_SERIALIZERS.get(verb):
-        serializer(parts, payload)
+        serializer(serialized, payload)
     elif verb in _VERB_SPECS:
-        _serialize_standard(verb, parts, payload)
+        _serialize_standard(verb, serialized, payload)
     else:
         raise ValueError(f"cannot serialize verb: {verb}")
-    return " ".join(parts)
+    return " ".join(serialized)
