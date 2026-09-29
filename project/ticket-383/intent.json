@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-383",
+  "summary": "refactor(verification-engine): split god module",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-383/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/verification_engine.py",
+    "src/koru/autonomy/verification_engine/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8bd8687abd5684b6e8f50b7ff85c8c7215c922be",
+    "targetBranch": "main",
+    "outcome": "verification_engine.py (613 lines, 7 dataclasses + collectors + sqlite budget + verdict) split into a package: models.py (dataclasses + VerdictOutcome), git_utils.py (git/workspace observers + _extract_leading_int), collectors.py (collect_* + take_snapshot + absorbed_foreign_paths + collect_evidence), budget.py (drive-budget sqlite), verdict.py (assess_verdict), __init__.py facade keeping the full public surface plus externally-imported privates and the subprocess patch target.",
+    "nonGoals": [
+      "Changing evidence collection, verdict scoring, or budget semantics",
+      "Changing __all__ or any importable name"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 7,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Module becomes package under autonomy/; facade __init__.py re-exports identical surface including privates imported by cycle_post_drive/task_model_policy/tests; 'import subprocess' retained so existing patch() targets keep resolving.",
+      "components": [
+        {
+          "name": "verification-engine",
+          "paths": [
+            "src/koru/autonomy/verification_engine.py",
+            "src/koru/autonomy/verification_engine/__init__.py",
+            "src/koru/autonomy/verification_engine/models.py",
+            "src/koru/autonomy/verification_engine/git_utils.py",
+            "src/koru/autonomy/verification_engine/collectors.py",
+            "src/koru/autonomy/verification_engine/budget.py",
+            "src/koru/autonomy/verification_engine/verdict.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure code move."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_verification_engine.py tests/test_verification_cycle_integration.py tests/test_autonomous_retry_guard.py tests/test_drive_git_discipline.py tests/test_cycle_post_drive.py tests/test_decision_arbiter.py tests/test_planning_llm.py -x -q"
+        ],
+        "evidence": "All verification consumers and patch-target tests pass unchanged."
+      }
+    ]
+  }
+}
