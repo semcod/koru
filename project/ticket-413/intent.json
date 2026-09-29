@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-413",
+  "summary": "refactor(desktop-uri): address shotgun surgery on payload variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-413/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koruapi/desktop_uri.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "95d9f4811ac1673e57e60ae3b55973ab30c1cc5b",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on payload removed in koruapi/desktop_uri.py: result binding renamed per handler (plan/plan_result/uri_list/imgl_result/enriched/getv_list/resolved/var_result/map_result/system_uris).",
+    "nonGoals": [
+      "URI resolution semantics",
+      "Other smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Token-level rename of payload locals; dict keys and spreads unchanged.",
+      "components": [
+        {
+          "name": "koruapi-desktop-uri",
+          "paths": [
+            "src/koruapi/desktop_uri.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_desktop_uri.py tests/test_koruapi.py -x -q"
+        ],
+        "evidence": "Desktop URI handlers preserved."
+      }
+    ]
+  }
+}
