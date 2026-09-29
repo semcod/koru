@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-360",
+  "summary": "windsurf autopilot plugin accepts Devin Desktop host",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-360/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "plugins/koru-autopilot-windsurf/package.json",
+    "plugins/koru-autopilot-windsurf/src/extension.ts",
+    "plugins/koru-autopilot-windsurf/src/ides/windsurf.test.ts",
+    "plugins/koru-autopilot-windsurf/src/ides/windsurf.ts"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "64f388d87542066087ab52c234dc42e478f7e9af",
+    "targetBranch": "main",
+    "outcome": "koru-autopilot-windsurf treats Devin Desktop (vscode.env.appName=Devin) as a windsurf-lane host: shared isWindsurfLaneHost predicate drives both the extension isHost gate and the IDE strategy detect, so the plugin activates and connects under Devin instead of silently aborting.",
+    "nonGoals": [
+      "Rebuilding or publishing the VSIX artifact",
+      "Changing other IDE lane detection"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Single HOST_TOKENS predicate in ides/windsurf.ts exported as isWindsurfLaneHost; extension.ts isHost delegates to it; detect() reuses it so Devin resolves to the windsurf strategy.",
+      "components": [
+        {
+          "name": "plugins",
+          "paths": [
+            "plugins/koru-autopilot-windsurf/src/extension.ts",
+            "plugins/koru-autopilot-windsurf/src/ides/windsurf.ts",
+            "plugins/koru-autopilot-windsurf/src/ides/windsurf.test.ts",
+            "plugins/koru-autopilot-windsurf/package.json"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert ticket-360 commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "cd plugins/koru-autopilot-windsurf && npm test"
+        ],
+        "evidence": "compile + all node test scripts pass, including new windsurf host-detection test."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "bash project/governance-check.sh"
+        ],
+        "evidence": "Governance check passes with 0 errors."
+      }
+    ]
+  }
+}

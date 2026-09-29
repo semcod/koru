@@ -7,6 +7,7 @@ import {
   createIdeBridgeExtension,
   type IdeBridgeExtensionConfig,
 } from "./_shared/extension-wrapper";
+import { isWindsurfLaneHost } from "./ides/windsurf";
 
 const WINDSURF_BRIDGE_OPTIONS: BridgeOptions = {
   extensionPackageId: "semcod.koru-autopilot-windsurf",
@@ -20,7 +21,7 @@ const WINDSURF_BRIDGE_OPTIONS: BridgeOptions = {
 
 const WINDSURF_EXTENSION_CONFIG: IdeBridgeExtensionConfig = {
   bridgeOptions: WINDSURF_BRIDGE_OPTIONS,
-  isHost: (appName: string): boolean => appName.toLowerCase().includes("windsurf"),
+  isHost: (appName: string): boolean => isWindsurfLaneHost(appName),
   // ``koru-autopilot-windsurf`` is a Windsurf-only VSIX.
   notHostWarning: (appName: string): string => (
     `koru-autopilot-windsurf: not activating (appName="${appName}"; ` +
