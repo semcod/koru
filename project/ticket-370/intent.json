@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-370",
+  "summary": "refactor(vdisplay): address god function _vdisplay_subprocess_env",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-370/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/integrations/vdisplay/imgl_loader.py",
+    "src/koru/integrations/vdisplay_client.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0a41c0946d00ffdb16404f4943d94e8a42c8d6d0",
+    "targetBranch": "main",
+    "outcome": "_vdisplay_subprocess_env is a thin composer (CC<=15): agent bootstrap, VDISPLAY_SRC/KORU_SRC resolution and PYTHONPATH assembly live in dedicated helpers; resulting env identical. Facade re-exports stay complete for the module contract test.",
+    "nonGoals": [
+      "Changing env resolution order, candidate paths or setdefault keys",
+      "Refactoring other imgl_loader functions"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Extract _vdisplay_agent_bootstrap_env, _vdisplay_src, _koru_src and _subprocess_pythonpath; keep public signature and env composition order.",
+      "components": [
+        {
+          "name": "vdisplay-imgl-loader",
+          "paths": [
+            "src/koru/integrations/vdisplay/imgl_loader.py",
+            "src/koru/integrations/vdisplay_client.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; pure function-level refactor in one module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_vdisplay_env_session.py tests/test_vdisplay_module_split.py tests/test_photo_vql_drive.py -x -q"
+        ],
+        "evidence": "vdisplay env/session tests pass; _vdisplay_subprocess_env CC<=15."
+      }
+    ]
+  }
+}

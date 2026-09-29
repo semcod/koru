@@ -97,8 +97,7 @@ def _vdisplay_observe_python_candidates() -> list[str]:
     return out
 
 
-def _vdisplay_subprocess_env(*, ide: str = "auto") -> dict[str, str]:
-    """Env for vdisplay CLI subprocess: real imgl first, capture validation for IDE."""
+def _vdisplay_agent_bootstrap_env() -> dict[str, str]:
     env = os.environ.copy()
     try:
         from koru.integrations.vdisplay_agent_bootstrap import apply_vdisplay_agent_env
@@ -107,31 +106,44 @@ def _vdisplay_subprocess_env(*, ide: str = "auto") -> dict[str, str]:
         env = os.environ.copy()
     except ImportError:
         pass
-    path_parts: list[str] = []
-    imgl_root = _vdc()._real_imgl_src()
-    if imgl_root:
-        path_parts.append(imgl_root)
-    vdisplay_src = os.environ.get("VDISPLAY_SRC", "").strip()
-    if not vdisplay_src:
+    return env
+
+
+def _vdisplay_src() -> str:
+    src = os.environ.get("VDISPLAY_SRC", "").strip()
+    if not src:
         guess = Path.home() / "github/wronai/vdisplay/src"
         if guess.is_dir():
-            vdisplay_src = str(guess)
-    if vdisplay_src:
-        path_parts.append(vdisplay_src)
-    koru_src = os.environ.get("KORU_SRC", "").strip()
-    if not koru_src:
-        for parent in Path(__file__).resolve().parents:
-            if parent.name == "src" and (parent / "koru" / "__init__.py").is_file():
-                koru_src = str(parent)
-                break
-        if not koru_src:
-            koru_src = str(Path(__file__).resolve().parents[3])
-    if koru_src:
-        path_parts.append(koru_src)
+            src = str(guess)
+    return src
+
+
+def _koru_src() -> str:
+    src = os.environ.get("KORU_SRC", "").strip()
+    if src:
+        return src
+    for parent in Path(__file__).resolve().parents:
+        if parent.name == "src" and (parent / "koru" / "__init__.py").is_file():
+            return str(parent)
+    return str(Path(__file__).resolve().parents[3])
+
+
+def _subprocess_pythonpath(env: dict[str, str]) -> str:
+    parts = [
+        part
+        for part in (_vdc()._real_imgl_src(), _vdisplay_src(), _koru_src())
+        if part
+    ]
     existing = env.get("PYTHONPATH", "").strip()
     if existing:
-        path_parts.append(existing)
-    env["PYTHONPATH"] = ":".join(path_parts)
+        parts.append(existing)
+    return ":".join(parts)
+
+
+def _vdisplay_subprocess_env(*, ide: str = "auto") -> dict[str, str]:
+    """Env for vdisplay CLI subprocess: real imgl first, capture validation for IDE."""
+    env = _vdisplay_agent_bootstrap_env()
+    env["PYTHONPATH"] = _subprocess_pythonpath(env)
     env.setdefault("VDISPLAY_IMGL", "1")
     canon = _vdc()._canonical_ide(ide)
     if canon not in {"", "auto"}:

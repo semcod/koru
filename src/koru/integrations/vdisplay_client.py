@@ -482,6 +482,7 @@ from koru.integrations.vdisplay.vql_sidecar import (  # noqa: E402,F401,I001
 from koru.integrations.vdisplay.imgl_loader import (  # noqa: E402,F401,I001
     _real_imgl_src, _ensure_real_imgl_on_path, _vdisplay_cli_candidates,
     _vdisplay_cli_path, _vdisplay_observe_python_candidates, _vdisplay_subprocess_env,
+    _vdisplay_agent_bootstrap_env, _vdisplay_src, _koru_src, _subprocess_pythonpath,
     _import_imgl_targets, _import_imgl_target_via_stdlib, _load_light_module,
     _install_imgl_source_packages, _import_imgl_target_from_source,
 )
