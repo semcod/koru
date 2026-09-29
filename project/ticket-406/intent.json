@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-406",
+  "summary": "refactor(nxdo-discovery): address shotgun surgery on outcome variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-406/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/nxdo_discovery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "6b08b0de6d0f97633e228069de66ad2197416cd0",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on outcome removed in nxdo_discovery.py: helper params renamed to per-stage names (draft/run_state/attempt/resolved/res); run_nxdo_discovery keeps the single outcome binding.",
+    "nonGoals": [
+      "Discovery semantics",
+      "Other smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Private helper params renamed; kwarg call sites updated; public API unchanged.",
+      "components": [
+        {
+          "name": "nxdo-discovery",
+          "paths": [
+            "src/koru/autonomy/nxdo_discovery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_nxdo_discovery.py tests/test_nxdo_modules.py -x -q"
+        ],
+        "evidence": "nxdo discovery behavior preserved."
+      }
+    ]
+  }
+}
