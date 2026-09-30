@@ -1,4 +1,5 @@
 """Consumer canaries; all destructive fixtures stay in TemporaryDirectory."""
+import hashlib
 import importlib.util
 import json
 import os
@@ -55,6 +56,12 @@ class ConsumerCanaries(unittest.TestCase):
             path = self.root / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes((ROOT / name).read_bytes())
+        managed = self.root / ".governance/docs/EXTERNAL_COPY.md"
+        managed.parent.mkdir(parents=True, exist_ok=True)
+        managed.write_bytes((ROOT / ".governance/docs/SNAPSHOT_MIGRATION.md").read_bytes())
+        digest = hashlib.sha256(managed.read_bytes()).hexdigest()
+        (self.root / ".governance/manifest.lock.json").write_text(
+            json.dumps({"managedFiles": {".governance/docs/EXTERNAL_COPY.md": digest}}))
         (self.root / "docs/README.md").write_text("\n".join(
             "[Topic](" + name[5:] + ")" for name in names[:3]))
         self.git("add", ".")
@@ -64,11 +71,18 @@ class ConsumerCanaries(unittest.TestCase):
     def git(self, *args):
         return subprocess.check_output(["git", *args], cwd=self.root, text=True, stderr=subprocess.PIPE)
 
-    def run_gate(self, phase="final", extra=()):
+    def run_gate(self, phase="final", extra=(),
+                 deliverable="docs/FEATURE/CONSUMER_PILOT.md"):
         command = [sys.executable, str(SCRIPT), phase, "--root", str(self.root),
                    "--standard-root", str(self.runtime)]
-        command += ["--base", self.base] if phase == "final" else [
-            "--kind", "feature", "--id", "consumer-pilot", "--deliverable", "docs/FEATURE/CONSUMER_PILOT.md"]
+        if phase == "final":
+            command += ["--base", self.base]
+        elif phase == "generate":
+            command += ["--kind", "feature", "--id", "consumer-pilot",
+                        "--deliverable", deliverable, "--title", "Consumer pilot"]
+        else:
+            command += ["--kind", "feature", "--id", "consumer-pilot",
+                        "--deliverable", deliverable]
         result = subprocess.run(command + list(extra), capture_output=True, text=True)
         self.assertIn(result.returncode, (0, 1), result.stderr)
         return result.returncode, json.loads(result.stdout)
@@ -135,6 +149,49 @@ class ConsumerCanaries(unittest.TestCase):
     def test_unavailable_base_fails(self):
         self.base = "f" * 40
         self.assertIn("DOCS_BASE", self.codes())
+
+    def test_managed_copy_verified_and_excluded(self):
+        code, result = self.run_gate()
+        self.assertEqual(code, 0, result)
+        verified = {item["path"] for item in result["managed_copies_verified"]}
+        self.assertIn(".governance/docs/EXTERNAL_COPY.md", verified)
+
+    def test_tampered_managed_copy_fails(self):
+        path = self.root / ".governance/docs/EXTERNAL_COPY.md"
+        path.write_bytes(path.read_bytes() + b"\nlocal edit\n")
+        self.assertIn("DOCS_MANAGED_COPY", self.codes())
+
+    def test_generate_creates_staged_document_and_index_link(self):
+        code, result = self.run_gate("generate")
+        self.assertEqual(code, 0, result)
+        document = self.root / "docs/FEATURE/CONSUMER_PILOT.md"
+        self.assertTrue(document.is_file())
+        self.assertIn('"id": "consumer-pilot"', document.read_text())
+        self.assertIn("](FEATURE/CONSUMER_PILOT.md)",
+                      (self.root / "docs/README.md").read_text())
+        self.assertIn("A  docs/FEATURE/CONSUMER_PILOT.md",
+                      self.git("status", "--porcelain"))
+
+    def test_generate_prepare_failure_writes_nothing(self):
+        (self.root / "docs/README.md").unlink()
+        code, result = self.run_gate("generate")
+        self.assertEqual(code, 1)
+        self.assertIn("DOCS_INDEX", {item["code"] for item in result["findings"]})
+        self.assertFalse((self.root / "docs/FEATURE").exists())
+        self.assertNotIn("CONSUMER_PILOT", self.git("status", "--porcelain"))
+
+    def test_generate_wrong_location_writes_nothing(self):
+        code, result = self.run_gate("generate",
+                                     deliverable="docs/FEATURE/WRONG_NAME.md")
+        self.assertEqual(code, 1)
+        self.assertIn("DOCS_LOCATION", {item["code"] for item in result["findings"]})
+        self.assertFalse((self.root / "docs/FEATURE/WRONG_NAME.md").exists())
+
+    def test_generate_rolls_back_when_completion_fails(self):
+        code, result = self.run_gate("generate", ["--base", "f" * 40])
+        self.assertEqual(code, 1)
+        self.assertFalse((self.root / "docs/FEATURE/CONSUMER_PILOT.md").exists())
+        self.assertEqual(self.git("status", "--porcelain"), "")
 
 
 if __name__ == "__main__":
