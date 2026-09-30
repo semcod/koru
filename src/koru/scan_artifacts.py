@@ -631,7 +631,7 @@ def _parse_layer_hotspot_suggestions(
             continue
         if loc < 500 and cc < 12:
             continue
-        priority = "high" if loc >= 800 or cc >= 14 else "normal"
+        hotspot_priority = "high" if loc >= 800 or cc >= 14 else "normal"
         src_path = (module_paths or {}).get(module)
         if src_path is None and project is not None:
             src_path = _resolve_module_path(project, module)
@@ -647,7 +647,7 @@ def _parse_layer_hotspot_suggestions(
                         "Extract cohesive submodules around stable responsibilities and add "
                         "focused regression tests before broad edits."
                     ),
-                    priority=priority,
+                    priority=hotspot_priority,
                     labels=("code2llm", "architecture", "large-module", "refactor", "scan"),
                     files=ticket_files or (rel,),
                 ),
@@ -893,7 +893,7 @@ def _scan_vallm_validation(project: Path) -> list[Suggestion]:
         warnings = int(warn_match.group("count"))
     if errors <= 0 and warnings < 10:
         return []
-    priority = "high" if errors > 0 else "normal"
+    vallm_priority = "high" if errors > 0 else "normal"
     return [
         Suggestion(
             signal="vallm_validation",
@@ -903,7 +903,7 @@ def _scan_vallm_validation(project: Path) -> list[Suggestion]:
                 "Fix the highest-impact validation failures first, then re-run "
                 "`vallm validate` / the project validation task and refresh the report."
             ),
-            priority=priority,
+            priority=vallm_priority,
             labels=("vallm", "validation", "scan"),
             files=(rel,),
         ),
@@ -931,7 +931,7 @@ def _scan_structured_semcod_report(
     count = _sum_structured_counts(artifact, keys)
     if count <= 0:
         return []
-    priority = "high" if count >= high_threshold else "normal"
+    finding_priority = "high" if count >= high_threshold else "normal"
     return [
         Suggestion(
             signal=signal,
@@ -941,7 +941,7 @@ def _scan_structured_semcod_report(
                 f"Triage and repair the report findings, then re-run `{command_hint}` "
                 "and refresh the artifact before closing the ticket."
             ),
-            priority=priority,
+            priority=finding_priority,
             labels=labels,
             files=(rel,),
         ),
@@ -1116,7 +1116,7 @@ def _scan_pfix_report(project: Path) -> list[Suggestion]:
         )
     if count <= 0:
         return []
-    priority = "high" if count >= 3 else "normal"
+    pfix_priority = "high" if count >= 3 else "normal"
     file_hint = f" Affected paths: {', '.join(failed_paths[:5])}." if failed_paths else ""
     return [
         Suggestion(
@@ -1128,7 +1128,7 @@ def _scan_pfix_report(project: Path) -> list[Suggestion]:
                 "then refresh the report before closing the ticket."
                 f"{file_hint}"
             ),
-            priority=priority,
+            priority=pfix_priority,
             labels=("pfix", "diagnostics", "scan"),
             files=((rel, *failed_paths[:8]) if failed_paths else (rel,)),
         ),
@@ -1159,7 +1159,7 @@ def _scan_metrun_report(project: Path) -> list[Suggestion]:
     top_score = float(score_match.group("score")) if score_match else 0.0
     name_match = _METRUN_TOP_NAME_RE.search(text)
     top_name = name_match.group("name") if name_match else "hotspot"
-    priority = "high" if bottlenecks >= 3 or top_score >= 8.0 else "normal"
+    metrun_priority = "high" if bottlenecks >= 3 or top_score >= 8.0 else "normal"
     return [
         Suggestion(
             signal="metrun_report",
@@ -1171,7 +1171,7 @@ def _scan_metrun_report(project: Path) -> list[Suggestion]:
                 "then re-run `metrun scan <script>` or `metrun profile` "
                 "and refresh the artifact before closing the ticket."
             ),
-            priority=priority,
+            priority=metrun_priority,
             labels=("metrun", "performance", "scan"),
             files=(rel,),
         ),
@@ -1198,9 +1198,9 @@ def _todo2code_plan_suggestion(
     title_raw = str(plan.get("title") or "todo2code code-change plan").strip()
     title = title_raw if len(title_raw) <= 140 else title_raw[:139].rstrip() + "…"
     description = str(plan.get("description") or title_raw).strip()
-    priority = priority_map.get(str(plan.get("priority") or "").upper(), "normal")
-    if priority not in {"high", "normal", "low"}:
-        priority = "normal"
+    plan_priority = priority_map.get(str(plan.get("priority") or "").upper(), "normal")
+    if plan_priority not in {"high", "normal", "low"}:
+        plan_priority = "normal"
     return Suggestion(
         signal="todo2code_plan",
         title=f"[todo2code] {title}",
@@ -1208,7 +1208,7 @@ def _todo2code_plan_suggestion(
             f"{description}\n\nSource: `{plans_rel}` "
             f"(plan id {plan.get('id') or 'n/a'}). Implement only declared target paths."
         ),
-        priority=priority,
+        priority=plan_priority,
         labels=("todo2code", "code-change", "scan", "useful-code-change"),
         files=tuple(paths[:12]),
         source_context=_todo2code_source_context(plan, dedupe_key=dedupe_key, source=source),

@@ -1,0 +1,73 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-421",
+  "summary": "refactor(scan-artifacts): address shotgun surgery on priority variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-421/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/scan_artifacts.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0bf20129b51cecaeba11356a3512fc8a74f9ff53",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on priority removed in scan_artifacts.py: per-function priority locals renamed (hotspot_priority, vallm_priority, finding_priority, pfix_priority, metrun_priority, plan_priority); Suggestion(priority=...) kwarg unchanged.",
+    "nonGoals": [
+      "Scan semantics",
+      "Suggestion field names",
+      "Other smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Token-level rename of priority local bindings; Suggestion kwarg and plan priority mapping unchanged.",
+      "components": [
+        {
+          "name": "scan-artifacts",
+          "paths": [
+            "src/koru/scan_artifacts.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_scan_artifacts.py tests/test_scan.py -x -q"
+        ],
+        "evidence": "Suggestion priorities preserved."
+      }
+    ]
+  }
+}
