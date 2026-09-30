@@ -81,6 +81,11 @@ def _prefer_keyboard_drive() -> bool:
     )
 
 
+def prompt_preview(text: str, max_chars: int = 100) -> str:
+    """Format single-line bounded preview of prompt text for logging and evidence."""
+    return text.replace("\n", " ")[:max_chars]
+
+
 def _log_drive_request(
     daemon: Any,
     raw_ide: str | None,
@@ -578,10 +583,10 @@ def _deliver_chat_via_plugin_socket(
         ).encode(),
     )
     daemon._last_chat_send_at = time.monotonic()
-    chat_preview = text.replace("\n", " ")[:100]
+    preview = prompt_preview(text)
     daemon.log(
         f"drive → plugin/{plugin.ide}: wklejam do czatu ({len(text)} zn, "
-        f"submit={submit}) «{chat_preview}»",
+        f"submit={submit}) «{preview}»",
     )
     for phase_name in ("focus_open", "input_busy_probe", "paste"):
         emit_phase(
@@ -607,7 +612,7 @@ def _deliver_chat_via_plugin_socket(
         transport="plugin-socket",
         phase="paste+submit",
         outcome="requested",
-        evidence=f"chars={len(text)}; submit={submit}; preview={chat_preview}",
+        evidence=f"chars={len(text)}; submit={submit}; preview={preview}",
         next_step="await plugin ack with verification",
         data={"chars": len(text), "submit": submit, "corr": corr},
     )
@@ -833,10 +838,10 @@ def _drive_via_vdisplay_backend(
         daemon.log(f"drive → vdisplay/{target_id} skipped: {decline}")
         return False
     os.environ.setdefault("VDISPLAY_SESSION", "1")
-    chat_preview = text.replace("\n", " ")[:100]
+    vdisplay_preview = prompt_preview(text)
     daemon.log(
         f"drive → vdisplay/{target_id}: photo-vql semantic chat "
-        f"({len(text)} zn) «{chat_preview}» submit={submit}"
+        f"({len(text)} zn) «{vdisplay_preview}» submit={submit}"
     )
     try:
         result = PhotoVqlDrive(ide=target_id).run(
@@ -878,10 +883,10 @@ def _drive_via_imgl_backend(
     target_id = (ide_pref or "auto").strip().lower()
     if not imgl_prefer_before_keyboard(target_id):
         return False
-    chat_preview = text.replace("\n", " ")[:100]
+    imgl_preview = prompt_preview(text)
     daemon.log(
         f"drive → imgl/{target_id}: vision-guided chat "
-        f"({len(text)} zn) «{chat_preview}» submit={submit}"
+        f"({len(text)} zn) «{imgl_preview}» submit={submit}"
     )
     try:
         result = send_chat(text, ide=target_id, submit=submit)
@@ -926,7 +931,7 @@ def _drive_via_keyboard(
     """Fallback: OS injector profile (X11) or :class:`Injector` keyboard sim."""
     ide_arg = ide_pref if ide_pref else "auto"
     daemon.log(f"drive_via_keyboard: ide_arg={ide_arg}, chars={len(text)}, submit={submit}")
-    target_id, profile_id, target, chat_preview = _resolve_keyboard_drive_selection(
+    target_id, profile_id, target, keyboard_preview = _resolve_keyboard_drive_selection(
         daemon=daemon,
         ide_arg=ide_arg,
         ide_pref=ide_pref,
@@ -940,7 +945,7 @@ def _drive_via_keyboard(
         profile_id=profile_id,
         text=text,
         submit=submit,
-        chat_preview=chat_preview,
+        preview=keyboard_preview,
         target=target,
     )
     if handled:
@@ -953,7 +958,7 @@ def _drive_via_keyboard(
         target_id=target_id,
         text=text,
         submit=submit,
-        chat_preview=chat_preview,
+        preview=keyboard_preview,
         target=target,
     )
 
@@ -978,9 +983,9 @@ def _resolve_keyboard_drive_selection(
     )
     if ide_arg == "auto":
         daemon.log(f"drive auto-selected {profile_id} ({selection})")
-    chat_preview = text.replace("\n", " ")[:100]
+    selection_preview = prompt_preview(text)
     target = pick_target(detect_running_ides(), prefer=ide_pref)
-    return target_id, profile_id, target, chat_preview
+    return target_id, profile_id, target, selection_preview
 
 
 def _drive_via_os_injector_backend(
@@ -992,7 +997,7 @@ def _drive_via_os_injector_backend(
     profile_id: str,
     text: str,
     submit: bool,
-    chat_preview: str,
+    preview: str,
     target: Any,
 ) -> bool:
     from koru.integrations.vdisplay_client import _send_chat_os_injector_enabled
@@ -1018,7 +1023,7 @@ def _drive_via_os_injector_backend(
     daemon.log(
         f"drive → os_injector/{profile_id}: klik ({os_res.get('chat_x')}, "
         f"{os_res.get('chat_y')}) + {os_res.get('input_method', 'type')} "
-        f"«{chat_preview}»",
+        f"«{preview}»",
     )
     target_dict = target.to_dict() if target is not None else None
     info = format_os_injector_ack(os_res, submit=submit, target=target_dict)
@@ -1046,13 +1051,13 @@ def _drive_via_keyboard_backend(
     target_id: str,
     text: str,
     submit: bool,
-    chat_preview: str,
+    preview: str,
     target: Any,
 ) -> None:
     backend_name = daemon.injector.select_backend()
     daemon.log(
         f"drive → keyboard/{target_id}: {backend_name or 'no-backend'} "
-        f"({len(text)} zn) «{chat_preview}»",
+        f"({len(text)} zn) «{preview}»",
     )
     from gillm.injection.drive_backend import apply_keyboard_injection
 

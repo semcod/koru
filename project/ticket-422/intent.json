@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-422",
+  "summary": "refactor(koruide): address shotgun surgery on chat_preview variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-422/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/koruide/src/koruide/daemon/handlers_drive.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a1d3f686dbf3f596fa1cddf88cfdb2717e608e9f",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on chat_preview removed in handlers_drive.py: prompt_preview helper extracted and per-backend preview local variables bound cleanly.",
+    "nonGoals": [
+      "Drive semantics",
+      "Other smells in handlers_drive.py"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Introduce prompt_preview helper and rename local preview variables per-backend.",
+      "components": [
+        {
+          "name": "koruide-daemon",
+          "paths": [
+            "packages/koruide/src/koruide/daemon/handlers_drive.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_koruide_daemon_handlers_drive.py -x -q"
+        ],
+        "evidence": "Daemon drive handlers and preview formatting pass."
+      }
+    ]
+  }
+}
