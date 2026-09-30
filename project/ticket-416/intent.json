@@ -1,0 +1,72 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-416",
+  "summary": "refactor(status): address shotgun surgery on plugins variable",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-416/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autopilot/commands/status.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "69d0d2d84467ac2348b8529e9ec37d891e8a8fb4",
+    "targetBranch": "main",
+    "outcome": "Shotgun surgery on plugins removed in autopilot commands/status.py: binding renamed to plugin_rows/plugin_list per function; evaluate_bridge kwarg unchanged.",
+    "nonGoals": [
+      "Status output semantics",
+      "Other smells"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Token-level rename of plugins locals to plugin_rows/plugin_list; info.get(\"plugins\") keys and evaluate_bridge kwarg unchanged.",
+      "components": [
+        {
+          "name": "autopilot-status",
+          "paths": [
+            "src/koru/autopilot/commands/status.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket branch; single-module refactor."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "python3 -m pytest tests/test_autopilot_status.py -x -q"
+        ],
+        "evidence": "Status command output preserved."
+      }
+    ]
+  }
+}
