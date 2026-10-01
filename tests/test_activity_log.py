@@ -298,3 +298,15 @@ def test_os_injector_no_profile_emits_activity_warn(
     msg, hint = warned[0]
     assert "jetbrains" in msg
     assert hint is not None and "calibrate" in hint and "jetbrains" in hint
+
+
+@pytest.mark.parametrize("ticket_id", [None, "PLF-001", "ticket-999"])
+def test_activity_never_falls_back_to_recent_closed_ticket(tmp_path, monkeypatch, ticket_id):
+    ticket_dir = tmp_path / "project" / "ticket-001"
+    ticket_dir.mkdir(parents=True)
+    (ticket_dir / "README.md").write_text("- **Status**: DONE\n")
+    monkeypatch.setenv("KORU_PROJECT_ROOT", str(tmp_path))
+    monkeypatch.delenv("KORU_TICKET_ID", raising=False)
+    data = {"ticket_id": ticket_id} if ticket_id else {}
+    al.activity("QUEUE", "start PLF-001", data=data, fmt="human")
+    assert not (ticket_dir / "koru.log.md").exists()

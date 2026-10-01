@@ -132,10 +132,10 @@ def test_find_ticket_dir(tmp_path) -> None:
     (project_dir / "ticket-031").mkdir()
     (project_dir / "ticket-102--feature-test").mkdir()
 
-    # PLF mapping with leading zeros and integer variants
-    assert find_ticket_dir(tmp_path, "PLF-031") == project_dir / "ticket-031"
-    assert find_ticket_dir(tmp_path, "plf-31") == project_dir / "ticket-031"
-    assert find_ticket_dir(tmp_path, "31") == project_dir / "ticket-031"
+    # Other namespaces never identify a Wellmanifest ticket
+    assert find_ticket_dir(tmp_path, "PLF-031") is None
+    assert find_ticket_dir(tmp_path, "plf-31") is None
+    assert find_ticket_dir(tmp_path, "31") is None
 
     # Direct ticket names and slugged directories
     assert find_ticket_dir(tmp_path, "ticket-031") == project_dir / "ticket-031"
@@ -171,10 +171,18 @@ def test_append_ticket_markdown_log_with_plf_identifier(tmp_path) -> None:
         hp=lines.append,
     )
 
-    log_file = ticket_dir / "koru.log.md"
-    assert log_file.is_file()
-    content = log_file.read_text(encoding="utf-8")
-    assert "# Koru Autonomy Log: `ticket-031`" in content
-    assert "uri: koru://cycle/42/decision/submit_verified" in content
-    assert 'NL: "Cykl 42: ticket_prompt' in content
+    assert not (ticket_dir / "koru.log.md").exists()
+    # The normal decision trace is still emitted.
+    assert lines
 
+
+def test_find_ticket_dir_rejects_ambiguous_and_unsafe_ids(tmp_path):
+    from koru.autonomy.cycle_trace import find_ticket_dir
+
+    project = tmp_path / "project"
+    for name in ("ticket-031--one", "ticket-031--two"):
+        (project / name).mkdir(parents=True)
+    assert find_ticket_dir(tmp_path, "ticket-031") is None
+    assert find_ticket_dir(tmp_path, "ticket-031--one") == project / "ticket-031--one"
+    for value in ("issue-031", "../ticket-031", "ticket-031/../../outside", "ticket-031*"):
+        assert find_ticket_dir(tmp_path, value) is None

@@ -396,15 +396,6 @@ def _append_activity_to_ticket_markdown_log(
             pass
 
     if target_ticket_dir is None:
-        ticket_dirs = [
-            d for d in (project_root / "project").glob("ticket-*")
-            if d.is_dir() and not d.name.endswith(".md")
-        ]
-        if ticket_dirs:
-            ticket_dirs.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-            target_ticket_dir = ticket_dirs[0]
-
-    if target_ticket_dir is None:
         return
 
     log_file = target_ticket_dir / "koru.log.md"

@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-423",
+  "summary": "Fix ticket log identity routing",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-423/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/activity_log.py",
+    "src/koru/autonomy/cycle_trace.py",
+    "tests/test_activity_log.py",
+    "tests/test_cycle_trace.py",
+    "tests/test_queue_log_markdown.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "a1d3f686dbf3f596fa1cddf88cfdb2717e608e9f",
+    "targetBranch": "main",
+    "outcome": "Publish and merge a fix preventing unrelated Planfile and unbound activity logs from polluting Wellmanifest tickets.",
+    "nonGoals": [
+      "Changing Planfile execution status",
+      "Changing Willman dispatch",
+      "Removing historical logs"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Resolve explicit Wellmanifest ticket IDs only and remove activity fallback based on directory modification time.",
+      "components": [
+        {
+          "name": "ticket-log-routing",
+          "paths": [
+            "src/koru/activity_log.py",
+            "src/koru/autonomy/cycle_trace.py",
+            "tests/test_activity_log.py",
+            "tests/test_cycle_trace.py",
+            "tests/test_queue_log_markdown.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket implementation commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_activity_log.py tests/test_cycle_trace.py tests/test_queue_log_markdown.py -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Regression coverage reproduces namespace collision and fallback; explicit ticket routing remains functional."
+      }
+    ]
+  }
+}

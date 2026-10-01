@@ -139,52 +139,27 @@ def record_decision_trace(
 
 
 def find_ticket_dir(project: Path, ticket_id: str) -> Path | None:
-    """Resolve a canonical wellmanifest project/ticket-* directory for a given ticket identifier.
+    """Resolve only explicit Wellmanifest IDs; Planfile IDs are a separate namespace.
 
-    Handles ticket identifiers such as:
-      - 'PLF-031' or 'plf-031' -> matches 'project/ticket-031' or 'project/ticket-31'
-      - 'ticket-344' -> matches 'project/ticket-344' or 'project/ticket-344--slug'
-      - '31' -> matches 'project/ticket-031' or 'project/ticket-31'
-    Returns None if project does not contain a wellmanifest `project/` directory or ticket is unmapped.
+    Never infer ownership from a shared numeric suffix or choose an arbitrary
+    slugged directory when several tickets match.
     """
-    if not ticket_id or ticket_id == "-":
+    raw = ticket_id.strip().lower()
+    if not re.fullmatch(r"ticket-[0-9]+(?:--?[a-z0-9]+(?:-[a-z0-9]+)*)?", raw):
         return None
     project_dir = project / "project"
     if not project_dir.is_dir():
         return None
-
-    raw = ticket_id.strip().lower()
-    candidates: list[str] = []
-    if raw.startswith("plf-"):
-        num = raw.removeprefix("plf-")
-        candidates.extend([f"ticket-{num.zfill(3)}", f"ticket-{num}"])
-        try:
-            candidates.append(f"ticket-{int(num)}")
-        except ValueError:
-            pass
-    elif raw.startswith("ticket-"):
-        candidates.append(raw)
-        m = re.search(r"\d+", raw)
-        if m:
-            candidates.extend([f"ticket-{m.group(0).zfill(3)}", f"ticket-{int(m.group(0))}"])
-    else:
-        m = re.search(r"\d+", raw)
-        if m:
-            candidates.extend([f"ticket-{m.group(0).zfill(3)}", f"ticket-{m.group(0)}", f"ticket-{int(m.group(0))}"])
-
-    # 1. Exact candidate directory matches first
-    for c in dict.fromkeys(candidates):
-        p = project_dir / c
-        if p.is_dir():
-            return p
-
-    # 2. Slugged matches (ticket-NNN--slug or ticket-NNN-slug)
-    for c in dict.fromkeys(candidates):
-        matches = [d for d in project_dir.glob(f"{c}-*") if d.is_dir()]
-        if matches:
-            return matches[0]
-
-    return None
+    exact = project_dir / raw
+    if exact.is_dir() and not exact.is_symlink():
+        return exact
+    if not re.fullmatch(r"ticket-[0-9]+", raw):
+        return None
+    matches = [
+        path for path in project_dir.glob(f"{raw}-*")
+        if path.is_dir() and not path.is_symlink()
+    ]
+    return matches[0] if len(matches) == 1 else None
 
 
 def append_ticket_markdown_log(
