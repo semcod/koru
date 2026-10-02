@@ -12,6 +12,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from koru.queue.patch_mode import VERIFY_PROFILE_INVALID
 from koru.queue.verify import (
@@ -30,6 +31,68 @@ class _RepoCase(unittest.TestCase):
 
     def _koru_yaml(self, project: Path, body: str) -> None:
         (project / "koru.yaml").write_text(body, encoding="utf-8")
+
+
+class TestPlanfileCIGate(_RepoCase):
+    def policy(self, project, body):
+        path = project / ".planfile" / ".koru" / "policy.yaml"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(body, encoding="utf-8")
+
+    def test_declared_ci_command_is_the_final_legacy_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"KORU_QUEUE_VERIFY_COMMAND": ""}):
+            project = self._git_repo(tmp)
+            self.policy(project, "ci:\n  command: |\n    python -m pytest -q\n    python -m ruff check .\n")
+            result = resolve_verify(project, {})
+            self.assertEqual(result.command, "python -m pytest -q\npython -m ruff check .")
+            self.assertEqual(result.source, "legacy")
+
+    def test_existing_commands_keep_precedence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self.policy(project, "ci:\n  command: python -m pytest planfile-tests\n")
+            self._koru_yaml(
+                project, 'when:\n  before_complete_ticket:\n    commands: ["python -m pytest koru-tests"]\n'
+            )
+            with patch.dict("os.environ", {"KORU_QUEUE_VERIFY_COMMAND": ""}):
+                self.assertEqual(resolve_verify(project, {}).command, "python -m pytest koru-tests")
+                self.assertEqual(
+                    resolve_verify(project, {"inputs": {"verify_command": "pytest explicit"}}).command,
+                    "pytest explicit",
+                )
+                self.assertEqual(
+                    resolve_verify(project, {"acceptance_criteria": ["pytest criteria"]}).command, "pytest criteria"
+                )
+            with patch.dict("os.environ", {"KORU_QUEUE_VERIFY_COMMAND": "pytest environment"}):
+                self.assertEqual(resolve_verify(project, {}).command, "pytest environment")
+
+    def test_named_profiles_and_required_profiles_cannot_be_bypassed(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"KORU_QUEUE_VERIFY_COMMAND": ""}):
+            project = self._git_repo(tmp)
+            self.policy(project, "ci:\n  command: python -m pytest planfile-tests\n")
+            self.assertTrue(resolve_verify(project, {"inputs": {"verify_profile": "unknown"}}).error)
+            self._koru_yaml(project, "queue:\n  verify_require_profile: true\n")
+            self.assertTrue(resolve_verify(project, {}).error)
+            result = resolve_verify(project, {"inputs": {"verify_profile": "python-pytest"}}, ("example.py",))
+            self.assertEqual(result.source, "profile")
+
+    def test_invalid_policies_do_not_become_shell_commands(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {"KORU_QUEUE_VERIFY_COMMAND": ""}):
+            project = self._git_repo(tmp)
+            for body in (
+                "",
+                "[]",
+                "ci: true",
+                "ci:\n  command: true",
+                "ci:\n  command: [pytest]",
+                'ci:\n  command: " "',
+                "ci: [",
+            ):
+                with self.subTest(body=body):
+                    self.policy(project, body)
+                    result = resolve_verify(project, {})
+                    self.assertEqual(result.source, "none")
+                    self.assertFalse(result.command)
 
 
 class TestRegistry(_RepoCase):
@@ -72,10 +135,7 @@ class TestRegistry(_RepoCase):
             project = self._git_repo(tmp)
             self._koru_yaml(
                 project,
-                "queue:\n"
-                "  verify_profiles:\n"
-                "    python-pytest:\n"
-                '      command: "python -m pytest -q tests/unit"\n',
+                'queue:\n  verify_profiles:\n    python-pytest:\n      command: "python -m pytest -q tests/unit"\n',
             )
 
             profile = load_registry(project).get("python-pytest")
@@ -96,7 +156,7 @@ class TestRegistry(_RepoCase):
             self.assertIsNone(load_registry(project).get("half-written"))
 
     def test_a_malformed_koru_yaml_degrades_to_builtins_only(self) -> None:
-        """"Could not read the policy" must never mean "policy relaxed"."""
+        """ "Could not read the policy" must never mean "policy relaxed"."""
         with tempfile.TemporaryDirectory() as tmp:
             project = self._git_repo(tmp)
             self._koru_yaml(project, ":\n  - not yaml at all {{{")
@@ -125,7 +185,8 @@ class TestRenderProfileCommand(unittest.TestCase):
 
     def test_file_arguments_are_filtered_to_declared_extensions_and_quoted(self) -> None:
         command, error = render_profile_command(
-            self._NODE_CHECK, ("src/a.js", "README.md", "lib/space name.mjs"),
+            self._NODE_CHECK,
+            ("src/a.js", "README.md", "lib/space name.mjs"),
         )
 
         self.assertIsNone(error)
@@ -189,7 +250,8 @@ class TestResolveVerify(_RepoCase):
             project = self._git_repo(tmp)
 
             resolution = resolve_verify(
-                project, {"inputs": {"verify_command": "pytest -q"}},
+                project,
+                {"inputs": {"verify_command": "pytest -q"}},
             )
 
             self.assertEqual(resolution.command, "pytest -q")
@@ -199,7 +261,8 @@ class TestResolveVerify(_RepoCase):
         with tempfile.TemporaryDirectory() as tmp:
             project = self._git_repo(tmp)
             self._koru_yaml(
-                project, 'queue:\n  verify_allowlist:\n    - "task quality:local"\n',
+                project,
+                'queue:\n  verify_allowlist:\n    - "task quality:local"\n',
             )
             allowed = {
                 "inputs": {
@@ -222,7 +285,8 @@ class TestResolveVerify(_RepoCase):
             project = self._git_repo(tmp)
 
             resolution = resolve_verify(
-                project, {"inputs": {"verify_profile": "custom-readonly"}},
+                project,
+                {"inputs": {"verify_profile": "custom-readonly"}},
             )
 
             self.assertTrue(resolution.refused)
@@ -234,7 +298,8 @@ class TestResolveVerify(_RepoCase):
             self._koru_yaml(project, "queue:\n  verify_require_profile: true\n")
 
             resolution = resolve_verify(
-                project, {"inputs": {"verify_command": "echo pwned"}},
+                project,
+                {"inputs": {"verify_command": "echo pwned"}},
             )
 
             self.assertTrue(resolution.refused)
@@ -244,13 +309,12 @@ class TestResolveVerify(_RepoCase):
             project = self._git_repo(tmp)
             self._koru_yaml(
                 project,
-                "queue:\n"
-                "  verify_require_profile: true\n"
-                '  verify_allowlist:\n    - "task quality:local"\n',
+                'queue:\n  verify_require_profile: true\n  verify_allowlist:\n    - "task quality:local"\n',
             )
 
             resolution = resolve_verify(
-                project, {"inputs": {"verify_command": "task quality:local"}},
+                project,
+                {"inputs": {"verify_command": "task quality:local"}},
             )
 
             self.assertFalse(resolution.refused)
@@ -283,23 +347,17 @@ class TestResolveVerify(_RepoCase):
 class TestTransactionIntegration(_RepoCase):
     """The transaction refuses on a bad profile and runs a good one's command."""
 
-    _REPLY = (
-        "```diff\n"
-        "diff --git a/a.js b/a.js\n"
-        "--- a/a.js\n"
-        "+++ b/a.js\n"
-        "@@ -1 +1 @@\n"
-        "-var x = 1\n"
-        "+var x = 2\n"
-        "```\n"
-    )
+    _REPLY = "```diff\ndiff --git a/a.js b/a.js\n--- a/a.js\n+++ b/a.js\n@@ -1 +1 @@\n-var x = 1\n+var x = 2\n```\n"
 
     def _commit_file(self, project: Path, rel: str, body: str) -> None:
         target = project / rel
         target.write_text(body, encoding="utf-8")
         subprocess.run(["git", "add", "-A"], cwd=project, check=True, capture_output=True)
         subprocess.run(
-            ["git", "commit", "-qm", "baseline"], cwd=project, check=True, capture_output=True,
+            ["git", "commit", "-qm", "baseline"],
+            cwd=project,
+            check=True,
+            capture_output=True,
         )
 
     def test_an_unknown_profile_stops_the_patch_before_anything_runs(self) -> None:
@@ -319,7 +377,8 @@ class TestTransactionIntegration(_RepoCase):
             assert outcome is not None
             self.assertEqual(outcome.code, VERIFY_PROFILE_INVALID)
             self.assertEqual(
-                (project / "a.js").read_text(encoding="utf-8"), "var x = 1\n",
+                (project / "a.js").read_text(encoding="utf-8"),
+                "var x = 1\n",
             )
 
     def test_a_profile_gate_receives_the_rendered_command(self) -> None:
