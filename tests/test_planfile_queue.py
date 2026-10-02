@@ -1841,7 +1841,10 @@ class TestPatchMode(unittest.TestCase):
         self.addCleanup(patcher.stop)
 
     def _git_repo(self, tmp: str) -> Path:
-        return _repolab.git_repo(tmp)
+        # Retained staging is test-owned and must stay inside this fixture.
+        project = Path(tmp) / "repo"
+        project.mkdir()
+        return _repolab.git_repo(project)
 
     def _commit_file(self, project: Path, rel: str, body: str) -> None:
         _repolab.commit_file(project, rel, body)
@@ -2205,9 +2208,8 @@ class TestPatchMode(unittest.TestCase):
 
             self.assertFalse(list(parent.glob(".koru-run-*")))
 
-    def test_stale_worktrees_from_a_killed_run_are_reclaimed(self) -> None:
-        """A killed process never runs its cleanup. The next run must reclaim
-        both the abandoned directory and git's registration of it."""
+    def test_stale_worktrees_from_a_killed_run_are_preserved(self) -> None:
+        """A new run cannot infer ownership from a missing registration or name."""
         from koru.queue.patch_mode import prune_stale_worktrees, staging_worktree
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -2233,16 +2235,15 @@ class TestPatchMode(unittest.TestCase):
             orphan_dir.mkdir()
             (orphan_dir / "leftover.txt").write_text("debris", encoding="utf-8")
 
-            # Reclaimed as a side effect of starting the next run, not only
-            # when called directly — that wiring is the part that matters.
+            # Starting another run must preserve both forms of recovery data.
             with staging_worktree(project, ("a.txt",)) as fresh:
                 self.assertIsNotNone(fresh)
 
-            self.assertFalse(orphan_dir.exists())
+            self.assertEqual((orphan_dir / "leftover.txt").read_text(), "debris")
             listed = subprocess.run(
                 ["git", "worktree", "list"], cwd=project, capture_output=True, text=True, check=True,
             ).stdout
-            self.assertNotIn(".koru-run-gone", listed)
+            self.assertIn(".koru-run-gone", listed)
 
             # A live worktree must survive pruning — concurrent runs rely on it.
             with staging_worktree(project, ("a.txt",)) as staged:
@@ -2251,8 +2252,8 @@ class TestPatchMode(unittest.TestCase):
                 prune_stale_worktrees(project)
                 self.assertTrue(staged.is_dir())
 
-    def test_worktree_is_cleaned_up_on_keyboard_interrupt(self) -> None:
-        """Ctrl-C during verification must not leave a worktree behind."""
+    def test_worktree_is_preserved_on_keyboard_interrupt(self) -> None:
+        """Ctrl-C retains interrupted verification evidence for reconciliation."""
         from koru.queue.patch_mode import staging_worktree
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -2272,7 +2273,7 @@ class TestPatchMode(unittest.TestCase):
                     self.assertIsNotNone(staged)
                     raise KeyboardInterrupt
 
-            self.assertFalse(list(parent.glob(".koru-run-*")))
+            self.assertEqual(len(list(parent.glob(".koru-run-*"))), 1)
 
     def test_conflict_on_one_file_promotes_none_of_them(self) -> None:
         """Promotion is all-or-nothing: a concurrent edit to one target must not
@@ -2741,8 +2742,8 @@ class TestPatchMode(unittest.TestCase):
             self.assertIsNone(outcome, outcome)
             self.assertFalse((project / "gone.txt").exists())
 
-    def test_worktree_is_cleaned_up_when_the_gate_raises(self) -> None:
-        """A crashing verify command must not leak a worktree directory."""
+    def test_worktree_is_preserved_when_the_gate_raises(self) -> None:
+        """A crashing verifier leaves evidence available for reconciliation."""
         from koru.queue.patch_transaction import apply_proposed_patch
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -2758,7 +2759,9 @@ class TestPatchMode(unittest.TestCase):
                     project, reply, {"inputs": {"verify_command": "true"}}, exploding_gate,
                 )
 
-            self.assertFalse(list(project.parent.glob(".koru-run-*")))
+            retained = list(project.parent.glob(".koru-run-*"))
+            self.assertEqual(len(retained), 1)
+            self.assertEqual((retained[0] / "a.txt").read_text(), "old\n")
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
 
     def test_untracked_file_counts_as_dirty_in_direct_mode(self) -> None:
@@ -2977,7 +2980,8 @@ class TestPatchMode(unittest.TestCase):
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")
             # The gate ran against the worktree, not the project itself.
             self.assertTrue(seen and seen[0] != project, seen)
-            self.assertFalse(list(project.parent.glob(".koru-run-*")))
+            self.assertTrue(seen[0].is_dir())
+            self.assertEqual((seen[0] / "a.txt").read_text(), "new\n")
 
     def test_failing_verify_rolls_back_when_worktree_is_disabled(self) -> None:
         """Without isolation the patch does land, so it must be reverted."""
@@ -3602,4 +3606,3 @@ def test_in_process_planfile_sdk_fast_path(tmp_path, monkeypatch):
     payload = json.dumps([{"id": ticket.id, "name": "fast path task"}])
     admitted = admitted_payload(tmp_path, payload, runner=run_process, queue_name="default")
     assert json.loads(admitted)[0]["id"] == ticket.id
-

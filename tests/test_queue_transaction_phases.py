@@ -72,7 +72,10 @@ class _RepoCase(unittest.TestCase):
     """A throwaway git repo with one committed file."""
 
     def _git_repo(self, tmp: str) -> Path:
-        return _repolab.git_repo(tmp)
+        # This fixture owns retained staging as well as the primary checkout.
+        project = Path(tmp) / "repo"
+        project.mkdir()
+        return _repolab.git_repo(project)
 
     def _commit_file(self, project: Path, rel: str, body: str) -> None:
         _repolab.commit_file(project, rel, body)
