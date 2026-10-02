@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from koru.cqrs.event_store import JsonlEventStore
 from koru.queue import run_next_planfile_task
@@ -1605,33 +1605,16 @@ class TestPlanfileQueueLlm(unittest.TestCase):
                 "Should we move only reusable code to packages/?",
             )
 
-    _LLM_ENV_KEYS = (
-        "OPENROUTER_API_KEY",
-        "OPENAI_API_KEY",
-        "KORU_LLM_ENDPOINT",
-        "KORU_LLM_PROVIDER",
-        "KORU_LLM_SHELL_FALLBACK",
-        "KORU_TILLM_CLIENT",
-    )
-
     @contextlib.contextmanager
-    def _clean_llm_env(self, **overrides: str):
-        """Run with every LLM-selecting env var cleared, plus overrides."""
-        backup = {k: os.environ.pop(k, None) for k in self._LLM_ENV_KEYS}
-        os.environ.update(overrides)
-        try:
+    def _unavailable_llm_runtime(self):
+        """SDK discovery must never consult the operator's model configuration."""
+        with patch("korullm.subllm._runtime", side_effect=ImportError("test runtime unavailable")):
             yield
-        finally:
-            for key in overrides:
-                os.environ.pop(key, None)
-            for key, value in backup.items():
-                if value is not None:
-                    os.environ[key] = value
 
     def test_llm_default_runner_requires_central_subllm_transport(self) -> None:
         from koru.queue import runners as runners_mod
 
-        with self._clean_llm_env():
+        with self._unavailable_llm_runtime():
             request = {"prompt": "hi"}
             result = runners_mod.run_llm_request(request, Path("/tmp"))
 
@@ -1651,7 +1634,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             captured.update(kwargs)
             return {"ok": True, "exit_code": 0, "stdout": "done", "stderr": ""}
 
-        with self._clean_llm_env(), patch.object(
+        with self._unavailable_llm_runtime(), patch.object(
             runners_mod.shutil, "which", side_effect=lambda cmd: cmd == "claude",
         ), patch("koru.tillm_bridge.drive_shell_chat", fake_drive):
             result = runners_mod.run_llm_request({"prompt": "hi"}, Path("/tmp"))
@@ -1668,7 +1651,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             captured.update(kwargs)
             return {"ok": True, "exit_code": 0, "stdout": "ok", "stderr": ""}
 
-        with self._clean_llm_env(), patch(
+        with self._unavailable_llm_runtime(), patch(
             "koru.tillm_bridge.drive_shell_chat", fake_drive,
         ):
             result = runners_mod.run_llm_request(
@@ -1677,6 +1660,34 @@ class TestPlanfileQueueLlm(unittest.TestCase):
 
         self.assertEqual(result.returncode, 1)
         self.assertEqual(captured, {})
+
+    def test_llm_queue_runner_uses_configured_central_transport(self) -> None:
+        from koru.queue import runners as runners_mod
+
+        complete = Mock(return_value=SimpleNamespace(
+            content="central answer", provider="test-provider", model="test-model",
+            usage={"total_tokens": 9},
+        ))
+        environment = Mock(return_value={"TEST_ROUTE": "controlled"})
+        project = Path("/queue-project")
+        request = {
+            "prompt": "inspect this ticket", "system_prompt": "answer concisely",
+            "timeout_seconds": 12, "provider": "legacy-provider", "model": "legacy-model",
+        }
+        with patch("korullm.subllm._runtime", return_value=(complete, environment)):
+            result = runners_mod.run_llm_request(request, project)
+
+        environment.assert_called_once_with(cwd=project)
+        complete.assert_called_once_with(
+            "koru-agent", "queue-executor",
+            [{"role": "system", "content": "answer concisely"},
+             {"role": "user", "content": "inspect this ticket"}],
+            environ={"TEST_ROUTE": "controlled"}, timeout_seconds=12.0,
+        )
+        self.assertEqual((result.returncode, result.stdout, result.model),
+                         (0, "central answer", "test-provider/test-model"))
+        self.assertEqual(result.usage, {"total_tokens": 9})
+        self.assertEqual(result.raw["transport"], "subllm.complete")
 
     def test_normalize_openrouter_model_strips_registry_prefix(self) -> None:
         from koru.queue import runners as runners_mod
