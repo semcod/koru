@@ -23,8 +23,9 @@ def resolve_legacy_verify_command(project: Path, ticket: dict) -> str:
 
     Ticket-level config is preferred but cannot be relied on: planfile's schema
     keeps a closed set of ``inputs`` keys and silently drops unknown ones. So
-    fall back to the project's own declared gate — ``koru.yaml`` already names
-    the command to run before completing a ticket, which is exactly this.
+    fall back to the project's own declared gate: ``koru.yaml`` first, then
+    ``.planfile/.koru/policy.yaml``'s ``ci.command``. Named-profile enforcement
+    remains the resolver's responsibility; this fallback never bypasses it.
     """
     explicit = str((ticket.get("inputs") or {}).get("verify_command") or "").strip()
     if explicit:
@@ -51,7 +52,7 @@ def verify_command_from_criteria(ticket: dict) -> str:
 
 
 def _verify_command_from_project(project: Path) -> str:
-    """Fall back to the gate the project already declares in ``koru.yaml``."""
+    """Use the existing project gate before the declared Planfile CI gate."""
     try:
         import yaml
     except ImportError:
@@ -62,6 +63,20 @@ def _verify_command_from_project(project: Path) -> str:
         commands = (((config or {}).get("when") or {}).get("before_complete_ticket") or {}).get(
             "commands",
         ) or []
+    except FileNotFoundError:
+        commands = []
     except (OSError, AttributeError, yaml.YAMLError):
         return ""
-    return str(commands[0]).strip() if commands else ""
+    if commands:
+        return str(commands[0]).strip()
+
+    try:
+        policy = yaml.safe_load(
+            (project / ".planfile" / ".koru" / "policy.yaml").read_text(encoding="utf-8"),
+        )
+    except (OSError, yaml.YAMLError):
+        return ""
+    if not isinstance(policy, dict) or not isinstance(policy.get("ci"), dict):
+        return ""
+    command = policy["ci"].get("command")
+    return command.strip() if isinstance(command, str) else ""

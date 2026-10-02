@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-424",
+  "summary": "Resolve declared Planfile CI verification gate",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-424/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/verify/legacy.py",
+    "tests/test_queue_verify_profiles.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "cca08dc1897fe34caa17fd7a65a4a8077a195727",
+    "targetBranch": "main",
+    "outcome": "Publish and merge support for the declared Planfile CI verification command while retaining named-profile and allowlist requirements.",
+    "nonGoals": [
+      "Changing ticket staging or branch promotion admission",
+      "Publishing the unrelated Windsurf version changes",
+      "Weakening verification requirements"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add the declared Planfile ci.command only as the final project fallback in the existing legacy resolver.",
+      "components": [
+        {
+          "name": "queue-verification",
+          "paths": [
+            "src/koru/queue/verify/legacy.py",
+            "tests/test_queue_verify_profiles.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket implementation commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_queue_verify_profiles.py -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Regressions for declared Planfile CI, existing command precedence, invalid policy and mandatory named profiles."
+      }
+    ]
+  }
+}
