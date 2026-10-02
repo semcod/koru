@@ -1,0 +1,77 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-427",
+  "summary": "Protected repository admission client",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-427/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/repository_admission.py",
+    "tests/test_repository_admission_client.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "617c3bb1a4442d870f1d558d36e38ad958f16a2c",
+    "targetBranch": "main",
+    "outcome": "Deliver and independently publish a pinned HTTPS Koru client for actual repository admission acquisition and current authoritative lease checks, and validate it against the operator-authorized deployed Autonom controller.",
+    "nonGoals": [
+      "No broad self-issued fleet policy or new publication grants.",
+      "No bypass of native staging or independent Validator."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use an externally pinned transport configuration, verified TLS controller identity, credential file outside the target checkout, exact request/response bindings and fresh server checks. Keep credentials private and retain the separate publication boundary.",
+      "components": [
+        {
+          "name": "repository-admission-client",
+          "paths": [
+            "src/koru/repository_admission.py",
+            "tests/test_repository_admission_client.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Koru repository admission acquire/check Python and module CLI interface."
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the material client commit; preserve authoritative existing leases and native allocations."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_repository_admission_client.py -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Verified HTTPS, exact native worktree admission, unavailable/mismatched/expired authority and current CAS/fencing checks."
+      }
+    ]
+  }
+}
