@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-426",
+  "summary": "Isolate queue LLM transport tests from operator configuration",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-426/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9a6281d0b02e2850d1d70d1677ebaa470d52f5b7",
+    "targetBranch": "main",
+    "outcome": "Publish and independently merge hermetic queue LLM regressions which cannot use operator model configuration, with an explicit positive central-transport test.",
+    "nonGoals": [
+      "Changing model routing or credentials",
+      "Granting repository execution admission",
+      "Changing deployment policy"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Replace environment-based guesses of unavailable SubLLM with a controlled runtime boundary for the negative tests. Exercise the real queue runner and SubLLM adapter with a deterministic positive completion.",
+      "components": [
+        {
+          "name": "queue-transport-tests",
+          "paths": [
+            "tests/test_planfile_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the material test implementation commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_planfile_queue.py tests/test_subllm_transport.py -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "The previously failing transport cases pass without live requests; a configured central route preserves messages, timeout, model and usage."
+      }
+    ]
+  }
+}
