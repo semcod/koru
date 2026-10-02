@@ -1,0 +1,82 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-425",
+  "summary": "Preserve staging evidence and refuse unmanaged governed worktrees",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-425/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/workspace.py",
+    "src/koru/queue/transaction/staging.py",
+    "tests/test_planfile_queue.py",
+    "tests/test_queue_workspace_retention.py",
+    "tests/test_queue_transaction_phases.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ede3cc3c95174ffdcc30bfd584593553051687d9",
+    "targetBranch": "main",
+    "outcome": "Publish and independently merge retention of staging evidence, removal of implicit pruning, and explicit refusal of unmanaged staging in governed repositories.",
+    "nonGoals": [
+      "Implementing a protected execution controller adapter",
+      "Enabling the Willman readiness flag without admitted execution",
+      "Changing direct-apply mode or model routing"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 50,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep legacy unmanaged staging for unmanaged repositories; refuse governed staging before Git effects. Preserve changed HEAD, dirty, ignored and interrupted staging, and never prune unknown registrations or delete orphan directories.",
+      "components": [
+        {
+          "name": "queue-staging",
+          "paths": [
+            "src/koru/queue/workspace.py",
+            "src/koru/queue/transaction/staging.py",
+            "tests/test_planfile_queue.py",
+            "tests/test_queue_workspace_retention.py",
+            "tests/test_queue_transaction_phases.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the material implementation commit without removing retained worktrees."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_queue_workspace_retention.py tests/test_queue_transaction_phases.py tests/test_planfile_queue.py -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Real-Git regressions for preservation of orphan data, dirty and ignored contents, unique commits and interruption; governed staging is refused before verification or mutation."
+      }
+    ]
+  }
+}

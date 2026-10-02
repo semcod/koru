@@ -1,14 +1,15 @@
 """Git and filesystem operations behind a patch transaction.
 
 Everything that touches disk lives here: applying and reverting a diff,
-fingerprinting files so concurrent edits can be detected, and managing the
-throwaway worktree a patch is proven in. Kept separate from policy so the
+fingerprinting files so concurrent edits can be detected, and retaining
+worktree evidence from patch verification. Kept separate from policy so the
 rules about *whether* a patch may land stay readable on their own.
 """
 
 from __future__ import annotations
 
 import hashlib
+import logging
 import os
 import shutil
 import subprocess
@@ -59,11 +60,7 @@ def apply_unified_diff(project: Path, diff: str) -> PatchApplyResult:
         )
 
     listed = _git(project, "apply", "--numstat", "-", stdin=diff)
-    changed = tuple(
-        line.split("\t")[-1].strip()
-        for line in (listed.stdout or "").splitlines()
-        if line.strip()
-    )
+    changed = tuple(line.split("\t")[-1].strip() for line in (listed.stdout or "").splitlines() if line.strip())
 
     applied = _git(project, "apply", "-", stdin=diff)
     if applied.returncode != 0:
@@ -102,11 +99,7 @@ def reverse_unified_diff(project: Path, diff: str) -> PatchApplyResult:
 def diff_target_files(project: Path, diff: str) -> tuple[str, ...]:
     """List the paths a diff touches, without applying it."""
     listed = _git(project, "apply", "--numstat", "-", stdin=diff)
-    return tuple(
-        line.split("\t")[-1].strip()
-        for line in (listed.stdout or "").splitlines()
-        if line.strip()
-    )
+    return tuple(line.split("\t")[-1].strip() for line in (listed.stdout or "").splitlines() if line.strip())
 
 
 @dataclass(frozen=True)
@@ -196,11 +189,7 @@ def repository_is_clean(project: Path) -> bool:
     status = _git(project, "status", "--porcelain")
     if status.returncode != 0:
         return False
-    lines = [
-        line
-        for line in (status.stdout or "").splitlines()
-        if line.strip() and not line[3:].startswith(".koru/")
-    ]
+    lines = [line for line in (status.stdout or "").splitlines() if line.strip() and not line[3:].startswith(".koru/")]
     return not lines
 
 
@@ -278,30 +267,77 @@ def _worktree_location(project: Path, run_id: str) -> Path:
 
 
 def prune_stale_worktrees(project: Path) -> None:
-    """Clear worktrees left behind by an interrupted run.
+    """Compatibility entry point; unknown worktrees require owner reconciliation.
 
-    A killed process never runs its cleanup, leaving both a directory and a git
-    registration. ``git worktree prune`` drops registrations whose directory is
-    gone; the reverse case — a surviving directory git no longer tracks — is
-    removed here. Only paths matching koru's own naming are touched, and a
-    directory git still lists is left alone, so a concurrent run is never
-    disturbed.
+    A matching directory name or missing registration does not establish that
+    its contents are disposable. Queue execution never prunes registrations or
+    removes orphan directories, including those from interrupted runs.
     """
-    _git(project, "worktree", "prune")
-    listed = _git(project, "worktree", "list", "--porcelain")
-    live = {
-        line.split(" ", 1)[1].strip()
-        for line in (listed.stdout or "").splitlines()
-        if line.startswith("worktree ")
-    }
-    for candidate in (*project.parent.glob(".koru-run-*"), *(project / ".koru" / "worktrees").glob("run-*")):
-        if candidate.is_dir() and str(candidate) not in live:
-            shutil.rmtree(candidate, ignore_errors=True)
+
+
+class StagingAdmissionRequired(RuntimeError):
+    """Legacy staging cannot satisfy this workspace's execution contract."""
+
+
+def _git_overrides() -> bool:
+    return any(
+        os.environ.get(key)
+        for key in (
+            "GIT_DIR",
+            "GIT_WORK_TREE",
+            "GIT_COMMON_DIR",
+            "GIT_INDEX_FILE",
+            "GIT_OBJECT_DIRECTORY",
+            "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        )
+    )
+
+
+def _require_unmanaged_staging(project: Path) -> None:
+    if _git_overrides():
+        raise StagingAdmissionRequired("Git environment overrides are not allowed for staging")
+    absolute = Path(os.path.abspath(project))
+    if any(path.is_symlink() for path in (absolute, *absolute.parents)):
+        raise StagingAdmissionRequired("Staging through symlink paths is forbidden")
+    common = _git(project, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    if common.returncode != 0 or not common.stdout.strip():
+        raise StagingAdmissionRequired("Cannot establish the primary checkout for staging")
+    primary = Path(common.stdout.strip()).parent
+    if (project / ".governance").exists() or (primary / ".governance").exists():
+        raise StagingAdmissionRequired(
+            "Governed staging requires native ticket allocation and protected controller "
+            "admission; legacy temporary worktrees and local lease files do not grant it"
+        )
+
+
+def _remove_unchanged_staging(project: Path, path: Path, head: str, git_dir: str) -> None:
+    """Remove only this invocation's unchanged, detached and empty staging tree."""
+    if not head or not git_dir or not path.is_dir() or _git_overrides() or path.resolve() != path.absolute():
+        return
+    current_dir = _git(path, "rev-parse", "--absolute-git-dir")
+    current_head = _git(path, "rev-parse", "HEAD")
+    branch = _git(path, "symbolic-ref", "--quiet", "HEAD")
+    status = _git(path, "status", "--porcelain=v1", "--untracked-files=all", "--ignored")
+    if (
+        current_dir.returncode != 0
+        or current_dir.stdout.strip() != git_dir
+        or current_head.returncode != 0
+        or current_head.stdout.strip() != head
+        or branch.returncode != 1
+        or status.returncode != 0
+        or status.stdout.strip()
+    ):
+        logging.getLogger(__name__).warning("Preserved staging worktree for reconciliation: %s", path)
+        return
+    # Git performs its own dirty/locked check. Never retry with --force.
+    removed = _git(project, "worktree", "remove", str(path))
+    if removed.returncode != 0:
+        logging.getLogger(__name__).warning("Staging removal refused; preserved for reconciliation: %s", path)
 
 
 @contextmanager
 def staging_worktree(project: Path, seed_files: tuple[str, ...]) -> Iterator[Path | None]:
-    """Yield a disposable worktree seeded with the workspace's current content.
+    """Yield unmanaged staging, retaining every changed or interrupted result.
 
     The agent read the *working tree*, so its diff is written against whatever
     is on disk — including uncommitted edits. A worktree checked out at HEAD
@@ -309,9 +345,11 @@ def staging_worktree(project: Path, seed_files: tuple[str, ...]) -> Iterator[Pat
     across before it is applied. Yields None when the worktree cannot be
     created, leaving the caller to fall back to in-place execution.
     """
-    prune_stale_worktrees(project)
+    _require_unmanaged_staging(project)
     try:
         path = _worktree_location(project, uuid4().hex[:12])
+        if any(component.is_symlink() for component in (path, *path.parents)):
+            raise StagingAdmissionRequired("Staging location contains a symlink")
         path.parent.mkdir(parents=True, exist_ok=True)
     except OSError:
         # Read-only checkouts are normal in containers and CI — koru's own
@@ -324,6 +362,9 @@ def staging_worktree(project: Path, seed_files: tuple[str, ...]) -> Iterator[Pat
     if created.returncode != 0:
         yield None
         return
+    head = _git(path, "rev-parse", "HEAD").stdout.strip()
+    git_dir = _git(path, "rev-parse", "--absolute-git-dir").stdout.strip()
+    completed = False
     try:
         for rel in seed_files:
             source = project / rel
@@ -333,7 +374,14 @@ def staging_worktree(project: Path, seed_files: tuple[str, ...]) -> Iterator[Pat
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, destination)
         yield path
+        completed = True
     finally:
-        _git(project, "worktree", "remove", "--force", str(path))
-
-
+        if completed:
+            try:
+                _remove_unchanged_staging(project, path, head, git_dir)
+            except OSError:
+                # Another owner can remove or move the tree during observation.
+                # Cleanup must not turn verified execution into an exception.
+                logging.getLogger(__name__).warning("Staging cleanup unavailable; reconcile exact path: %s", path)
+        else:
+            logging.getLogger(__name__).warning("Preserved interrupted staging worktree: %s", path)

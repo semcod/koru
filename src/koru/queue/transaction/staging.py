@@ -1,8 +1,8 @@
-"""Proving a patch in a throwaway worktree before it touches the workspace.
+"""Proving a patch in an isolated worktree before it touches the workspace.
 
 Nothing reaches the real tree until the patch has both applied and passed its
 gate in isolation, so a bad patch — or one racing another agent's edits — costs
-a discarded directory rather than a broken workspace.
+retained staging evidence rather than a broken workspace.
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ from pathlib import Path
 from koru.queue.patch_mode import (
     PATCH_DOES_NOT_APPLY,
     PROMOTION_BRANCH,
+    PROMOTION_FAILED,
     VERIFY_BASELINE_FAILED,
     VERIFY_FAILED_ISOLATED,
     PatchOutcome,
@@ -28,9 +29,21 @@ from koru.queue.transaction.verification import (
     verify_output,
 )
 from koru.queue.types import CommandResult
+from koru.queue.workspace import StagingAdmissionRequired
 
 
 def stage_patch(
+    plan: PatchPlan,
+    shell_runner: Callable[[str, Path], CommandResult],
+) -> StagingResult:
+    """Report admission failure without falling back to shared-tree execution."""
+    try:
+        return _stage_patch(plan, shell_runner)
+    except StagingAdmissionRequired as exc:
+        return StagingResult.refused(PatchOutcome(code=PROMOTION_FAILED, message=str(exc)))
+
+
+def _stage_patch(
     plan: PatchPlan,
     shell_runner: Callable[[str, Path], CommandResult],
 ) -> StagingResult:
