@@ -1,0 +1,73 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-428",
+  "summary": "Adopt Wellmanifest Worktrees v5 staging layout",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-428/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/workspace.py",
+    "tests/**"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "9ad3633043072feef60e3dcafc8ef214b2550eac",
+    "targetBranch": "main",
+    "outcome": "Adopt Wellmanifest Worktrees v5 for Koru staging worktrees placed in <primary>/.worktrees/ticket-<run_id>.",
+    "nonGoals": [
+      "Monorepo depth resolver changes",
+      "Other queue refactorings"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Place staging worktrees under project/.worktrees/ticket-<id> conforming to Wellmanifest Worktrees v5.",
+      "components": [
+        {
+          "name": "koru-queue",
+          "paths": [
+            "src/koru/queue/workspace.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit in src/koru/queue/workspace.py"
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-1",
+        "commands": [
+          "pytest tests/test_queue_workspace_retention.py -x -q"
+        ],
+        "evidence": "Staging worktree retention and location tests pass."
+      }
+    ]
+  }
+}
