@@ -251,15 +251,20 @@ def worktree_enabled(project: Path) -> bool:
 def _worktree_location(project: Path, run_id: str) -> Path:
     """Where to put the staging worktree.
 
-    Placed as a *sibling* of the project rather than inside it, so the checkout
-    keeps its usual depth on disk. Suites routinely resolve fixtures relative to
-    the repository's parent (``resolve(__dirname, "../..")`` in a monorepo), and
-    a worktree nested under ``<project>/.koru/`` silently breaks every one of
-    them. Sibling placement keeps those paths resolving as they do normally.
+    Adopts Wellmanifest Worktrees v5: delivery and staging worktrees are placed under
+    `<primary>/.worktrees/ticket-<run_id>`.
     """
     override = (os.environ.get("KORU_QUEUE_WORKTREE_DIR") or "").strip()
+    prefix = "ticket-" if not str(run_id).startswith("ticket-") else ""
+    slug = f"{prefix}{run_id}"
+
     if override:
-        return Path(override).expanduser() / f".koru-run-{run_id}"
+        return Path(override).expanduser() / slug
+
+    v5_dir = project / ".worktrees"
+    if v5_dir.is_dir() or (project / ".git").is_dir() or (project / ".git").is_file():
+        return v5_dir / slug
+
     parent = project.parent
     if os.access(parent, os.W_OK):
         return parent / f".koru-run-{run_id}"
