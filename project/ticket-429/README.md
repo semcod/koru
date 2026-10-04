@@ -26,3 +26,9 @@ Critical validation reproduces the unchanged-base CLI dispatch expectation missi
 ## Validation result
 
 22 client tests and 56 subtests passed; the deployed-controller TLS fixture passed acquisition, check, two renewals and idempotent retries. The bounded CLI prerequisite passes 6 tests and 58 subtests. The declared critical suite passes 257 tests; Ruff, governance and Docker Compose validation pass. AC-02 publication remains pending independent exact-head review; no production policy grant is claimed.
+
+## Independent validation prerequisite
+
+OneDev exact-head validation reports three inherited queue tests asserting legacy sibling `.koru-run-*` placement, although accepted base #667 stages under the primary `.worktrees/ticket-<run_id>`. Scoped admission is free. Preserve interruption evidence, primary source isolation, actual Git registration and unchanged staging cleanup in the updated assertions. The previous publication lease is cancelled/released; a fresh four-file, three-component scope is fenced before editing.
+
+The corrected protected OneDev selection passes locally: 139 tests and 12 subtests. Four scoped implementation/test files remain within the M budget. Independent validation must rerun on the revised HEAD; previous failed and blocked receipts remain preserved.

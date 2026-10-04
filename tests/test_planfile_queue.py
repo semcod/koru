@@ -2190,10 +2190,8 @@ class TestPatchMode(unittest.TestCase):
                 promotion_mode({"inputs": {"promotion_mode": "nonsense"}}), "commit",
             )
 
-    def test_worktree_keeps_the_repository_depth_on_disk(self) -> None:
-        """Suites resolve fixtures relative to the repo's parent in a monorepo
-        (`resolve(__dirname, "../..")`). A worktree nested inside the project
-        silently breaks every one of them, so it is staged as a sibling."""
+    def test_worktree_uses_primary_local_staging_and_cleans_unchanged_result(self) -> None:
+        """Unmanaged staging follows primary-local placement, not legacy siblings."""
         from koru.queue.patch_mode import staging_worktree
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -2207,16 +2205,20 @@ class TestPatchMode(unittest.TestCase):
             ):
                 subprocess.run(["git", *args], cwd=project, check=True, capture_output=True)
             self._commit_file(project, "a.txt", "old\n")
-            # A fixture that lives beside the repo, as in a monorepo checkout.
-            (parent / "fixture.json").write_text("{}", encoding="utf-8")
-
             with staging_worktree(project, ("a.txt",)) as staged:
                 self.assertIsNotNone(staged)
                 assert staged is not None
-                # Same depth as the project, so "../.." lands where it normally would.
-                self.assertEqual(staged.parent, project.parent)
-                self.assertTrue((staged / ".." / "fixture.json").resolve().is_file())
+                self.assertEqual(staged.parent, project / ".worktrees")
+                self.assertRegex(staged.name, r"^ticket-[a-f0-9]{12}$")
+                registered = subprocess.run(
+                    ["git", "worktree", "list", "--porcelain"], cwd=project,
+                    check=True, capture_output=True, text=True,
+                ).stdout
+                self.assertIn("worktree " + str(staged), registered)
+                self.assertEqual((staged / "a.txt").read_text(), "old\n")
 
+            self.assertFalse(staged.exists())
+            self.assertFalse(list((project / ".worktrees").glob("ticket-*")))
             self.assertFalse(list(parent.glob(".koru-run-*")))
 
     def test_stale_worktrees_from_a_killed_run_are_preserved(self) -> None:
@@ -2284,7 +2286,10 @@ class TestPatchMode(unittest.TestCase):
                     self.assertIsNotNone(staged)
                     raise KeyboardInterrupt
 
-            self.assertEqual(len(list(parent.glob(".koru-run-*"))), 1)
+            retained = list((project / ".worktrees").glob("ticket-*"))
+            self.assertEqual(len(retained), 1)
+            self.assertEqual((retained[0] / "a.txt").read_text(), "old\n")
+            self.assertTrue((retained[0] / ".git").is_file())
 
     def test_conflict_on_one_file_promotes_none_of_them(self) -> None:
         """Promotion is all-or-nothing: a concurrent edit to one target must not
@@ -2770,7 +2775,7 @@ class TestPatchMode(unittest.TestCase):
                     project, reply, {"inputs": {"verify_command": "true"}}, exploding_gate,
                 )
 
-            retained = list(project.parent.glob(".koru-run-*"))
+            retained = list((project / ".worktrees").glob("ticket-*"))
             self.assertEqual(len(retained), 1)
             self.assertEqual((retained[0] / "a.txt").read_text(), "old\n")
             self.assertEqual((project / "a.txt").read_text(encoding="utf-8"), "old\n")

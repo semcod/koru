@@ -14,7 +14,8 @@
     "project/TICKETS.md",
     "src/koru/repository_admission.py",
     "tests/test_repository_admission_client.py",
-    "tests/test_cli.py"
+    "tests/test_cli.py",
+    "tests/test_planfile_queue.py"
   ],
   "forbiddenPaths": [
     "project/ticket-*/user-*.md"
@@ -35,14 +36,14 @@
     "complexity": "M",
     "estimatedMinutes": 60,
     "budgets": {
-      "maxImplementationFiles": 3,
-      "maxAffectedComponents": 2,
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 3,
       "maxPublicInterfaceChanges": 2,
       "maxRuntimeDependencies": 0
     },
     "architecture": {
       "status": "accepted",
-      "decision": "Renew only through the pinned verified HTTPS origin. A cached expired lease is a retry cursor only, never write authority. Require a live policy and current authenticated editing lease, unchanged fence and lease identity, an advanced revision and a bound durable heartbeat receipt. Repair the inherited documented CLI registration expectation and retain handler-routing coverage for all declared commands.",
+      "decision": "Renew only through the pinned verified HTTPS origin. A cached expired lease is a retry cursor only, never write authority. Require a live policy and current authenticated editing lease, unchanged fence and lease identity, an advanced revision and a bound durable heartbeat receipt. Repair the inherited documented CLI registration expectation and retain handler-routing coverage for all declared commands. Reconcile inherited unmanaged queue staging tests with already adopted primary-local v5 placement and retained interrupted evidence.",
       "components": [
         {
           "name": "repository-admission-client",
@@ -55,6 +56,12 @@
           "name": "cli-dispatch-regression",
           "paths": [
             "tests/test_cli.py"
+          ]
+        },
+        {
+          "name": "queue-worktrees-v5-regression",
+          "paths": [
+            "tests/test_planfile_queue.py"
           ]
         }
       ],
@@ -84,6 +91,7 @@
       {
         "criterion": "AC-02",
         "commands": [
+          "python3 -m pytest tests/test_koru_queue_argv.py tests/test_mcp_server.py tests/test_planfile_queue.py tests/test_queue_cli_helpers.py -q",
           "python3 -m pytest tests/test_cli.py::TestSubcommandDispatch -q",
           "./project/governance-check.sh",
           "KORU_PYTEST_CRITICAL_XDIST=1 bash scripts/koru-pytest.sh --critical --quick"
