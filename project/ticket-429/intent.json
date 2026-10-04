@@ -1,0 +1,103 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-429",
+  "summary": "Consume authenticated admission lease renewal",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-429/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/repository_admission.py",
+    "tests/test_repository_admission_client.py",
+    "tests/test_cli.py",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "334da8363064e691e915f22e0a4efa9b2fb66391",
+    "targetBranch": "main",
+    "outcome": "Consume authenticated HTTPS lease renewal in the Koru admission client and supervised module CLI with exact cursor, binding and durable heartbeat receipt validation.",
+    "nonGoals": [
+      "No self-issued policy, new workspace grants or publication authority.",
+      "No fleet scheduler or executor renewal loop in this slice.",
+      "Preserve foreign Planfile cache and historical work."
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 2,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Renew only through the pinned verified HTTPS origin. A cached expired lease is a retry cursor only, never write authority. Require a live policy and current authenticated editing lease, unchanged fence and lease identity, an advanced revision and a bound durable heartbeat receipt. Repair the inherited documented CLI registration expectation and retain handler-routing coverage for all declared commands. Reconcile inherited unmanaged queue staging tests with already adopted primary-local v5 placement and retained interrupted evidence.",
+      "components": [
+        {
+          "name": "repository-admission-client",
+          "paths": [
+            "src/koru/repository_admission.py",
+            "tests/test_repository_admission_client.py"
+          ]
+        },
+        {
+          "name": "cli-dispatch-regression",
+          "paths": [
+            "tests/test_cli.py"
+          ]
+        },
+        {
+          "name": "queue-worktrees-v5-regression",
+          "paths": [
+            "tests/test_planfile_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "AdmissionClient.renew(request, receipt).",
+        "Supervised module CLI --renew-receipt, exclusive with --check-receipt."
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the material client change and use the preserved previously approved immutable launcher; preserve external policy and lease state."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_repository_admission_client.py -q",
+          "ruff check src/koru/repository_admission.py tests/test_repository_admission_client.py"
+        ],
+        "evidence": "Verified TLS transport, exact owner/CAS heartbeat receipts, denied stale/fenced/expired policy, lost-response reconciliation and bounded CLI."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python3 -m pytest tests/test_koru_queue_argv.py tests/test_mcp_server.py tests/test_planfile_queue.py tests/test_queue_cli_helpers.py -q",
+          "python3 -m pytest tests/test_cli.py::TestSubcommandDispatch -q",
+          "./project/governance-check.sh",
+          "KORU_PYTEST_CRITICAL_XDIST=1 bash scripts/koru-pytest.sh --critical --quick"
+        ],
+        "evidence": "Native governance and declared stack gates, protected exact-head independent review and merge."
+      }
+    ]
+  }
+}

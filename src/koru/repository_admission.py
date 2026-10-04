@@ -2,7 +2,7 @@
 
 Execution adapters must call check immediately before their effects, enforce
 the accepted intent's path scope, and retain separate publication controls.
-The module CLI exposes acquire/check for supervised consumers such as Willman.
+The module CLI exposes acquire/check/renew for supervised consumers such as Willman.
 """
 from __future__ import annotations
 
@@ -117,18 +117,22 @@ class AdmissionClient:
         context.minimum_version = ssl.TLSVersion.TLSv1_3
         return config, bearer, context
 
-    def _call(self, request: dict, *, check: bool) -> dict:
-        extras = {"leaseId", "leaseRevision", "fencingToken"} if check else set()
+    def _call(self, request: dict, *, action: str) -> dict:
+        extras = {"leaseId", "leaseRevision", "fencingToken"} if action != "acquire" else set()
         if (not isinstance(request, dict) or set(request) != BINDINGS | {"schema", "requestId"} | extras
                 or request.get("schema") != "subactor.repository-admission-request/v1"):
             raise AdmissionUnavailable("invalid admission request")
+        if extras and (not isinstance(request["leaseId"], str) or not request["leaseId"]
+                       or any(type(request[k]) is not int or request[k] < 1
+                              for k in ("leaseRevision", "fencingToken"))):
+            raise AdmissionUnavailable("invalid admission cursor")
         self._target(request)
         config, bearer, context = self._config()
         raw = json.dumps(request, sort_keys=True, separators=(",", ":")).encode()
         if len(raw) > MAX_BYTES:
             raise AdmissionUnavailable("admission request exceeds limit")
         query = urllib.request.Request(
-            config["endpoint"] + "/v1/repository-admissions/" + ("check" if check else "acquire"),
+            config["endpoint"] + "/v1/repository-admissions/" + action,
             data=raw, headers={"Content-Type": "application/json", "Authorization": "Bearer " + bearer},
         )
         # Disable environment proxies and redirects: credentials stay at this
@@ -143,7 +147,9 @@ class AdmissionClient:
                 result = _document(response.read(MAX_BYTES + 1))
         except (OSError, urllib.error.URLError, ValueError) as exc:
             raise AdmissionUnavailable("admission refused or unavailable") from exc
-        self._validate(result, request, config, check=check)
+        self._validate(result, request, config, check=action == "check")
+        if action == "renew":
+            self._renewal(result, request)
         # Detect trust material changes during the HTTP exchange.
         self._config()
         self._target(request)
@@ -174,7 +180,9 @@ class AdmissionClient:
                     f"git@github.com:{repository}.git", f"https://github.com/{repository}.git"}):
             raise AdmissionUnavailable("admission target binding mismatch")
 
-    def _validate(self, result, request, config, *, check):
+    def _validate(self, result, request, config, *, check, lease_live=True):
+        if not isinstance(result, dict):
+            raise AdmissionUnavailable("invalid admission response")
         expected = {key: request[key] for key in BINDINGS}
         lease = result.get("lease")
         if (result.get("schema") != "subactor.repository-admission/v1"
@@ -194,10 +202,45 @@ class AdmissionClient:
         if check and any(lease[k] != request[k] for k in ("leaseId", "leaseRevision", "fencingToken")):
             raise AdmissionUnavailable("stale admission fencing")
         _expires(result.get("admissionExpiresAt"), self.clock())
-        _expires(lease.get("expiresAt"), self.clock())
+        # An expired cached lease is a renewal retry cursor only. Even there
+        # require a valid timezone-aware timestamp; server results must be live.
+        _expires(lease.get("expiresAt"), self.clock() if lease_live else datetime.min.replace(tzinfo=UTC))
+
+    @staticmethod
+    def _renewal(result, request):
+        lease = result["lease"]
+        receipt = result.get("renewalReceipt")
+        if (lease["leaseId"] != request["leaseId"] or lease["fencingToken"] != request["fencingToken"]
+                or lease["leaseRevision"] <= request["leaseRevision"]):
+            raise AdmissionUnavailable("stale admission renewal fencing")
+        if (not isinstance(receipt, dict) or set(receipt) != {
+                "schema", "requestId", "leaseId", "previousRevision", "leaseRevision",
+                "previousFencingToken", "fencingToken", "action", "outcome", "code",
+                "phaseBefore", "phaseAfter", "headSha", "pullRequest", "receiptRef", "occurredAt"}
+                or receipt["schema"] != "wellmanifest.change-lease-receipt/v1"
+                or receipt["requestId"] != request["requestId"] or receipt["leaseId"] != request["leaseId"]
+                or receipt["action"] != "heartbeat" or receipt["outcome"] not in ("accepted", "idempotent")
+                or receipt["code"] is not None or receipt["phaseBefore"] != "editing"
+                or receipt["phaseAfter"] != "editing" or receipt["headSha"] is not None
+                or receipt["pullRequest"] is not None
+                or any(type(receipt[k]) is not int for k in (
+                    "previousRevision", "leaseRevision", "previousFencingToken", "fencingToken"))
+                or receipt["previousRevision"] != request["leaseRevision"]
+                or receipt["leaseRevision"] != request["leaseRevision"] + 1
+                or receipt["previousFencingToken"] != request["fencingToken"]
+                or receipt["fencingToken"] != request["fencingToken"]):
+            raise AdmissionUnavailable("invalid admission renewal receipt")
+        _expires(receipt["occurredAt"], datetime.min.replace(tzinfo=UTC))
+        # The controller replays the durable accepted receipt with only its
+        # outcome changed to idempotent. Its reference hashes the original.
+        original = {k: v for k, v in receipt.items() if k != "receiptRef"}
+        original["outcome"] = "accepted"
+        raw = json.dumps(original, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
+        if receipt["receiptRef"] != "receipt://change-lease/" + hashlib.sha256(raw).hexdigest():
+            raise AdmissionUnavailable("admission renewal receipt digest mismatch")
 
     def acquire(self, request: dict) -> dict:
-        return self._call(request, check=False)
+        return self._call(request, action="acquire")
 
     def check(self, request: dict, receipt: dict) -> dict:
         # Validate a cached receipt before using it as a check cursor. Cached
@@ -205,7 +248,29 @@ class AdmissionClient:
         config, _, _ = self._config()
         self._validate(receipt, request, config, check=False)
         cursor = {**request, **{k: receipt["lease"][k] for k in ("leaseId", "leaseRevision", "fencingToken")}}
-        return self._call(cursor, check=True)
+        return self._call(cursor, action="check")
+
+    def renew(self, request: dict, receipt: dict) -> dict:
+        """Renew or reconcile a lost response; never authorize from cached data.
+
+        Use a stable requestId and the same cached receipt for a retry. A new
+        heartbeat uses the returned lease cursor and a new requestId. Call
+        check immediately before any effect; renewal grants no publication.
+        """
+        if (not isinstance(request, dict) or set(request) != BINDINGS | {"schema", "requestId"}
+                or request.get("schema") != "subactor.repository-admission-request/v1"
+                or not isinstance(request["requestId"], str) or not request["requestId"]
+                or len(request["requestId"]) > 160 or not isinstance(receipt, dict)
+                or not isinstance(receipt.get("requestId"), str) or not receipt["requestId"]):
+            raise AdmissionUnavailable("invalid admission renewal cursor")
+        config, _, _ = self._config()
+        self._validate(receipt, {**request, "requestId": receipt["requestId"]}, config,
+                       check=False, lease_live=False)
+        cursor = {**request, **{k: receipt["lease"][k] for k in ("leaseId", "leaseRevision", "fencingToken")}}
+        result = self._call(cursor, action="renew")
+        if result["admissionExpiresAt"] != receipt["admissionExpiresAt"]:
+            raise AdmissionUnavailable("admission renewal cannot extend policy")
+        return result
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -219,13 +284,19 @@ def main(argv=None):
     parser.add_argument("--config-sha256", required=True)
     parser.add_argument("--primary", type=Path, required=True)
     parser.add_argument("--request", type=Path, required=True)
-    parser.add_argument("--check-receipt", type=Path)
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--check-receipt", type=Path)
+    mode.add_argument("--renew-receipt", type=Path)
     args = parser.parse_args(argv)
     try:
         client = AdmissionClient(args.config, args.config_sha256, args.primary)
         request = _document(args.request.read_bytes())
-        result = (client.check(request, _document(args.check_receipt.read_bytes()))
-                  if args.check_receipt else client.acquire(request))
+        if args.renew_receipt:
+            result = client.renew(request, _document(args.renew_receipt.read_bytes()))
+        elif args.check_receipt:
+            result = client.check(request, _document(args.check_receipt.read_bytes()))
+        else:
+            result = client.acquire(request)
     except (AdmissionUnavailable, OSError, ValueError):
         print(json.dumps({"authorizationGranted": False, "code": "admission_unavailable"}))
         return 1
