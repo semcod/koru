@@ -209,6 +209,131 @@ class AdmissionClientTest(unittest.TestCase):
             self.client.check(self.request, receipt)
         self.assertFalse(self.calls)
 
+    def renewal(self, *, outcome="accepted"):
+        cached = copy.deepcopy(self.result)
+        request = {**self.request, "requestId": "renew-one"}
+        self.result["requestId"] = request["requestId"]
+        self.result["lease"]["leaseRevision"] += 1
+        self.result["lease"]["expiresAt"] = (self.now + timedelta(seconds=900)).isoformat()
+        receipt = {
+            "schema": "wellmanifest.change-lease-receipt/v1", "requestId": request["requestId"],
+            "leaseId": "lease-a", "previousRevision": 2, "leaseRevision": 3,
+            "previousFencingToken": 1, "fencingToken": 1, "action": "heartbeat",
+            "outcome": "accepted", "code": None, "phaseBefore": "editing", "phaseAfter": "editing",
+            "headSha": None, "pullRequest": None, "occurredAt": self.now.isoformat(),
+        }
+        receipt["receiptRef"] = "receipt://change-lease/" + digest(
+            json.dumps(receipt, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode())
+        receipt["outcome"] = outcome
+        self.result["renewalReceipt"] = receipt
+        return request, cached
+
+    def test_renewal_sends_original_cursor_and_checks_new_current_lease(self):
+        request, cached = self.renewal()
+        result = self.client.renew(request, cached)
+        self.assertEqual(result, self.result)
+        self.assertEqual(self.calls[-1]["path"], "/v1/repository-admissions/renew")
+        self.assertTrue(self.calls[-1]["authenticated"])
+        self.assertEqual(self.calls[-1]["request"],
+                         {**request, "leaseId": "lease-a", "leaseRevision": 2, "fencingToken": 1})
+        self.assertEqual(self.client.check(request, result), result)
+        self.assertEqual(self.calls[-1]["request"]["leaseRevision"], 3)
+        self.result["requestId"] = self.request["requestId"]
+        with self.assertRaisesRegex(AdmissionUnavailable, "stale admission fencing"):
+            self.client.check(self.request, cached)
+
+    def test_lost_response_retry_uses_expired_cache_only_as_cursor(self):
+        request, cached = self.renewal(outcome="idempotent")
+        self.now += timedelta(seconds=601)
+        self.result["lease"]["leaseRevision"] = 4  # A subsequent heartbeat may already exist.
+        with self.assertRaisesRegex(AdmissionUnavailable, "expired"):
+            self.client.check(self.request, cached)
+        self.assertFalse(self.calls)
+        self.assertEqual(self.client.renew(request, cached), self.result)
+        self.assertEqual(self.calls[-1]["request"]["leaseRevision"], 2)
+        self.assertEqual(self.client.renew(request, cached), self.result)
+        self.assertEqual(self.calls[-1]["request"], self.calls[-2]["request"])
+
+    def test_renewal_refuses_expired_policy_and_malformed_cached_lease_before_http(self):
+        request, cached = self.renewal()
+        for key, value in (("expiresAt", "invalid"), ("expiresAt", "2026-01-01T00:00:00"),
+                           ("fencingToken", True), ("phase", "released"), ("ownerSession", "foreign")):
+            bad = copy.deepcopy(cached)
+            bad["lease"][key] = value
+            with self.subTest(key=key, value=value), self.assertRaises(AdmissionUnavailable):
+                self.client.renew(request, bad)
+        self.now += timedelta(hours=2)
+        with self.assertRaisesRegex(AdmissionUnavailable, "expired"):
+            self.client.renew(request, cached)
+        self.assertFalse(self.calls)
+
+    def test_renewal_refuses_replacement_fence_stale_revision_and_expired_server_lease(self):
+        request, cached = self.renewal()
+        baseline = copy.deepcopy(self.result)
+        for key, value in (("leaseId", "replacement"), ("fencingToken", 2), ("leaseRevision", 2),
+                           ("expiresAt", self.now.isoformat()), ("phase", "released")):
+            self.result = copy.deepcopy(baseline)
+            self.result["lease"][key] = value
+            with self.subTest(key=key), self.assertRaises(AdmissionUnavailable):
+                self.client.renew(request, cached)
+
+    def test_renewal_requires_bound_durable_heartbeat_receipt(self):
+        request, cached = self.renewal()
+        baseline = copy.deepcopy(self.result)
+        mutations = (("schema", "other"), ("requestId", "foreign"), ("leaseId", "replacement"),
+                     ("previousRevision", True), ("previousRevision", 1), ("leaseRevision", 4),
+                     ("previousFencingToken", 2), ("fencingToken", True), ("action", "release"),
+                     ("outcome", "rejected"), ("outcome", []), ("code", "denied"), ("phaseBefore", "released"),
+                     ("phaseAfter", "frozen"), ("headSha", "a" * 40), ("pullRequest", 1),
+                     ("occurredAt", "invalid"), ("receiptRef", "receipt://change-lease/" + "0" * 64))
+        for key, value in mutations:
+            self.result = copy.deepcopy(baseline)
+            self.result["renewalReceipt"][key] = value
+            if key != "receiptRef":
+                original = {k: v for k, v in self.result["renewalReceipt"].items() if k != "receiptRef"}
+                original["outcome"] = "accepted"
+                self.result["renewalReceipt"]["receiptRef"] = "receipt://change-lease/" + digest(
+                    json.dumps(original, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode())
+            with self.subTest(key=key), self.assertRaises(AdmissionUnavailable):
+                self.client.renew(request, cached)
+        for invalid in (None, {}, "receipt"):
+            self.result = {**baseline, "renewalReceipt": invalid}
+            with self.subTest(invalid=invalid), self.assertRaises(AdmissionUnavailable):
+                self.client.renew(request, cached)
+        self.result = copy.deepcopy(baseline)
+        self.result["admissionExpiresAt"] = (self.now + timedelta(hours=2)).isoformat()
+        with self.assertRaises(AdmissionUnavailable):
+            self.client.renew(request, cached)
+
+    def test_renewal_never_uses_cache_when_endpoint_refuses_or_trust_changes(self):
+        request, cached = self.renewal()
+        self.status = 403
+        with self.assertRaises(AdmissionUnavailable):
+            self.client.renew(request, cached)
+        self.status = 302
+        with self.assertRaises(AdmissionUnavailable):
+            self.client.renew(request, cached)
+        self.assertEqual(len(self.calls), 2)
+        self.status = 200
+        self.mutate = lambda: self.config_path.write_text(self.config_path.read_text() + "\n")
+        with self.assertRaisesRegex(AdmissionUnavailable, "configuration pin mismatch"):
+            self.client.renew(request, cached)
+
+    def test_cli_renewal_and_exclusive_check_mode(self):
+        request, cached = self.renewal()
+        payload = self.root / "request.json"
+        payload.write_text(json.dumps(request))
+        receipt = self.root / "receipt.json"
+        receipt.write_text(json.dumps(cached))
+        args = ["--config", str(self.config_path), "--config-sha256", self.pin,
+                "--primary", str(self.primary), "--request", str(payload), "--renew-receipt", str(receipt)]
+        with patch("builtins.print") as printed:
+            self.assertEqual(main(args), 0)
+        self.assertEqual(json.loads(printed.call_args.args[0]), self.result)
+        with self.assertRaises(SystemExit) as rejected, patch("sys.stderr"):
+            main([*args, "--check-receipt", str(receipt)])
+        self.assertEqual(rejected.exception.code, 2)
+
     def test_policy_expiry_without_timezone_is_refused(self):
         self.result["admissionExpiresAt"] = "2026-10-02T18:00:00"
         with self.assertRaisesRegex(AdmissionUnavailable, "expired or invalid"):

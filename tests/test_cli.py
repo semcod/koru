@@ -909,6 +909,13 @@ class TestSubcommandDispatch(unittest.TestCase):
             "on",
             "off",
             "status",
+            "benchmark",
+            "config",
+            "github",
+            "nlp",
+            "sum",
+            "summary",
+            "voice",
         },
     )
 
