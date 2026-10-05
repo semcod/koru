@@ -14,6 +14,7 @@ from koru.redup_integration import redup_changed_scan_runner_command, redup_scan
 from koru.tasks import create_nl_task
 
 IdleCheck = tuple[str, str, list[str]]
+IDLE_CHECK_TIMEOUT_SECONDS = 300
 
 
 def _has_redup_module() -> bool:
@@ -217,7 +218,17 @@ def run_command_check(
     stdio_format: str = "human",
 ) -> bool:
     stdio_info(f"+ {' '.join(command)}", fmt=stdio_format)
-    result = subprocess.run(command, cwd=project, check=False)
+    try:
+        result = subprocess.run(
+            command, cwd=project, check=False, timeout=IDLE_CHECK_TIMEOUT_SECONDS,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        # Preserve failed-check intake without exposing exception payloads.
+        stdio_info(
+            f"! {check_id} failed: {type(error).__name__} (continuing loop)",
+            fmt=stdio_format,
+        )
+        return False
     if result.returncode != 0:
         stdio_info(f"! {check_id} failed (continuing loop)", fmt=stdio_format)
         return False
