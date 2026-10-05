@@ -1,0 +1,87 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-431",
+  "summary": "SESSION_EXECUTION_AUTHORIZATION: continue repairs, tests and protected merge. PLF-2669 / GitHub676, child of PLF-2666 / GitHub672. Refuse governed direct and fallback patch mutation without independent protected admission.",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-431/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/transaction/service.py",
+    "src/koru/queue/workspace.py",
+    "tests/test_queue_governed_patch_admission.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "1d8c461e6b23a64f9bd1242657653781a1eddfde",
+    "targetBranch": "main",
+    "outcome": "Governed patch transactions cannot bypass protected repository admission through direct apply, local callback, flags, Git overrides or staging fallback. Real Git regression evidence and independent protected publication.",
+    "nonGoals": [
+      "No admission enrollment, OpenCode adapter or production deployment",
+      "No changes to artifact proposal delivery or unmanaged legacy patch execution",
+      "No dependency, governance policy or unrelated willmux changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Share the existing unmanaged staging workspace check with patch transactions. Refuse non-artifact execution before planning; recheck fresh authority at the shared mutation boundary after callbacks and staging fallback. Local authorizers do not grant protected repository admission. Preserve existing promotion_failed refusal semantics.",
+      "components": [
+        {
+          "name": "queue-patch-transaction",
+          "paths": [
+            "src/koru/queue/transaction/service.py",
+            "tests/test_queue_governed_patch_admission.py"
+          ]
+        },
+        {
+          "name": "queue-workspace",
+          "paths": [
+            "src/koru/queue/workspace.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Shared unmanaged patch workspace admission check; existing promotion_failed outcome remains stable"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the bounded material commit; parent admission adapter remains open."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_queue_governed_patch_admission.py tests/test_queue_transaction_phases.py tests/test_queue_workspace_retention.py tests/test_planfile_queue.py tests/test_queue_admission.py -q",
+          "python3 -m ruff check src/koru tests",
+          "./project/governance-check.sh",
+          "docker compose config --quiet"
+        ],
+        "evidence": "Real Git fixtures: governed primary and linked checkouts, apply/commit modes, verification and isolation flags, callback and local lease forgery, authority drift, fallback, symlink and Git redirection refusal; artifact and unmanaged positive cases."
+      }
+    ]
+  }
+}
