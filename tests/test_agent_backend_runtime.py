@@ -189,6 +189,9 @@ def test_all_backends_implement_send_chat(backend_id, kwargs) -> None:
 @pytest.mark.parametrize("submit,execute,expected", [(False, True, False), (True, False, False), (True, True, True)])
 def test_shell_backend_honors_submit_and_execute(monkeypatch, tmp_path, submit, execute, expected):
     calls = []
-    monkeypatch.setattr("koru.agent_backend_runtime.backends.drive_shell_chat", lambda **kw: calls.append(kw) or {"ok": True})
+    monkeypatch.setattr(
+        "koru.agent_backend_runtime.backends.drive_shell_chat",
+        lambda **kw: calls.append(kw) or {"ok": True},
+    )
     TillmShellBackend(execute=execute).send_chat(tmp_path, "edit", ide="aider", submit=submit)
     assert calls[0]["execute"] is expected

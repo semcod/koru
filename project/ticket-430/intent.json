@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-430",
+  "summary": "SESSION_EXECUTION_AUTHORIZATION: continue repairs, tests and protected merge. PLF-2667 / GitHub673; parent PLF-2666 / GitHub672. Preserve explicit vendor CLI request and deny central queue transport mismatch before any claim or model call.",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-430/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/runner.py",
+    "src/koru/queue/runners.py",
+    "src/koru/queue/ticket.py",
+    "tests/test_queue_explicit_shell_provider.py",
+    "tests/test_agent_backend_runtime.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "dcade87d60e7cbab9a51f4f3bfcfd952c54554fd",
+    "targetBranch": "main",
+    "outcome": "Explicit OpenCode/shell provider survives ticket translation and cannot be silently executed or completed through central SubLLM. Independent protected publication and local installed readback.",
+    "nonGoals": [
+      "No admitted OpenCode adapter, enrollment or service deployment",
+      "No weakening shell guard, HTTP provider routing changes or dependency changes"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Preserve optional provider at the ticket boundary. Reuse existing shell token recognition without consulting environment for this gate. Refuse unsupported explicit shell lane before queue claim/preflight and in direct runner; preserve centrally configured legacy/non-shell transport. Include the independently reproduced existing E501 test-only formatting prerequisite, tracked in the quality issue, without behavior changes or suppression.",
+      "components": [
+        {
+          "name": "queue-executor",
+          "paths": [
+            "src/koru/queue/ticket.py",
+            "src/koru/queue/runners.py",
+            "src/koru/queue/runner.py",
+            "tests/test_queue_explicit_shell_provider.py"
+          ]
+        },
+        {
+          "name": "shell-backend-regression",
+          "paths": [
+            "tests/test_agent_backend_runtime.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "Stable shell_provider_not_admitted diagnostic for explicit incompatible shell provider"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert bounded material commit; parent adapter task remains open."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_queue_explicit_shell_provider.py tests/test_planfile_queue.py tests/test_queue_admission.py tests/test_queue_runners.py tests/test_subllm_transport.py -q",
+          "./project/governance-check.sh",
+          "python3 -m pytest tests/test_agent_backend_runtime.py -q",
+          "python3 -m ruff check src/koru tests"
+        ],
+        "evidence": "Actual SDK-to-queue and direct runner with conflicting environment; no claim/start/block/done or model/network/vendor calls; legacy central route unchanged."
+      }
+    ]
+  }
+}

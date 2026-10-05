@@ -333,6 +333,9 @@ def _build_llm_request(inputs: dict[str, Any], ticket: dict) -> dict[str, Any] |
         # real refactor do not belong on the same clock.
         "timeout_seconds": inputs.get("llm_timeout_seconds"),
     }
+    # Preserve an explicit executor choice; the runner must validate its transport.
+    if inputs.get("provider") is not None:
+        request["provider"] = inputs["provider"]
     request["task"] = {key: ticket[key] for key in ("id", "files", "labels", "source", "complexity") if key in ticket}
     _task_keys = ("llm_model", "llm_task_kind", "ruff_codes", "complexity", "task_size")
     request["task"]["inputs"] = {key: inputs[key] for key in _task_keys if key in inputs}

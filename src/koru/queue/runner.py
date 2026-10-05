@@ -36,6 +36,7 @@ from koru.queue.planfile_sdk import planfile_lifecycle_command
 from koru.queue.planfile_ticket_note import append_shell_evidence_note
 from koru.queue.runners import (
     _DEFAULT_LLM_MODEL,
+    llm_request_transport_denial,
     preflight_llm_request,
     run_api_request,
     run_llm_request,
@@ -1168,6 +1169,15 @@ def _run_next_planfile_task_impl(
 
         if dry_run:
             return _handle_dry_run(ticket_id, executor_kind, resolved_action)
+
+        # An explicit shell provider must not be claimed or silently handed to
+        # central completion while its independently admitted adapter is absent.
+        if executor_kind == "llm" and (denial := llm_request_transport_denial(resolved_action)):
+            return QueueRunResult(
+                status="infrastructure_error", ticket_id=ticket_id,
+                executor_kind=executor_kind, message=denial, exit_code=1,
+                stderr=denial, autopilot_blocked=True,
+            )
 
         if executor_kind == "llm" and llm_runner is run_llm_request:
             available, preflight_message = preflight_llm_request(project)
