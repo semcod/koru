@@ -463,8 +463,31 @@ def _normalize_llm_model(model: str, endpoint: str) -> str:
     return normalized
 
 
+def llm_request_transport_denial(request: dict[str, Any]) -> str | None:
+    """Refuse explicit shell requests which the central queue cannot execute.
+
+    Environment defaults do not choose this route. A shell adapter needs its
+    own protected admission; an explicit ticket cannot grant it or silently
+    fall through to central completion.
+    """
+    provider = str(request.get("provider") or "").strip().lower()
+    client = _SHELL_LLM_PROVIDER_ALIASES.get(provider, provider)
+    if provider in _SHELL_LLM_GENERIC_PROVIDERS or client in _SHELL_LLM_CLIENT_COMMANDS:
+        return (
+            f"[shell_provider_not_admitted] Requested shell provider '{provider}' "
+            "requires an admitted shell execution adapter; the central SubLLM "
+            "queue route cannot execute this request. The ticket remains pending."
+        )
+    return None
+
+
 def run_llm_request(request: dict[str, Any], project: Path) -> LlmRunResult:
     """Run an LLM ticket through the centrally configured SubLLM route."""
+    if denial := llm_request_transport_denial(request):
+        return LlmRunResult(
+            returncode=1, stdout="", stderr=denial, status_code=0, model="",
+            usage={}, raw={"diagnostic_code": "shell_provider_not_admitted"},
+        )
     messages = _build_llm_messages(request)
     timeout = request.get("timeout_seconds")
     result = run_subllm_messages(
