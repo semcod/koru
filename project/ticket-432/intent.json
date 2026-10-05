@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-432",
+  "summary": "SESSION_EXECUTION_AUTHORIZATION: continue diagnosis, tests, repairs and independent protected delivery. PLF-2671 / GitHub679; bounded diagnostic launch/timeout slice, parent672 remains open.",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-432/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/operator/operator_diagnostics.py",
+    "tests/test_diagnostic_check_failures.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2346e2fef8af469b5a9cf9ee7d27e63532dd23ca",
+    "targetBranch": "main",
+    "outcome": "Failed diagnostic launch/timeout yields normal failed-check intake and the next check runs. Finite subprocess budget, bounded diagnostics, protected merge and local installed readback.",
+    "nonGoals": [
+      "No admitted OpenCode adapter, independent enrollment, default provider switch, or production daemon deployment",
+      "No global workspace cleanup or incident outbox redesign"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reuse the existing failed-check loop and durable local diagnostic ticket/marker path; bound individual subprocess runtime and translate launch/timeout exceptions into false without printing exception details.",
+      "components": [
+        {
+          "name": "autonomous-diagnostic-runner",
+          "paths": [
+            "src/koru/autonomy/operator/operator_diagnostics.py",
+            "tests/test_diagnostic_check_failures.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the bounded runner change; keep parent672 and unrelated workspace recovery requests open."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_diagnostic_check_failures.py tests/test_autonomous_diagnostics.py tests/test_autonomous_diag_markers.py tests/test_planfile_sync.py -q",
+          "python3 -m ruff check src/koru/autonomy/operator/operator_diagnostics.py tests/test_diagnostic_check_failures.py",
+          "docker compose config --quiet",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Real missing executable and controlled short actual timeout; continue healthy checks, real local Planfile intake/dedup, successful/nonzero command and bounded log messages. Independent required OneDev/standards checks at frozen head."
+      }
+    ]
+  }
+}
