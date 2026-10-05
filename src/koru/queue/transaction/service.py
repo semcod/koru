@@ -45,6 +45,7 @@ from koru.queue.patch_mode import (
     VERIFY_PROFILE_INVALID,
     PatchOutcome,
     apply_unified_diff,
+    promotion_mode,
 )
 from koru.queue.transaction.preflight import (
     ManifestFreeze,
@@ -63,6 +64,7 @@ from koru.queue.transaction.result import PatchPlan, PatchTransactionResult
 from koru.queue.transaction.rollback import roll_back_failed_verify
 from koru.queue.transaction.staging import stage_patch
 from koru.queue.types import CommandResult
+from koru.queue.workspace import StagingAdmissionRequired, require_unmanaged_patch_workspace
 
 ShellRunner = Callable[[str, Path], CommandResult]
 Authorizer = Callable[[PatchPlan, dict], PatchOutcome | None]
@@ -96,6 +98,14 @@ def execute_patch_transaction(
     if screened.diff is None or screened.refusal is not None:
         return PatchTransactionResult(result, screened.refusal)
 
+    # An arbitrary local authorizer, an isolation opt-out or a promotion flag
+    # cannot grant protected repository admission. Artifact delivery proposes
+    # a patch without applying it and remains available on governed projects.
+    if promotion_mode(ticket) != PROMOTION_ARTIFACT:
+        refusal = _workspace_admission_refusal(project)
+        if refusal is not None:
+            return PatchTransactionResult(result, refusal)
+
     plan = build_patch_plan(
         project,
         ticket,
@@ -121,6 +131,15 @@ def execute_patch_transaction(
 
     outcome = _run_plan(plan, freeze, shell_runner, journal, authorize=authorize)
     return PatchTransactionResult(result, outcome, plan=plan, manifest=freeze.manifest)
+
+
+def _workspace_admission_refusal(project: Path) -> PatchOutcome | None:
+    """Share the staging boundary; local capability callbacks cannot bypass it."""
+    try:
+        require_unmanaged_patch_workspace(project)
+    except StagingAdmissionRequired as exc:
+        return PatchOutcome(code=PROMOTION_FAILED, message=str(exc))
+    return None
 
 
 def _screen_before_plan(result: CommandResult) -> _ScreenedPatch:
@@ -388,6 +407,11 @@ def _apply_to_workspace(
     verify: bool,
 ) -> PatchOutcome | None:
     """Write the patch into the real tree, gate it if asked, then promote."""
+    # Re-observe after authorizer callbacks or staging. Admission may have
+    # changed since preflight; failed isolation never grants direct-write rights.
+    refusal = _workspace_admission_refusal(plan.project)
+    if refusal is not None:
+        return _refused(journal, refusal)
     freeze.freeze()
 
     _journal_step(journal, PHASE_APPLYING)

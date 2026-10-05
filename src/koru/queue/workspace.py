@@ -298,19 +298,20 @@ def _git_overrides() -> bool:
     )
 
 
-def _require_unmanaged_staging(project: Path) -> None:
+def require_unmanaged_patch_workspace(project: Path) -> None:
+    """Refuse legacy patch writes where protected repository admission is required."""
     if _git_overrides():
-        raise StagingAdmissionRequired("Git environment overrides are not allowed for staging")
+        raise StagingAdmissionRequired("Git environment overrides are not allowed for patch execution")
     absolute = Path(os.path.abspath(project))
     if any(path.is_symlink() for path in (absolute, *absolute.parents)):
-        raise StagingAdmissionRequired("Staging through symlink paths is forbidden")
+        raise StagingAdmissionRequired("Patch execution through symlink paths is forbidden")
     common = _git(project, "rev-parse", "--path-format=absolute", "--git-common-dir")
     if common.returncode != 0 or not common.stdout.strip():
-        raise StagingAdmissionRequired("Cannot establish the primary checkout for staging")
+        raise StagingAdmissionRequired("Cannot establish the primary checkout for patch execution")
     primary = Path(common.stdout.strip()).parent
     if (project / ".governance").exists() or (primary / ".governance").exists():
         raise StagingAdmissionRequired(
-            "Governed staging requires native ticket allocation and protected controller "
+            "Governed patch execution requires native ticket allocation and protected controller "
             "admission; legacy temporary worktrees and local lease files do not grant it"
         )
 
@@ -350,7 +351,7 @@ def staging_worktree(project: Path, seed_files: tuple[str, ...]) -> Iterator[Pat
     across before it is applied. Yields None when the worktree cannot be
     created, leaving the caller to fall back to in-place execution.
     """
-    _require_unmanaged_staging(project)
+    require_unmanaged_patch_workspace(project)
     try:
         path = _worktree_location(project, uuid4().hex[:12])
         if any(component.is_symlink() for component in (path, *path.parents)):
