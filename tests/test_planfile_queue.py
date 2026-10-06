@@ -1157,7 +1157,7 @@ def test_run_next_planfile_task_persists_queue_event(tmp_path: Path) -> None:
             self.assertEqual(result.executor_kind, "mcp")
             self.assertEqual(result.ticket_id, "PLF-020")
 
-    def test_shell_ticket_without_command_auto_completes(self) -> None:
+    def test_shell_ticket_without_command_requests_input(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             project = Path(tmp_dir)
             ticket = {
@@ -1176,11 +1176,12 @@ def test_run_next_planfile_task_persists_queue_event(tmp_path: Path) -> None:
 
             result = run_next_planfile_task(project=project, planfile_runner=planfile_runner)
 
-            self.assertEqual(result.status, "completed")
+            self.assertEqual(result.status, "waiting_input")
             self.assertEqual(result.ticket_id, "PLF-030")
-            # Missing script in non-interactive mode → no-op fallback "true".
-            self.assertTrue(
-                any(_ticket_args(call)[:3] == ["ticket", "done", "PLF-030"] for call in calls),
+            self.assertTrue(result.autopilot_blocked)
+            self.assertFalse(
+                any(_ticket_args(call)[:2] in (["ticket", "claim"], ["ticket", "start"],
+                                              ["ticket", "done"]) for call in calls),
             )
 
     def test_scan_ticket_without_executor_waits_for_ide_prompt(self) -> None:
@@ -3668,3 +3669,38 @@ def test_unaccepted_completion_contract_cannot_run_or_close(tmp_path, declaratio
     assert not any(c[:2] in (["ticket", "claim"], ["ticket", "start"],
                             ["ticket", "done"]) for c in commands)
     assert any(c[:3] == ["ticket", "block", "PLF-109"] for c in commands)
+
+
+@pytest.mark.parametrize("script", [None, "", "   ", "\n\t", 123, {"command": "true"}])
+@pytest.mark.parametrize("dry_run", [False, True])
+@pytest.mark.parametrize("interactive", [False, True])
+def test_invalid_shell_action_cannot_run_or_close(tmp_path, script, dry_run, interactive):
+    ticket = {
+        "id": "SHELL-EMPTY", "name": "Publish and verify runtime",
+        "executor": {"kind": "shell", "mode": "automatic"},
+        "inputs": {"script": script},
+    }
+    commands, shell_calls = [], []
+
+    @runnable_fixture_report
+    def planfile_runner(command, _project):
+        commands.append(_ticket_args(command))
+        if _ticket_args(command)[:2] == ["ticket", "list"]:
+            return _ok(json.dumps(ticket))
+        return _ok()
+
+    def shell_runner(command, _project):
+        shell_calls.append(command)
+        return _ok("successful no-op")
+
+    result = run_next_planfile_task(
+        project=tmp_path, actor="tester", planfile_runner=planfile_runner,
+        shell_runner=shell_runner, dry_run=dry_run, interactive=interactive,
+    )
+    assert result.status == "waiting_input"
+    assert result.autopilot_blocked is True
+    assert not shell_calls
+    assert not any(c[:2] in (["ticket", "claim"], ["ticket", "start"],
+                            ["ticket", "done"]) for c in commands)
+    assert bool(commands) or dry_run
+    assert any(c[:3] == ["ticket", "block", "SHELL-EMPTY"] for c in commands) is not dry_run

@@ -1,0 +1,83 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-434",
+  "summary": "Prevent missing shell commands from becoming successful no-op completion",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-434/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/runner.py",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "320e0f529c6bea40820904652db0984a698d3c60",
+    "targetBranch": "main",
+    "outcome": "Reject absent, blank and non-string shell execution commands before claim/start/run/done; independently publish the complete queue revision including the prior LLM contract guard, verify its installed runtime, then activate bounded idle fleet lanes with preserved dependency/admission bindings and rollback.",
+    "nonGoals": [
+      "No synthetic approval for manually merged PR #698",
+      "No changes to executor selection, explicit valid shell commands or LLM contracts",
+      "No blind status or lease reset and no loss of other actors work"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reuse the existing missing-action block path; remove implicit true fallback and reject non-string or whitespace-only shell actions. Observe valid explicit no-op commands as deliberately declared actions. A fresh independent publication binds the resulting complete runtime.",
+      "components": [
+        {
+          "name": "queue-execution-contract",
+          "paths": [
+            "src/koru/queue/runner.py",
+            "tests/test_planfile_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore the exact prior protected runtime; preserve task notes, evidence and lease history."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_planfile_queue.py tests/test_queue_evidence.py tests/test_queue_runner.py tests/test_koru_queue_argv.py tests/test_mcp_server.py tests/test_queue_cli_helpers.py -q"
+        ],
+        "evidence": "Genuine before/after regression for missing, blank and invalid shell actions across interactive and dry-run modes; accepted commands and existing LLM/transaction tests."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh",
+          "python -m ruff check src/koru/queue/runner.py tests/test_planfile_queue.py"
+        ],
+        "evidence": "Native governance, subsystem verification, current-head/base OneDev and independent approval/merge; installed runtime canary without live task completion."
+      }
+    ]
+  }
+}
