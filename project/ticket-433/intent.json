@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-433",
+  "summary": "Require explicit LLM completion contracts before closing tickets",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-433/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/runner.py",
+    "tests/test_planfile_queue.py",
+    "tests/test_queue_completion_contract.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b5d781f422aa58cf5be1b1bb437cc7bba0ce2314",
+    "targetBranch": "main",
+    "outcome": "Require an explicit analytical response contract or existing source-edit contract before any LLM execution/claim; prevent narrative-only replies from closing implementation tickets. Independently publish and deploy the exact reviewed queue guard.",
+    "nonGoals": [
+      "No keyword-based NL intent inference",
+      "No changes to non-LLM executors, patch transaction authority or publication policy",
+      "No automatic closure of previously misclassified tasks"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reuse inputs.expect_files_changed=false as the explicit answer-delivery declaration and existing patch/refactor/code-change contracts for material edits. Reject absent or incorrectly typed declarations before claim, model invocation and done; retain accepted edit verification and deterministic wait state.",
+      "components": [
+        {
+          "name": "queue-completion-contract",
+          "paths": [
+            "src/koru/queue/runner.py",
+            "tests/test_planfile_queue.py",
+            "tests/test_queue_completion_contract.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Restore the exact prior protected runtime; preserve task notes, evidence and lease history."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_planfile_queue.py tests/test_queue_evidence.py tests/test_queue_runner.py tests/test_koru_queue_argv.py tests/test_mcp_server.py tests/test_queue_cli_helpers.py -q"
+        ],
+        "evidence": "Real before-fix narrative-only completion and malformed declaration regressions; explicit analytical tasks and verified patch transactions remain supported."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh",
+          "python -m ruff check src/koru/queue/runner.py tests/test_planfile_queue.py"
+        ],
+        "evidence": "Native governance, subsystem verification, current-head/base OneDev and independent approval/merge; installed runtime canary without live task completion."
+      }
+    ]
+  }
+}

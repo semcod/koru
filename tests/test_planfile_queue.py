@@ -11,6 +11,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+import pytest
+
 from koru.cqrs.event_store import JsonlEventStore
 from koru.queue import run_next_planfile_task
 from koru.queue.ticket import (
@@ -461,7 +463,7 @@ class TestPlanfileQueue(unittest.TestCase):
                 "name": "Refactor safely",
                 "status": "open",
                 "executor": {"kind": "llm"},
-                "inputs": {"prompt": "Refactor the declared module"},
+                "inputs": {"prompt": "Refactor the declared module", "expect_files_changed": True},
             }
             planfile_calls: list[list[str]] = []
 
@@ -1374,6 +1376,7 @@ class TestPlanfileQueueLlm(unittest.TestCase):
             "inputs": {
                 "prompt": "Should we move only reusable code to packages/?",
                 "llm_model": "openai/gpt-4o-mini",
+                "expect_files_changed": False,
             },
         }
         if overrides:
@@ -3622,3 +3625,46 @@ def test_in_process_planfile_sdk_fast_path(tmp_path, monkeypatch):
     payload = json.dumps([{"id": ticket.id, "name": "fast path task"}])
     admitted = admitted_payload(tmp_path, payload, runner=run_process, queue_name="default")
     assert json.loads(admitted)[0]["id"] == ticket.id
+
+
+@pytest.mark.parametrize("declaration", [None, "false", "true", 0, 1])
+def test_unaccepted_completion_contract_cannot_run_or_close(tmp_path, declaration):
+    ticket = {
+        "id": "PLF-109",
+        "name": "Establish verified offline publication",
+        "executor": {"kind": "llm", "mode": "automatic"},
+        "acceptance_criteria": ["Implement and verify the protected runtime"],
+        "inputs": {"prompt": "Publish the reviewed runtime and verify it."},
+    }
+    if declaration is not None:
+        ticket["inputs"]["expect_files_changed"] = declaration
+    commands = []
+    model_calls = []
+
+    @runnable_fixture_report
+    def planfile_runner(command, _project):
+        commands.append(_ticket_args(command))
+        if _ticket_args(command)[:2] == ["ticket", "list"]:
+            import json
+
+            return _ok(json.dumps(ticket))
+        return _ok()
+
+    def llm_runner(request, _project):
+        model_calls.append(request)
+        return SimpleNamespace(
+            returncode=0, stdout="Here is a breakdown of the remaining tasks.",
+            stderr="", status_code=200, model="test", usage={},
+        )
+
+    result = run_next_planfile_task(
+        project=tmp_path, actor="tester", planfile_runner=planfile_runner,
+        llm_runner=llm_runner,
+    )
+
+    assert result.status == "waiting_input"
+    assert result.autopilot_blocked is True
+    assert not model_calls
+    assert not any(c[:2] in (["ticket", "claim"], ["ticket", "start"],
+                            ["ticket", "done"]) for c in commands)
+    assert any(c[:3] == ["ticket", "block", "PLF-109"] for c in commands)
