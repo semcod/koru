@@ -978,10 +978,12 @@ def _resolve_action_or_result(
         )
 
     resolved_action, missing_prompt = action_info
+    if executor_kind == "shell" and (
+        not isinstance(resolved_action, str) or not resolved_action.strip()
+    ):
+        resolved_action = None
     if resolved_action:
         return resolved_action, None
-    if executor_kind == "shell" and not interactive and not dry_run:
-        return "true", None
 
     if not dry_run:
         planfile_lifecycle_command(
@@ -994,6 +996,7 @@ def _resolve_action_or_result(
         ticket_id=ticket_id,
         executor_kind=executor_kind,
         message=missing_prompt,
+        autopilot_blocked=executor_kind == "shell",
     )
 
 
