@@ -400,6 +400,24 @@ def _duplication_scope_gap(ticket: dict) -> str | None:
     return None
 
 
+def _llm_completion_scope_gap(ticket: dict) -> str | None:
+    """Require a declared deliverable; successful generation alone proves none."""
+    inputs = ticket.get("inputs") or {}
+    if not isinstance(inputs, dict) or (
+        "expect_files_changed" in inputs
+        and type(inputs["expect_files_changed"]) is not bool
+    ):
+        return "[completion_contract_invalid] expect_files_changed must be a boolean."
+    if inputs.get("expect_files_changed") is False or _ticket_expects_edits(ticket):
+        return None
+    return (
+        "[completion_contract_required] Declare the accepted deliverable before execution: "
+        "inputs.expect_files_changed=false only for an analytical answer, or an existing "
+        "source-edit/patch contract with its owned files and verification. "
+        "A model response is not implementation, deployment or publication evidence."
+    )
+
+
 def _snapshot_declared_files(project: Path, ticket: dict) -> dict[str, str]:
     """Hash the ticket's declared files so edits can be detected afterwards."""
     snapshot: dict[str, str] = {}
@@ -559,8 +577,8 @@ def _finalize_ticket(
         if executor_kind == "shell":
             _append_shell_evidence(project, ticket_id, result, planfile_runner)
         elif executor_kind == "llm":
-            # The model answer IS the deliverable — persist it on the ticket
-            # instead of discarding stdout the way pre-0.1.373 releases did.
+            # Persist the answer after the accepted response/edit contract
+            # and, for edits, the transaction's evidence gates have passed.
             _append_shell_evidence(
                 project, ticket_id, result, planfile_runner, tag=LLM_RUN_NOTE_TAG
             )
@@ -1141,7 +1159,9 @@ def _run_next_planfile_task_impl(
                 prompt_runner,
             )
 
-        if executor_kind == "llm" and (gap := _duplication_scope_gap(ticket)):
+        if executor_kind == "llm" and (
+            gap := _duplication_scope_gap(ticket) or _llm_completion_scope_gap(ticket)
+        ):
             if not dry_run:
                 planfile_lifecycle_command(
                     project,
