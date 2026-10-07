@@ -39,6 +39,7 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
+from koru.doctor_project_health import tracked_ignored_runtime_files
 from koru.fleet_admission import scan_admission
 from koru.scan_artifacts import (
     _ANALYSIS_ARTIFACT_PATHS as _ANALYSIS_ARTIFACT_PATHS,  # noqa: F401
@@ -448,7 +449,23 @@ def scan_gitignore_drift(project: Path) -> list[Suggestion]:
     except OSError:
         return []
     if needle in text:
-        return []
+        tracked = tracked_ignored_runtime_files(project)
+        if not tracked:
+            return []
+        return [
+            Suggestion(
+                signal="gitignore_drift",
+                title="Untrack koru runtime files excluded by `.gitignore`",
+                description=(
+                    f"{len(tracked)} koru runtime file(s) are ignored but still tracked, "
+                    "so every koru run dirties the checkout. Run "
+                    "`git rm --cached` on them in a ticket commit."
+                ),
+                priority="low",
+                labels=("hygiene", "scan"),
+                files=tuple(tracked[:20]),
+            ),
+        ]
     return [
         Suggestion(
             signal="gitignore_drift",

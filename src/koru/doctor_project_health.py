@@ -373,15 +373,45 @@ def check_policy_yaml(project: Path) -> tuple[str, str]:
     return PASS, "parses; loaded values match schema"
 
 
+RUNTIME_PATHS = (".koru", ".planfile/.koru")
+
+
+def tracked_ignored_runtime_files(project: Path) -> list[str]:
+    """Return koru runtime files Git still tracks although ``.gitignore`` excludes them.
+
+    A ``.gitignore`` entry does not untrack files committed earlier, so they
+    keep dirtying the checkout on every koru run. Empty outside a Git checkout.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(project), "ls-files", "-ci", "--exclude-standard", "--", *RUNTIME_PATHS],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    if result.returncode != 0:
+        return []
+    return [line for line in result.stdout.splitlines() if line]
+
+
 def check_gitignore(project: Path) -> tuple[str, str]:
     gi = project / ".gitignore"
     if not gi.exists():
         return WARN, ".gitignore missing — runtime artefacts may be committed"
     text = gi.read_text(encoding="utf-8")
     needle = ".planfile/.koru/"
-    if any(line.strip() == needle for line in text.splitlines()):
-        return PASS, f"ignores {needle}"
-    return WARN, f".gitignore does not list {needle} — re-run `koru --init`"
+    if not any(line.strip() == needle for line in text.splitlines()):
+        return WARN, f".gitignore does not list {needle} — re-run `koru --init`"
+    tracked = tracked_ignored_runtime_files(project)
+    if tracked:
+        return WARN, (
+            f"{len(tracked)} ignored koru runtime file(s) still tracked "
+            f"(e.g. {tracked[0]}) — untrack with `git rm --cached`"
+        )
+    return PASS, f"ignores {needle}"
 
 
 def resolve_pytest_collect_timeout() -> float:
