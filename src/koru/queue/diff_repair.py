@@ -59,11 +59,16 @@ def extract_unified_diff(text: str) -> str | None:
     return None
 
 
+_ELLIPSIS_RE = re.compile(r"^\s*(?:\.{3,}|//\s*\.{3,}|\.\.\.\s*\[truncated\])\s*$")
+
+
 def _sanitize_inner_headers(lines: list[str]) -> list[str]:
-    """Strip duplicate or nested diff/file headers leaked inside hunks.
+    """Strip duplicate or nested diff/file headers leaked inside hunks,
+    discard model ellipses (`...`), and fix context lines missing leading spaces.
 
     Models occasionally emit a second diff header or copy ``--- a/...``/``+++ b/...``
-    inside a hunk body, causing git apply to immediately abort with 'corrupt patch'.
+    inside a hunk body, or insert ``...`` placeholders, causing git apply to
+    immediately abort with 'corrupt patch'.
     """
     cleaned: list[str] = []
     in_hunk = False
@@ -79,6 +84,15 @@ def _sanitize_inner_headers(lines: list[str]) -> list[str]:
         if in_hunk:
             if line.startswith(("--- ", "+++ ")) or line.lstrip().startswith(("+--- a/", "+++ b/", "--- a/")):
                 continue
+            if _ELLIPSIS_RE.match(line):
+                continue
+            # If inside a hunk and line doesn't start with +, -, \, or space:
+            # Models sometimes emit context lines without a leading space or with a stray leading dot.
+            if not line.startswith(("+", "-", " ", "\\")):
+                if line.startswith("."):
+                    line = " " + line[1:]
+                else:
+                    line = " " + line
         cleaned.append(line)
     return cleaned
 

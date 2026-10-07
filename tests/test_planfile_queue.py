@@ -2053,6 +2053,43 @@ class TestPatchMode(unittest.TestCase):
         self.assertIn("a/project/analysis.toon.yaml", diff)
         self.assertIn("b/project/analysis.toon.yaml", diff)
         self.assertIn("@@ -9,", diff)
+    def test_strips_ellipses_and_repairs_unspaced_context_lines(self) -> None:
+        """Models sometimes emit unspaced context lines, leading dots, or trailing ellipses (`...`)."""
+        from koru.queue.patch_mode import apply_unified_diff, extract_unified_diff
+
+        reply = (
+            "```diff\n"
+            "diff --git a/project/analysis.toon.yaml b/project/analysis.toon.yaml\n"
+            "--- a/project/analysis.toon.yaml\n"
+            "+++ b/project/analysis.toon.yaml\n"
+            "@@ -1,4 +1,4 @@\n"
+            "# header 1\n"
+            ".HEALTH[1]:\n"
+            "-  - 🟡 old\n"
+            "+  - 🟡 new\n"
+            " ...\n"
+            "```\n"
+        )
+        diff = extract_unified_diff(reply) or ""
+        self.assertNotIn("...", diff)
+        self.assertIn(" HEALTH[1]:", diff)
+        self.assertIn(" # header 1", diff)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            (project / "project").mkdir(parents=True)
+            self._commit_file(
+                project,
+                "project/analysis.toon.yaml",
+                "# header 1\nHEALTH[1]:\n  - 🟡 old\n",
+            )
+            result = apply_unified_diff(project, diff)
+            self.assertTrue(result.ok, result.detail)
+            self.assertEqual(
+                (project / "project" / "analysis.toon.yaml").read_text(encoding="utf-8"),
+                "# header 1\nHEALTH[1]:\n  - 🟡 new\n",
+            )
+
 
     _PATCH_REPLY = (
         "```diff\n"

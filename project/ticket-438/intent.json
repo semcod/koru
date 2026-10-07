@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-438",
+  "summary": "Repair broken context lines and strip ellipses in diff repair",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-438/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/diff_repair.py",
+    "tests/**"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "89488311be7e9d8c1abf5bcfa0e4f2a32cd8f5dc",
+    "targetBranch": "main",
+    "outcome": "Repair broken context lines and strip trailing ellipses in diff repair for robust patch application.",
+    "nonGoals": [
+      "No changes to git backend",
+      "No changes to execution models"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "In diff_repair.py strip ellipses and fix unspaced context lines or leading dot in hunks.",
+      "components": [
+        {
+          "name": "queue-diff-repair",
+          "paths": [
+            "src/koru/queue/diff_repair.py",
+            "tests/test_planfile_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert diff_repair.py changes."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m unittest -k test_strips_ellipses_and_repairs_unspaced_context_lines tests/test_planfile_queue.py"
+        ],
+        "evidence": "Verification of stripping ellipses and repairing broken context lines."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Native governance validation passes."
+      }
+    ]
+  }
+}
