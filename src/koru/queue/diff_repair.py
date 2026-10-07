@@ -34,7 +34,67 @@ _GIT_HEADER_RE = re.compile(r"^diff --git a/(?P<old>.+?) b/(?P<new>.+?)\s*$")
 _SYMLINK_MODE_RE = re.compile(r"^(?:new file mode|new mode) 120000\s*$", re.MULTILINE)
 
 
-def extract_unified_diff(text: str) -> str | None:
+def _normalize_path_prefixes(
+    body: str,
+    *,
+    known_files: tuple[str, ...] | list[str] | set[str] | None = None,
+    project: str | None = None,
+) -> str:
+    """Normalize path prefixes if files match known files or exist under project/src/."""
+    candidates: set[str] = set(known_files or ())
+    if project:
+        try:
+            import os
+            from pathlib import Path
+            proj_p = Path(project)
+            src_p = proj_p / "src"
+            if src_p.is_dir():
+                for root, _, files in os.walk(src_p):
+                    rel_dir = os.path.relpath(root, proj_p)
+                    for f in files:
+                        candidates.add(os.path.join(rel_dir, f))
+        except Exception:
+            pass
+
+    if not candidates:
+        return body
+
+    src_map: dict[str, str] = {}
+    for f in candidates:
+        f_norm = f.replace("\\", "/")
+        if f_norm.startswith("src/"):
+            src_map[f_norm[4:]] = f_norm
+
+    if not src_map:
+        return body
+
+    def _replace_git_header(m: re.Match) -> str:
+        old = m.group("old")
+        new = m.group("new")
+        old_norm = src_map.get(old, old)
+        new_norm = src_map.get(new, new)
+        return f"diff --git a/{old_norm} b/{new_norm}"
+
+    def _replace_old_file_header(m: re.Match) -> str:
+        path = m.group(1)
+        return f"--- a/{src_map.get(path, path)}"
+
+    def _replace_new_file_header(m: re.Match) -> str:
+        path = m.group(1)
+        return f"+++ b/{src_map.get(path, path)}"
+
+    body = _GIT_HEADER_RE.sub(_replace_git_header, body)
+    body = re.sub(r"^--- a/(\S+)", _replace_old_file_header, body, flags=re.MULTILINE)
+    body = re.sub(r"^\+\+\+ b/(\S+)", _replace_new_file_header, body, flags=re.MULTILINE)
+    return body
+
+
+def extract_unified_diff(
+    text: str,
+    *,
+    known_files: tuple[str, ...] | list[str] | set[str] | None = None,
+    project: str | None = None,
+) -> str | None:
     """Pull a unified diff out of an agent's stdout.
 
     Agents habitually wrap diffs in code fences and add commentary, so accept
@@ -50,6 +110,8 @@ def extract_unified_diff(text: str) -> str | None:
     text = re.sub(r"(project/analysis)/toon\.yaml", r"\1.toon.yaml", text)
     text = re.sub(r"([ab]/)analysis/toon\.yaml", r"\1project/analysis.toon.yaml", text)
     text = re.sub(r"(?<![/\w])analysis/toon\.yaml", r"project/analysis.toon.yaml", text)
+    if known_files or project:
+        text = _normalize_path_prefixes(text, known_files=known_files, project=project)
     for match in _FENCE_RE.finditer(text):
         body = match.group("body")
         if _DIFF_START_RE.search(body):

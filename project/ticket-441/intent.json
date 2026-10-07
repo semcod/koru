@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-441",
+  "summary": "Repair diff paths missing src prefix in diff repair",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-441/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/diff_repair.py",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8f588e06e4a704afb79b0bac6a9108fd033a974b",
+    "targetBranch": "main",
+    "outcome": "Allow diff repair to accept known declared files or project root context to normalize path prefixes missing src/ when diff paths omit them.",
+    "nonGoals": [
+      "No changes to git backend",
+      "No arbitrary path rewriting"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "In diff_repair.py extract_unified_diff, accept optional project and target_files hints to normalize paths like algitex/... to src/algitex/... when target file exists or is declared under src/.",
+      "components": [
+        {
+          "name": "diff-repair",
+          "paths": [
+            "src/koru/queue/diff_repair.py",
+            "tests/test_planfile_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert diff_repair.py changes."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_planfile_queue.py -k test_diff_repair"
+        ],
+        "evidence": "Verification of diff repair path normalization."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Native governance validation passes."
+      }
+    ]
+  }
+}

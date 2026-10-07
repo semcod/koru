@@ -2105,6 +2105,47 @@ class TestPatchMode(unittest.TestCase):
                 "# header 1\nHEALTH[1]:\n  - 🟡 new\n",
             )
 
+    def test_diff_repair_normalizes_missing_src_prefix(self) -> None:
+        """Models often omit src/ in python packages; extract_unified_diff should restore it when known."""
+        from koru.queue.patch_mode import extract_unified_diff
+
+        reply = (
+            "```diff\n"
+            "diff --git a/algitex/microtask/__init__.py b/algitex/microtask/__init__.py\n"
+            "--- a/algitex/microtask/__init__.py\n"
+            "+++ b/algitex/microtask/__init__.py\n"
+            "@@ -1,2 +1,2 @@\n"
+            " old\n"
+            "+new\n"
+            "```\n"
+        )
+        # Without hint: leaves diff unchanged
+        diff_raw = extract_unified_diff(reply) or ""
+        self.assertIn("a/algitex/microtask/__init__.py", diff_raw)
+        self.assertNotIn("a/src/algitex", diff_raw)
+
+        # With known_files:
+        diff_known = extract_unified_diff(
+            reply,
+            known_files=("src/algitex/microtask/__init__.py", "tests/test_foo.py"),
+        ) or ""
+        self.assertIn("a/src/algitex/microtask/__init__.py", diff_known)
+        self.assertIn("b/src/algitex/microtask/__init__.py", diff_known)
+        self.assertIn("--- a/src/algitex/microtask/__init__.py", diff_known)
+        self.assertIn("+++ b/src/algitex/microtask/__init__.py", diff_known)
+
+        # With project directory:
+        with tempfile.TemporaryDirectory() as tmp:
+            proj = Path(tmp)
+            target = proj / "src" / "algitex" / "microtask"
+            target.mkdir(parents=True)
+            (target / "__init__.py").write_text("# mod\n", encoding="utf-8")
+            diff_proj = extract_unified_diff(reply, project=str(proj)) or ""
+            self.assertIn("a/src/algitex/microtask/__init__.py", diff_proj)
+            self.assertIn("b/src/algitex/microtask/__init__.py", diff_proj)
+            self.assertIn("--- a/src/algitex/microtask/__init__.py", diff_proj)
+            self.assertIn("+++ b/src/algitex/microtask/__init__.py", diff_proj)
+
 
     _PATCH_REPLY = (
         "```diff\n"
