@@ -3755,3 +3755,43 @@ def test_invalid_shell_action_cannot_run_or_close(tmp_path, script, dry_run, int
                             ["ticket", "done"]) for c in commands)
     assert bool(commands) or dry_run
     assert any(c[:3] == ["ticket", "block", "SHELL-EMPTY"] for c in commands) is not dry_run
+
+
+def test_unmanaged_workspace_and_scan_artifacts(tmp_path: Path):
+    from koru.queue.workspace import require_unmanaged_patch_workspace, StagingAdmissionRequired
+    from koru.scan_artifacts import _code2llm_cc_locations
+    import subprocess
+
+    # 1. Unmanaged workspace check: project with only .governance/docs.json must be allowed
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    subprocess.run(["git", "-C", str(tmp_path), "commit", "--allow-empty", "-m", "init"], check=True)
+    (tmp_path / ".governance").mkdir()
+    (tmp_path / ".governance" / "docs.json").write_text("{}", encoding="utf-8")
+    
+    # Should not raise StagingAdmissionRequired when manifest.json is absent
+    require_unmanaged_patch_workspace(tmp_path)
+
+    # When manifest.json is present, it must raise StagingAdmissionRequired
+    (tmp_path / ".governance" / "manifest.json").write_text("{}", encoding="utf-8")
+    with pytest.raises(StagingAdmissionRequired):
+        require_unmanaged_patch_workspace(tmp_path)
+
+    # 2. scan_artifacts _code2llm_cc_locations resolves entry_points when planfile-tickets is absent
+    test_proj = tmp_path / "proj"
+    test_proj.mkdir()
+    (test_proj / "project").mkdir()
+    src_dir = test_proj / "pkg" / "sub"
+    src_dir.mkdir(parents=True)
+    src_file = src_dir / "worker.py"
+    src_file.write_text("def do_work(): pass\n", encoding="utf-8")
+
+    calls_yaml = test_proj / "project" / "calls.yaml"
+    calls_yaml.write_text(
+        "entry_points:\n"
+        "  - pkg.sub.worker.do_work\n",
+        encoding="utf-8",
+    )
+    locs = _code2llm_cc_locations(test_proj)
+    assert "do_work" in locs
+    assert locs["do_work"] == ["pkg/sub/worker.py"]
+

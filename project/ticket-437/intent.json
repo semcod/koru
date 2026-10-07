@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-437",
+  "summary": "Enhance unmanaged workspace check and code2llm context file resolution",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-437/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/workspace.py",
+    "src/koru/scan_artifacts.py",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "14d6034325d12eefc4a769a94b7c11d7dc37d030",
+    "targetBranch": "main",
+    "outcome": "Refine require_unmanaged_patch_workspace to check manifest.json and improve code2llm entry_points location resolution in scan_artifacts.",
+    "nonGoals": [
+      "No changes to git backend",
+      "No changes to execution models"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "In workspace.py require_unmanaged_patch_workspace check manifest.json; in scan_artifacts.py resolve entry_points from calls.yaml even when tickets_doc is missing.",
+      "components": [
+        {
+          "name": "queue-workspace-and-scanner",
+          "paths": [
+            "src/koru/queue/workspace.py",
+            "src/koru/scan_artifacts.py",
+            "tests/test_planfile_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert workspace.py and scan_artifacts.py changes."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_planfile_queue.py -k test_unmanaged_workspace_and_scan_artifacts -q"
+        ],
+        "evidence": "Verification of workspace governance check and scan artifacts resolution."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Native governance validation passes."
+      }
+    ]
+  }
+}

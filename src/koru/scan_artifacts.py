@@ -124,18 +124,16 @@ def _location_from_cc_ticket(ticket: object) -> tuple[str, str] | None:
 
 def _code2llm_cc_locations(project: Path) -> dict[str, list[str]]:
     """Map a function name to the source file(s) that define it."""
-    tickets_doc = _load_yaml_mapping(project, _PLANFILE_TICKETS_ARTIFACT_PATHS)
-    if tickets_doc is None:
-        return {}
-
     locations: dict[str, list[str]] = {}
-    for ticket in tickets_doc.get("tickets") or []:
-        result = _location_from_cc_ticket(ticket)
-        if result is None:
-            continue
-        key, located = result
-        for alias in {key, key.rsplit(".", 1)[-1]}:
-            _add_location(locations, alias, located)
+    tickets_doc = _load_yaml_mapping(project, _PLANFILE_TICKETS_ARTIFACT_PATHS)
+    if tickets_doc is not None:
+        for ticket in tickets_doc.get("tickets") or []:
+            result = _location_from_cc_ticket(ticket)
+            if result is None:
+                continue
+            key, located = result
+            for alias in {key, key.rsplit(".", 1)[-1]}:
+                _add_location(locations, alias, located)
 
     _merge_call_graph_locations(project, locations)
     return locations
@@ -186,27 +184,47 @@ def _code2llm_module_paths(project: Path) -> dict[str, str]:
 def _merge_call_graph_locations(project: Path, locations: dict[str, list[str]]) -> None:
     """Fill location gaps from the code2llm call graph."""
     graph_doc = _load_yaml_mapping(project, _CALLS_ARTIFACT_PATHS)
-    nodes = graph_doc.get("nodes") if graph_doc else None
-    if not isinstance(nodes, dict):
+    if not graph_doc:
         return
 
     resolved: dict[str, str | None] = {}
-    for qualified, node in nodes.items():
-        if not isinstance(node, dict):
-            continue
-        name = str(node.get("name") or "").strip()
-        module = str(node.get("module") or "").strip()
-        if not name or not module:
-            continue
-        if module not in resolved:
-            resolved[module] = _resolve_module_path(project, module)
-        rel_path = resolved[module]
-        if not rel_path:
-            continue
-        line = node.get("line")
-        located = f"{rel_path}:{line}" if isinstance(line, int) else rel_path
-        for alias in {str(qualified), name}:
-            _add_location(locations, alias, located)
+
+    def _resolve(module_str: str) -> str | None:
+        if module_str not in resolved:
+            resolved[module_str] = _resolve_module_path(project, module_str)
+        return resolved[module_str]
+
+    nodes = graph_doc.get("nodes")
+    if isinstance(nodes, dict):
+        for qualified, node in nodes.items():
+            if not isinstance(node, dict):
+                continue
+            name = str(node.get("name") or "").strip()
+            module = str(node.get("module") or "").strip()
+            if not name or not module:
+                continue
+            rel_path = _resolve(module)
+            if not rel_path:
+                continue
+            line = node.get("line")
+            located = f"{rel_path}:{line}" if isinstance(line, int) else rel_path
+            for alias in {str(qualified), name}:
+                _add_location(locations, alias, located)
+
+    entry_points = graph_doc.get("entry_points")
+    if isinstance(entry_points, list):
+        for entry in entry_points:
+            if not isinstance(entry, str) or not entry.strip():
+                continue
+            parts = entry.strip().split(".")
+            for i in range(len(parts) - 1, 0, -1):
+                mod_candidate = ".".join(parts[:i])
+                fn_candidate = ".".join(parts[i:])
+                rel_path = _resolve(mod_candidate)
+                if rel_path:
+                    for alias in {entry.strip(), fn_candidate, parts[-1]}:
+                        _add_location(locations, alias, rel_path)
+                    break
 
 
 def _file_evidence(project: Path, file_path: Path, rel: str | None = None) -> dict[str, object]:

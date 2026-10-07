@@ -309,7 +309,7 @@ def require_unmanaged_patch_workspace(project: Path) -> None:
     if common.returncode != 0 or not common.stdout.strip():
         raise StagingAdmissionRequired("Cannot establish the primary checkout for patch execution")
     primary = Path(common.stdout.strip()).parent
-    if (project / ".governance").exists() or (primary / ".governance").exists():
+    if (project / ".governance" / "manifest.json").exists() or (primary / ".governance" / "manifest.json").exists():
         raise StagingAdmissionRequired(
             "Governed patch execution requires native ticket allocation and protected controller "
             "admission; legacy temporary worktrees and local lease files do not grant it"
