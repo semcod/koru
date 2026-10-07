@@ -3857,7 +3857,11 @@ def test_unmanaged_workspace_and_scan_artifacts(tmp_path: Path):
 
     # 1. Unmanaged workspace check: project with only .governance/docs.json must be allowed
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
-    subprocess.run(["git", "-C", str(tmp_path), "commit", "--allow-empty", "-m", "init"], check=True)
+    subprocess.run(
+        ["git", "-C", str(tmp_path), "-c", "user.name=koru", "-c", "user.email=koru@test",
+         "commit", "--allow-empty", "-m", "init"],
+        check=True,
+    )
     (tmp_path / ".governance").mkdir()
     (tmp_path / ".governance" / "docs.json").write_text("{}", encoding="utf-8")
     

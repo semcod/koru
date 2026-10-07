@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-443",
+  "summary": "Give the unmanaged-workspace queue test its own Git identity",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-443/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "06648f2a1bacdd4254669d522ff2b9471323b658",
+    "targetBranch": "main",
+    "outcome": "The unmanaged-workspace queue test no longer depends on a global Git identity, so OneDev local verification passes for koru pull requests.",
+    "nonGoals": [
+      "No production code change",
+      "No change to the OneDev executor image"
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Pass user.name/user.email with git -c in the test's seed commit, matching the other tests in the file.",
+      "components": [
+        {
+          "name": "queue-tests",
+          "paths": [
+            "tests/test_planfile_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the test change."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "HOME=$(mktemp -d) python3 -m pytest -q tests/test_planfile_queue.py -k test_unmanaged_workspace_and_scan_artifacts"
+        ],
+        "evidence": "Test passes without a global Git identity."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Native governance validation passes."
+      }
+    ]
+  }
+}
