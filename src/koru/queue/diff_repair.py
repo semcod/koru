@@ -48,6 +48,8 @@ def extract_unified_diff(text: str) -> str | None:
     # Fix common path hallucination: project/analysis/toon.yaml -> project/analysis.toon.yaml
     text = re.sub(r"([ab]/project/analysis)/toon\.yaml", r"\1.toon.yaml", text)
     text = re.sub(r"(project/analysis)/toon\.yaml", r"\1.toon.yaml", text)
+    text = re.sub(r"([ab]/)analysis/toon\.yaml", r"\1project/analysis.toon.yaml", text)
+    text = re.sub(r"(?<![/\w])analysis/toon\.yaml", r"project/analysis.toon.yaml", text)
     for match in _FENCE_RE.finditer(text):
         body = match.group("body")
         if _DIFF_START_RE.search(body):

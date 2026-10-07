@@ -2053,6 +2053,21 @@ class TestPatchMode(unittest.TestCase):
         self.assertIn("a/project/analysis.toon.yaml", diff)
         self.assertIn("b/project/analysis.toon.yaml", diff)
         self.assertIn("@@ -9,", diff)
+
+        reply_bare = (
+            "```diff\n"
+            "diff --git a/analysis/toon.yaml b/analysis/toon.yaml\n"
+            "--- a/analysis/toon.yaml\n"
+            "+++ b/analysis/toon.yaml\n"
+            "@@ -1,2 +1,2 @@\n"
+            " old\n"
+            "+new\n"
+            "```\n"
+        )
+        diff_bare = extract_unified_diff(reply_bare) or ""
+        self.assertIn("a/project/analysis.toon.yaml", diff_bare)
+        self.assertIn("b/project/analysis.toon.yaml", diff_bare)
+
     def test_strips_ellipses_and_repairs_unspaced_context_lines(self) -> None:
         """Models sometimes emit unspaced context lines, leading dots, or trailing ellipses (`...`)."""
         from koru.queue.patch_mode import apply_unified_diff, extract_unified_diff

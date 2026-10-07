@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-439",
+  "summary": "Normalize hallucinated analysis toon paths in diff repair",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-439/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/diff_repair.py",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": ["project/ticket-*/user-*.md"],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "cdf7d9ce3e093ef6cbfae5eedf3a7b24180a870c",
+    "targetBranch": "main",
+    "outcome": "Normalize hallucinated analysis toon paths (analysis/toon.yaml -> project/analysis.toon.yaml) in diff repair.",
+    "nonGoals": [
+      "No changes to git backend",
+      "No changes to execution models"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "In diff_repair.py map [ab]/analysis/toon.yaml to [ab]/project/analysis.toon.yaml.",
+      "components": [
+        {
+          "name": "queue-diff-repair",
+          "paths": [
+            "src/koru/queue/diff_repair.py",
+            "tests/test_planfile_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert diff_repair.py changes."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m unittest -k test_split_hunk_header_and_analysis_toon_path_normalized tests/test_planfile_queue.py"
+        ],
+        "evidence": "Verification of path normalization in diff repair."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Native governance validation passes."
+      }
+    ]
+  }
+}
