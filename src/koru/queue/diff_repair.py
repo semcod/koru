@@ -54,13 +54,37 @@ def extract_unified_diff(text: str) -> str | None:
     return None
 
 
+def _sanitize_inner_headers(lines: list[str]) -> list[str]:
+    """Strip duplicate or nested diff/file headers leaked inside hunks.
+
+    Models occasionally emit a second diff header or copy ``--- a/...``/``+++ b/...``
+    inside a hunk body, causing git apply to immediately abort with 'corrupt patch'.
+    """
+    cleaned: list[str] = []
+    in_hunk = False
+    for line in lines:
+        if line.startswith("@@"):
+            in_hunk = True
+            cleaned.append(line)
+            continue
+        if line.startswith(("diff --git", "index ")):
+            in_hunk = False
+            cleaned.append(line)
+            continue
+        if in_hunk:
+            if line.startswith(("--- ", "+++ ")) or line.lstrip().startswith(("+--- a/", "+++ b/", "--- a/")):
+                continue
+        cleaned.append(line)
+    return cleaned
+
+
 def _normalize_diff(body: str) -> str:
     """Trim trailing fences/prose and guarantee the single trailing newline
     ``git apply`` expects."""
     lines = body.splitlines()
     while lines and lines[-1].strip() in {"", "```"}:
         lines.pop()
-    return "\n".join(_repair_hunk_counts(_repair_missing_file_headers(lines))) + "\n"
+    return "\n".join(_repair_hunk_counts(_repair_missing_file_headers(_sanitize_inner_headers(lines)))) + "\n"
 
 
 def _repair_hunk_counts(lines: list[str]) -> list[str]:

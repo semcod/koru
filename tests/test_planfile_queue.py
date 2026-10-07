@@ -2002,6 +2002,37 @@ class TestPatchMode(unittest.TestCase):
                 (project / "a.txt").read_text(encoding="utf-8"),
                 "one\ninserted\ntwo\nthree\n",
             )
+    def test_inner_headers_in_hunk_are_stripped_and_applied(self) -> None:
+        """Models sometimes repeat file headers inside hunks, which causes corrupt patch."""
+        from koru.queue.patch_mode import apply_unified_diff, extract_unified_diff
+
+        reply = (
+            "```diff\n"
+            "diff --git a/a.txt b/a.txt\n"
+            "--- a/a.txt\n"
+            "+++ b/a.txt\n"
+            "@@ -1,3 +1,4 @@\n"
+            " +--- a/a.txt\n"
+            "+++ b/a.txt\n"
+            " one\n"
+            "+inserted\n"
+            " two\n"
+            " three\n"
+            "```\n"
+        )
+        diff = extract_unified_diff(reply) or ""
+        self.assertNotIn("+--- a/a.txt", diff)
+        self.assertNotIn("+++ b/a.txt\n one", diff)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = self._git_repo(tmp)
+            self._commit_file(project, "a.txt", "one\ntwo\nthree\n")
+            result = apply_unified_diff(project, diff)
+            self.assertTrue(result.ok, result.detail)
+            self.assertEqual(
+                (project / "a.txt").read_text(encoding="utf-8"),
+                "one\ninserted\ntwo\nthree\n",
+            )
 
     _PATCH_REPLY = (
         "```diff\n"

@@ -380,7 +380,7 @@ def _ticket_expects_edits(ticket: dict) -> bool:
     if str(executor.get("mode") or "").lower() == "patch":
         return True
     labels = {str(label).lower() for label in (ticket.get("labels") or [])}
-    return bool(labels & {"refactor", "todo2code", "code-change"})
+    return bool(labels & {"refactor", "todo2code", "code-change", "bootstrap", "gates"})
 
 
 def _duplication_scope_gap(ticket: dict) -> str | None:

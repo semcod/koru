@@ -1,0 +1,83 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-435",
+  "summary": "fix diff repair inner headers and bootstrap gate contracts",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-435/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/diff_repair.py",
+    "src/koru/queue/runner.py",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "70ce4eecb455a08368674771dd253a2596d34c49",
+    "targetBranch": "main",
+    "outcome": "Strip leaked inner headers inside diff hunks to prevent corrupt patch errors during git apply, and recognize bootstrap/gates labels in completion contract verification.",
+    "nonGoals": [
+      "No changes to git execution backend or promotion modes",
+      "No arbitrary modification of model patch contents outside structural header repair"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add _sanitize_inner_headers in diff_repair to drop inner git diff and file headers inside hunk bodies before hunk counts are recomputed; expand _ticket_expects_edits in runner.py to include bootstrap and gates labels.",
+      "components": [
+        {
+          "name": "queue-diff-repair-and-contracts",
+          "paths": [
+            "src/koru/queue/diff_repair.py",
+            "src/koru/queue/runner.py",
+            "tests/test_planfile_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert diff_repair.py and runner.py changes to prior HEAD."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_planfile_queue.py -k test_inner_headers_in_hunk_are_stripped_and_applied -q"
+        ],
+        "evidence": "Verification that repeated inner headers in hunk bodies are stripped and applied cleanly."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Native governance and static validation checks pass."
+      }
+    ]
+  }
+}
