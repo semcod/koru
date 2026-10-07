@@ -1245,8 +1245,9 @@ class TestScanSemcodArtifacts(unittest.TestCase):
             )
             out = scan_semcod_quality_artifacts(project)
             hotspots = [s for s in out if s.signal == "code2llm_layer_hotspot"]
-            self.assertEqual(len(hotspots), 1)
             self.assertIn("src/pkg/autonomous_cycle.py", hotspots[0].files)
+            self.assertNotIn("project/analysis.toon.yaml", hotspots[0].files)
+            self.assertEqual(hotspots[0].files, ("src/pkg/autonomous_cycle.py",))
 
     def test_code2llm_layer_hotspots_skip_doc_modules(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -653,7 +653,7 @@ def _parse_layer_hotspot_suggestions(
         src_path = (module_paths or {}).get(module)
         if src_path is None and project is not None:
             src_path = _resolve_module_path(project, module)
-        ticket_files = tuple(dict.fromkeys(p for p in (src_path, rel) if p))
+        ticket_files = (src_path,) if src_path else (rel,)
         suggestions.append(
             _with_source_context(
                 Suggestion(
