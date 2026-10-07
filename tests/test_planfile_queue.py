@@ -2034,6 +2034,26 @@ class TestPatchMode(unittest.TestCase):
                 "one\ninserted\ntwo\nthree\n",
             )
 
+    def test_split_hunk_header_and_analysis_toon_path_normalized(self) -> None:
+        """Models sometimes output split hunk headers and path project/analysis/toon.yaml."""
+        from koru.queue.patch_mode import extract_unified_diff
+
+        reply = (
+            "```diff\n"
+            "diff --git a/project/analysis/toon.yaml b/project/analysis/toon.yaml\n"
+            "--- a/project/analysis/toon.yaml\n"
+            "+++ b/project/analysis/toon.yaml\n"
+            "@@ -\n"
+            "9,3 +9,3 @@\n"
+            " old\n"
+            "+new\n"
+            "```\n"
+        )
+        diff = extract_unified_diff(reply) or ""
+        self.assertIn("a/project/analysis.toon.yaml", diff)
+        self.assertIn("b/project/analysis.toon.yaml", diff)
+        self.assertIn("@@ -9,", diff)
+
     _PATCH_REPLY = (
         "```diff\n"
         "diff --git a/a.txt b/a.txt\n"

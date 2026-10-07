@@ -1,0 +1,81 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-436",
+  "summary": "normalize analysis toon path and fix split hunk headers in diff repair",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-436/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/diff_repair.py",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "11d51cca5a608998f0e56e95e4e5745836b1356a",
+    "targetBranch": "main",
+    "outcome": "Normalize hallucinated project/analysis/toon.yaml paths to project/analysis.toon.yaml and heal split hunk lines in diff repair.",
+    "nonGoals": [
+      "No changes to git backend",
+      "No changes to execution models"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "In diff_repair.py extract_unified_diff, join split hunk header lines and map project/analysis/toon.yaml to project/analysis.toon.yaml.",
+      "components": [
+        {
+          "name": "queue-diff-repair-paths",
+          "paths": [
+            "src/koru/queue/diff_repair.py",
+            "tests/test_planfile_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert diff_repair.py changes to prior HEAD."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest tests/test_planfile_queue.py -k test_split_hunk_header_and_analysis_toon_path_normalized -q"
+        ],
+        "evidence": "Verification that split hunk headers and analysis.toon.yaml paths are healed."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Native governance validation passes."
+      }
+    ]
+  }
+}

@@ -43,6 +43,11 @@ def extract_unified_diff(text: str) -> str | None:
     """
     if not text:
         return None
+    # Fix split hunk headers produced by some models: @@ -\n<nums> @@
+    text = re.sub(r"@@ -[ \t]*\n[ \t]*(\d+)", r"@@ -\1", text)
+    # Fix common path hallucination: project/analysis/toon.yaml -> project/analysis.toon.yaml
+    text = re.sub(r"([ab]/project/analysis)/toon\.yaml", r"\1.toon.yaml", text)
+    text = re.sub(r"(project/analysis)/toon\.yaml", r"\1.toon.yaml", text)
     for match in _FENCE_RE.finditer(text):
         body = match.group("body")
         if _DIFF_START_RE.search(body):
