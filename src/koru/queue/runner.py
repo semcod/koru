@@ -299,7 +299,8 @@ def _execute_action(
     elif executor_kind == "llm":
         action = _enrich_llm_request_with_context(action, project)
         result = llm_runner(action, project)
-        action_label = f"llm {action.get('model') or _DEFAULT_LLM_MODEL}"
+        runtime_model = getattr(result, "model", None)
+        action_label = f"llm {runtime_model or action.get('model') or _DEFAULT_LLM_MODEL}"
     elif executor_kind in ("taskand", "process"):
         result = taskand_runner(action, project)
         action_label = f"taskand {action.get('uri') or 'orchestrator'}"

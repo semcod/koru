@@ -1,0 +1,91 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-445",
+  "summary": "Report actual SubLLM model in queue execution evidence",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-445/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/runner.py",
+    "tests/test_queue_model_provenance.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [
+    "python",
+    "docker"
+  ],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "552ed81026c9213d05029c9ce395d2e01fa0ca7a",
+    "targetBranch": "main",
+    "outcome": "Queue completion and run-log labels report the actual SubLLM result model, including a local model chosen instead of the requested/default cloud model.",
+    "nonGoals": [
+      "No provider route or permission changes",
+      "No automatic fleet execution or issue closure"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Prefer optional result.model from the executed runner when building the queue action label; retain requested/default label for legacy CommandResult implementations without model metadata.",
+      "components": [
+        {
+          "name": "queue-execution-evidence",
+          "paths": [
+            "src/koru/queue/runner.py",
+            "tests/test_queue_model_provenance.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the source/test delta; no stored state migration."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest -q tests/test_queue_model_provenance.py tests/test_queue_runners.py tests/test_queue_evidence.py"
+        ],
+        "evidence": "Executed model wins; requested/default fallback and failure propagation retain behavior."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Bounded source ownership and delivery contract validated."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "protected OneDev exact-head checks and independent Validator"
+        ],
+        "evidence": "Reviewed exact-head PR merged by protected controller."
+      }
+    ]
+  }
+}
