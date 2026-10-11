@@ -43,7 +43,7 @@ BUILTIN_PROFILES: dict[str, VerifyProfile] = {
     for profile in (
         VerifyProfile(
             name="python-pytest",
-            command="python -m pytest -q",
+            command='python -m pytest -o pythonpath="src ." -q',
             timeout_s=600,
             description="run the project's pytest suite",
         ),

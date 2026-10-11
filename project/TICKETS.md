@@ -442,4 +442,5 @@ project analysis or human-owned ticket inputs.
 | **ticket-442** | [`README.md`](./ticket-442/README.md) | - | - | - | - | - |
 | **ticket-443** | [`README.md`](./ticket-443/README.md) | - | - | - | - | - |
 | **ticket-445** | [`README.md`](./ticket-445/README.md) | - | - | - | - | - |
+| **ticket-447** | [`README.md`](./ticket-447/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->

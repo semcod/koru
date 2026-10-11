@@ -109,6 +109,10 @@ class TestRegistry(_RepoCase):
                 "shellcheck",
             ):
                 self.assertIsNotNone(registry.get(name), name)
+            self.assertEqual(
+                registry.get("python-pytest").command,
+                'python -m pytest -o pythonpath="src ." -q',
+            )
 
     def test_a_project_profile_from_koru_yaml_is_loaded(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
