@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-447",
+  "summary": "Support force staging and add returncode check for verified patch paths in commit_worktree",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-447/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/workspace.py",
+    "tests/test_queue_workspace_retention.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e960b60e6316e557fb7a0034b9fef48317d2de09",
+    "targetBranch": "main",
+    "outcome": "Ensure explicit verified patch paths are staged with -f in commit_worktree and commit_on_main, and verify staging exit code before commit.",
+    "nonGoals": [
+      "No changes to admission checks or governance rules",
+      "No changes to promotion modes or verification pipeline"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use -f flag when staging explicit verified patch paths in commit_worktree and commit_on_main, and verify command exit code before commit.",
+      "components": [
+        {
+          "name": "queue-workspace",
+          "paths": [
+            "src/koru/queue/workspace.py",
+            "tests/test_queue_workspace_retention.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit on ticket-447."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_queue_workspace_retention.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Regression test verifying that verified patch paths matched by .gitignore rules are staged and committed properly."
+      }
+    ]
+  }
+}

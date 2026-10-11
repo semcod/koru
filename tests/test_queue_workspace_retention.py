@@ -126,7 +126,9 @@ def test_removal_during_cleanup_observation_does_not_mask_result(repo: Path) -> 
 
 @pytest.mark.parametrize("linked", [False, True])
 def test_governed_staging_requires_controller(repo: Path, linked: bool) -> None:
-    (repo / ".governance").mkdir()
+    gov = repo / ".governance"
+    gov.mkdir()
+    (gov / "manifest.json").write_text("{}")
     root = repo
     if linked:
         root = repo.parent / "existing-linked"
@@ -145,7 +147,9 @@ def test_governed_staging_requires_controller(repo: Path, linked: bool) -> None:
 
 @pytest.mark.parametrize("mode", ["branch", "apply"])
 def test_governed_refusal_does_not_run_verifier_or_apply(repo: Path, mode: str) -> None:
-    (repo / ".governance").mkdir()
+    gov = repo / ".governance"
+    gov.mkdir()
+    (gov / "manifest.json").write_text("{}")
     diff = "diff --git a/a.txt b/a.txt\n--- a/a.txt\n+++ b/a.txt\n@@ -1 +1 @@\n-old\n+new\n"
     plan = build_patch_plan(repo, {"id": "T-1", "inputs": {"promotion_mode": mode}}, diff)
     runner = Mock(side_effect=AssertionError("verifier must not run"))
@@ -183,3 +187,21 @@ def test_git_override_is_refused_before_any_git_effect(repo: Path, monkeypatch: 
         with pytest.raises(StagingAdmissionRequired, match="overrides"):
             with staging_worktree(repo, ()):
                 pytest.fail("redirected workspace admitted")
+
+
+def test_commit_worktree_stages_explicit_paths_even_if_ignored(repo: Path) -> None:
+    _repolab.commit_file(repo, ".gitignore", ".planfile/\n")
+    with staging_worktree(repo, ()) as staged:
+        assert staged is not None
+        planfile_file = staged / ".planfile" / "sync" / "state.yaml"
+        planfile_file.parent.mkdir(parents=True)
+        planfile_file.write_text("version: 1\n")
+        ok, detail = workspace.commit_worktree(
+            staged,
+            "koru/run-test-ignored",
+            "koru(T-1): commit test",
+            (".planfile/sync/state.yaml",),
+        )
+        assert ok, f"commit_worktree failed: {detail}"
+        committed_content = git(staged, "show", "koru/run-test-ignored:.planfile/sync/state.yaml")
+        assert committed_content.strip() == "version: 1"
