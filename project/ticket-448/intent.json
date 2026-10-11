@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-448",
+  "summary": "Support pythonpath src and dot fallback in python-pytest builtin verify profile",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-448/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/verify/profiles.py",
+    "tests/test_queue_verify_profiles.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "54490af40c001591304cb616cd66ec5617469716",
+    "targetBranch": "main",
+    "outcome": "Include src and . in pythonpath option for python-pytest builtin verify profile so that packages using src/ layout can be verified in fresh worktrees without prior editable install.",
+    "nonGoals": [
+      "No changes to other verify profiles",
+      "No changes to custom project profiles"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Configure python-pytest builtin profile to execute python -m pytest -o pythonpath=\"src .\" -q.",
+      "components": [
+        {
+          "name": "queue-verify-profiles",
+          "paths": [
+            "src/koru/queue/verify/profiles.py",
+            "tests/test_queue_verify_profiles.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-448."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_queue_verify_profiles.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Tests verifying python-pytest command configuration and fallback."
+      }
+    ]
+  }
+}
