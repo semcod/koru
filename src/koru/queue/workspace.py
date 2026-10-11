@@ -200,7 +200,7 @@ def commit_on_main(
 ) -> tuple[bool, str]:
     """Commit only the patch's files on the current branch."""
     if paths:
-        staged = _git(project, "add", "--", *paths)
+        staged = _git(project, "add", "-f", "--", *paths)
     else:
         staged = _git(project, "add", "-A")
     if staged.returncode != 0:
@@ -227,7 +227,12 @@ def commit_worktree(
     switched = _git(worktree, "switch", "--quiet", "-c", branch)
     if switched.returncode != 0:
         return False, (switched.stderr or "").strip()[:300]
-    _git(worktree, "add", "--", *paths) if paths else _git(worktree, "add", "-A")
+    if paths:
+        staged = _git(worktree, "add", "-f", "--", *paths)
+    else:
+        staged = _git(worktree, "add", "-A")
+    if staged.returncode != 0:
+        return False, (staged.stderr or staged.stdout or "").strip()[:300]
     committed = _git(worktree, "commit", "--quiet", "-m", message)
     if committed.returncode != 0:
         return False, (committed.stderr or committed.stdout or "").strip()[:300]
