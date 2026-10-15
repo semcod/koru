@@ -21,7 +21,9 @@
     "tests/test_queue_transaction_phases.py",
     "tests/test_queue_verification_sandbox.py",
     "src/koru/queue/workspace.py",
-    "tests/test_queue_verify_profiles.py"
+    "tests/test_queue_verify_profiles.py",
+    "tests/test_planfile_queue.py",
+    "tests/test_queue_governed_patch_admission.py"
   ],
   "forbiddenPaths": [
     "project/ticket-*/user-*.md"
@@ -33,7 +35,7 @@
   "delivery": {
     "acceptedBaseSha": "febdb1e2beac504e7ca939b89537f9c507d5dcc5",
     "targetBranch": "main",
-    "outcome": "Kernel-isolate baseline, staged and in-place Koru patch verification so candidate tests and all descendants cannot write source/host paths or invoke network/host Unix socket effects; retain writable repository-owned scratch only. Reject partial or malformed governance markers before patch writes; preserve the rendered verification command inside the sandbox.",
+    "outcome": "Kernel-isolate baseline, staged and in-place Koru patch verification so candidate tests and descendants cannot write source/host paths or invoke network/host Unix socket effects; retain writable repository-owned scratch only. Preserve native-adoption classification and correct native fixtures and verification test doubles.",
     "nonGoals": [
       "No editing, admission, lease, MCP or publication grant",
       "No global host configuration or runtime activation",
@@ -69,7 +71,9 @@
             "tests/test_queue_journal.py",
             "tests/test_queue_evidence.py",
             "tests/test_queue_recovery.py",
-            "tests/test_queue_verify_profiles.py"
+            "tests/test_queue_verify_profiles.py",
+            "tests/test_planfile_queue.py",
+            "tests/test_queue_governed_patch_admission.py"
           ]
         }
       ],

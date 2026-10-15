@@ -18,14 +18,10 @@ This changes verification execution only. It grants no editing, lease, publicati
 - [x] AC-03: Focused transaction tests, required project checks and managed governance pass; test scratch stays inside this worktree.
 - [ ] AC-04: Independent exact-head publication and separate delivery states are recorded. No global enforcement claim.
 
-## Accepted scope refinement
+## Final scope and validation
 
-The broader queue regression run exposed that an empty or malformed `.governance` marker is treated as unmanaged when `manifest.json` is missing. The existing 35 refusal regressions fail before this slice. Include `workspace.py` to close that fail-open classification without granting editing authority. The rendered-profile assertion must check the command inside the sandbox envelope. Ownership of both paths was independently re-observed as free; preserve foreign ticket-446. Unrelated pre-existing provider/execution-plan failures remain outside this slice.
+Preserve the existing distinction between docs-only metadata and native project adoption. The first refinement treated every `.governance` directory as native; CI exposed that this reversed the deliberate docs-only behavior from commit 89488311. Restore the original production classifier and update the native-admission fixtures to create `manifest.json`. The 35 earlier failures came from fixtures missing that native marker, rather than a proven production admission bypass.
 
-## Validation and limits
+Focused tests and real kernel denials passed locally; final counts are recorded in the owning receipts. The required critical suite passed 257 tests. The broad queue run also confirmed two existing provider failures and five existing execution-plan fixture errors on baseline HEAD. Preserve foreign active ticket-446.
 
-Final focused suite: 167 tests and 10 subtests passed, including real kernel denials and a real transaction whose attempted out-of-scope verifier write was denied and whose candidate patch was rolled back. The required critical suite passed 257 tests. Managed governance passed with zero errors/warnings. Test temporary files, JUnit and bounded receipts are kept in this checkout’s `.subactor` namespaces.
-
-A broad queue run passed 390 tests and 28 subtests, with two existing provider tests failing and five existing execution-plan fixture errors. Replaying the original HEAD transaction modules reproduced those failures before the patch, along with the 35 partial-governance refusal failures now repaired. The two provider tests belong to foreign active ticket-446; no edits or takeover were made there. The full repository suite is not claimed clean.
-
-This boundary requires Linux, a protected system bubblewrap binary and libseccomp. Missing support refuses execution. Verification is offline and source is read-only; only private repository-owned scratch is writable. It is a write/IPC boundary, not a claim of secret-read isolation, controller admission, global LLM coverage, MCP authorization or deployment. Independent exact-head publication remains pending.
+OneDev runs transaction unit tests on a host without the sandbox tools. Give those unit tests an explicit verifier test double; the separate kernel tests continue to run the real wrapper and real transaction. Production verification remains mandatory and fails closed when support is absent. This slice makes no secret-read, global LLM, MCP, editing authority or deployment claim.
