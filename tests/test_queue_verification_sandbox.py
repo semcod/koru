@@ -8,8 +8,6 @@ import subprocess
 import sys
 import tempfile
 
-import pytest
-
 from koru.queue.verification_sandbox import run_verification
 
 
@@ -23,6 +21,14 @@ def test_missing_backend_never_executes_command(tmp_path, monkeypatch):
     result = run_verification("touch escaped", tmp_path, lambda *args: calls.append(args))
     assert result.returncode != 0
     assert "verification_sandbox_unavailable" in result.stderr
+    assert calls == []
+
+
+def test_unsupported_platform_never_executes_command(tmp_path, monkeypatch):
+    monkeypatch.setattr("koru.queue.verification_sandbox.sys.platform", "unsupported")
+    calls = []
+    result = run_verification("touch escaped", tmp_path, lambda *args: calls.append(args))
+    assert result.returncode != 0
     assert calls == []
 
 
@@ -57,8 +63,7 @@ def test_symlinked_scratch_is_refused(tmp_path):
 
 
 def test_kernel_denies_writes_and_host_sockets_in_children():
-    if sys.platform != "linux" or not shutil.which("bwrap"):
-        pytest.skip("Linux bubblewrap is required for real kernel evidence")
+    assert sys.platform == "linux" and shutil.which("bwrap"), "Kernel evidence requires Linux bubblewrap"
     cache = Path.cwd() / ".subactor/cache/ticket-449/kernel-tests"
     cache.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=cache) as temporary:
@@ -126,8 +131,7 @@ print('kernel-boundary-passed')
 def test_real_transaction_applies_patch_but_verifier_cannot_write(monkeypatch):
     from koru.queue.transaction import execute_patch_transaction
 
-    if sys.platform != "linux" or not shutil.which("bwrap"):
-        pytest.skip("Linux bubblewrap is required for real kernel evidence")
+    assert sys.platform == "linux" and shutil.which("bwrap"), "Kernel evidence requires Linux bubblewrap"
     cache = Path.cwd() / ".subactor/cache/ticket-449/transaction-tests"
     cache.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=cache) as temporary:
