@@ -64,6 +64,7 @@ from koru.queue.transaction.result import PatchPlan, PatchTransactionResult
 from koru.queue.transaction.rollback import roll_back_failed_verify
 from koru.queue.transaction.staging import stage_patch
 from koru.queue.types import CommandResult
+from koru.queue.verification_sandbox import run_verification
 from koru.queue.workspace import StagingAdmissionRequired, require_unmanaged_patch_workspace
 
 ShellRunner = Callable[[str, Path], CommandResult]
@@ -430,7 +431,7 @@ def _apply_to_workspace(
 
     if verify:
         try:
-            gate = shell_runner(plan.verify_command, plan.project)
+            gate = run_verification(plan.verify_command, plan.project, shell_runner)
         except Exception as exc:
             gate = SimpleNamespace(returncode=1, stdout="", stderr=f"{type(exc).__name__}: {exc}")
         if gate.returncode != 0:

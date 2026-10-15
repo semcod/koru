@@ -1854,6 +1854,15 @@ class TestPatchMode(unittest.TestCase):
         patcher = patch.dict(os.environ, {"KORU_QUEUE_PROMOTION_MODE": "apply"})
         patcher.start()
         self.addCleanup(patcher.stop)
+        # These are transaction unit tests with injected gate callbacks.
+        # Actual namespace/IPC enforcement has separate kernel regressions.
+        for module in ("service", "staging"):
+            boundary = patch(
+                f"koru.queue.transaction.{module}.run_verification",
+                side_effect=lambda command, cwd, runner: runner(command, cwd),
+            )
+            boundary.start()
+            self.addCleanup(boundary.stop)
 
     def _git_repo(self, tmp: str) -> Path:
         # Retained staging is test-owned and must stay inside this fixture.

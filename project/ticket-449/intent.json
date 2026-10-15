@@ -1,0 +1,109 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-449",
+  "summary": "Contain patch verification filesystem and network effects",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-449/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/transaction/service.py",
+    "src/koru/queue/transaction/staging.py",
+    "src/koru/queue/verification_sandbox.py",
+    "tests/test_queue_evidence.py",
+    "tests/test_queue_journal.py",
+    "tests/test_queue_recovery.py",
+    "tests/test_queue_transaction_phases.py",
+    "tests/test_queue_verification_sandbox.py",
+    "src/koru/queue/workspace.py",
+    "tests/test_queue_verify_profiles.py",
+    "tests/test_planfile_queue.py",
+    "tests/test_queue_governed_patch_admission.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "febdb1e2beac504e7ca939b89537f9c507d5dcc5",
+    "targetBranch": "main",
+    "outcome": "Kernel-isolate baseline, staged and in-place Koru patch verification so candidate tests and descendants cannot write source/host paths or invoke network/host Unix socket effects; retain writable repository-owned scratch only. Preserve native-adoption classification and correct native fixtures and verification test doubles.",
+    "nonGoals": [
+      "No editing, admission, lease, MCP or publication grant",
+      "No global host configuration or runtime activation",
+      "No changes to foreign active ticket446 or blocked ticket444",
+      "No unsandboxed compatibility fallback"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 9,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 2
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Mandatory verification wrapper retains the injected shell-runner contract but runs its command through Linux bubblewrap plus a native-architecture libseccomp filter. All host mounts are read-only except exclusive repository-local scratch. Clear inherited environment; deny socket and namespace escape syscalls; fail closed if support is unavailable. Existing protected write/promotion boundaries are unchanged.",
+      "components": [
+        {
+          "name": "verification-boundary",
+          "paths": [
+            "src/koru/queue/verification_sandbox.py",
+            "src/koru/queue/transaction/staging.py",
+            "src/koru/queue/transaction/service.py",
+            "src/koru/queue/workspace.py"
+          ]
+        },
+        {
+          "name": "regressions",
+          "paths": [
+            "tests/test_queue_verification_sandbox.py",
+            "tests/test_queue_transaction_phases.py",
+            "tests/test_queue_journal.py",
+            "tests/test_queue_evidence.py",
+            "tests/test_queue_recovery.py",
+            "tests/test_queue_verify_profiles.py",
+            "tests/test_planfile_queue.py",
+            "tests/test_queue_governed_patch_admission.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the material implementation through protected publication; do not weaken sandbox requirements or issue authority from test receipts."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q tests/test_queue_verification_sandbox.py tests/test_queue_transaction_phases.py tests/test_queue_journal.py tests/test_queue_evidence.py tests/test_queue_recovery.py",
+          "python3 -m pytest -q tests/test_queue_governed_patch_admission.py tests/test_queue_verify_profiles.py"
+        ],
+        "evidence": "Owning worktree .subactor/receipts/ticket-449 focused JUnit and bounded checkpoint"
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Managed governance plus declared stack checks and exact-head protected publication"
+      }
+    ]
+  }
+}

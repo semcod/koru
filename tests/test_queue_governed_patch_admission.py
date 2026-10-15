@@ -37,6 +37,7 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 def governed_root(repo: Path, linked: bool) -> Path:
     (repo / ".governance").mkdir()
+    (repo / ".governance/manifest.json").write_text("{}")
     if not linked:
         return repo
     # Only the registered primary has the marker: linked lookup must find it.
@@ -107,6 +108,8 @@ def test_unmanaged_direct_apply_keeps_legacy_behavior(
     repo: Path, monkeypatch: pytest.MonkeyPatch, verify: bool,
 ) -> None:
     monkeypatch.setenv("KORU_QUEUE_WORKTREE", "0")
+    monkeypatch.setattr("koru.queue.transaction.service.run_verification",
+                        lambda command, cwd, runner: runner(command, cwd))
     runner = Mock(return_value=_repolab.reply())
     inputs = {"promotion_mode": "apply"}
     if verify:
@@ -125,6 +128,7 @@ def test_recheck_after_local_authorizer(repo: Path, monkeypatch: pytest.MonkeyPa
 
     def local_callback(plan, frozen):
         (repo / ".governance").mkdir()
+        (repo / ".governance/manifest.json").write_text("{}")
         return None
 
     result = execute_patch_transaction(
@@ -141,6 +145,7 @@ def test_recheck_after_staging_before_fallback_or_promotion(repo: Path, staged: 
 
     def stage_then_change_authority(plan, shell_runner):
         (repo / ".governance").mkdir()
+        (repo / ".governance/manifest.json").write_text("{}")
         return StagingResult.verified() if staged else StagingResult.unavailable()
 
     with patch("koru.queue.transaction.service.stage_patch", side_effect=stage_then_change_authority):
