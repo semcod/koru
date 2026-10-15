@@ -7,6 +7,7 @@ loudly instead of degrading to a weaker gate.
 
 from __future__ import annotations
 
+import shlex
 import subprocess
 import tempfile
 import unittest
@@ -405,7 +406,7 @@ class TestTransactionIntegration(_RepoCase):
             self.assertTrue(seen, "the gate must have run")
             self.assertIn("node --check", seen[0])
             self.assertIn("a.js", seen[0])
-            self.assertTrue(seen[0].startswith("timeout 60s "), seen[0])
+            self.assertTrue(shlex.split(seen[0])[-1].startswith("timeout 60s "), seen[0])
 
 
 class TestVerifyProfileDataclass(unittest.TestCase):

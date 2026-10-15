@@ -30,6 +30,7 @@ from koru.queue.transaction.verification import (
 )
 from koru.queue.types import CommandResult
 from koru.queue.workspace import StagingAdmissionRequired
+from koru.queue.verification_sandbox import run_verification
 
 
 def stage_patch(
@@ -72,7 +73,7 @@ def _stage_patch(
                 ),
             )
 
-        verify = shell_runner(plan.verify_command, staged)
+        verify = run_verification(plan.verify_command, staged, shell_runner)
         if verify.returncode != 0:
             return StagingResult.refused(_staged_verify_failure(plan, baseline, verify))
 
@@ -105,7 +106,7 @@ def _record_baseline(
     """
     if skip_verify_baseline(plan.ticket):
         return _Baseline()
-    result = shell_runner(plan.verify_command, staged)
+    result = run_verification(plan.verify_command, staged, shell_runner)
     if result.returncode == 0:
         return _Baseline()
     return _Baseline(ok=False, output=verify_output(result, limit=BASELINE_OUTPUT_LIMIT))
