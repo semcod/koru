@@ -29,8 +29,8 @@ from koru.queue.transaction.verification import (
     verify_output,
 )
 from koru.queue.types import CommandResult
-from koru.queue.workspace import StagingAdmissionRequired
 from koru.queue.verification_sandbox import run_verification
+from koru.queue.workspace import StagingAdmissionRequired
 
 
 def stage_patch(

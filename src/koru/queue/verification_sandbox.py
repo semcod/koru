@@ -11,7 +11,6 @@ import ctypes
 import ctypes.util
 import errno
 import os
-from pathlib import Path
 import shlex
 import shutil
 import stat
@@ -19,6 +18,7 @@ import subprocess
 import sys
 import tempfile
 from collections.abc import Callable
+from pathlib import Path
 
 
 class SandboxUnavailable(ValueError):

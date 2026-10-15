@@ -64,8 +64,8 @@ from koru.queue.transaction.result import PatchPlan, PatchTransactionResult
 from koru.queue.transaction.rollback import roll_back_failed_verify
 from koru.queue.transaction.staging import stage_patch
 from koru.queue.types import CommandResult
-from koru.queue.workspace import StagingAdmissionRequired, require_unmanaged_patch_workspace
 from koru.queue.verification_sandbox import run_verification
+from koru.queue.workspace import StagingAdmissionRequired, require_unmanaged_patch_workspace
 
 ShellRunner = Callable[[str, Path], CommandResult]
 Authorizer = Callable[[PatchPlan, dict], PatchOutcome | None]
