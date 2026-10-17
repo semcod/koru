@@ -76,6 +76,12 @@ _ANALYSIS_ARTIFACT_PATHS = (
     "project/analysis.toon",
     "analysis.toon.yaml",
 )
+DUPLICATION_ARTIFACT_CANDIDATES = (
+    "project/duplication.toon.yaml",
+    "duplication.toon.yaml",
+    "project/duplication.yaml",
+    "duplication.yaml",
+)
 _PLANFILE_TICKETS_ARTIFACT_PATHS = (
     "project/planfile-tickets.yaml",
     "planfile-tickets.yaml",
@@ -412,6 +418,244 @@ def _is_rm_duplicates_refactor(desc: str, note: str) -> bool:
     return "duplicate" in blob or "dup group" in blob or "dup groups" in blob
 
 
+_SCAN_ARTIFACT_BASENAMES = frozenset(
+    {
+        "analysis.toon.yaml",
+        "analysis.toon",
+        "duplication.toon.yaml",
+        "duplication.yaml",
+        "calls.yaml",
+        "calls.toon.yaml",
+        "map.toon.yaml",
+        "project.toon.yaml",
+    }
+)
+
+
+def _is_scan_artifact_rel(path_str: str) -> bool:
+    norm = str(path_str or "").replace("\\", "/").strip().lstrip("./")
+    if not norm:
+        return True
+    return norm.rsplit("/", 1)[-1].lower() in _SCAN_ARTIFACT_BASENAMES
+
+
+_DUP_HOTSPOT_RE = re.compile(
+    r"^\s+(?P<path>[A-Za-z0-9_./-]+\.[A-Za-z0-9_]+)\s+dup=(?P<dup>\d+)L\s+groups=(?P<groups>\d+)",
+    re.MULTILINE,
+)
+_DUP_GROUP_HEADER_RE = re.compile(
+    r"^\s+\[(?P<id>[^\]]+)\]\s+(?P<kind>\S+)\s+(?P<name>\S+)\s+L=(?P<lines>\d+)\s+N=(?P<count>\d+)\s+saved=(?P<saved>\d+)",
+)
+_DUP_LOC_LINE_RE = re.compile(
+    r"^\s+(?P<path>[A-Za-z0-9_./-]+\.[A-Za-z0-9_]+):(?P<start>\d+)-(?P<end>\d+)",
+)
+
+
+def _extract_duplication_toon_files(text: str) -> tuple[str, ...]:
+    """Extract unique source file paths from a redup/duplication .toon.yaml document."""
+    seen: list[str] = []
+    for m in _DUP_LOC_LINE_RE.finditer(text):
+        p = m.group("path").strip()
+        if p and not _is_scan_artifact_rel(p) and p not in seen:
+            seen.append(p)
+    for m in _DUP_HOTSPOT_RE.finditer(text):
+        p = m.group("path").strip()
+        if p and not _is_scan_artifact_rel(p) and p not in seen:
+            seen.append(p)
+    return tuple(seen)
+
+
+def _parse_duplication_toon_suggestions(
+    text: str | dict[str, Any],
+    rel: str = "project/duplication.toon.yaml",
+    *,
+    source_context: dict[str, object] | None = None,
+) -> list[Suggestion]:
+    """Parse actionable duplicate groups and hotspots from duplication.toon.yaml."""
+    suggestions: list[Suggestion] = []
+    doc: dict[str, Any] | None = None
+    if isinstance(text, dict):
+        doc = text
+        raw_text = ""
+    else:
+        raw_text = str(text or "")
+
+    lines = raw_text.splitlines()
+    in_duplicates = False
+    current_group: dict[str, Any] | None = None
+    groups: list[dict[str, Any]] = []
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("DUPLICATES"):
+            in_duplicates = True
+            continue
+        if in_duplicates and stripped.startswith(("REFACTOR", "QUICK_WINS", "EFFORT_ESTIMATE", "METRICS-TARGET", "HOTSPOTS", "SUMMARY")):
+            if current_group:
+                groups.append(current_group)
+                current_group = None
+            in_duplicates = False
+            continue
+        if not in_duplicates:
+            continue
+        m_hdr = _DUP_GROUP_HEADER_RE.match(line)
+        if m_hdr:
+            if current_group:
+                groups.append(current_group)
+            current_group = {
+                "id": m_hdr.group("id"),
+                "kind": m_hdr.group("kind"),
+                "name": m_hdr.group("name"),
+                "lines": int(m_hdr.group("lines")),
+                "count": int(m_hdr.group("count")),
+                "saved": int(m_hdr.group("saved")),
+                "files": [],
+                "spans": [],
+            }
+            continue
+        if current_group is not None:
+            m_loc = _DUP_LOC_LINE_RE.match(line)
+            if m_loc:
+                p = m_loc.group("path").strip()
+                span = f"{p}:{m_loc.group('start')}-{m_loc.group('end')}"
+                current_group["spans"].append(span)
+                if p and not _is_scan_artifact_rel(p) and p not in current_group["files"]:
+                    current_group["files"].append(p)
+
+    if current_group:
+        groups.append(current_group)
+
+    for grp in groups:
+        grp_files = tuple(grp["files"])
+        if not grp_files:
+            continue
+        saved = grp["saved"]
+        priority = "high" if saved >= 20 else "normal"
+        spans_desc = ", ".join(f"`{s}`" for s in grp["spans"][:6])
+        suggestions.append(
+            _with_source_context(
+                Suggestion(
+                    signal="redup_duplication",
+                    title=f"Deduplicate {grp['name']} ({grp['count']} occurrences, saves {saved}L)",
+                    description=(
+                        f"`{rel}` reports duplicate group `[{grp['id']}]` (`{grp['name']}`, "
+                        f"kind={grp['kind']}, L={grp['lines']}, N={grp['count']}, saved={saved}L) "
+                        f"at {spans_desc}. Extract shared helper/module."
+                    ),
+                    priority=priority,
+                    labels=("redup", "duplication", "refactor", "scan"),
+                    files=grp_files,
+                ),
+                source_context,
+            )
+        )
+
+    if not suggestions and doc is None and raw_text.strip():
+        try:
+            import yaml
+
+            loaded = yaml.safe_load(raw_text)
+            if isinstance(loaded, dict):
+                doc = loaded
+        except Exception:
+            doc = None
+
+    if not suggestions and isinstance(doc, dict):
+        yaml_groups = (
+            doc.get("duplication_groups")
+            or doc.get("clusters")
+            or doc.get("duplicates")
+            or []
+        )
+        if isinstance(yaml_groups, list):
+            for idx, item in enumerate(yaml_groups, start=1):
+                if not isinstance(item, dict):
+                    continue
+                item_files: list[str] = []
+                spans: list[str] = []
+                for loc in item.get("locations") or []:
+                    if isinstance(loc, dict):
+                        f_str = str(loc.get("file") or loc.get("path") or "").strip()
+                        if f_str and not _is_scan_artifact_rel(f_str):
+                            if f_str not in item_files:
+                                item_files.append(f_str)
+                            start = loc.get("start")
+                            end = loc.get("end")
+                            if start is not None and end is not None:
+                                spans.append(f"{f_str}:{start}-{end}")
+                            else:
+                                spans.append(f_str)
+                for f_raw in item.get("files") or []:
+                    f_str = str(f_raw or "").strip()
+                    if f_str and not _is_scan_artifact_rel(f_str) and f_str not in item_files:
+                        item_files.append(f_str)
+                        spans.append(f_str)
+                if not item_files:
+                    continue
+                dup_lines = int(item.get("lines") or 0)
+                saved = int(item.get("saved") or dup_lines)
+                name = str(item.get("name") or item.get("id") or f"DUP-{idx:03d}")
+                priority = "high" if saved >= 20 else "normal"
+                spans_desc = ", ".join(f"`{s}`" for s in spans[:6])
+                suggestions.append(
+                    _with_source_context(
+                        Suggestion(
+                            signal="redup_duplication",
+                            title=f"Deduplicate {name} ({len(item_files)} files, {dup_lines}L)",
+                            description=(
+                                f"`{rel}` reports duplicate code ({dup_lines} lines) across "
+                                f"{spans_desc}. Extract shared helper/module."
+                            ),
+                            priority=priority,
+                            labels=("redup", "duplication", "refactor", "scan"),
+                            files=tuple(item_files),
+                        ),
+                        source_context,
+                    )
+                )
+
+    if not suggestions and raw_text:
+        hotspot_files = _extract_duplication_toon_files(raw_text)
+        if hotspot_files:
+            suggestions.append(
+                _with_source_context(
+                    Suggestion(
+                        signal="redup_duplication",
+                        title=f"Reduce code duplication in {hotspot_files[0]}",
+                        description=(
+                            f"`{rel}` reports duplication hotspots in "
+                            + ", ".join(f"`{f}`" for f in hotspot_files[:6])
+                            + ". Extract shared helpers/modules."
+                        ),
+                        priority="normal",
+                        labels=("redup", "duplication", "refactor", "scan"),
+                        files=hotspot_files[:8],
+                    ),
+                    source_context,
+                )
+            )
+    return suggestions
+
+
+def _scan_duplication_toon(project: Path) -> list[Suggestion]:
+    found = _first_existing_artifact(project, DUPLICATION_ARTIFACT_CANDIDATES)
+    if found is None:
+        return []
+    dup_path, rel = found
+    try:
+        text = dup_path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return []
+    source_context = {
+        "evidence": {
+            "schema": "koru.ticket_evidence.v1",
+            "kind": "duplication_toon",
+            "artifact": _file_evidence(project, dup_path, rel),
+        }
+    }
+    return _parse_duplication_toon_suggestions(text, rel, source_context=source_context)
+
+
 def _parse_dup_suggestions(
     text: str,
     rel: str,
@@ -426,6 +670,26 @@ def _parse_dup_suggestions(
         if _should_skip_code2llm_dup_ticket(text, project=project):
             return []
         count = int(dup_match.group("count"))
+        dup_files: list[str] = []
+        if project is not None:
+            tickets_doc = _load_yaml_mapping(project, _PLANFILE_TICKETS_ARTIFACT_PATHS)
+            for t in (tickets_doc or {}).get("tickets") or []:
+                if isinstance(t, dict) and t.get("signal") == "code2llm_dup":
+                    for f in t.get("files") or ():
+                        f_str = str(f).strip()
+                        if f_str and not _is_scan_artifact_rel(f_str) and f_str not in dup_files:
+                            dup_files.append(f_str)
+            if not dup_files:
+                dup_art = _first_existing_artifact(project, DUPLICATION_ARTIFACT_CANDIDATES)
+                if dup_art is not None:
+                    try:
+                        dup_files.extend(
+                            _extract_duplication_toon_files(
+                                dup_art[0].read_text(encoding="utf-8", errors="ignore")
+                            )
+                        )
+                    except OSError:
+                        pass
         suggestions.append(
             _with_source_context(
                 Suggestion(
@@ -439,7 +703,7 @@ def _parse_dup_suggestions(
                     ),
                     priority="high",
                     labels=("code2llm", "duplication", "refactor", "scan"),
-                    files=(rel,),
+                    files=tuple(dup_files[:12]),
                 ),
                 source_context,
             ),
@@ -472,7 +736,7 @@ def _parse_god_module_suggestions(
                     ),
                     priority="high",
                     labels=("code2llm", "god-module", "refactor", "scan"),
-                    files=(file_path, rel),
+                    files=(file_path,),
                 ),
                 source_context,
             ),
@@ -528,7 +792,11 @@ def _parse_high_cc_suggestions(
             continue
 
         func_locations = (locations or {}).get(func) or []
-        located_files = tuple(entry.split(":", 1)[0] for entry in func_locations) or (rel,)
+        located_files = tuple(
+            entry.split(":", 1)[0]
+            for entry in func_locations
+            if not _is_scan_artifact_rel(entry.split(":", 1)[0])
+        )
         if len(func_locations) == 1:
             where = f"`{func_locations[0]}`"
         elif func_locations:
@@ -556,6 +824,9 @@ def _parse_high_cc_suggestions(
     return suggestions
 
 
+_REFACTOR_PATH_RE = re.compile(r"\b([A-Za-z0-9_./-]+\.(?:py|js|mjs|cjs|ts|tsx|jsx|rs|go|php))\b")
+
+
 def _parse_refactor_suggestions(
     text: str,
     rel: str,
@@ -581,6 +852,9 @@ def _parse_refactor_suggestions(
         note = rm.group("note").strip()
         if skip_duplicate_items and _is_rm_duplicates_refactor(desc, note):
             continue
+        extracted_files = tuple(
+            p for p in _REFACTOR_PATH_RE.findall(desc) if not _is_scan_artifact_rel(p)
+        )
         suggestions.append(
             _with_source_context(
                 Suggestion(
@@ -592,7 +866,7 @@ def _parse_refactor_suggestions(
                     ),
                     priority="normal",
                     labels=("code2llm", "refactor", "scan"),
-                    files=(rel,),
+                    files=extracted_files,
                 ),
                 source_context,
             ),
@@ -653,7 +927,7 @@ def _parse_layer_hotspot_suggestions(
         src_path = (module_paths or {}).get(module)
         if src_path is None and project is not None:
             src_path = _resolve_module_path(project, module)
-        ticket_files = (src_path,) if src_path else (rel,)
+        ticket_files = (src_path,) if (src_path and not _is_scan_artifact_rel(src_path)) else ()
         suggestions.append(
             _with_source_context(
                 Suggestion(
@@ -667,7 +941,7 @@ def _parse_layer_hotspot_suggestions(
                     ),
                     priority=hotspot_priority,
                     labels=("code2llm", "architecture", "large-module", "refactor", "scan"),
-                    files=ticket_files or (rel,),
+                    files=ticket_files,
                 ),
                 source_context,
             ),
@@ -1303,6 +1577,7 @@ def scan_semcod_quality_artifacts(project: Path) -> list[Suggestion]:
     out: list[Suggestion] = []
     out.extend(_scan_jscpd_report(project))
     out.extend(_scan_code2llm_analysis(project))
+    out.extend(_scan_duplication_toon(project))
     out.extend(_scan_testql_export(project))
     out.extend(_scan_redup_filtered(project))
     out.extend(_scan_redup_changed(project))
@@ -1318,6 +1593,7 @@ def scan_semcod_quality_artifacts(project: Path) -> list[Suggestion]:
 
 
 __all__ = [
+    "DUPLICATION_ARTIFACT_CANDIDATES",
     "_ANALYSIS_ARTIFACT_PATHS",
     "_CALLS_ARTIFACT_PATHS",
     "_PLANFILE_TICKETS_ARTIFACT_PATHS",
@@ -1326,7 +1602,9 @@ __all__ = [
     "_find_analysis_file",
     "_first_existing_artifact",
     "_load_yaml_mapping",
+    "_parse_duplication_toon_suggestions",
     "_scan_code2llm_analysis",
+    "_scan_duplication_toon",
     "_scan_jscpd_report",
     "_scan_metrun_report",
     "_scan_pfix_report",

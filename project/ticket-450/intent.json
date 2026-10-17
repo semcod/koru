@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-450",
+  "summary": "Upgrade diff repair, search-replace synthesis, governed workspace support, and scan artifact filtering",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-450/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/context_files.py",
+    "src/koru/queue/context_slicing.py",
+    "src/koru/queue/diff_repair.py",
+    "src/koru/queue/patch_mode.py",
+    "src/koru/queue/patch_retry.py",
+    "src/koru/queue/transaction/preflight.py",
+    "src/koru/queue/verify/legacy.py",
+    "src/koru/queue/workspace.py",
+    "src/koru/scan_artifacts.py",
+    "tests/test_diff_repair_and_refactor.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "febdb1e2beac504e7ca939b89537f9c507d5dcc5",
+    "targetBranch": "main",
+    "outcome": "Upgrade koru diff repair, search/replace diff synthesis, governed ticket worktree admission, scan artifact filtering, duplication.toon.yaml parsing, refactor context slicing, and verification gate auto-detection.",
+    "nonGoals": [
+      "Do not modify opencode transport or runner modules owned by ticket-446"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 12,
+      "maxAffectedComponents": 3,
+      "maxPublicInterfaceChanges": 2,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Synthesize unified diffs from search/replace and new-file blocks and repair fuzzy hunks in diff_repair.py; admit governed ticket worktrees in workspace.py; exclude read-only scan artifacts from target files and parse duplication.toon.yaml in scan_artifacts.py; bypass destructive AST slicing on refactor prompts in context_slicing.py; and auto-detect fallback test gates in verify/legacy.py.",
+      "components": [
+        {
+          "name": "queue-patch-and-context",
+          "paths": [
+            "src/koru/queue/diff_repair.py",
+            "src/koru/queue/patch_mode.py",
+            "src/koru/queue/patch_retry.py",
+            "src/koru/queue/transaction/preflight.py",
+            "src/koru/queue/workspace.py",
+            "src/koru/queue/context_files.py",
+            "src/koru/queue/context_slicing.py",
+            "src/koru/queue/verify/legacy.py",
+            "tests/test_diff_repair_and_refactor.py"
+          ]
+        },
+        {
+          "name": "scan-artifacts",
+          "paths": [
+            "src/koru/scan_artifacts.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-450."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -p no:wellmanifest_governance tests/test_diff_repair_and_refactor.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Unit tests for diff repair, search/replace synthesis, governed workspace support, scan artifact filtering, context slicing, and verify auto-detection."
+      }
+    ]
+  }
+}

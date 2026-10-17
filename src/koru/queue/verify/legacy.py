@@ -70,13 +70,37 @@ def _verify_command_from_project(project: Path) -> str:
     if commands:
         return str(commands[0]).strip()
 
-    try:
-        policy = yaml.safe_load(
-            (project / ".planfile" / ".koru" / "policy.yaml").read_text(encoding="utf-8"),
-        )
-    except (OSError, yaml.YAMLError):
-        return ""
-    if not isinstance(policy, dict) or not isinstance(policy.get("ci"), dict):
-        return ""
-    command = policy["ci"].get("command")
-    return command.strip() if isinstance(command, str) else ""
+    policy_path = project / ".planfile" / ".koru" / "policy.yaml"
+    if policy_path.exists():
+        try:
+            policy = yaml.safe_load(policy_path.read_text(encoding="utf-8"))
+        except (OSError, yaml.YAMLError):
+            return ""
+        if not isinstance(policy, dict) or not isinstance(policy.get("ci"), dict):
+            return ""
+        command = policy["ci"].get("command")
+        if not isinstance(command, str):
+            return ""
+        if command.strip():
+            return command.strip()
+
+    return _auto_detect_verify_command(project)
+
+
+def _auto_detect_verify_command(project: Path) -> str:
+    """Auto-detect a sensible default verification gate from project markers."""
+    if (
+        (project / "pyproject.toml").is_file()
+        or (project / "pytest.ini").is_file()
+        or (project / "tests").is_dir()
+    ):
+        venv_pytest = project / ".venv" / "bin" / "pytest"
+        if venv_pytest.is_file():
+            return f"{venv_pytest} -q"
+        return "pytest -q"
+    if (project / "Cargo.toml").is_file():
+        return "cargo test --locked"
+    if (project / "package.json").is_file():
+        return "npm test"
+    return ""
+
