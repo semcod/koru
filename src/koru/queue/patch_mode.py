@@ -17,11 +17,16 @@ from __future__ import annotations
 import json
 import os
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
 from koru.proposal_envelope import NO_VALID_ARTIFACT
-from koru.queue.diff_repair import extract_unified_diff, symlink_creations
+from koru.queue.diff_repair import (
+    extract_unified_diff,
+    symlink_creations,
+    synthesize_diff_from_search_replace,
+)
 from koru.queue.manifest import (
     MANIFEST_MISMATCH,
     MANIFEST_NOT_PERSISTED,
@@ -69,6 +74,7 @@ __all__ = [
     "revert_files",
     "staging_worktree",
     "symlink_creations",
+    "synthesize_diff_from_search_replace",
     "worktree_enabled",
 ]
 
@@ -174,9 +180,17 @@ class _EnvelopedReply:
     stderr: str
     raw: dict | None = None
     model: str | None = None
+    project: Path | str | None = None
+    known_files: tuple[str, ...] | None = None
 
 
-def wrap_reply_in_proposal_envelope(result, prompt: str):
+def wrap_reply_in_proposal_envelope(
+    result,
+    prompt: str,
+    *,
+    project: Path | str | None = None,
+    known_files: Iterable[str] | None = None,
+):
     """Producer-side wrap: a bare-diff reply becomes a hash-bound envelope.
 
     The model authored only the diff; every binding (input hash, prompt-schema
@@ -193,10 +207,21 @@ def wrap_reply_in_proposal_envelope(result, prompt: str):
         looks_like_proposal_envelope,
     )
 
+    resolved_project = project if project is not None else getattr(result, "project", None)
+    resolved_files = known_files if known_files is not None else getattr(result, "known_files", None)
+    known_tuple = tuple(str(f) for f in resolved_files) if resolved_files is not None else None
+    try:
+        if resolved_project is not None:
+            setattr(result, "project", resolved_project)
+        if known_tuple is not None:
+            setattr(result, "known_files", known_tuple)
+    except Exception:
+        pass
+
     stdout = result.stdout or ""
     if not proposal_producer_enabled() or looks_like_proposal_envelope(stdout):
         return result
-    diff = extract_unified_diff(stdout)
+    diff = extract_unified_diff(stdout, project=resolved_project, known_files=known_tuple)
     if diff is None:
         return result
     raw = getattr(result, "raw", None)
@@ -227,6 +252,8 @@ def wrap_reply_in_proposal_envelope(result, prompt: str):
         stderr=getattr(result, "stderr", "") or "",
         raw=raw or None,
         model=getattr(result, "model", None),
+        project=resolved_project,
+        known_files=known_tuple,
     )
 
 
@@ -285,11 +312,28 @@ def build_retry_prompt(prompt: str, failure: str) -> str:
     )
 
 
+def build_verify_retry_prompt(prompt: str, failure: str, previous_diff: str = "") -> str:
+    """Re-ask for a corrected patch when the previous diff applied but failed verification."""
+    diff_section = (
+        f"\n\n### Your previous diff (applied cleanly, then rolled back)\n\n```diff\n{redact_secrets(previous_diff.strip(), limit=6000)}\n```"
+        if previous_diff and previous_diff.strip()
+        else ""
+    )
+    return (
+        f"{build_patch_prompt(prompt).rstrip()}\n\n"
+        "## Previous attempt failed the verification gate (Reflexion)\n\n"
+        "Your previous diff applied cleanly, but the verification gate failed and the workspace was rolled back to the original base state:\n\n"
+        f"    {failure.strip()}"
+        f"{diff_section}\n\n"
+        "Analyze the test/verification failure above, fix the bug in your change, and emit a complete replacement unified diff against the original files on disk."
+    )
+
+
 def current_file_excerpt(
     project: Path,
     paths: tuple[str, ...],
     *,
-    max_chars: int = 6000,
+    max_chars: int = 24000,
 ) -> str:
     """Quote the files a patch must apply to, for a retry prompt.
 

@@ -113,6 +113,30 @@ def _read_file_content(project: Path, rel_path: str) -> str | None:
         return None
 
 
+# Default maximum context characters for large refactor/context assembly
+DEFAULT_MAX_CONTEXT_CHARS: int = 64_000
+
+_READONLY_SCAN_ARTIFACT_NAMES: frozenset[str] = frozenset(
+    {
+        "analysis.toon.yaml",
+        "analysis.toon",
+        "duplication.toon.yaml",
+        "duplication.yaml",
+        "calls.yaml",
+        "calls.toon.yaml",
+        "map.toon.yaml",
+        "project.toon.yaml",
+    }
+)
+
+
+def _is_readonly_scan_artifact(rel_path: str) -> bool:
+    norm = str(rel_path or "").replace("\\", "/").strip().lstrip("./")
+    if not norm:
+        return False
+    return norm.rsplit("/", 1)[-1].lower() in _READONLY_SCAN_ARTIFACT_NAMES
+
+
 def _collect_auto_files(project: Path) -> list[str]:
     """Return relative paths for the auto-include file set."""
     found: list[str] = []
@@ -123,7 +147,7 @@ def _collect_auto_files(project: Path) -> list[str]:
     for glob_pattern in _AUTO_INCLUDE_GLOBS:
         for match in sorted(project.glob(glob_pattern)):
             rel = match.relative_to(project).as_posix()
-            if rel not in found and not _is_excluded(rel):
+            if rel not in found and not _is_excluded(rel) and not _is_readonly_scan_artifact(rel):
                 found.append(rel)
     return found
 
@@ -138,7 +162,7 @@ def _collect_glob_files(project: Path, globs: list[str]) -> list[str]:
                 if not match.is_file():
                     continue
                 rel = match.relative_to(project).as_posix()
-                if rel in seen or _is_excluded(rel):
+                if rel in seen or _is_excluded(rel) or _is_readonly_scan_artifact(rel):
                     continue
                 seen.add(rel)
                 found.append(rel)
@@ -154,6 +178,34 @@ def _context_nothing_requested(request: dict[str, Any]) -> bool:
         or request.get("context_globs")
         or request.get("ticket_files")
     )
+
+
+_PROMPT_PATH_RE = (
+    r"(?:^|[\s`'\"(])([A-Za-z0-9_./-]+\.(?:py|ts|tsx|js|jsx|mjs|cjs|rs|go|sh|yaml|yml|json|toml|md))(?=$|[\s`'\",.:;)])"
+)
+
+
+def _extract_prompt_files(project: Path, prompt: str) -> list[str]:
+    """Discover existing project files explicitly named in *prompt*."""
+    if not prompt:
+        return []
+    import re
+
+    found: list[str] = []
+    seen: set[str] = set()
+    for match in re.finditer(_PROMPT_PATH_RE, prompt):
+        raw = match.group(1).strip().lstrip("./")
+        if not raw or raw in seen or ".." in raw.split("/"):
+            continue
+        candidate = (project / raw).resolve()
+        try:
+            rel = candidate.relative_to(project.resolve()).as_posix()
+        except ValueError:
+            continue
+        if candidate.is_file() and rel not in seen and not _is_excluded(rel) and not _is_readonly_scan_artifact(rel):
+            seen.add(rel)
+            found.append(rel)
+    return found
 
 
 def _context_files_to_include(project: Path, request: dict[str, Any]) -> list[str]:
@@ -173,13 +225,19 @@ def _context_files_to_include(project: Path, request: dict[str, Any]) -> list[st
     seen: set[str] = set()
 
     def _add(rel: str) -> None:
-        if rel not in seen and not _is_excluded(rel):
+        if (
+            rel not in seen
+            and not _is_excluded(rel)
+            and not _is_readonly_scan_artifact(rel)
+        ):
             seen.add(rel)
             files_to_include.append(rel)
 
     for rel in ticket_files:
         _add(rel)
     for rel in context_files:
+        _add(rel)
+    for rel in _extract_prompt_files(project, str(request.get("prompt") or "")):
         _add(rel)
     if context_globs:
         for rel in _collect_glob_files(project, context_globs):
@@ -188,3 +246,4 @@ def _context_files_to_include(project: Path, request: dict[str, Any]) -> list[st
         for rel in _collect_auto_files(project):
             _add(rel)
     return files_to_include
+

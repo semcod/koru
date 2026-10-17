@@ -38,9 +38,12 @@ from koru.queue.patch_mode import (
     PATCH_DOES_NOT_APPLY,
     PROMOTION_ARTIFACT,
     PROMOTION_BRANCH,
+    VERIFY_FAILED_ISOLATED,
+    VERIFY_FAILED_ROLLED_BACK,
     PatchOutcome,
     build_manifest,
     build_retry_prompt,
+    build_verify_retry_prompt,
     current_file_excerpt,
     diff_target_files,
     extract_unified_diff,
@@ -76,6 +79,30 @@ def patch_retry_budget(ticket: dict | None = None) -> int:
         return max(0, int(raw)) if raw else 1
     except ValueError:
         return 1
+
+
+def verify_retry_budget(ticket: dict | None = None) -> int:
+    """How many times to re-ask an agent when a patch applied cleanly but failed verification."""
+    if ticket is not None:
+        per_ticket = (ticket.get("inputs") or {}).get("max_verify_retries")
+        if per_ticket is not None:
+            try:
+                return max(0, int(per_ticket))
+            except (TypeError, ValueError):
+                pass
+    raw = (os.environ.get("KORU_QUEUE_VERIFY_RETRIES") or "").strip()
+    try:
+        return max(0, int(raw)) if raw else 0
+    except ValueError:
+        return 0
+
+
+def _is_verify_failure(outcome: PatchOutcome | None) -> bool:
+    return bool(
+        outcome is not None
+        and outcome.workspace_left_untouched
+        and outcome.code in (VERIFY_FAILED_ISOLATED, VERIFY_FAILED_ROLLED_BACK)
+    )
 
 
 def _contract_capped_budget(project: Path, ticket: dict) -> int:
@@ -114,6 +141,34 @@ def _finish_patch_run(
     )
 
 
+_READONLY_SCAN_ARTIFACT_NAMES = frozenset(
+    {
+        "analysis.toon.yaml",
+        "analysis.toon",
+        "duplication.toon.yaml",
+        "duplication.yaml",
+        "calls.yaml",
+        "calls.toon.yaml",
+        "map.toon.yaml",
+        "project.toon.yaml",
+    }
+)
+
+
+def _is_readonly_scan_artifact(rel_path: str) -> bool:
+    norm = str(rel_path or "").replace("\\", "/").strip().lstrip("./")
+    if not norm:
+        return False
+    basename = norm.rsplit("/", 1)[-1].lower()
+    return basename in _READONLY_SCAN_ARTIFACT_NAMES
+
+
+def _filter_readonly_scan_artifacts(paths: Any) -> tuple[str, ...]:
+    if not paths:
+        return ()
+    return tuple(str(p) for p in paths if p and not _is_readonly_scan_artifact(str(p)))
+
+
 def _perform_retry_call(
     llm_runner: Callable[[dict[str, Any], Path], CommandResult],
     action: dict[str, Any],
@@ -122,10 +177,23 @@ def _perform_retry_call(
     manifest: dict | None,
     outcome: PatchOutcome,
     enrich: Callable[[dict[str, Any], Path], dict[str, Any]] | None,
+    *,
+    previous_diff: str = "",
 ) -> CommandResult:
-    retry_action = _build_retry_action(action, base_prompt, project, manifest, outcome, enrich)
+    retry_action = _build_retry_action(
+        action, base_prompt, project, manifest, outcome, enrich,
+        previous_diff=previous_diff,
+    )
     res = llm_runner(retry_action, project)
-    return wrap_reply_in_proposal_envelope(res, str(retry_action.get("prompt") or ""))
+    known = _filter_readonly_scan_artifacts(
+        action.get("ticket_files") or (manifest or {}).get("touched_files") or ()
+    )
+    return wrap_reply_in_proposal_envelope(
+        res,
+        str(retry_action.get("prompt") or ""),
+        project=project,
+        known_files=known,
+    )
 
 
 class _AttemptDecision(NamedTuple):
@@ -164,27 +232,53 @@ class _PatchRun:
     attempts: list[dict] = field(default_factory=list)
     base_prompt: str = ""
     remaining: int = 0
+    verify_remaining: int = 0
 
     def __post_init__(self) -> None:
-        self.base_prompt = str(self.action.get("prompt") or "")
+        raw_prompt = str(self.action.get("prompt") or "")
+        known = _filter_readonly_scan_artifacts(
+            (self.ticket.get("files") if isinstance(self.ticket, dict) else None)
+            or self.action.get("ticket_files")
+            or ()
+        )
+        ticket_id = str(self.ticket.get("id") or "") if isinstance(self.ticket, dict) else ""
+        lessons_section = format_lessons_for_prompt(
+            self.project, ticket_id=ticket_id or None, target_files=known,
+        )
+        self.base_prompt = f"{raw_prompt.rstrip()}\n\n{lessons_section}" if lessons_section else raw_prompt
         self.remaining = self.budget
+        self.verify_remaining = verify_retry_budget(self.ticket if isinstance(self.ticket, dict) else None)
         # Producer side of the envelope contract: the bare diff the agent wrote
         # becomes a hash-bound ProposalEnvelope before the transaction judges it.
-        self.result = wrap_reply_in_proposal_envelope(self.result, self.base_prompt)
+        self.result = wrap_reply_in_proposal_envelope(
+            self.result,
+            raw_prompt,
+            project=self.project,
+            known_files=known,
+        )
 
     def record_attempt(self, transaction: PatchTransactionResult) -> None:
         """Fold one judged attempt into the run's permanent record."""
-        self.attempts.append(_attempt_record(len(self.attempts) + 1, transaction))
+        self.attempts.append(
+            _attempt_record(len(self.attempts) + 1, transaction, self.verify_remaining > 0)
+        )
 
     def advance(self, transaction: PatchTransactionResult) -> _AttemptDecision:
         """Decide the run's next move after one judged attempt.
 
         Landing, a substantive failure, or an exhausted budget ends the run; a
-        mechanical failure first pins the base (aborting on drift), then spends
-        one budget unit re-asking the agent with the exact rejection attached.
+        mechanical failure (or a verify failure when verify_remaining > 0) first
+        pins the base (aborting on drift), then spends one budget unit re-asking
+        the agent with the exact rejection attached.
         """
         outcome = transaction.outcome
-        if outcome is None or not outcome.retryable or self.remaining <= 0:
+        if outcome is None:
+            return _AttemptDecision(transaction.result, outcome, True)
+        is_verify = _is_verify_failure(outcome)
+        if is_verify:
+            if self.verify_remaining <= 0:
+                return _AttemptDecision(transaction.result, outcome, True)
+        elif not outcome.retryable or self.remaining <= 0:
             return _AttemptDecision(transaction.result, outcome, True)
         # A structurally invalid model artifact gets one repair attempt. A
         # ticket/env knob may shrink that budget, never expand it into a loop.
@@ -193,17 +287,22 @@ class _PatchRun:
         aborted = self._pin_or_abort(transaction)
         if aborted is not None:
             return _AttemptDecision(transaction.result, aborted, True)
-        self.remaining -= 1
+        if is_verify:
+            self.verify_remaining -= 1
+        else:
+            self.remaining -= 1
+        prev_diff = transaction.plan.diff if (is_verify and transaction.plan) else ""
         result = _perform_retry_call(
             self.llm_runner, self.action, self.base_prompt, self.project,
             self.manifest, outcome, self.enrich,
+            previous_diff=prev_diff,
         )
         return _AttemptDecision(result, outcome, result.returncode != 0)
 
     def _pin_or_abort(self, transaction: PatchTransactionResult) -> PatchOutcome | None:
         """Pin the base on the first failure, or abort if it has since drifted."""
         self.manifest, aborted = _pin_or_detect_drift(
-            self.project, self.ticket, transaction.result, self.budget,
+            self.project, self.ticket, transaction.result, self.budget + self.verify_remaining,
             self.manifest, transaction, self.attempts,
         )
         return aborted
@@ -322,22 +421,204 @@ def _build_retry_action(
     manifest: dict | None,
     outcome: PatchOutcome,
     enrich: Callable[[dict[str, Any], Path], dict[str, Any]] | None,
+    *,
+    previous_diff: str = "",
 ) -> dict[str, Any]:
     # git and test output can quote file contents, so redact before it
     # travels back out to the model.
     diagnostic = redact_secrets(outcome.diagnostics or outcome.message)
-    prompt = build_retry_prompt(base_prompt, diagnostic)
-    if manifest and outcome.code == PATCH_DOES_NOT_APPLY:
+    if _is_verify_failure(outcome):
+        prompt = build_verify_retry_prompt(base_prompt, diagnostic, previous_diff=previous_diff)
+    else:
+        prompt = build_retry_prompt(base_prompt, diagnostic)
+    if manifest and (
+        outcome.code in (PATCH_DOES_NOT_APPLY, NO_PATCH_EMITTED)
+        or _is_verify_failure(outcome)
+    ):
         # Safe only because the manifest guarantees these contents are still
         # the ones the patch must apply to.
-        prompt += current_file_excerpt(project, tuple(manifest.get("touched_files") or ()))
+        touched = _filter_readonly_scan_artifacts(manifest.get("touched_files") or ())
+        prompt += current_file_excerpt(project, touched)
     retry_action = {**action, "prompt": prompt}
     if enrich is not None:
         retry_action = enrich(retry_action, project)
     return retry_action
 
 
-def _attempt_record(attempt: int, transaction: PatchTransactionResult) -> dict:
+def _distill_lesson_rule(outcome_code: str | None, diagnostic: str, self_repaired: bool) -> str:
+    diag_line = next((ln.strip() for ln in (diagnostic or "").splitlines() if ln.strip()), "")[:240]
+    if self_repaired:
+        return f"Recovered after initial '{outcome_code}': ensure hunks match disk context and pass verification ({diag_line})."
+    if outcome_code == "patch_destructive_truncation":
+        return "Do not delete existing public functions/classes or truncate large sections of the module unless explicitly replacing them."
+    if outcome_code == "patch_introduces_antipattern":
+        return f"Avoid introducing performance or resource-leak anti-patterns ({diag_line})."
+    if outcome_code in (VERIFY_FAILED_ISOLATED, VERIFY_FAILED_ROLLED_BACK):
+        return f"Verification failed ({diag_line}); preserve existing public signatures, imports, and test expectations."
+    if outcome_code == PATCH_DOES_NOT_APPLY:
+        return f"Patch context did not match disk ({diag_line}); include exact 3-line context from current file contents."
+    return f"Previous attempt failed with '{outcome_code}': {diag_line}"
+
+
+def record_run_lesson(
+    project: Path,
+    ticket: dict,
+    bundle: dict,
+    transaction: PatchTransactionResult,
+) -> dict | None:
+    """Persist a structured post-mortem lesson when a run fails or self-repairs."""
+    import json
+    from datetime import datetime, timezone
+
+    attempts = bundle.get("patch_attempts") or []
+    verdict = str(bundle.get("verdict") or "")
+    outcome = transaction.outcome
+    failed_attempts = [a for a in attempts if a.get("outcome") and a.get("outcome") != "landed"]
+    if verdict == VERDICT_VERIFIED and not failed_attempts:
+        return None
+    first_fail = failed_attempts[0] if failed_attempts else {}
+    outcome_code = str(
+        (outcome.code if outcome else None)
+        or first_fail.get("outcome")
+        or "unknown_failure"
+    )
+    diagnostic = redact_secrets(
+        (outcome.diagnostics or outcome.message)
+        if outcome is not None
+        else str(first_fail.get("message") or ""),
+        limit=500,
+    )
+    self_repaired = verdict == VERDICT_VERIFIED and bool(failed_attempts)
+    plan = transaction.plan
+    raw_targets = (
+        list(plan.targets)
+        if plan and plan.targets
+        else list((ticket.get("files") if isinstance(ticket, dict) else None) or [])
+    )
+    targets = list(_filter_readonly_scan_artifacts(raw_targets))
+    lesson = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "run_id": bundle.get("run_id"),
+        "ticket_id": str(ticket.get("id") or "") if isinstance(ticket, dict) else "",
+        "project": project.name,
+        "verdict": verdict,
+        "self_repaired": self_repaired,
+        "outcome_code": outcome_code,
+        "failed_codes": [str(a.get("outcome")) for a in failed_attempts if a.get("outcome")],
+        "target_files": targets,
+        "diagnostic": diagnostic,
+        "rule": _distill_lesson_rule(outcome_code, diagnostic, self_repaired),
+    }
+    line = json.dumps(lesson, ensure_ascii=False, sort_keys=True) + "\n"
+    try:
+        lessons_dir = project / ".koru"
+        lessons_dir.mkdir(parents=True, exist_ok=True)
+        with (lessons_dir / "lessons.jsonl").open("a", encoding="utf-8") as fh:
+            fh.write(line)
+    except OSError:
+        pass
+    fleet_path = (os.environ.get("KORU_FLEET_LESSONS_PATH") or "").strip()
+    if fleet_path:
+        try:
+            fp = Path(fleet_path)
+            fp.parent.mkdir(parents=True, exist_ok=True)
+            with fp.open("a", encoding="utf-8") as fh:
+                fh.write(line)
+        except OSError:
+            pass
+    return lesson
+
+
+def _read_bounded_tail_lines(path: Path) -> list[str]:
+    max_bytes = 65536
+    if not path.is_file():
+        return []
+    try:
+        size = path.stat().st_size
+        with path.open("rb") as fh:
+            if size > max_bytes:
+                fh.seek(size - max_bytes)
+                raw = fh.read()
+                nl = raw.find(b"\n")
+                if nl != -1:
+                    raw = raw[nl + 1 :]
+            else:
+                raw = fh.read()
+        return raw.decode("utf-8", errors="replace").splitlines()
+    except OSError:
+        return []
+
+
+def load_project_lessons(
+    project: Path,
+    *,
+    ticket_id: str | None = None,
+    target_files: Any = None,
+    limit: int = 5,
+) -> list[dict]:
+    """Load recent relevant lessons from ``.koru/lessons.jsonl`` (bounded read)."""
+    import json
+
+    candidates: list[Path] = [project / ".koru" / "lessons.jsonl"]
+    fleet_path = (os.environ.get("KORU_FLEET_LESSONS_PATH") or "").strip()
+    if fleet_path:
+        candidates.append(Path(fleet_path))
+    target_set = set(_filter_readonly_scan_artifacts(target_files or ()))
+    matched: list[dict] = []
+    seen_rules: set[str] = set()
+    for path in candidates:
+        for raw_line in reversed(_read_bounded_tail_lines(path)):
+            raw_line = raw_line.strip()
+            if not raw_line:
+                continue
+            try:
+                item = json.loads(raw_line)
+            except ValueError:
+                continue
+            if not isinstance(item, dict):
+                continue
+            same_ticket = bool(ticket_id and item.get("ticket_id") == ticket_id)
+            item_files = set(item.get("target_files") or ())
+            same_files = bool(target_set and (target_set & item_files))
+            is_self_repaired = bool(item.get("self_repaired"))
+            if not (same_ticket or same_files or is_self_repaired):
+                continue
+            rule = str(item.get("rule") or "").strip()
+            if not rule or rule in seen_rules:
+                continue
+            seen_rules.add(rule)
+            matched.append(item)
+            if len(matched) >= max(1, limit):
+                return matched
+    return matched
+
+
+def format_lessons_for_prompt(
+    project: Path,
+    *,
+    ticket_id: str | None = None,
+    target_files: Any = None,
+    limit: int = 5,
+) -> str:
+    """Format relevant past lessons into a concise prompt guardrail section."""
+    lessons = load_project_lessons(
+        project, ticket_id=ticket_id, target_files=target_files, limit=limit,
+    )
+    if not lessons:
+        return ""
+    bullets = [f"- [{item.get('outcome_code', 'lesson')}] {item.get('rule', '')}" for item in lessons]
+    return (
+        "## Learned Constraints from Previous Runs\n\n"
+        "Apply these lessons distilled from earlier attempts on this ticket/files:\n"
+        + "\n".join(bullets)
+    )
+
+
+def _attempt_record(
+    attempt: int,
+    transaction: PatchTransactionResult,
+    verify_retryable: bool,
+) -> dict:
     """One transaction attempt, as it will be remembered."""
     plan = transaction.plan
     outcome = transaction.outcome
@@ -348,7 +629,10 @@ def _attempt_record(attempt: int, transaction: PatchTransactionResult) -> dict:
         ),
         outcome_code=outcome.code if outcome else None,
         message=outcome.message if outcome else "",
-        retryable=bool(outcome and outcome.retryable),
+        retryable=bool(
+            outcome
+            and (outcome.retryable or (verify_retryable and _is_verify_failure(outcome)))
+        ),
     )
     # A retry can land on a different provider after a fallback; each attempt
     # remembers who authored it, not just the bundle-level summary.
@@ -431,6 +715,10 @@ def _finish_run(
         persist_evidence(project, bundle)
     except OSError:
         pass
+    try:
+        record_run_lesson(project, ticket, bundle, transaction)
+    except Exception:
+        pass
     _journal_terminal(project, run_id, bundle, transaction)
     return bundle
 
@@ -493,10 +781,12 @@ def _pin_base(
     """
     from koru.queue.verify.resolver import resolve_verify
 
-    diff = extract_unified_diff(result.stdout) or ""
-    targets = diff_target_files(project, diff) or tuple(
+    known = _filter_readonly_scan_artifacts(ticket.get("files") or ())
+    diff = extract_unified_diff(result.stdout, project=project, known_files=known) or ""
+    raw_targets = diff_target_files(project, diff) or tuple(
         str(rel) for rel in (ticket.get("files") or [])
     )
+    targets = _filter_readonly_scan_artifacts(raw_targets) or raw_targets
     return build_manifest(
         project,
         run_id=run_id or uuid4().hex[:12],
@@ -508,3 +798,6 @@ def _pin_base(
         attempt=1,
         max_attempts=budget + 1,
     )
+
+
+execute_with_patch_retries = apply_patch_with_retry

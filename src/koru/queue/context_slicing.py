@@ -54,14 +54,105 @@ def _extract_line_from_corpus(filename: str, text_corpus: str) -> int | None:
         return None
 
 
+_SYMBOL_STOPWORDS = frozenset(
+    {
+        "hierarchy",
+        "helpers",
+        "helper",
+        "module",
+        "modules",
+        "submodules",
+        "submodule",
+        "into",
+        "from",
+        "methods",
+        "method",
+        "functions",
+        "function",
+        "classes",
+        "class",
+        "file",
+        "files",
+        "code",
+        "logic",
+        "group",
+        "groups",
+        "name",
+        "names",
+        "definitions",
+        "definition",
+        "body",
+        "bodies",
+        "that",
+        "this",
+        "with",
+        "without",
+        "across",
+        "shared",
+    }
+)
+
+_MODULE_REFACTOR_MAX_CHARS: int = 64_000
+
+_MODULE_REFACTOR_RE = re.compile(
+    r"\b(?:god\s+module|split\b|submodules?\b|deduplicat\w*|duplicate\s+(?:class|group|code)|extract\s+(?:shared|cohesive|submodules?|helpers?))\b",
+    re.IGNORECASE,
+)
+
+_FUNCTION_SMELL_RE = re.compile(
+    r"(?:`(?:God Function|Feature Envy|Long Method|Shotgun Surgery|Data Clump):\s*[a-zA-Z0-9_]+`|`[a-zA-Z0-9_]+`\s+with\s+CC=)",
+)
+
+
 def _extract_symbol_from_corpus(text_corpus: str) -> str | None:
     for pat in _SYMBOL_PATTERNS:
-        m_sym = re.search(pat, text_corpus)
-        if m_sym:
+        for m_sym in re.finditer(pat, text_corpus):
             candidate = m_sym.group(1).strip()
-            if candidate and not candidate.isdigit() and len(candidate) > 1:
+            if (
+                candidate
+                and not candidate.isdigit()
+                and len(candidate) > 1
+                and candidate.lower() not in _SYMBOL_STOPWORDS
+            ):
                 return candidate
     return None
+
+
+def _extract_prompt_symbols(text_corpus: str) -> list[str]:
+    """Return all non-stopword symbol candidates found in *text_corpus*."""
+    found: list[str] = []
+    for pat in _SYMBOL_PATTERNS:
+        for m_sym in re.finditer(pat, text_corpus):
+            candidate = m_sym.group(1).strip()
+            if (
+                candidate
+                and not candidate.isdigit()
+                and len(candidate) > 1
+                and candidate.lower() not in _SYMBOL_STOPWORDS
+                and candidate not in found
+            ):
+                found.append(candidate)
+    return found
+
+
+def _is_module_refactor_request(request: dict[str, Any]) -> bool:
+    if request.get("target_symbol") or request.get("target_line") is not None:
+        return False
+    text_corpus = " ".join(
+        [
+            str(request.get("prompt") or ""),
+            str(request.get("ticket_description") or ""),
+        ]
+    )
+    if not text_corpus.strip():
+        return False
+    if _FUNCTION_SMELL_RE.search(text_corpus):
+        return False
+    if _MODULE_REFACTOR_RE.search(text_corpus):
+        return True
+    if "refactor" in text_corpus.lower() and _extract_symbol_from_corpus(text_corpus) is None:
+        return True
+    return False
 
 
 def _resolve_target_symbol_and_line(rel_path: str, request: dict[str, Any]) -> _TargetRef:
@@ -156,9 +247,13 @@ def _focused_file_slice(
     When the file exceeds ``LARGE_FILE_SLICE_THRESHOLD_CHARS`` and target
     symbol or line metadata is present in ``request``, a focused slice is
     generated instead of dumping the entire file; otherwise the content is
-    returned unchanged.
+    returned unchanged. Module-level split/refactor requests preserve full
+    files up to ``_MODULE_REFACTOR_MAX_CHARS`` (64,000 chars).
     """
     if not request or len(content) <= LARGE_FILE_SLICE_THRESHOLD_CHARS:
+        return _FocusedSlice(content, None)
+
+    if len(content) <= _MODULE_REFACTOR_MAX_CHARS and _is_module_refactor_request(request):
         return _FocusedSlice(content, None)
 
     target = _resolve_target_symbol_and_line(rel, request)
@@ -176,3 +271,25 @@ def _focused_file_slice(
             f"focused slice around line {target.line}, lines {code_slice.start_line}-{code_slice.end_line}",
         )
     return _FocusedSlice(content, None)
+
+
+def slice_file_content(
+    rel: str,
+    content: str,
+    prompt_or_lang: str | dict[str, Any] = "",
+    request: dict[str, Any] | None = None,
+    *,
+    max_chars: int = _MODULE_REFACTOR_MAX_CHARS,
+) -> str | _FocusedSlice:
+    """Slice *content* for *rel* given either a prompt/request or (lang, request)."""
+    if request is not None:
+        return _focused_file_slice(rel, content, str(prompt_or_lang), request)
+    if isinstance(prompt_or_lang, dict):
+        req = prompt_or_lang
+    else:
+        req = {"prompt": str(prompt_or_lang)}
+    lang = "py" if str(rel).endswith(".py") else ""
+    if len(content) <= max_chars and _is_module_refactor_request(req):
+        return content
+    return _focused_file_slice(rel, content, lang, req).content
+
