@@ -300,6 +300,17 @@ class _PatchRun:
         if outcome is None:
             return _AttemptDecision(transaction.result, outcome, True)
         is_verify = _is_verify_failure(outcome)
+        if is_verify and outcome.code == VERIFY_BASELINE_FAILED:
+            declared = _filter_readonly_scan_artifacts(
+                (self.ticket.get("files") if isinstance(self.ticket, dict) else None) or ()
+            )
+            prev_touched = (
+                set(diff_target_files(self.project, transaction.plan.diff))
+                if (transaction.plan and transaction.plan.diff)
+                else set()
+            )
+            if len(declared) <= 1 or set(declared).issubset(prev_touched):
+                is_verify = False
         if is_verify:
             if self.verify_remaining <= 0:
                 return _AttemptDecision(transaction.result, outcome, True)
