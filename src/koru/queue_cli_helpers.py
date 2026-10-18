@@ -135,11 +135,24 @@ def run_queue_loop_mode(
 ) -> int:
     if getattr(args, "ticket", None):
         print("koru queue: --ticket targets one task and cannot be combined with --loop")
+        if run_log is not None:
+            run_log.write_footer(summary=QueueLoopResult(0, [], [], [], "invalid_args"))
         return 2
     # A preview registers no worker and claims no action in the local manager.
     manager = None if getattr(args, "dry_run", False) else queue_local_manager_session(args)
     early_exit = queue_manager_start(args, manager)
     if early_exit is not None:
+        if run_log is not None:
+            run_log.write_footer(
+                summary=QueueLoopResult(
+                    0,
+                    [],
+                    [],
+                    [],
+                    early_exit.status,
+                    last_message=early_exit.message,
+                )
+            )
         print(f"koru queue: {early_exit.message}")
         _emit_queue_completed(
             args,
@@ -149,24 +162,30 @@ def run_queue_loop_mode(
             details=early_exit.details,
         )
         return early_exit.exit_code
-    loop_result = run_planfile_queue_loop(
-        project=args.project,
-        actor=args.actor,
-        queue_name=args.queue_name,
-        interactive=args.interactive,
-        dry_run=getattr(args, "dry_run", False),
-        concurrency=getattr(args, "concurrency", 1),
-        max_iterations=args.max_iterations,
-        progress_callback=_queue_progress_callback(args, run_log),
-        stop_callback=queue_manager_stop_callback(manager),
-        planfile_runner=planfile_runner,
-        shell_runner=shell_runner,
-        api_runner=api_runner,
-        llm_runner=llm_runner,
-        prompt_runner=prompt_runner,
-    )
-    if run_log is not None:
-        run_log.write_footer(summary=loop_result)
+    footer_written = False
+    try:
+        loop_result = run_planfile_queue_loop(
+            project=args.project,
+            actor=args.actor,
+            queue_name=args.queue_name,
+            interactive=args.interactive,
+            dry_run=getattr(args, "dry_run", False),
+            concurrency=getattr(args, "concurrency", 1),
+            max_iterations=args.max_iterations,
+            progress_callback=_queue_progress_callback(args, run_log),
+            stop_callback=queue_manager_stop_callback(manager),
+            planfile_runner=planfile_runner,
+            shell_runner=shell_runner,
+            api_runner=api_runner,
+            llm_runner=llm_runner,
+            prompt_runner=prompt_runner,
+        )
+        if run_log is not None:
+            run_log.write_footer(summary=loop_result)
+            footer_written = True
+    finally:
+        if run_log is not None and not footer_written:
+            run_log.write_footer(summary=QueueLoopResult(0, [], [], [], "interrupted"))
     print()
     print(f"koru queue loop: {loop_result.summary()}")
     if loop_result.completed:
@@ -229,6 +248,17 @@ def run_queue_single_mode(
     manager = None if getattr(args, "dry_run", False) else queue_local_manager_session(args)
     early_exit = queue_manager_start(args, manager)
     if early_exit is not None:
+        if run_log is not None:
+            run_log.write_footer(
+                summary=QueueLoopResult(
+                    0,
+                    [],
+                    [],
+                    [],
+                    early_exit.status,
+                    last_message=early_exit.message,
+                )
+            )
         print(f"koru queue: {early_exit.message}")
         _emit_queue_completed(
             args,
@@ -238,22 +268,28 @@ def run_queue_single_mode(
             details=early_exit.details,
         )
         return early_exit.exit_code
-    result = run_next_planfile_task(
-        project=args.project,
-        actor=args.actor,
-        dry_run=args.dry_run,
-        queue_name=args.queue_name,
-        target_ticket_id=getattr(args, "ticket", None),
-        interactive=args.interactive,
-        planfile_runner=planfile_runner,
-        shell_runner=shell_runner,
-        api_runner=api_runner,
-        llm_runner=llm_runner,
-        prompt_runner=prompt_runner,
-    )
-    if run_log is not None:
-        run_log.write_iteration(iteration=1, result=result)
-        run_log.write_footer(summary=_single_task_summary(result))
+    footer_written = False
+    try:
+        result = run_next_planfile_task(
+            project=args.project,
+            actor=args.actor,
+            dry_run=args.dry_run,
+            queue_name=args.queue_name,
+            target_ticket_id=getattr(args, "ticket", None),
+            interactive=args.interactive,
+            planfile_runner=planfile_runner,
+            shell_runner=shell_runner,
+            api_runner=api_runner,
+            llm_runner=llm_runner,
+            prompt_runner=prompt_runner,
+        )
+        if run_log is not None:
+            run_log.write_iteration(iteration=1, result=result)
+            run_log.write_footer(summary=_single_task_summary(result))
+            footer_written = True
+    finally:
+        if run_log is not None and not footer_written:
+            run_log.write_footer(summary=QueueLoopResult(0, [], [], [], "interrupted"))
     print(
         f"koru queue: status={result.status} "
         f"ticket={result.ticket_id or '-'} executor={result.executor_kind or '-'}",

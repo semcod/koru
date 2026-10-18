@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-456",
+  "summary": "Ensure run.end footer is written on early exit and interruption in queue CLI",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-456/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue_cli_helpers.py",
+    "tests/test_run_log_early_exit.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ba009b4772352590998bd59885f34fdeb8139df8",
+    "targetBranch": "main",
+    "outcome": "Prevent orphaned run.start-only JSONL files in .planfile/.koru/runs/ when koru queue exits early via local manager or is interrupted.",
+    "nonGoals": [
+      "Do not change RunLogWriter schema or dry-run zero-trace behavior"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Write run_log.write_footer in run_queue_loop_mode and run_queue_single_mode on early_exit / invalid_args returns and in a finally block on interruption.",
+      "components": [
+        {
+          "name": "cli-and-operator-surfaces",
+          "paths": [
+            "src/koru/queue_cli_helpers.py",
+            "tests/test_run_log_early_exit.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-456."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -p no:wellmanifest_governance tests/test_run_log_early_exit.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Unit tests verifying run.end footer is written on early exit, invalid args, and KeyboardInterrupt."
+      }
+    ]
+  }
+}
