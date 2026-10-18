@@ -155,3 +155,101 @@ def test_real_transaction_applies_patch_but_verifier_cannot_write(monkeypatch):
         assert "VERIFIER-STARTED" in result.outcome.message
         assert (project / "a.txt").read_text() == "old\n"
         assert (project / "sentinel.txt").read_text() == "sentinel"
+
+
+def test_pytest_verification_allows_loopback_http_while_blocking_unix_sockets():
+    assert sys.platform == "linux" and shutil.which("bwrap"), "Kernel evidence requires Linux bubblewrap"
+    cache = Path.cwd() / ".subactor/cache/ticket-451/loopback-tests"
+    cache.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=cache) as temporary:
+        project = Path(temporary)
+        test_file = project / "test_local_http.py"
+        test_file.write_text(
+            "import http.server, socket, threading, urllib.request\n"
+            "def test_loopback_http_and_unix_denied():\n"
+            "    try:\n"
+            "        socket.socket(socket.AF_UNIX)\n"
+            "    except OSError:\n"
+            "        pass\n"
+            "    else:\n"
+            "        raise AssertionError('AF_UNIX must remain blocked')\n"
+            "    class Handler(http.server.BaseHTTPRequestHandler):\n"
+            "        def do_GET(self):\n"
+            "            self.send_response(200)\n"
+            "            self.end_headers()\n"
+            "            self.wfile.write(b'loopback-ok')\n"
+            "        def log_message(self, *args):\n"
+            "            pass\n"
+            "    srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Handler)\n"
+            "    t = threading.Thread(target=srv.serve_forever, daemon=True)\n"
+            "    t.start()\n"
+            "    try:\n"
+            "        data = urllib.request.urlopen(f'http://127.0.0.1:{srv.server_port}/').read()\n"
+            "        assert data == b'loopback-ok'\n"
+            "    finally:\n"
+            "        srv.shutdown()\n"
+            "        srv.server_close()\n",
+            encoding="utf-8",
+        )
+        command = f"{shlex.quote(sys.executable)} -m pytest -q test_local_http.py"
+        result = run_verification(command, project, shell)
+        assert result.returncode == 0, result.stdout + "\n" + result.stderr
+
+
+def test_multi_file_context_includes_all_files_and_retry_lists_untouched_targets(tmp_path):
+    from types import SimpleNamespace
+    from koru.queue.context import build_project_context
+    from koru.queue.patch_retry import _build_retry_action, _pin_base, verify_retry_budget
+    from koru.queue.patch_mode import PatchOutcome, VERIFY_BASELINE_FAILED
+
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    files = []
+    for idx in range(11):
+        name = f"test_mod_{idx:02d}.py"
+        (tmp_path / name).write_text(f"# file {idx}\n" + ("x = 1\n" * 900), encoding="utf-8")
+        files.append(name)
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
+    subprocess.run(
+        ["git", "-c", "user.name=Test", "-c", "user.email=t@example.invalid", "commit", "-qm", "init"],
+        cwd=tmp_path,
+        check=True,
+    )
+
+    ctx = build_project_context(tmp_path, {"prompt": "update all 11 test files", "context_files": files})
+    assert ctx is not None
+    assert ctx.included_files == files
+
+    ticket = {"id": "PLF-255-tests", "files": files[:3], "inputs": {}}
+    assert verify_retry_budget(ticket) == 1
+
+    partial_diff = (
+        "diff --git a/test_mod_00.py b/test_mod_00.py\n"
+        "--- a/test_mod_00.py\n"
+        "+++ b/test_mod_00.py\n"
+        "@@ -1,2 +1,2 @@\n"
+        "-# file 0\n"
+        "+# file 0 updated\n"
+        " x = 1\n"
+    )
+    reply = SimpleNamespace(returncode=0, stdout=partial_diff, stderr="")
+    manifest = _pin_base(tmp_path, ticket, reply, budget=2, run_id="r451")
+    assert tuple(manifest["touched_files"]) == tuple(files[:3])
+
+    outcome = PatchOutcome(
+        code=VERIFY_BASELINE_FAILED,
+        message="verification failed on remaining untouched files",
+        workspace_left_untouched=True,
+    )
+    retry_act = _build_retry_action(
+        {"prompt": "update all files"},
+        "update all files",
+        tmp_path,
+        manifest,
+        outcome,
+        None,
+        previous_diff=partial_diff,
+    )
+    assert "Incomplete multi-file patch detected" in retry_act["prompt"]
+    assert "`test_mod_01.py`" in retry_act["prompt"]
+    assert "`test_mod_02.py`" in retry_act["prompt"]
+
