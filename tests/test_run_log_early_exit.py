@@ -33,7 +33,9 @@ def _make_args(tmp_path: Path, *, loop: bool = False, ticket: str | None = None)
 
 
 def _dummy_runners() -> dict:
-    nop = lambda *a, **kw: None
+    def nop(*a, **kw):
+        return None
+
     return {
         "planfile_runner": nop,
         "shell_runner": nop,

@@ -7,6 +7,8 @@ that already exists, so a refusal here costs nothing and leaves nothing to undo.
 
 from __future__ import annotations
 
+import os
+import re
 from collections.abc import Iterable
 from pathlib import Path
 from uuid import uuid4
@@ -100,9 +102,6 @@ def extract_patch(
         retryable=True,
     )
 
-
-import os
-import re
 
 PATCH_DESTRUCTIVE_TRUNCATION = "patch_destructive_truncation"
 PATCH_INTRODUCES_ANTIPATTERN = "patch_introduces_antipattern"

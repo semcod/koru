@@ -1,12 +1,12 @@
 """Actual verification processes must not mutate their host or contact services."""
 import json
 import os
-from pathlib import Path
 import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 
 from koru.queue.verification_sandbox import run_verification
 
@@ -146,7 +146,10 @@ def test_real_transaction_applies_patch_but_verifier_cannot_write(monkeypatch):
         subprocess.run(["git", "add", "."], cwd=project, check=True)
         subprocess.run(["git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
                         "commit", "-qm", "fixture"], cwd=project, check=True)
-        probe = "from pathlib import Path; print('VERIFIER-STARTED', flush=True); Path('sentinel.txt').write_text('escaped')"
+        probe = (
+            "from pathlib import Path; print('VERIFIER-STARTED', flush=True); "
+            "Path('sentinel.txt').write_text('escaped')"
+        )
         command = shlex.join([sys.executable, "-c", probe])
         ticket = {"id": "sandbox-probe", "inputs": {
             "verify_command": command, "promotion_mode": "apply"}}
@@ -202,9 +205,10 @@ def test_pytest_verification_allows_loopback_http_while_blocking_unix_sockets():
 
 def test_multi_file_context_includes_all_files_and_retry_lists_untouched_targets(tmp_path):
     from types import SimpleNamespace
+
     from koru.queue.context import build_project_context
+    from koru.queue.patch_mode import VERIFY_BASELINE_FAILED, PatchOutcome
     from koru.queue.patch_retry import _build_retry_action, _pin_base, verify_retry_budget
-    from koru.queue.patch_mode import PatchOutcome, VERIFY_BASELINE_FAILED
 
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     files = []
@@ -259,7 +263,7 @@ def test_multi_file_context_includes_all_files_and_retry_lists_untouched_targets
 
 
 def test_sandbox_prepends_project_venv_and_skips_unrecoverable_baseline_retries(tmp_path):
-    from koru.queue.patch_mode import PatchOutcome, VERIFY_BASELINE_FAILED, VERIFY_FAILED_ISOLATED
+    from koru.queue.patch_mode import VERIFY_BASELINE_FAILED, VERIFY_FAILED_ISOLATED, PatchOutcome
     from koru.queue.patch_retry import _is_verify_failure
     from koru.queue.verification_sandbox import _command, _sandbox_path
 
@@ -302,6 +306,7 @@ def test_sandbox_prepends_project_venv_and_skips_unrecoverable_baseline_retries(
     )
 
     from types import SimpleNamespace
+
     from koru.queue.patch_retry import _PatchRun
 
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
@@ -327,7 +332,16 @@ def test_sandbox_prepends_project_venv_and_skips_unrecoverable_baseline_retries(
     )
     tx = SimpleNamespace(
         result=initial_res,
-        plan=SimpleNamespace(diff="diff --git a/regix.yaml b/regix.yaml\n--- a/regix.yaml\n+++ b/regix.yaml\n@@ -1 +1 @@\n-rules: []\n+rules: [1]\n"),
+        plan=SimpleNamespace(
+            diff=(
+                "diff --git a/regix.yaml b/regix.yaml\n"
+                "--- a/regix.yaml\n"
+                "+++ b/regix.yaml\n"
+                "@@ -1 +1 @@\n"
+                "-rules: []\n"
+                "+rules: [1]\n"
+            )
+        ),
         outcome=PatchOutcome(
             code=VERIFY_BASELINE_FAILED,
             message="already failed. Before: 1 failed in 12.34s After: 1 failed in 11.89s",
@@ -337,8 +351,8 @@ def test_sandbox_prepends_project_venv_and_skips_unrecoverable_baseline_retries(
     decision = state.advance(tx)
     assert decision.done is True
 
-    from koru.queue.diff_repair import extract_unified_diff, synthesize_diff_from_search_replace
     from koru.queue.context_files import _extract_prompt_files
+    from koru.queue.diff_repair import extract_unified_diff, synthesize_diff_from_search_replace
 
     (tmp_path / ".gitignore").write_text("__pycache__/\n.planfile/\n", encoding="utf-8")
     (tmp_path / ".wup.yaml").write_text("version: 1\n", encoding="utf-8")
@@ -357,7 +371,8 @@ def test_sandbox_prepends_project_venv_and_skips_unrecoverable_baseline_retries(
     assert "\n .planfile/\n" in extracted
     assert "a/gitignore" not in extracted
     sr_diff = synthesize_diff_from_search_replace(
-        "### FILE: .gitignore\n<<<<<<< SEARCH\n__pycache__/\n=======\n__pycache__/\n.planfile/.koru/\n>>>>>>> REPLACE\n",
+        "### FILE: .gitignore\n<<<<<<< SEARCH\n__pycache__/\n"
+        "=======\n__pycache__/\n.planfile/.koru/\n>>>>>>> REPLACE\n",
         tmp_path,
         known_files=[".gitignore"],
     )

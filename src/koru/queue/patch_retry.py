@@ -17,6 +17,7 @@ import hashlib
 import os
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import UTC
 from pathlib import Path
 from typing import Any, NamedTuple
 from uuid import uuid4
@@ -494,15 +495,27 @@ def _build_retry_action(
 def _distill_lesson_rule(outcome_code: str | None, diagnostic: str, self_repaired: bool) -> str:
     diag_line = next((ln.strip() for ln in (diagnostic or "").splitlines() if ln.strip()), "")[:240]
     if self_repaired:
-        return f"Recovered after initial '{outcome_code}': ensure hunks match disk context and pass verification ({diag_line})."
+        return (
+            f"Recovered after initial '{outcome_code}': "
+            f"ensure hunks match disk context and pass verification ({diag_line})."
+        )
     if outcome_code == "patch_destructive_truncation":
-        return "Do not delete existing public functions/classes or truncate large sections of the module unless explicitly replacing them."
+        return (
+            "Do not delete existing public functions/classes or truncate large sections "
+            "of the module unless explicitly replacing them."
+        )
     if outcome_code == "patch_introduces_antipattern":
         return f"Avoid introducing performance or resource-leak anti-patterns ({diag_line})."
     if outcome_code in (VERIFY_FAILED_ISOLATED, VERIFY_FAILED_ROLLED_BACK, VERIFY_BASELINE_FAILED):
-        return f"Verification failed ({diag_line}); preserve existing public signatures, imports, and test expectations."
+        return (
+            f"Verification failed ({diag_line}); "
+            "preserve existing public signatures, imports, and test expectations."
+        )
     if outcome_code == PATCH_DOES_NOT_APPLY:
-        return f"Patch context did not match disk ({diag_line}); include exact 3-line context from current file contents."
+        return (
+            f"Patch context did not match disk ({diag_line}); "
+            "include exact 3-line context from current file contents."
+        )
     return f"Previous attempt failed with '{outcome_code}': {diag_line}"
 
 
@@ -514,7 +527,7 @@ def record_run_lesson(
 ) -> dict | None:
     """Persist a structured post-mortem lesson when a run fails or self-repairs."""
     import json
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     attempts = bundle.get("patch_attempts") or []
     verdict = str(bundle.get("verdict") or "")
@@ -543,7 +556,7 @@ def record_run_lesson(
     )
     targets = list(_filter_readonly_scan_artifacts(raw_targets))
     lesson = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "run_id": bundle.get("run_id"),
         "ticket_id": str(ticket.get("id") or "") if isinstance(ticket, dict) else "",
         "project": project.name,

@@ -49,7 +49,8 @@ _FILE_HEADER_LINE_RE = re.compile(
 )
 
 _NEW_FILE_SECTION_RE = re.compile(
-    r"(?:^|\n)(?:#{1,4}\s*(?:NEW\s+)?FILE\s*:\s*`?(?P<header_path>[A-Za-z0-9_./-]+\.[A-Za-z0-9_]+)`?[ \t]*\n\s*```[a-zA-Z0-9_-]*[ \t]*\n(?P<header_body>.*?)\n```"
+    r"(?:^|\n)(?:#{1,4}\s*(?:NEW\s+)?FILE\s*:\s*`?(?P<header_path>[A-Za-z0-9_./-]+\.[A-Za-z0-9_]+)`?"
+    r"[ \t]*\n\s*```[a-zA-Z0-9_-]*[ \t]*\n(?P<header_body>.*?)\n```"
     r"|```[a-zA-Z0-9_-]+(?:\s+|:)(?P<fence_path>[A-Za-z0-9_./-]+\.[A-Za-z0-9_]+)[ \t]*\n(?P<fence_body>.*?)\n```)",
     re.DOTALL,
 )
@@ -271,8 +272,8 @@ def synthesize_diff_from_search_replace(
                         except SyntaxError:
                             continue
                     # Verify some structural overlap with the original file
-                    orig_set = {l.strip() for l in orig_lines if len(l.strip()) > 6}
-                    cand_set = {l.strip() for l in cand_lines if len(l.strip()) > 6}
+                    orig_set = {line.strip() for line in orig_lines if len(line.strip()) > 6}
+                    cand_set = {line.strip() for line in cand_lines if len(line.strip()) > 6}
                     if orig_set and len(orig_set & cand_set) / max(1, min(len(orig_set), len(cand_set))) >= 0.25:
                         return _format_unified_diff_for_file(rel, orig_text, candidate_body + "\n")
         return ""
@@ -325,7 +326,10 @@ def synthesize_diff_from_search_replace(
                 for candidate in known_list:
                     cand_rel = _resolve_candidate_path(candidate, project_path, known_list)
                     orig, cur = _get_current(cand_rel)
-                    if orig is not None and _apply_search_replace_to_text(cur, search_body, match.group("replace")) is not None:
+                    if (
+                        orig is not None
+                        and _apply_search_replace_to_text(cur, search_body, match.group("replace")) is not None
+                    ):
                         target_rel = cand_rel
                         break
             if not target_rel:
@@ -443,9 +447,17 @@ def _apply_edit_subblocks_fallback(
                         ctx_hits += 2
                     if len(pre_ctx) >= 2 and cand >= 2 and working[cand - 2].strip() == pre_ctx[-2].strip():
                         ctx_hits += 1
-                    if post_ctx and cand + rem_n < len(working) and working[cand + rem_n].strip() == post_ctx[0].strip():
+                    if (
+                        post_ctx
+                        and cand + rem_n < len(working)
+                        and working[cand + rem_n].strip() == post_ctx[0].strip()
+                    ):
                         ctx_hits += 2
-                    if len(post_ctx) >= 2 and cand + rem_n + 1 < len(working) and working[cand + rem_n + 1].strip() == post_ctx[1].strip():
+                    if (
+                        len(post_ctx) >= 2
+                        and cand + rem_n + 1 < len(working)
+                        and working[cand + rem_n + 1].strip() == post_ctx[1].strip()
+                    ):
                         ctx_hits += 1
                     exact_bonus = 1 if working[cand : cand + rem_n] == removed else 0
                     score = (ctx_hits * 2 + exact_bonus, -abs(cand - expected_start))
@@ -459,7 +471,7 @@ def _apply_edit_subblocks_fallback(
                 changed_any = True
             elif len(removed) == len(added) and len(removed) > 1:
                 # Non-contiguous removed lines bundled into one block: apply line by line
-                for r_line, a_line in zip(removed, added):
+                for r_line, a_line in zip(removed, added, strict=False):
                     r_s = r_line.strip()
                     if not r_s:
                         continue
@@ -526,7 +538,9 @@ def _apply_edit_subblocks_fallback(
     return working, changed_any
 
 
-def _apply_hunks_with_fuzzy_fallback(orig_lines: list[str], hunk_blocks: list[list[str]]) -> tuple[list[str], bool] | None:
+def _apply_hunks_with_fuzzy_fallback(
+    orig_lines: list[str], hunk_blocks: list[list[str]]
+) -> tuple[list[str], bool] | None:
     """Apply parsed hunk bodies to orig_lines; return (new_lines, used_fuzzy) or None."""
     working = list(orig_lines)
     offset = 0
@@ -657,9 +671,9 @@ def _repair_diff_against_project(diff: str, project: Path | str) -> str:
         old_rel = header_match.group("old")
         new_rel = header_match.group("new")
         is_new_or_del = any(
-            l.startswith(("new file mode", "deleted file mode", "--- /dev/null", "+++ /dev/null"))
-            for l in sec[:6]
-        ) or any(l.startswith("@@ -0,0") for l in sec)
+            sec_line.startswith(("new file mode", "deleted file mode", "--- /dev/null", "+++ /dev/null"))
+            for sec_line in sec[:6]
+        ) or any(sec_line.startswith("@@ -0,0") for sec_line in sec)
         target_file = proj_path / old_rel
         if is_new_or_del or old_rel != new_rel:
             section_order.append(("raw", sec))
@@ -670,13 +684,13 @@ def _repair_diff_against_project(diff: str, project: Path | str) -> str:
 
         hunks: list[list[str]] = []
         cur_hunk: list[str] = []
-        for l in sec:
-            if l.startswith("@@"):
+        for sec_line in sec:
+            if sec_line.startswith("@@"):
                 if cur_hunk:
                     hunks.append(cur_hunk)
-                cur_hunk = [l]
+                cur_hunk = [sec_line]
             elif cur_hunk:
-                cur_hunk.append(l)
+                cur_hunk.append(sec_line)
         if cur_hunk:
             hunks.append(cur_hunk)
         if not hunks:
@@ -832,7 +846,9 @@ def _sanitize_inner_headers(lines: list[str]) -> list[str]:
             in_hunk = True
             cleaned.append(line)
             continue
-        if line.startswith(("index ", "new file mode", "deleted file mode", "similarity index", "rename from", "rename to")):
+        if line.startswith(
+            ("index ", "new file mode", "deleted file mode", "similarity index", "rename from", "rename to")
+        ):
             in_hunk = False
             cleaned.append(line)
             continue
@@ -844,7 +860,7 @@ def _sanitize_inner_headers(lines: list[str]) -> list[str]:
             # If inside a hunk and line doesn't start with +, -, \, or space:
             # Models sometimes emit context lines without a leading space or with a stray leading dot.
             if not line.startswith(("+", "-", " ", "\\")):
-                if line.startswith(". "):
+                if line.startswith(". ") or re.match(r"^\.[A-Z_][A-Z0-9_]*(?:\[\d+\])?\s*:", line):
                     line = " " + line[1:]
                 else:
                     line = " " + line

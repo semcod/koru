@@ -3860,9 +3860,10 @@ def test_invalid_shell_action_cannot_run_or_close(tmp_path, script, dry_run, int
 
 
 def test_unmanaged_workspace_and_scan_artifacts(tmp_path: Path):
-    from koru.queue.workspace import require_unmanaged_patch_workspace, StagingAdmissionRequired
-    from koru.scan_artifacts import _code2llm_cc_locations
     import subprocess
+
+    from koru.queue.workspace import StagingAdmissionRequired, require_unmanaged_patch_workspace
+    from koru.scan_artifacts import _code2llm_cc_locations
 
     # 1. Unmanaged workspace check: project with only .governance/docs.json must be allowed
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
