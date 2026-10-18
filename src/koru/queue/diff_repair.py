@@ -66,6 +66,10 @@ def _normalize_path_prefixes(
     if project:
         try:
             proj_p = Path(project)
+            if proj_p.is_dir():
+                for entry in proj_p.iterdir():
+                    if entry.is_file() and entry.name.startswith("."):
+                        candidates.add(entry.name)
             src_p = proj_p / "src"
             if src_p.is_dir():
                 for root, _, files in os.walk(src_p):
@@ -78,16 +82,23 @@ def _normalize_path_prefixes(
     if not candidates:
         return body
 
+    def _strip_rel_prefix(p: str) -> str:
+        return re.sub(r"^(?:\./)+", "", p.replace("\\", "/")).lstrip("/")
+
     src_map: dict[str, str] = {}
     basename_counts: dict[str, int] = {}
     for f in candidates:
-        f_norm = f.replace("\\", "/").lstrip("./")
+        f_norm = _strip_rel_prefix(f)
         base = f_norm.rsplit("/", 1)[-1]
         basename_counts[base] = basename_counts.get(base, 0) + 1
 
     proj_root = Path(project) if project else None
     for f in candidates:
-        f_norm = f.replace("\\", "/").lstrip("./")
+        f_norm = _strip_rel_prefix(f)
+        if f_norm.startswith(".") and len(f_norm) > 1 and "/" not in f_norm:
+            dotless = f_norm[1:]
+            if proj_root is None or not (proj_root / dotless).exists():
+                src_map.setdefault(dotless, f_norm)
         if f_norm.startswith("src/"):
             src_map[f_norm[4:]] = f_norm
         if "/" in f_norm:
@@ -116,7 +127,12 @@ def _normalize_path_prefixes(
         path = m.group(1)
         return f"+++ b/{src_map.get(path, path)}"
 
-    body = _GIT_HEADER_RE.sub(_replace_git_header, body)
+    body = re.sub(
+        r"^diff --git a/(?P<old>.+?) b/(?P<new>.+?)[ \t]*$",
+        _replace_git_header,
+        body,
+        flags=re.MULTILINE,
+    )
     body = re.sub(r"^--- a/(\S+)", _replace_old_file_header, body, flags=re.MULTILINE)
     body = re.sub(r"^\+\+\+ b/(\S+)", _replace_new_file_header, body, flags=re.MULTILINE)
     return body
@@ -130,7 +146,7 @@ def _resolve_candidate_path(
     cleaned = raw_path.strip().strip("`'\"").replace("\\", "/")
     if cleaned.startswith(("a/", "b/")):
         cleaned = cleaned[2:]
-    cleaned = cleaned.lstrip("./")
+    cleaned = re.sub(r"^(?:\./)+", "", cleaned).lstrip("/")
     if project_path is not None:
         if (project_path / cleaned).exists():
             return cleaned
@@ -180,7 +196,7 @@ def _apply_search_replace_to_text(content: str, search: str, replace: str) -> st
 
 
 def _format_unified_diff_for_file(rel_path: str, old_text: str | None, new_text: str) -> str:
-    rel_norm = rel_path.replace("\\", "/").lstrip("./")
+    rel_norm = re.sub(r"^(?:\./)+", "", rel_path.replace("\\", "/")).lstrip("/")
     new_lines = new_text.splitlines()
     if old_text is None:
         if not new_lines:
@@ -828,7 +844,7 @@ def _sanitize_inner_headers(lines: list[str]) -> list[str]:
             # If inside a hunk and line doesn't start with +, -, \, or space:
             # Models sometimes emit context lines without a leading space or with a stray leading dot.
             if not line.startswith(("+", "-", " ", "\\")):
-                if line.startswith("."):
+                if line.startswith(". "):
                     line = " " + line[1:]
                 else:
                     line = " " + line

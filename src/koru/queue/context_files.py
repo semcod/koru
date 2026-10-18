@@ -131,7 +131,10 @@ _READONLY_SCAN_ARTIFACT_NAMES: frozenset[str] = frozenset(
 
 
 def _is_readonly_scan_artifact(rel_path: str) -> bool:
-    norm = str(rel_path or "").replace("\\", "/").strip().lstrip("./")
+    norm = str(rel_path or "").replace("\\", "/").strip()
+    while norm.startswith("./"):
+        norm = norm[2:]
+    norm = norm.lstrip("/")
     if not norm:
         return False
     return norm.rsplit("/", 1)[-1].lower() in _READONLY_SCAN_ARTIFACT_NAMES
@@ -194,7 +197,7 @@ def _extract_prompt_files(project: Path, prompt: str) -> list[str]:
     found: list[str] = []
     seen: set[str] = set()
     for match in re.finditer(_PROMPT_PATH_RE, prompt):
-        raw = match.group(1).strip().lstrip("./")
+        raw = re.sub(r"^(?:\./)+", "", match.group(1).strip()).lstrip("/")
         if not raw or raw in seen or ".." in raw.split("/"):
             continue
         candidate = (project / raw).resolve()

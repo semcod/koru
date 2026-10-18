@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-454",
+  "summary": "fix(queue): mount ephemeral .subactor/cache inside verification sandbox",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-454/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/context_files.py",
+    "src/koru/queue/diff_repair.py",
+    "src/koru/queue/patch_retry.py",
+    "src/koru/queue/verification_sandbox.py",
+    "tests/test_queue_verification_sandbox.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "ba009b4772352590998bd59885f34fdeb8139df8",
+    "targetBranch": "main",
+    "outcome": "Bind-mount an ephemeral subactor-cache directory at project/.subactor/cache inside the bwrap verification sandbox and preserve leading dot on dotfiles (.gitignore, .wup.yaml) during path normalization in diff_repair.py, context_files.py, and patch_retry.py.",
+    "nonGoals": [
+      "Do not allow writes outside scratch or project/.subactor/cache"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Create subactor-cache/koru-verification/<scratch.name> inside scratch and bind-mount subactor-cache onto project/.subactor/cache before binding scratch onto itself; replace .lstrip('./') with regex/prefix stripping so dotfiles retain their leading dot.",
+      "components": [
+        {
+          "name": "queue-verification-and-retry",
+          "paths": [
+            "src/koru/queue/patch_retry.py",
+            "src/koru/queue/verification_sandbox.py",
+            "tests/test_queue_verification_sandbox.py"
+          ]
+        },
+        {
+          "name": "queue-patch-and-context",
+          "paths": [
+            "src/koru/queue/context_files.py",
+            "src/koru/queue/diff_repair.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-454."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -p no:wellmanifest_governance tests/test_queue_verification_sandbox.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Kernel boundary test verifying .subactor/cache is writable inside bwrap and does not persist on the host checkout."
+      }
+    ]
+  }
+}
