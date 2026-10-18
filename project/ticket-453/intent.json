@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-453",
+  "summary": "fix(queue): only retry VERIFY_BASELINE_FAILED on incomplete multi-file patches",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-453/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/patch_retry.py",
+    "tests/test_queue_verification_sandbox.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5743d15b91a2583eaaa0e6bb2f3a33fad8382c5b",
+    "targetBranch": "main",
+    "outcome": "Prevent single-file or complete patches from retrying on VERIFY_BASELINE_FAILED in _AttemptState.advance when baseline test timings differ.",
+    "nonGoals": [
+      "Do not disable multi-file incomplete patch retries"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "In _AttemptState.advance, check that len(declared) > 1 and not set(declared).issubset(prev_touched) before allowing VERIFY_BASELINE_FAILED to spend verify_remaining.",
+      "components": [
+        {
+          "name": "queue-verification-and-retry",
+          "paths": [
+            "src/koru/queue/patch_retry.py",
+            "tests/test_queue_verification_sandbox.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-453."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -p no:wellmanifest_governance tests/test_queue_verification_sandbox.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Unit test verifying single-file VERIFY_BASELINE_FAILED stops immediately in _AttemptState.advance."
+      }
+    ]
+  }
+}

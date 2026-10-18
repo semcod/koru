@@ -297,4 +297,41 @@ def test_sandbox_prepends_project_venv_and_skips_unrecoverable_baseline_retries(
         )
     )
 
+    from types import SimpleNamespace
+    from koru.queue.patch_retry import _PatchRun
+
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    (tmp_path / "regix.yaml").write_text("rules: []\n", encoding="utf-8")
+    subprocess.run(["git", "add", "regix.yaml"], cwd=tmp_path, check=True)
+    subprocess.run(
+        ["git", "-c", "user.name=Test", "-c", "user.email=t@example.invalid", "commit", "-qm", "init"],
+        cwd=tmp_path,
+        check=True,
+    )
+    single_ticket = {"id": "PLF-017", "files": ["regix.yaml"], "inputs": {"max_verify_retries": 1}}
+    initial_res = SimpleNamespace(returncode=0, stdout="", stderr="")
+    state = _PatchRun(
+        project=tmp_path,
+        ticket=single_ticket,
+        action={"prompt": "create regix.yaml"},
+        result=initial_res,
+        llm_runner=lambda *_a, **_kw: (_ for _ in ()).throw(AssertionError("should not retry")),
+        enrich=None,
+        actor="r453",
+        authorize=None,
+        budget=0,
+    )
+    tx = SimpleNamespace(
+        result=initial_res,
+        plan=SimpleNamespace(diff="diff --git a/regix.yaml b/regix.yaml\n--- a/regix.yaml\n+++ b/regix.yaml\n@@ -1 +1 @@\n-rules: []\n+rules: [1]\n"),
+        outcome=PatchOutcome(
+            code=VERIFY_BASELINE_FAILED,
+            message="already failed. Before: 1 failed in 12.34s After: 1 failed in 11.89s",
+            workspace_left_untouched=True,
+        ),
+    )
+    decision = state.advance(tx)
+    assert decision.done is True
+
+
 
