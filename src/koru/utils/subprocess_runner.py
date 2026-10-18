@@ -1,9 +1,47 @@
 """Subprocess runner utilities."""
 
+import os
 import subprocess
 import sys
 from collections.abc import Sequence
 from pathlib import Path
+
+
+def sanitized_subprocess_env(project: Path | None = None) -> dict[str, str]:
+    """Return an environment for project subprocesses without foreign venv site-packages."""
+    env = dict(os.environ)
+    env.pop("PYTHONHOME", None)
+    project_venvs: tuple[str, ...] = ()
+    if project is not None:
+        resolved = Path(project).resolve()
+        project_venvs = tuple(
+            str((resolved / name).resolve())
+            for name in (".venv", "venv")
+            if (resolved / name).exists()
+        )
+    raw_pythonpath = env.get("PYTHONPATH", "")
+    if raw_pythonpath:
+        kept: list[str] = []
+        for entry in raw_pythonpath.split(os.pathsep):
+            cleaned = entry.strip()
+            if not cleaned:
+                continue
+            normalized = cleaned.rstrip("/")
+            if "/.local/share/koru/runtime/" in normalized:
+                continue
+            if normalized.endswith(("/site-packages", "/dist-packages")):
+                if project_venvs and any(normalized.startswith(v + "/") for v in project_venvs):
+                    kept.append(cleaned)
+                continue
+            kept.append(cleaned)
+        if kept:
+            env["PYTHONPATH"] = os.pathsep.join(kept)
+        else:
+            env.pop("PYTHONPATH", None)
+    venv_var = env.get("VIRTUAL_ENV", "")
+    if venv_var and "/.local/share/koru/runtime/" in venv_var:
+        env.pop("VIRTUAL_ENV", None)
+    return env
 
 
 def default_subprocess_runner(cmd: Sequence[str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -11,6 +49,7 @@ def default_subprocess_runner(cmd: Sequence[str], cwd: Path) -> subprocess.Compl
     return subprocess.run(
         list(cmd),
         cwd=cwd,
+        env=sanitized_subprocess_env(cwd),
         capture_output=True,
         text=True,
         check=False,

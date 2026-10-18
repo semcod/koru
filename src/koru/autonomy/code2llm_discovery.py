@@ -350,23 +350,84 @@ def _code2llm_issue_key_from_ticket(ticket: Any) -> tuple[str, str, str] | None:
     )
 
 
+def _history_ticket_still_matches_files(project: Path, ticket: dict[str, Any]) -> bool:
+    status = str(ticket.get("status") or "").strip().lower()
+    if status not in {"done", "canceled", "cancelled", "closed"}:
+        return False
+    source = ticket.get("source")
+    context = source.get("context") if isinstance(source, dict) else None
+    evidence = context.get("evidence") if isinstance(context, dict) else None
+    evidence_files = evidence.get("files") if isinstance(evidence, dict) else None
+    if isinstance(evidence_files, list) and evidence_files:
+        for entry in evidence_files:
+            if not isinstance(entry, dict):
+                return False
+            rel = str(entry.get("path") or "").strip()
+            expected_sha = str(entry.get("sha256") or "").strip().lower()
+            if not rel or not expected_sha:
+                return False
+            current = _file_evidence(project, project / rel)
+            if str(current.get("sha256") or "").lower() != expected_sha:
+                return False
+        return True
+    files = _string_list(ticket.get("files"))
+    if not files:
+        return False
+    from datetime import datetime
+
+    ts_raw = str(ticket.get("updated_at") or ticket.get("created_at") or "").strip()
+    if not ts_raw:
+        return False
+    try:
+        closed_epoch = datetime.fromisoformat(ts_raw.replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return False
+    for rel in files:
+        target = project / rel
+        try:
+            if target.stat().st_mtime > closed_epoch:
+                return False
+        except OSError:
+            return False
+    return True
+
+
 def _existing_code2llm_issue_keys(project: Path, *, sprint: str) -> set[tuple[str, str, str]]:
     try:
         import yaml
-
-        sprint_path = project / ".planfile" / "sprints" / f"{sprint}.yaml"
-        data = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
-    except (OSError, Exception):  # noqa: BLE001 - best-effort duplicate guard
+    except Exception:  # noqa: BLE001 - best-effort duplicate guard
         return set()
+    sprints_dir = project / ".planfile" / "sprints"
+    keys: set[tuple[str, str, str]] = set()
+    sprint_path = sprints_dir / f"{sprint}.yaml"
+    try:
+        data = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
+    except (OSError, Exception):  # noqa: BLE001
+        data = {}
     sprint_data = data.get("sprint") if isinstance(data, dict) else None
     tickets = sprint_data.get("tickets") if isinstance(sprint_data, dict) else None
-    if not isinstance(tickets, dict):
-        return set()
-    return {
-        key
-        for ticket in tickets.values()
-        if (key := _code2llm_issue_key_from_ticket(ticket)) is not None
-    }
+    if isinstance(tickets, dict):
+        for ticket in tickets.values():
+            if (key := _code2llm_issue_key_from_ticket(ticket)) is not None:
+                keys.add(key)
+    if sprints_dir.is_dir():
+        for history_path in sorted(sprints_dir.glob("history-*.yaml")):
+            try:
+                hist_data = yaml.safe_load(history_path.read_text(encoding="utf-8")) or {}
+            except (OSError, Exception):  # noqa: BLE001
+                continue
+            hist_sprint = hist_data.get("sprint") if isinstance(hist_data, dict) else None
+            hist_tickets = hist_sprint.get("tickets") if isinstance(hist_sprint, dict) else None
+            if not isinstance(hist_tickets, dict):
+                continue
+            for ticket in hist_tickets.values():
+                if not isinstance(ticket, dict):
+                    continue
+                if not _history_ticket_still_matches_files(project, ticket):
+                    continue
+                if (key := _code2llm_issue_key_from_ticket(ticket)) is not None:
+                    keys.add(key)
+    return keys
 
 
 def _backfill_existing_dedupe_keys(

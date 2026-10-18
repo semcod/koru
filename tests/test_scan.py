@@ -222,6 +222,26 @@ class TestScanPytestCollect(unittest.TestCase):
             idx = cmd.index("-p")
             self.assertEqual(cmd[idx + 1], "no:wellmanifest_governance")
 
+    def test_collect_probe_strips_foreign_venv_pythonpath(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "pyproject.toml").write_text("[project]\nname='x'\n")
+            foreign = "/home/user/.local/share/koru/runtime/abc/venv/lib/python3.12/site-packages"
+            local_src = str(project / "src")
+            with (
+                mock.patch.dict(
+                    "os.environ",
+                    {"PYTHONPATH": f"{foreign}{os.pathsep}{local_src}"},
+                    clear=False,
+                ),
+                mock.patch("koru.scan.subprocess.run", return_value=_ok("1 test collected")) as run_mock,
+            ):
+                result = scan_pytest_collect(project)
+            self.assertEqual(result, [])
+            run_mock.assert_called_once()
+            passed_env = run_mock.call_args.kwargs["env"]
+            self.assertEqual(passed_env.get("PYTHONPATH"), local_src)
+
     def test_parses_per_file_collection_errors(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

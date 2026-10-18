@@ -173,7 +173,11 @@ from koru.scan_types import (
 )
 from koru.semcod_tools import detect_semcod_tools
 from koru.tasks import create_nl_task
-from koru.utils.subprocess_runner import default_subprocess_runner, get_python_cmd
+from koru.utils.subprocess_runner import (
+    default_subprocess_runner,
+    get_python_cmd,
+    sanitized_subprocess_env,
+)
 
 # ---------------------------------------------------------------------------
 # Signal probes — each returns a list[Suggestion]; never raises
@@ -209,6 +213,7 @@ def scan_pytest_collect(
         return subprocess.run(
             list(cmd),
             cwd=cwd,
+            env=sanitized_subprocess_env(cwd),
             capture_output=True,
             text=True,
             timeout=timeout_seconds,

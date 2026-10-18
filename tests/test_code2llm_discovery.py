@@ -477,3 +477,84 @@ def test_format_summary_for_skip_and_success() -> None:
     text = cd.format_discovery_summary(success)
     assert "applied=2" in text
     assert "skipped=1" in text
+
+
+def test_applies_planfile_tickets_skips_archived_history_ticket_when_file_unchanged(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import hashlib
+
+    monkeypatch.setattr(cd, "_code2llm_executable", lambda: "/usr/bin/code2llm")
+    target = tmp_path / "src" / "tagi" / "autoupdate.py"
+    target.parent.mkdir(parents=True)
+    target.write_text("def check_for_updates():\n    return True\n", encoding="utf-8")
+    digest = hashlib.sha256(target.read_bytes()).hexdigest()
+
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "history-2026-10.yaml").write_text(
+        yaml.safe_dump(
+            {
+                "sprint": {
+                    "id": "history-2026-10",
+                    "tickets": {
+                        "PLF-183": {
+                            "id": "PLF-183",
+                            "name": "Address code smell: God Function: check_for_updates",
+                            "status": "done",
+                            "files": ["src/tagi/autoupdate.py"],
+                            "source": {
+                                "tool": "koru-project-discovery",
+                                "context": {
+                                    "signal": "code2llm_smell_god_function",
+                                    "dedupe_key": (
+                                        "code2llm:smell:god_function:"
+                                        "src/tagi/autoupdate.py:114:God Function: check_for_updates"
+                                    ),
+                                    "evidence": {
+                                        "schema": "koru.ticket_evidence.v1",
+                                        "kind": "code2llm_discovery",
+                                        "files": [
+                                            {
+                                                "path": "src/tagi/autoupdate.py",
+                                                "sha256": digest,
+                                            }
+                                        ],
+                                    },
+                                },
+                            },
+                        }
+                    },
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    ticket_yaml = {
+        "schema": "code2llm.planfile_tickets.v1",
+        "source": "koru-project-discovery",
+        "tickets": [
+            {
+                "signal": "code2llm_smell_god_function",
+                "title": "Address code smell: God Function: check_for_updates",
+                "description": "Refactor check_for_updates",
+                "priority": "normal",
+                "labels": ["llm-ready", "code2llm"],
+                "files": ["src/tagi/autoupdate.py"],
+                "dedupe_key": (
+                    "code2llm:smell:god_function:"
+                    "src/tagi/autoupdate.py:114:God Function: check_for_updates"
+                ),
+            }
+        ],
+    }
+
+    outcome = cd.run_code2llm_discovery(
+        tmp_path,
+        runner=_make_runner(written_yaml=ticket_yaml),
+        force=True,
+    )
+
+    assert outcome.applied_titles == []
+    assert outcome.skipped_titles == ["Address code smell: God Function: check_for_updates"]

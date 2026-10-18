@@ -130,6 +130,37 @@ class TestNaturalLanguageTask(unittest.TestCase):
             config = yaml.safe_load((project / ".planfile" / "config.yaml").read_text())
             self.assertEqual(config["next_id"], 2)
 
+    def test_skips_historical_highwater_ids_when_config_next_id_lags(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            planfile_dir = project / ".planfile"
+            sprints_dir = planfile_dir / "sprints"
+            sprints_dir.mkdir(parents=True)
+            (planfile_dir / "config.yaml").write_text(
+                yaml.safe_dump({"project": "tagi", "prefix": "PLF", "next_id": 176}),
+                encoding="utf-8",
+            )
+            (sprints_dir / "history-2026-10.yaml").write_text(
+                yaml.safe_dump(
+                    {
+                        "sprint": {
+                            "id": "history-2026-10",
+                            "tickets": {
+                                "PLF-176": {"id": "PLF-176", "status": "done"},
+                                "PLF-251": {"id": "PLF-251", "status": "done"},
+                            },
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            created = create_nl_task(project, "New task after archive")
+
+            self.assertEqual(created.ticket_id, "PLF-252")
+            config = yaml.safe_load((planfile_dir / "config.yaml").read_text(encoding="utf-8"))
+            self.assertEqual(config["next_id"], 253)
+
 
 def test_create_nl_task_persists_domain_event(tmp_path: Path) -> None:
     created = create_nl_task(tmp_path, "Persist CQRS task")

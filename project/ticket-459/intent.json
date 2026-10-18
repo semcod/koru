@@ -1,0 +1,85 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-459",
+  "summary": "Prevent duplicate historical ticket IDs and cross-venv PYTHONPATH scan pollution",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-459/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/code2llm_discovery.py",
+    "src/koru/scan.py",
+    "src/koru/task_intake.py",
+    "src/koru/utils/subprocess_runner.py",
+    "tests/test_code2llm_discovery.py",
+    "tests/test_scan.py",
+    "tests/test_tasks.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "c04c63d964e7c0add2a67bed59aafea20df91b28",
+    "targetBranch": "main",
+    "outcome": "Prevent create_nl_task from reusing archived ticket IDs, strip foreign virtualenv site-packages from PYTHONPATH during scan_pytest_collect, and skip archived code2llm discovery tickets on unchanged files.",
+    "nonGoals": [
+      "Do not modify planfile storage format or queue execution semantics"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 7,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Compute highwater ID across .planfile artifacts in _generate_ticket_id, sanitize foreign site-packages in subprocess_runner and scan_pytest_collect, and include unchanged history-* tickets in _existing_code2llm_issue_keys.",
+      "components": [
+        {
+          "name": "task-intake-and-scan-isolation",
+          "paths": [
+            "src/koru/task_intake.py",
+            "src/koru/utils/subprocess_runner.py",
+            "src/koru/scan.py",
+            "src/koru/autonomy/code2llm_discovery.py",
+            "tests/test_tasks.py",
+            "tests/test_scan.py",
+            "tests/test_code2llm_discovery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-459."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_tasks.py tests/test_scan.py tests/test_code2llm_discovery.py",
+          "python3 -m ruff check src tests",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "All unit tests in test_tasks.py, test_scan.py, and test_code2llm_discovery.py, ruff check, and governance-check.sh pass."
+      }
+    ]
+  }
+}
