@@ -663,3 +663,73 @@ class TestVerifyFailureReflexionAndLessonLedger:
         assert "Learned Constraints from Previous Runs" in prompt_section
         assert "Recovered after initial" in prompt_section
 
+    def test_new_file_diff_repair_and_enveloped_pin_base(self, tmp_path: Path) -> None:
+        import hashlib
+
+        from koru.queue.patch_retry import _pin_base
+
+        repo = _init_repo(tmp_path)
+        (repo / "README.md").write_text("# Demo\n", encoding="utf-8")
+        _git(repo, "add", "README.md")
+        _git(repo, "commit", "-m", "init")
+
+        variants = [
+            (
+                "diff --git a/LICENSE b/LICENSE\n"
+                "--- a/LICENSE\n"
+                "+++ b/LICENSE\n"
+                "@@ -1,0 +1,3 @@\n"
+                "+MIT License\n"
+                "\n"
+                "+Copyright (c) 2026\n"
+            ),
+            (
+                "--- /dev/null\n"
+                "+++ b/LICENSE\n"
+                "@@ -0,0 +1,3 @@\n"
+                "+MIT License\n"
+                "\n"
+                "+Copyright (c) 2026\n"
+            ),
+            (
+                "Here is the license file:\n"
+                "```text\n"
+                "MIT License\n\n"
+                "Copyright (c) 2026 Demo\n"
+                "Permission is hereby granted.\n"
+                "```\n"
+            ),
+        ]
+        for raw in variants:
+            repaired = extract_unified_diff(raw, project=repo, known_files=["LICENSE"])
+            assert repaired is not None
+            assert "new file mode 100644" in repaired
+            assert "--- /dev/null" in repaired
+            assert "+++ b/LICENSE" in repaired
+            proc = subprocess.run(
+                ["git", "apply", "--check"],
+                cwd=repo,
+                input=repaired,
+                text=True,
+                capture_output=True,
+            )
+            assert proc.returncode == 0, f"git apply failed: {proc.stderr}\n{repaired}"
+
+        enveloped = wrap_reply_in_proposal_envelope(
+            SimpleNamespace(returncode=0, stdout=variants[0], stderr=""),
+            "Create LICENSE",
+            project=repo,
+            known_files=["LICENSE"],
+        )
+        manifest = _pin_base(
+            repo,
+            {"id": "T-LIC-1", "files": ["LICENSE"]},
+            enveloped,
+            budget=1,
+            run_id="run123",
+        )
+        empty_sha = hashlib.sha256(b"").hexdigest()
+        assert manifest["patch_sha256"] != empty_sha
+        assert "LICENSE" in manifest["touched_files"]
+
+

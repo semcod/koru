@@ -838,10 +838,16 @@ def _pin_base(
     so fall back to the files the ticket declared. A manifest that pins nothing
     would silently permit the rebase it is meant to prevent.
     """
+    from koru.queue.transaction.preflight import extract_patch
     from koru.queue.verify.resolver import resolve_verify
 
     known = _filter_readonly_scan_artifacts(ticket.get("files") or ())
-    diff = extract_unified_diff(result.stdout, project=project, known_files=known) or ""
+    extracted_diff, _, _ = extract_patch(result, project=project, known_files=known)
+    diff = (
+        extracted_diff
+        or extract_unified_diff(result.stdout, project=project, known_files=known)
+        or ""
+    )
     diff_targets = diff_target_files(project, diff)
     declared_targets = tuple(str(rel) for rel in (ticket.get("files") or []))
     merged_targets = tuple(dict.fromkeys((*diff_targets, *declared_targets)))

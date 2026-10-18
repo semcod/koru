@@ -276,6 +276,20 @@ def synthesize_diff_from_search_replace(
                     cand_set = {line.strip() for line in cand_lines if len(line.strip()) > 6}
                     if orig_set and len(orig_set & cand_set) / max(1, min(len(orig_set), len(cand_set))) >= 0.25:
                         return _format_unified_diff_for_file(rel, orig_text, candidate_body + "\n")
+            elif not disk_file.exists():
+                for m_fence in _FENCE_RE.finditer(text):
+                    candidate_body = m_fence.group("body").strip("\r\n")
+                    cand_lines = candidate_body.splitlines()
+                    if len(cand_lines) < 3 or candidate_body.lstrip().startswith("NO-PATCH:"):
+                        continue
+                    if rel.endswith(".py"):
+                        import ast
+
+                        try:
+                            ast.parse(candidate_body)
+                        except SyntaxError:
+                            continue
+                    return _format_unified_diff_for_file(rel, None, candidate_body + "\n")
         return ""
 
     file_states: dict[str, tuple[str | None, str]] = {}
@@ -670,12 +684,45 @@ def _repair_diff_against_project(diff: str, project: Path | str) -> str:
             continue
         old_rel = header_match.group("old")
         new_rel = header_match.group("new")
-        is_new_or_del = any(
-            sec_line.startswith(("new file mode", "deleted file mode", "--- /dev/null", "+++ /dev/null"))
+        is_del = any(
+            sec_line.startswith(("deleted file mode", "+++ /dev/null"))
             for sec_line in sec[:6]
-        ) or any(sec_line.startswith("@@ -0,0") for sec_line in sec)
+        )
+        is_new = not is_del and (
+            any(sec_line.startswith(("new file mode", "--- /dev/null")) for sec_line in sec[:6])
+            or any(sec_line.startswith("@@ -0,0") for sec_line in sec)
+        )
         target_file = proj_path / old_rel
-        if is_new_or_del or old_rel != new_rel:
+        new_target_file = proj_path / new_rel
+        if not is_del and not target_file.exists() and not new_target_file.exists():
+            is_new = True
+        if is_del or (old_rel != new_rel and not is_new):
+            section_order.append(("raw", sec))
+            continue
+        if is_new:
+            if not new_target_file.exists():
+                in_sec_hunk = False
+                has_removals = False
+                added_lines: list[str] = []
+                for sec_line in sec:
+                    if sec_line.startswith("@@"):
+                        in_sec_hunk = True
+                        continue
+                    if not in_sec_hunk or sec_line.startswith("\\"):
+                        continue
+                    if sec_line.startswith("-"):
+                        has_removals = True
+                        break
+                    added_lines.append(
+                        sec_line[1:] if sec_line.startswith(("+", " ")) else sec_line
+                    )
+                if not has_removals and added_lines:
+                    formatted_new = _format_unified_diff_for_file(
+                        new_rel, None, "\n".join(added_lines) + "\n"
+                    )
+                    if formatted_new:
+                        section_order.append(("raw", formatted_new.splitlines()))
+                        continue
             section_order.append(("raw", sec))
             continue
         if not target_file.is_file():
@@ -827,6 +874,7 @@ def _sanitize_inner_headers(lines: list[str]) -> list[str]:
     cleaned: list[str] = []
     in_hunk = False
     after_fence = False
+    is_new_file = False
     for line in lines:
         if line.strip().startswith("```"):
             in_hunk = False
@@ -835,6 +883,7 @@ def _sanitize_inner_headers(lines: list[str]) -> list[str]:
         if line.startswith("diff --git "):
             in_hunk = False
             after_fence = False
+            is_new_file = False
             cleaned.append(line)
             continue
         if after_fence:
@@ -842,14 +891,20 @@ def _sanitize_inner_headers(lines: list[str]) -> list[str]:
                 after_fence = False
             else:
                 continue
+        if line.startswith("--- /dev/null"):
+            is_new_file = True
         if line.startswith("@@"):
             in_hunk = True
+            if line.startswith("@@ -0,0"):
+                is_new_file = True
             cleaned.append(line)
             continue
         if line.startswith(
             ("index ", "new file mode", "deleted file mode", "similarity index", "rename from", "rename to")
         ):
             in_hunk = False
+            if line.startswith("new file mode"):
+                is_new_file = True
             cleaned.append(line)
             continue
         if in_hunk:
@@ -857,9 +912,13 @@ def _sanitize_inner_headers(lines: list[str]) -> list[str]:
                 continue
             if _ELLIPSIS_RE.match(line):
                 continue
-            # If inside a hunk and line doesn't start with +, -, \, or space:
-            # Models sometimes emit context lines without a leading space or with a stray leading dot.
-            if not line.startswith(("+", "-", " ", "\\")):
+            if is_new_file:
+                if line == " ":
+                    line = "+"
+                elif not line.startswith(("+", "-", " ", "\\")):
+                    line = "+" + line
+            elif not line.startswith(("+", "-", " ", "\\")):
+                # Models sometimes emit context lines without a leading space or with a stray leading dot.
                 if line.startswith(". ") or re.match(r"^\.[A-Z_][A-Z0-9_]*(?:\[\d+\])?\s*:", line):
                     line = " " + line[1:]
                 else:
@@ -886,17 +945,29 @@ def _repair_hunk_counts(lines: list[str]) -> list[str]:
     them is a safe normalisation rather than a guess.
     """
     repaired = list(lines)
+    is_new_file = False
     for index, line in enumerate(repaired):
+        if line.startswith("diff --git "):
+            is_new_file = False
+            continue
+        if line.startswith(("new file mode", "--- /dev/null")):
+            is_new_file = True
+            continue
         match = _HUNK_RE.match(line)
         if not match:
             continue
+        hunk_is_new = is_new_file or match.group("old_start") == "0"
         old_count = 0
         new_count = 0
-        for body_line in repaired[index + 1 :]:
+        for body_idx in range(index + 1, len(repaired)):
+            body_line = repaired[body_idx]
             if body_line.startswith(("@@", "diff --git", "--- a/", "--- /dev/null", "+++ b/", "+++ /dev/null")):
                 break
             if body_line.startswith("\\"):  # "\ No newline at end of file"
                 continue
+            if hunk_is_new and body_line == " ":
+                repaired[body_idx] = "+"
+                body_line = "+"
             if body_line.startswith("+"):
                 new_count += 1
             elif body_line.startswith("-"):
@@ -904,8 +975,9 @@ def _repair_hunk_counts(lines: list[str]) -> list[str]:
             else:  # context line (a bare empty line counts as context too)
                 old_count += 1
                 new_count += 1
+        old_start = "0" if (hunk_is_new and old_count == 0) else match.group("old_start")
         repaired[index] = (
-            f"@@ -{match.group('old_start')},{old_count} "
+            f"@@ -{old_start},{old_count} "
             f"+{match.group('new_start')},{new_count} @@{match.group('tail')}"
         )
     return repaired
@@ -921,6 +993,16 @@ def _repair_missing_file_headers(lines: list[str]) -> list[str]:
     rather than by re-prompting.
     """
     repaired: list[str] = []
+    if lines and not _GIT_HEADER_RE.match(lines[0]) and lines[0].startswith("--- "):
+        old_m = re.match(r"^---\s+a/(\S+)", lines[0])
+        new_m = next(
+            (re.match(r"^\+\+\+\s+b/(\S+)", ln) for ln in lines[1:4] if ln.startswith("+++ ")),
+            None,
+        )
+        if old_m or new_m:
+            new_p = new_m.group(1) if new_m else old_m.group(1)  # type: ignore[union-attr]
+            old_p = old_m.group(1) if old_m else new_p
+            lines = [f"diff --git a/{old_p} b/{new_p}", *lines]
     i = 0
     n = len(lines)
     while i < n:

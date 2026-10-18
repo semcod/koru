@@ -1,0 +1,77 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-458",
+  "summary": "Fix new-file unified diff repair and enveloped manifest pinning in queue",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-458/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/diff_repair.py",
+    "src/koru/queue/patch_retry.py",
+    "tests/test_diff_repair_and_refactor.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "302261f3ec2d5f633ad707ff72336e6565785693",
+    "targetBranch": "main",
+    "outcome": "Ensure new-file unified diffs (such as LICENSE creation) apply cleanly via git apply and retry manifest pinning preserves the real patch SHA-256 on ProposalEnvelope replies.",
+    "nonGoals": [
+      "Do not alter existing multi-file verification or sandbox behavior"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Normalize new-file hunks in _sanitize_inner_headers, _repair_hunk_counts, _repair_diff_against_project, and synthesize_diff_from_search_replace, and unwrap ProposalEnvelope in _pin_base.",
+      "components": [
+        {
+          "name": "queue-diff-repair-and-retry",
+          "paths": [
+            "src/koru/queue/diff_repair.py",
+            "src/koru/queue/patch_retry.py",
+            "tests/test_diff_repair_and_refactor.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-458."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_diff_repair_and_refactor.py",
+          "python3 -m ruff check src tests",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "All unit tests in test_diff_repair_and_refactor.py, ruff check, and governance-check.sh pass."
+      }
+    ]
+  }
+}
