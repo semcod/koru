@@ -181,7 +181,10 @@ _READONLY_SCAN_ARTIFACT_NAMES = frozenset(
 
 
 def _is_readonly_scan_artifact(rel_path: str) -> bool:
-    norm = str(rel_path or "").replace("\\", "/").strip().lstrip("./")
+    norm = str(rel_path or "").replace("\\", "/").strip()
+    while norm.startswith("./"):
+        norm = norm[2:]
+    norm = norm.lstrip("/")
     if not norm:
         return False
     basename = norm.rsplit("/", 1)[-1].lower()

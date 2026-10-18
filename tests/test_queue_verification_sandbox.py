@@ -104,6 +104,9 @@ assert 'KORU_VERIFICATION_TEST_CREDENTIAL' not in os.environ
 scratch = pathlib.Path(os.environ['TMPDIR'])
 (scratch / 'fixture.txt').write_text('allowed')
 assert scratch.is_relative_to(pathlib.Path.cwd())
+sub_probe = pathlib.Path.cwd() / '.subactor/cache/agent-hosts.probe'
+sub_probe.write_text('ephemeral-cache-ok')
+assert sub_probe.read_text() == 'ephemeral-cache-ok'
 try:
     os.link(targets[0], scratch / 'host-hardlink')
 except OSError:
@@ -125,6 +128,7 @@ print('kernel-boundary-passed')
         assert result.returncode == 0, result.stderr
         assert "kernel-boundary-passed" in result.stdout
         assert protected.read_text() == sibling.read_text() == "sentinel"
+        assert not (project / ".subactor/cache/agent-hosts.probe").exists()
         assert not temporary_target.exists()
 
 
@@ -332,6 +336,32 @@ def test_sandbox_prepends_project_venv_and_skips_unrecoverable_baseline_retries(
     )
     decision = state.advance(tx)
     assert decision.done is True
+
+    from koru.queue.diff_repair import extract_unified_diff, synthesize_diff_from_search_replace
+    from koru.queue.context_files import _extract_prompt_files
+
+    (tmp_path / ".gitignore").write_text("__pycache__/\n.planfile/\n", encoding="utf-8")
+    (tmp_path / ".wup.yaml").write_text("version: 1\n", encoding="utf-8")
+    assert ".wup.yaml" in _extract_prompt_files(tmp_path, "Please update `./.wup.yaml`")
+    raw_dotfile_diff = (
+        "diff --git a/gitignore b/gitignore\n"
+        "--- a/gitignore\n"
+        "+++ b/gitignore\n"
+        "@@ -1,2 +1,3 @@\n"
+        " __pycache__/\n"
+        ".planfile/\n"
+        "+.planfile/.koru/\n"
+    )
+    extracted = extract_unified_diff(raw_dotfile_diff, project=tmp_path, known_files=[".gitignore"])
+    assert "a/.gitignore b/.gitignore" in extracted
+    assert "\n .planfile/\n" in extracted
+    assert "a/gitignore" not in extracted
+    sr_diff = synthesize_diff_from_search_replace(
+        "### FILE: .gitignore\n<<<<<<< SEARCH\n__pycache__/\n=======\n__pycache__/\n.planfile/.koru/\n>>>>>>> REPLACE\n",
+        tmp_path,
+        known_files=[".gitignore"],
+    )
+    assert "a/.gitignore b/.gitignore" in sr_diff
 
 
 

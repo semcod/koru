@@ -142,6 +142,8 @@ def _command(command: str, project: Path, scratch: Path, binary: str) -> str:
     _export_filter(filter_path, allow_loopback=_should_allow_loopback(command))
     for folder in ("tmp", "home", "cache", "config", "empty"):
         (scratch / folder).mkdir(mode=0o700)
+    subactor_cache = scratch / "subactor-cache"
+    (subactor_cache / "koru-verification" / scratch.name).mkdir(parents=True, mode=0o700)
     environment = {
         "PATH": _sandbox_path(project),
         "LANG": "C.UTF-8",
@@ -156,7 +158,9 @@ def _command(command: str, project: Path, scratch: Path, binary: str) -> str:
     if os.environ.get("PYTHONPATH"):
         environment["PYTHONPATH"] = os.environ["PYTHONPATH"]
     argv = ["env", "-i", *(key + "=" + value for key, value in environment.items()),
-            binary, "--ro-bind", "/", "/", "--bind", str(scratch), str(scratch),
+            binary, "--ro-bind", "/", "/",
+            "--bind", str(subactor_cache), str(project / ".subactor/cache"),
+            "--bind", str(scratch), str(scratch),
             "--unshare-all", "--unshare-user", "--disable-userns", "--assert-userns-disabled",
             "--die-with-parent", "--new-session", "--cap-drop", "ALL",
             "--proc", "/proc", "--dev", "/dev",
