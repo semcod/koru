@@ -11,8 +11,10 @@ import ctypes
 import ctypes.util
 import errno
 import os
+import re
 import shlex
 import shutil
+import socket
 import stat
 import subprocess
 import sys
@@ -25,6 +27,28 @@ class SandboxUnavailable(ValueError):
     """The verification command must not run without its boundary."""
 
 
+class _ScmpArgCmp(ctypes.Structure):
+    _fields_ = [
+        ("arg", ctypes.c_uint),
+        ("op", ctypes.c_int),
+        ("datum_a", ctypes.c_uint64),
+        ("datum_b", ctypes.c_uint64),
+    ]
+
+
+_SCMP_CMP_EQ = 4
+_PYTEST_CMD_RE = re.compile(r"(?:^|[\s/\"'])pytest(?:\s|\"|'|$)")
+
+
+def _should_allow_loopback(command: str) -> bool:
+    override = (os.environ.get("KORU_VERIFY_ALLOW_LOOPBACK") or "").strip().lower()
+    if override in {"0", "false", "no", "off"}:
+        return False
+    if override in {"1", "true", "yes", "on"}:
+        return True
+    return bool(_PYTEST_CMD_RE.search(command or ""))
+
+
 def _safe_path(path: Path) -> Path:
     if ".." in Path(path).parts:
         raise SandboxUnavailable("noncanonical verification path")
@@ -34,7 +58,7 @@ def _safe_path(path: Path) -> Path:
     return path
 
 
-def _export_filter(path: Path) -> None:
+def _export_filter(path: Path, *, allow_loopback: bool = False) -> None:
     """Export a native-architecture seccomp program, never load it in the parent."""
     name = ctypes.util.find_library("seccomp")
     if not name:
@@ -47,22 +71,43 @@ def _export_filter(path: Path) -> None:
     library.seccomp_syscall_resolve_name.restype = ctypes.c_int
     library.seccomp_rule_add.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_int, ctypes.c_uint]
     library.seccomp_rule_add.restype = ctypes.c_int
+    library.seccomp_rule_add_array.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_uint32,
+        ctypes.c_int,
+        ctypes.c_uint,
+        ctypes.POINTER(_ScmpArgCmp),
+    ]
+    library.seccomp_rule_add_array.restype = ctypes.c_int
     library.seccomp_export_bpf.argtypes = [ctypes.c_void_p, ctypes.c_int]
     library.seccomp_export_bpf.restype = ctypes.c_int
     context = library.seccomp_init(0x7FFF0000)  # SCMP_ACT_ALLOW; other ABIs fail closed.
     if not context:
         raise SandboxUnavailable("seccomp initialization failed")
     try:
-        for name in (
-            "socket", "socketcall", "connect", "sendto", "sendmsg",
+        denied = (
+            ("socketcall",)
+            if allow_loopback
+            else ("socket", "socketcall", "connect", "sendto", "sendmsg")
+        ) + (
             "mount", "umount2", "pivot_root", "setns", "unshare",
             "fsopen", "fsconfig", "fsmount", "move_mount", "open_tree", "mount_setattr",
             "ptrace", "process_vm_writev", "bpf", "keyctl", "add_key", "request_key",
             "io_uring_setup", "io_uring_enter", "io_uring_register",
-        ):
-            number = library.seccomp_syscall_resolve_name(name.encode("ascii"))
+        )
+        if allow_loopback:
+            socket_nr = library.seccomp_syscall_resolve_name(b"socket")
+            if socket_nr == -1:
+                raise SandboxUnavailable("required seccomp syscall is unknown")
+            unix_cmp = _ScmpArgCmp(0, _SCMP_CMP_EQ, socket.AF_UNIX, 0)
+            if library.seccomp_rule_add_array(
+                context, 0x00050000 | errno.EPERM, socket_nr, 1, ctypes.byref(unix_cmp)
+            ):
+                raise SandboxUnavailable("seccomp rule installation failed")
+        for syscall_name in denied:
+            number = library.seccomp_syscall_resolve_name(syscall_name.encode("ascii"))
             if number == -1:
-                if name in {"socket", "connect", "io_uring_setup"}:
+                if syscall_name in {"socket", "connect", "io_uring_setup"}:
                     raise SandboxUnavailable("required seccomp syscall is unknown")
                 continue
             if library.seccomp_rule_add(context, 0x00050000 | errno.EPERM, number, 0):
@@ -78,7 +123,7 @@ def _export_filter(path: Path) -> None:
 
 def _command(command: str, project: Path, scratch: Path, binary: str) -> str:
     filter_path = scratch / "filter.bpf"
-    _export_filter(filter_path)
+    _export_filter(filter_path, allow_loopback=_should_allow_loopback(command))
     for folder in ("tmp", "home", "cache", "config", "empty"):
         (scratch / folder).mkdir(mode=0o700)
     environment = {

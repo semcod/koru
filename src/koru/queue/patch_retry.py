@@ -38,6 +38,7 @@ from koru.queue.patch_mode import (
     PATCH_DOES_NOT_APPLY,
     PROMOTION_ARTIFACT,
     PROMOTION_BRANCH,
+    VERIFY_BASELINE_FAILED,
     VERIFY_FAILED_ISOLATED,
     VERIFY_FAILED_ROLLED_BACK,
     PatchOutcome,
@@ -91,17 +92,27 @@ def verify_retry_budget(ticket: dict | None = None) -> int:
             except (TypeError, ValueError):
                 pass
     raw = (os.environ.get("KORU_QUEUE_VERIFY_RETRIES") or "").strip()
-    try:
-        return max(0, int(raw)) if raw else 0
-    except ValueError:
-        return 0
+    if raw:
+        try:
+            return max(0, int(raw))
+        except ValueError:
+            return 0
+    if isinstance(ticket, dict):
+        declared = _filter_readonly_scan_artifacts(ticket.get("files") or ())
+        if len(declared) > 1:
+            return 1
+    return 0
 
 
 def _is_verify_failure(outcome: PatchOutcome | None) -> bool:
     return bool(
         outcome is not None
         and outcome.workspace_left_untouched
-        and outcome.code in (VERIFY_FAILED_ISOLATED, VERIFY_FAILED_ROLLED_BACK)
+        and outcome.code in (
+            VERIFY_FAILED_ISOLATED,
+            VERIFY_FAILED_ROLLED_BACK,
+            VERIFY_BASELINE_FAILED,
+        )
     )
 
 
@@ -427,8 +438,16 @@ def _build_retry_action(
     # git and test output can quote file contents, so redact before it
     # travels back out to the model.
     diagnostic = redact_secrets(outcome.diagnostics or outcome.message)
+    touched = _filter_readonly_scan_artifacts((manifest or {}).get("touched_files") or ())
     if _is_verify_failure(outcome):
-        prompt = build_verify_retry_prompt(base_prompt, diagnostic, previous_diff=previous_diff)
+        prev_touched = set(diff_target_files(project, previous_diff)) if previous_diff else set()
+        missing = tuple(f for f in touched if f not in prev_touched) if len(touched) > 1 else ()
+        prompt = build_verify_retry_prompt(
+            base_prompt,
+            diagnostic,
+            previous_diff=previous_diff,
+            missing_files=missing,
+        )
     else:
         prompt = build_retry_prompt(base_prompt, diagnostic)
     if manifest and (
@@ -437,7 +456,6 @@ def _build_retry_action(
     ):
         # Safe only because the manifest guarantees these contents are still
         # the ones the patch must apply to.
-        touched = _filter_readonly_scan_artifacts(manifest.get("touched_files") or ())
         prompt += current_file_excerpt(project, touched)
     retry_action = {**action, "prompt": prompt}
     if enrich is not None:
@@ -453,7 +471,7 @@ def _distill_lesson_rule(outcome_code: str | None, diagnostic: str, self_repaire
         return "Do not delete existing public functions/classes or truncate large sections of the module unless explicitly replacing them."
     if outcome_code == "patch_introduces_antipattern":
         return f"Avoid introducing performance or resource-leak anti-patterns ({diag_line})."
-    if outcome_code in (VERIFY_FAILED_ISOLATED, VERIFY_FAILED_ROLLED_BACK):
+    if outcome_code in (VERIFY_FAILED_ISOLATED, VERIFY_FAILED_ROLLED_BACK, VERIFY_BASELINE_FAILED):
         return f"Verification failed ({diag_line}); preserve existing public signatures, imports, and test expectations."
     if outcome_code == PATCH_DOES_NOT_APPLY:
         return f"Patch context did not match disk ({diag_line}); include exact 3-line context from current file contents."
@@ -783,9 +801,10 @@ def _pin_base(
 
     known = _filter_readonly_scan_artifacts(ticket.get("files") or ())
     diff = extract_unified_diff(result.stdout, project=project, known_files=known) or ""
-    raw_targets = diff_target_files(project, diff) or tuple(
-        str(rel) for rel in (ticket.get("files") or [])
-    )
+    diff_targets = diff_target_files(project, diff)
+    declared_targets = tuple(str(rel) for rel in (ticket.get("files") or []))
+    merged_targets = tuple(dict.fromkeys((*diff_targets, *declared_targets)))
+    raw_targets = merged_targets or diff_targets or declared_targets
     targets = _filter_readonly_scan_artifacts(raw_targets) or raw_targets
     return build_manifest(
         project,

@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-451",
+  "summary": "fix(queue): allow loopback HTTP in pytest verification sandbox and enforce multi-file patch completeness",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "regression"
+  },
+  "allowedPaths": [
+    "project/ticket-451/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/context.py",
+    "src/koru/queue/patch_mode.py",
+    "src/koru/queue/patch_retry.py",
+    "src/koru/queue/verification_sandbox.py",
+    "tests/test_queue_verification_sandbox.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5df477fbdd21f4a7d8c22ddbb065038c0e498792",
+    "targetBranch": "main",
+    "outcome": "Allow isolated loopback HTTP servers in pytest verification sandbox while blocking AF_UNIX sockets via seccomp, scale context assembly for multi-file specs, and report untouched target files on multi-file verification retries.",
+    "nonGoals": [
+      "Do not weaken read-only filesystem or AF_UNIX socket isolation in verification_sandbox.py"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use libseccomp seccomp_rule_add_array with scmp_arg_cmp(arg0 == AF_UNIX) on socket during pytest verification runs inside bwrap --unshare-all so loopback AF_INET/AF_INET6 servers work while host AF_UNIX sockets remain blocked; scale multi-file context budgets in context.py; and union declared ticket files in _pin_base while surfacing untouched files in build_verify_retry_prompt.",
+      "components": [
+        {
+          "name": "queue-verification-and-retry",
+          "paths": [
+            "src/koru/queue/context.py",
+            "src/koru/queue/patch_mode.py",
+            "src/koru/queue/patch_retry.py",
+            "src/koru/queue/verification_sandbox.py",
+            "tests/test_queue_verification_sandbox.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-451."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -p no:wellmanifest_governance tests/test_queue_verification_sandbox.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "Unit tests for loopback HTTP pytest verification, AF_UNIX denial, multi-file context scaling, and incomplete multi-file retry prompts."
+      }
+    ]
+  }
+}

@@ -86,6 +86,8 @@ def _context_file_sections(
     project: Path,
     files_to_include: list[str],
     request: dict[str, Any] | None = None,
+    *,
+    per_file_char_cap: int | None = None,
 ) -> tuple[list[str], list[str]]:
     """Return ``(markdown_sections, included_files)`` for readable files.
 
@@ -101,8 +103,13 @@ def _context_file_sections(
             continue
         lang = Path(rel).suffix.lstrip(".")
         focused = _focused_file_slice(rel, content, lang, request)
-        header = f"## {rel}" + (f" ({focused.note})" if focused.note else "")
-        sections.append(f"{header}\n\n```{lang}\n{focused.content}\n```")
+        body = focused.content
+        note = focused.note
+        if per_file_char_cap and per_file_char_cap > 200 and len(body) > per_file_char_cap:
+            body = body[: per_file_char_cap - 40] + "\n... [file section capped]"
+            note = f"{note}, capped" if note else "capped"
+        header = f"## {rel}" + (f" ({note})" if note else "")
+        sections.append(f"{header}\n\n```{lang}\n{body}\n```")
         included_files.append(rel)
     return sections, included_files
 
@@ -136,9 +143,28 @@ def build_project_context(
 
     project = project.resolve()
     sections: list[str] = []
+    files_to_include = _context_files_to_include(project, request)
+    explicit_max = request.get("max_context_chars")
+    if explicit_max is None:
+        if len(files_to_include) > 1:
+            max_chars = max(
+                DEFAULT_MAX_CONTEXT_CHARS,
+                min(160_000, len(files_to_include) * 16_000),
+            )
+        else:
+            max_chars = DEFAULT_MAX_CONTEXT_CHARS
+    else:
+        max_chars = int(explicit_max)
+
+    per_file_cap: int | None = None
+    if max_chars > 0 and len(files_to_include) > 1:
+        per_file_cap = max(2_000, int((max_chars * 0.9) // len(files_to_include)))
 
     file_sections, included_files = _context_file_sections(
-        project, _context_files_to_include(project, request), request=request
+        project,
+        files_to_include,
+        request=request,
+        per_file_char_cap=per_file_cap,
     )
     sections.extend(file_sections)
 
@@ -152,9 +178,6 @@ def build_project_context(
         return None
 
     full_text = "\n\n".join(sections)
-    max_chars = request.get("max_context_chars")
-    if max_chars is None:
-        max_chars = DEFAULT_MAX_CONTEXT_CHARS
 
     if int(max_chars) > 0:
         full_text, truncated, total_chars = _truncate_context_text(

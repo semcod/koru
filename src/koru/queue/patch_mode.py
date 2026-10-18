@@ -92,7 +92,7 @@ else — no prose before or after it.
   patch unusable. Blank context lines are a single space, not an empty line.
 - Changing a line means both a `-` line and a `+` line — never edit a line in place.
 - Include at least 3 lines of context around every hunk so the patch applies cleanly.
-- Emit one diff covering every file you change.
+- Emit one complete diff covering EVERY target file required by the task — never stop after the first file on a multi-file task.
 - If you cannot produce the change, emit exactly `NO-PATCH: <one-line reason>` instead.
 """
 
@@ -312,11 +312,25 @@ def build_retry_prompt(prompt: str, failure: str) -> str:
     )
 
 
-def build_verify_retry_prompt(prompt: str, failure: str, previous_diff: str = "") -> str:
+def build_verify_retry_prompt(
+    prompt: str,
+    failure: str,
+    previous_diff: str = "",
+    *,
+    missing_files: tuple[str, ...] = (),
+) -> str:
     """Re-ask for a corrected patch when the previous diff applied but failed verification."""
     diff_section = (
         f"\n\n### Your previous diff (applied cleanly, then rolled back)\n\n```diff\n{redact_secrets(previous_diff.strip(), limit=6000)}\n```"
         if previous_diff and previous_diff.strip()
+        else ""
+    )
+    missing_section = (
+        "\n\n### Incomplete multi-file patch detected\n\n"
+        "Your previous diff omitted required changes for the following target files:\n"
+        + "\n".join(f"- `{rel}`" for rel in missing_files)
+        + "\n\nYou MUST include `diff --git` hunks for ALL required target files in your replacement unified diff."
+        if missing_files
         else ""
     )
     return (
@@ -324,7 +338,8 @@ def build_verify_retry_prompt(prompt: str, failure: str, previous_diff: str = ""
         "## Previous attempt failed the verification gate (Reflexion)\n\n"
         "Your previous diff applied cleanly, but the verification gate failed and the workspace was rolled back to the original base state:\n\n"
         f"    {failure.strip()}"
-        f"{diff_section}\n\n"
+        f"{diff_section}"
+        f"{missing_section}\n\n"
         "Analyze the test/verification failure above, fix the bug in your change, and emit a complete replacement unified diff against the original files on disk."
     )
 
