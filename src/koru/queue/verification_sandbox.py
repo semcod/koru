@@ -121,21 +121,38 @@ def _export_filter(path: Path, *, allow_loopback: bool = False) -> None:
         library.seccomp_release(context)
 
 
+def _sandbox_path(project: Path) -> str:
+    base_path = os.environ.get("PATH", os.defpath)
+    roots = [project]
+    if project.parent.name == ".worktrees":
+        roots.append(project.parent.parent)
+    extra: list[str] = []
+    for root in roots:
+        for rel in (".venv/bin", "venv/bin", "node_modules/.bin"):
+            candidate = root / rel
+            if candidate.is_dir():
+                c_str = str(candidate)
+                if c_str not in extra:
+                    extra.append(c_str)
+    return os.pathsep.join([*extra, base_path]) if extra else base_path
+
+
 def _command(command: str, project: Path, scratch: Path, binary: str) -> str:
     filter_path = scratch / "filter.bpf"
     _export_filter(filter_path, allow_loopback=_should_allow_loopback(command))
     for folder in ("tmp", "home", "cache", "config", "empty"):
         (scratch / folder).mkdir(mode=0o700)
     environment = {
-        "PATH": os.environ.get("PATH", os.defpath),
+        "PATH": _sandbox_path(project),
         "LANG": "C.UTF-8",
         "HOME": str(scratch / "home"),
         "TMPDIR": str(scratch / "tmp"),
         "XDG_CACHE_HOME": str(scratch / "cache"),
         "XDG_CONFIG_HOME": str(scratch / "config"),
         "PYTHONDONTWRITEBYTECODE": "1",
-        "PYTEST_ADDOPTS": "-o cache_dir=" + str(scratch / "cache"),
     }
+    if "no:cacheprovider" not in command:
+        environment["PYTEST_ADDOPTS"] = "-o cache_dir=" + str(scratch / "cache")
     if os.environ.get("PYTHONPATH"):
         environment["PYTHONPATH"] = os.environ["PYTHONPATH"]
     argv = ["env", "-i", *(key + "=" + value for key, value in environment.items()),
