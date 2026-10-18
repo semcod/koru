@@ -104,16 +104,30 @@ def verify_retry_budget(ticket: dict | None = None) -> int:
     return 0
 
 
+_UNRECOVERABLE_BASELINE_MARKERS = (
+    "no tests ran",
+    "ModuleNotFoundError",
+    "No module named ",
+    "command not found",
+    "verification_sandbox_unavailable",
+)
+
+
 def _is_verify_failure(outcome: PatchOutcome | None) -> bool:
-    return bool(
-        outcome is not None
-        and outcome.workspace_left_untouched
-        and outcome.code in (
-            VERIFY_FAILED_ISOLATED,
-            VERIFY_FAILED_ROLLED_BACK,
-            VERIFY_BASELINE_FAILED,
-        )
-    )
+    if outcome is None or not outcome.workspace_left_untouched:
+        return False
+    if outcome.code in (VERIFY_FAILED_ISOLATED, VERIFY_FAILED_ROLLED_BACK):
+        return True
+    if outcome.code == VERIFY_BASELINE_FAILED:
+        msg = outcome.message or ""
+        if any(marker in msg for marker in _UNRECOVERABLE_BASELINE_MARKERS):
+            return False
+        if " Before: " in msg and " After: " in msg:
+            before_part, after_part = msg.rsplit(" Before: ", 1)[1].split(" After: ", 1)
+            if before_part.strip() == after_part.strip():
+                return False
+        return True
+    return False
 
 
 def _contract_capped_budget(project: Path, ticket: dict) -> int:

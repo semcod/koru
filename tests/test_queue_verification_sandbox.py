@@ -253,3 +253,48 @@ def test_multi_file_context_includes_all_files_and_retry_lists_untouched_targets
     assert "`test_mod_01.py`" in retry_act["prompt"]
     assert "`test_mod_02.py`" in retry_act["prompt"]
 
+
+def test_sandbox_prepends_project_venv_and_skips_unrecoverable_baseline_retries(tmp_path):
+    from koru.queue.patch_mode import PatchOutcome, VERIFY_BASELINE_FAILED, VERIFY_FAILED_ISOLATED
+    from koru.queue.patch_retry import _is_verify_failure
+    from koru.queue.verification_sandbox import _command, _sandbox_path
+
+    primary_venv = tmp_path / ".venv" / "bin"
+    primary_venv.mkdir(parents=True)
+    wt = tmp_path / ".worktrees" / "ticket-001"
+    wt_venv = wt / ".venv" / "bin"
+    wt_venv.mkdir(parents=True)
+
+    resolved_path = _sandbox_path(wt)
+    parts = resolved_path.split(os.pathsep)
+    assert parts[0] == str(wt_venv)
+    assert parts[1] == str(primary_venv)
+
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    cmd_no_cache = _command("pytest -p no:cacheprovider -q", wt, scratch, "/usr/bin/bwrap")
+    assert "PYTEST_ADDOPTS=" not in cmd_no_cache
+
+    assert not _is_verify_failure(
+        PatchOutcome(
+            code=VERIFY_BASELINE_FAILED,
+            message="already failed. Before: no tests ran in 0.01s After: no tests ran in 0.01s",
+            workspace_left_untouched=True,
+        )
+    )
+    assert not _is_verify_failure(
+        PatchOutcome(
+            code=VERIFY_BASELINE_FAILED,
+            message="already failed. Before: ModuleNotFoundError: No module named 'reportlab' After: failed",
+            workspace_left_untouched=True,
+        )
+    )
+    assert _is_verify_failure(
+        PatchOutcome(
+            code=VERIFY_FAILED_ISOLATED,
+            message="patch failed verification",
+            workspace_left_untouched=True,
+        )
+    )
+
+
