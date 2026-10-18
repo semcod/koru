@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -21,7 +22,6 @@ from koru.queue.diff_repair import (
     extract_unified_diff,
     synthesize_diff_from_search_replace,
 )
-from types import SimpleNamespace
 from koru.queue.patch_mode import wrap_reply_in_proposal_envelope
 from koru.queue.patch_retry import _filter_readonly_scan_artifacts
 from koru.queue.transaction.preflight import extract_patch

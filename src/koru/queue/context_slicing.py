@@ -100,7 +100,8 @@ _MODULE_REFACTOR_RE = re.compile(
 )
 
 _FUNCTION_SMELL_RE = re.compile(
-    r"(?:`(?:God Function|Feature Envy|Long Method|Shotgun Surgery|Data Clump):\s*[a-zA-Z0-9_]+`|`[a-zA-Z0-9_]+`\s+with\s+CC=)",
+    r"(?:`(?:God Function|Feature Envy|Long Method|Shotgun Surgery|Data Clump):\s*"
+    r"[a-zA-Z0-9_]+`|`[a-zA-Z0-9_]+`\s+with\s+CC=)",
 )
 
 

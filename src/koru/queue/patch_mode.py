@@ -92,7 +92,8 @@ else — no prose before or after it.
   patch unusable. Blank context lines are a single space, not an empty line.
 - Changing a line means both a `-` line and a `+` line — never edit a line in place.
 - Include at least 3 lines of context around every hunk so the patch applies cleanly.
-- Emit one complete diff covering EVERY target file required by the task — never stop after the first file on a multi-file task.
+- Emit one complete diff covering EVERY target file required by the task — never stop
+  after the first file on a multi-file task.
 - If you cannot produce the change, emit exactly `NO-PATCH: <one-line reason>` instead.
 """
 
@@ -212,9 +213,9 @@ def wrap_reply_in_proposal_envelope(
     known_tuple = tuple(str(f) for f in resolved_files) if resolved_files is not None else None
     try:
         if resolved_project is not None:
-            setattr(result, "project", resolved_project)
+            result.project = resolved_project
         if known_tuple is not None:
-            setattr(result, "known_files", known_tuple)
+            result.known_files = known_tuple
     except Exception:
         pass
 
@@ -321,7 +322,8 @@ def build_verify_retry_prompt(
 ) -> str:
     """Re-ask for a corrected patch when the previous diff applied but failed verification."""
     diff_section = (
-        f"\n\n### Your previous diff (applied cleanly, then rolled back)\n\n```diff\n{redact_secrets(previous_diff.strip(), limit=6000)}\n```"
+        "\n\n### Your previous diff (applied cleanly, then rolled back)\n\n"
+        f"```diff\n{redact_secrets(previous_diff.strip(), limit=6000)}\n```"
         if previous_diff and previous_diff.strip()
         else ""
     )
@@ -336,11 +338,13 @@ def build_verify_retry_prompt(
     return (
         f"{build_patch_prompt(prompt).rstrip()}\n\n"
         "## Previous attempt failed the verification gate (Reflexion)\n\n"
-        "Your previous diff applied cleanly, but the verification gate failed and the workspace was rolled back to the original base state:\n\n"
+        "Your previous diff applied cleanly, but the verification gate failed and the workspace "
+        "was rolled back to the original base state:\n\n"
         f"    {failure.strip()}"
         f"{diff_section}"
         f"{missing_section}\n\n"
-        "Analyze the test/verification failure above, fix the bug in your change, and emit a complete replacement unified diff against the original files on disk."
+        "Analyze the test/verification failure above, fix the bug in your change, and emit a "
+        "complete replacement unified diff against the original files on disk."
     )
 
 

@@ -1,0 +1,90 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-457",
+  "summary": "Fix ruff lint violations across src/koru and tests to restore CI smoke and main gates",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-457/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/context_slicing.py",
+    "src/koru/queue/diff_repair.py",
+    "src/koru/queue/patch_mode.py",
+    "src/koru/queue/patch_retry.py",
+    "src/koru/queue/transaction/preflight.py",
+    "src/koru/scan_artifacts.py",
+    "tests/test_diff_repair_and_refactor.py",
+    "tests/test_planfile_queue.py",
+    "tests/test_queue_verification_sandbox.py",
+    "tests/test_run_log_early_exit.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "7f7a8cae0abf8486c77457bbbcac1814c34a0759",
+    "targetBranch": "main",
+    "outcome": "Resolve all ruff lint violations across src/koru and tests so Koru CI (smoke) and main CI lint gates pass cleanly.",
+    "nonGoals": [
+      "Do not alter runtime queue behavior or test semantics"
+    ],
+    "complexity": "L",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 10,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Format long lines under 120 chars, move module-level imports to top of preflight.py, replace ambiguous variable names, and add explicit strict=False to zip() in diff_repair.py.",
+      "components": [
+        {
+          "name": "queue-verification-and-retry",
+          "paths": [
+            "src/koru/queue/context_slicing.py",
+            "src/koru/queue/diff_repair.py",
+            "src/koru/queue/patch_mode.py",
+            "src/koru/queue/patch_retry.py",
+            "src/koru/queue/transaction/preflight.py",
+            "src/koru/scan_artifacts.py",
+            "tests/test_diff_repair_and_refactor.py",
+            "tests/test_planfile_queue.py",
+            "tests/test_queue_verification_sandbox.py",
+            "tests/test_run_log_early_exit.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-457."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m ruff check src tests",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "ruff check src tests exits 0 with All checks passed and unit tests pass."
+      }
+    ]
+  }
+}

@@ -490,7 +490,9 @@ def _parse_duplication_toon_suggestions(
         if stripped.startswith("DUPLICATES"):
             in_duplicates = True
             continue
-        if in_duplicates and stripped.startswith(("REFACTOR", "QUICK_WINS", "EFFORT_ESTIMATE", "METRICS-TARGET", "HOTSPOTS", "SUMMARY")):
+        if in_duplicates and stripped.startswith(
+            ("REFACTOR", "QUICK_WINS", "EFFORT_ESTIMATE", "METRICS-TARGET", "HOTSPOTS", "SUMMARY")
+        ):
             if current_group:
                 groups.append(current_group)
                 current_group = None
