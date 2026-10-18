@@ -1,5 +1,6 @@
 """Natural-language task creation implementation."""
 
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -213,11 +214,48 @@ def _persist_new_nl_task(
     )
 
 
+def _known_ticket_highwater(planfile_dir: Path, prefix: str) -> int:
+    """Return the highest numeric ticket ID recorded across sprints, history index, or sync."""
+    key_re = re.compile(
+        rf"^\s*(?:-\s*)?(?:id:\s*)?['\"]?{re.escape(prefix)}-(\d+)['\"]?\s*(?::\s*\S.*|:)?$",
+        re.MULTILINE,
+    )
+    highest = 0
+    candidate_files: list[Path] = []
+    history_index = planfile_dir / "index" / "history-locations.yaml"
+    if history_index.is_file():
+        candidate_files.append(history_index)
+    sprints_dir = planfile_dir / "sprints"
+    if sprints_dir.is_dir():
+        candidate_files.extend(sorted(sprints_dir.glob("*.yaml")))
+    sync_dir = planfile_dir / "sync"
+    if sync_dir.is_dir():
+        candidate_files.extend(sorted(sync_dir.glob("*.state.yaml")))
+    for path in candidate_files:
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for match in key_re.finditer(text):
+            highest = max(highest, int(match.group(1)))
+    ops_path = planfile_dir / "events" / "operations.jsonl"
+    if ops_path.is_file():
+        ops_re = re.compile(rf'"ticket_id"\s*:\s*"{re.escape(prefix)}-(\d+)"')
+        try:
+            text = ops_path.read_text(encoding="utf-8")
+        except OSError:
+            text = ""
+        for match in ops_re.finditer(text):
+            highest = max(highest, int(match.group(1)))
+    return highest
+
+
 def _generate_ticket_id(config_path: Path, project_name: str) -> tuple[str, dict[str, Any]]:
     """Generate a new ticket ID and update config."""
     config = _read_config(config_path, project_name=project_name)
     prefix = str(config.get("prefix") or "PLF")
-    next_id = int(config.get("next_id") or 1)
+    configured_next = int(config.get("next_id") or 1)
+    next_id = max(configured_next, _known_ticket_highwater(config_path.parent, prefix) + 1)
     ticket_id = f"{prefix}-{next_id:03d}"
     config["next_id"] = next_id + 1
     _write_yaml(config_path, config)
