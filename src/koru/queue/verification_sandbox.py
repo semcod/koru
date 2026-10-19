@@ -151,6 +151,8 @@ def _command(command: str, project: Path, scratch: Path, binary: str) -> str:
         "TMPDIR": str(scratch / "tmp"),
         "XDG_CACHE_HOME": str(scratch / "cache"),
         "XDG_CONFIG_HOME": str(scratch / "config"),
+        "RUFF_CACHE_DIR": str(scratch / "cache" / "ruff"),
+        "MYPY_CACHE_DIR": str(scratch / "cache" / "mypy"),
         "PYTHONDONTWRITEBYTECODE": "1",
     }
     if "no:cacheprovider" not in command:
@@ -174,9 +176,22 @@ def _command(command: str, project: Path, scratch: Path, binary: str) -> str:
     return "exec 9<" + shlex.quote(str(filter_path)) + " && exec " + shlex.join(argv)
 
 
+def _prune_empty_scratch_parents(root: Path) -> None:
+    for parent in (
+        root / ".subactor/cache/koru-verification",
+        root / ".subactor/cache",
+        root / ".subactor",
+    ):
+        try:
+            parent.rmdir()
+        except OSError:
+            break
+
+
 def run_verification(command: str, project: Path, runner: Callable):
     """Keep the existing runner contract while making isolation mandatory."""
     scratch = None
+    root = None
     try:
         if sys.platform != "linux" or not (binary := shutil.which("bwrap")):
             raise SandboxUnavailable("Linux bubblewrap is required")
@@ -195,9 +210,14 @@ def run_verification(command: str, project: Path, runner: Callable):
     except (SandboxUnavailable, OSError, AttributeError):
         if scratch is not None:
             scratch.cleanup()
+        if root is not None:
+            _prune_empty_scratch_parents(root)
         return subprocess.CompletedProcess(
             ["verification-sandbox"], 125, "",
             "verification_sandbox_unavailable: verified Linux bubblewrap/seccomp execution is required",
         )
-    with scratch:
-        return runner(isolated, root)
+    try:
+        with scratch:
+            return runner(isolated, root)
+    finally:
+        _prune_empty_scratch_parents(root)
