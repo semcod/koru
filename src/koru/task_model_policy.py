@@ -270,7 +270,7 @@ def drive_with_model_policy(
         "reason": decision["reason"],
     }
     project = kwargs["project"]
-    from koru.autonomy.verification_engine import reserve_drive_attempt
+    from koru.drive_budget import reserve_drive_attempt
 
     if kwargs.get("execute", True) and not reserve_drive_attempt(project, receipt["ticket"]):
         return {

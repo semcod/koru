@@ -92,7 +92,7 @@ class PlanfileQueueCommandService(CqrsService):
             payload=payload,
             aggregate_id=aggregate_id,
         )
-        from koru.autonomy.cycle_trace import append_queue_ticket_markdown_log
+        from koru.ticket_logs import append_queue_ticket_markdown_log
 
         append_queue_ticket_markdown_log(command.project, result)
         return result
