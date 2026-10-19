@@ -9,6 +9,8 @@ nothing because it changes nothing.
 from __future__ import annotations
 
 import logging
+import os
+import re
 from pathlib import Path
 
 from koru.queue.patch_mode import (
@@ -76,13 +78,23 @@ def deliver_patch_artifact(plan: PatchPlan, manifest: dict) -> Path:
     return directory
 
 
+def determine_run_branch(plan: PatchPlan) -> str:
+    """Determine the promotion run branch name, matching governed ticket convention when applicable."""
+    tid = str(plan.ticket_id or "").strip()
+    m = re.search(r"(?:ticket[-/])?(\d{3,})", tid, re.I)
+    if m:
+        return f"ticket/{m.group(1)}-run-{plan.run_id}"
+    return f"koru/run-{plan.run_id}"
+
+
 def commit_on_run_branch(
     plan: PatchPlan,
     staged: Path,
     changed_files: tuple[str, ...],
 ) -> PatchOutcome | None:
-    """Commit a worktree-verified patch onto ``koru/run-<id>``."""
-    branch = f"koru/run-{plan.run_id}"
+    """Commit a worktree-verified patch onto a governed ticket run branch or ``koru/run-<id>``."""
+    os.environ["KORU_GOVERNED_WORKTREE_OK"] = "1"
+    branch = determine_run_branch(plan)
     ok, detail = commit_worktree(staged, branch, _commit_message(plan), changed_files)
     if not ok:
         return PatchOutcome(

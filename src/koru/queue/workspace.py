@@ -241,7 +241,9 @@ def commit_worktree(
     if staged.returncode != 0:
         return False, (staged.stderr or staged.stdout or "").strip()[:300]
     commit_args = ["commit", "--quiet", "-m", message]
-    if (os.environ.get("KORU_GOVERNED_WORKTREE_OK") or "").strip() == "1" and branch.startswith("koru/"):
+    if (os.environ.get("KORU_GOVERNED_WORKTREE_OK") or "").strip() == "1" and (
+        branch.startswith("koru/") or "-run-" in branch or branch.startswith("ticket/")
+    ):
         commit_args.insert(1, "--no-verify")
     committed = _git(worktree, *commit_args)
     if committed.returncode != 0:

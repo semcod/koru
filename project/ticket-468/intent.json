@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-468",
+  "summary": "fix(queue): bind patch promotion branch to governed ticket pattern and pass no-verify on run branches",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-468/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/transaction/promotion.py",
+    "src/koru/queue/workspace.py",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "e976b65433e8e1bb9fef2187a665503a9468aa4c",
+    "targetBranch": "main",
+    "outcome": "Bind patch promotion branch to governed ticket pattern and pass no-verify on intermediate run branches to prevent GOV-AGENT-HOST-001 failures.",
+    "nonGoals": [
+      "Do not bypass governance checks during final PR merge."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use determine_run_branch to create ticket/{tnum}-run-{run_id} branches for governed tickets and allow commit_worktree --no-verify when KORU_GOVERNED_WORKTREE_OK is set.",
+      "components": [
+        {
+          "name": "queue-promotion",
+          "paths": [
+            "src/koru/queue/transaction/promotion.py",
+            "src/koru/queue/workspace.py",
+            "tests/test_planfile_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-468."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_planfile_queue.py -k 'test_commit_worktree or test_promotion'",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-468/README.md"
+      }
+    ]
+  }
+}

@@ -3953,3 +3953,60 @@ def test_unmanaged_workspace_and_scan_artifacts(tmp_path: Path):
     assert "do_work" in locs
     assert locs["do_work"] == ["pkg/sub/worker.py"]
 
+
+def test_determine_run_branch_and_governed_commit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from koru.queue.transaction.promotion import determine_run_branch
+    from koru.queue.transaction.result import PatchPlan
+    from koru.queue.workspace import _git, commit_worktree
+
+    plan_governed = PatchPlan(
+        run_id="run-12345",
+        project=tmp_path,
+        ticket={"id": "ticket-468"},
+        diff="--- a/file\n+++ b/file\n",
+        targets=("file",),
+        verify_command="true",
+        mode="branch",
+        isolated=True,
+    )
+    assert determine_run_branch(plan_governed) == "ticket/468-run-run-12345"
+
+    plan_numeric = PatchPlan(
+        run_id="run-67890",
+        project=tmp_path,
+        ticket={"id": "468"},
+        diff="",
+        targets=(),
+        verify_command="true",
+        mode="branch",
+        isolated=True,
+    )
+    assert determine_run_branch(plan_numeric) == "ticket/468-run-run-67890"
+
+    plan_ungoverned = PatchPlan(
+        run_id="run-99999",
+        project=tmp_path,
+        ticket={"id": "feature-xyz"},
+        diff="",
+        targets=(),
+        verify_command="true",
+        mode="branch",
+        isolated=True,
+    )
+    assert determine_run_branch(plan_ungoverned) == "koru/run-run-99999"
+
+    # Test commit_worktree with governed branch under KORU_GOVERNED_WORKTREE_OK
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-b", "main")
+    _git(repo, "config", "user.name", "Test")
+    _git(repo, "config", "user.email", "test@example.com")
+    (repo / "file.txt").write_text("initial\n", encoding="utf-8")
+    _git(repo, "add", "file.txt")
+    _git(repo, "commit", "-m", "init")
+
+    (repo / "file.txt").write_text("updated\n", encoding="utf-8")
+    monkeypatch.setenv("KORU_GOVERNED_WORKTREE_OK", "1")
+    ok, head = commit_worktree(repo, "ticket/468-run-test", "governed commit", ["file.txt"])
+    assert ok, f"commit failed: {head}"
+
