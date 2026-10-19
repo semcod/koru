@@ -1,0 +1,74 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-473",
+  "summary": "fix(queue): reverse unified diff after non-branch staging verification so staging worktrees are removed",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-473/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/transaction/staging.py",
+    "tests/test_queue_workspace_retention.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "0470bf29932909b3dd4b432b879020c35153996e",
+    "targetBranch": "main",
+    "outcome": "Reverse the staged unified diff after non-branch verification passes so temporary staging worktrees are cleanly removed.",
+    "nonGoals": [
+      "Do not alter branch promotion or failed isolated verification retention."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Call reverse_unified_diff(staged, plan.diff) when plan.mode != PROMOTION_BRANCH before returning StagingResult.verified().",
+      "components": [
+        {
+          "name": "queue-staging",
+          "paths": [
+            "src/koru/queue/transaction/staging.py",
+            "tests/test_queue_workspace_retention.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-473."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_queue_workspace_retention.py tests/test_queue_transaction_phases.py -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-473/README.md"
+      }
+    ]
+  }
+}
