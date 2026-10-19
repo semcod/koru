@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-461",
+  "summary": "Allow staging_worktree on baseline-only .governance/manifest.json repos",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-461/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/workspace.py",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8b3a591e6a61e3dd693d32214f03b252a7e376a6",
+    "targetBranch": "main",
+    "outcome": "Allow staging_worktree on repositories whose .governance/manifest.json only declares profile:baseline (schema wellmanifest.manifest/v1) without project/new-ticket.sh.",
+    "nonGoals": [
+      "Do not weaken StagingAdmissionRequired on wellmanifest/new-project governed repositories."
+    ],
+    "complexity": "XS",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Update _has_governance_marker in src/koru/queue/workspace.py to return False when .governance/manifest.json has schema wellmanifest.manifest/v1 or standard.id starting with profile: and project/new-ticket.sh is absent.",
+      "components": [
+        {
+          "name": "queue-workspace",
+          "paths": [
+            "src/koru/queue/workspace.py",
+            "tests/test_planfile_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-461."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_planfile_queue.py -k test_unmanaged_workspace_and_scan_artifacts tests/test_queue_workspace_retention.py",
+          "python3 -m ruff check src/koru/queue/workspace.py tests/test_planfile_queue.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-461/README.md"
+      }
+    ]
+  }
+}

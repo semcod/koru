@@ -9,6 +9,7 @@ rules about *whether* a patch may land stay readable on their own.
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import os
 import shutil
@@ -349,7 +350,20 @@ def _has_governance_marker(root: Path) -> bool:
     gov = root / ".governance"
     if not gov.is_dir():
         return False
-    if (gov / "manifest.json").exists():
+    manifest = gov / "manifest.json"
+    if manifest.exists():
+        if (root / "project" / "new-ticket.sh").is_file():
+            return True
+        try:
+            payload = json.loads(manifest.read_text(encoding="utf-8", errors="replace"))
+        except Exception:
+            return True
+        if isinstance(payload, dict):
+            schema = str(payload.get("schema") or "").strip()
+            std = payload.get("standard")
+            std_id = str(std.get("id") or "").strip() if isinstance(std, dict) else ""
+            if schema == "wellmanifest.manifest/v1" or std_id.startswith("profile:"):
+                return False
         return True
     try:
         return not any(gov.iterdir())
