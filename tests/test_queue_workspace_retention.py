@@ -205,3 +205,12 @@ def test_commit_worktree_stages_explicit_paths_even_if_ignored(repo: Path) -> No
         assert ok, f"commit_worktree failed: {detail}"
         committed_content = git(staged, "show", "koru/run-test-ignored:.planfile/sync/state.yaml")
         assert committed_content.strip() == "version: 1"
+
+
+def test_staging_with_only_koru_dir_is_removed(repo: Path) -> None:
+    with staging_worktree(repo, ()) as staged:
+        assert staged is not None
+        (staged / ".koru" / "events").mkdir(parents=True)
+        (staged / ".koru" / "events" / "observability.jsonl").write_text("{}\n")
+    assert not staged.exists()
+

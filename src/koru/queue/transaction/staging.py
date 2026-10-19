@@ -83,6 +83,8 @@ def _stage_patch(
             promoted = commit_on_run_branch(plan, staged, applied.changed_files)
             if promoted is not None:
                 return StagingResult.refused(promoted)
+        else:
+            reverse_unified_diff(staged, plan.diff)
         return StagingResult.verified()
 
 
