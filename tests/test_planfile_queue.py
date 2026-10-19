@@ -3878,7 +3878,14 @@ def test_unmanaged_workspace_and_scan_artifacts(tmp_path: Path):
     # Should not raise StagingAdmissionRequired when manifest.json is absent
     require_unmanaged_patch_workspace(tmp_path)
 
-    # When manifest.json is present, it must raise StagingAdmissionRequired
+    # Should not raise StagingAdmissionRequired when manifest.json is baseline-only without new-ticket.sh
+    (tmp_path / ".governance" / "manifest.json").write_text(
+        '{"schema": "wellmanifest.manifest/v1", "standard": {"id": "profile:baseline", "version": "0.20.38"}}',
+        encoding="utf-8",
+    )
+    require_unmanaged_patch_workspace(tmp_path)
+
+    # When manifest.json is present (governed / non-baseline), it must raise StagingAdmissionRequired
     (tmp_path / ".governance" / "manifest.json").write_text("{}", encoding="utf-8")
     with pytest.raises(StagingAdmissionRequired):
         require_unmanaged_patch_workspace(tmp_path)
