@@ -39,7 +39,6 @@ from koru.queue.patch_mode import (
 from koru.queue.transaction.result import PatchPlan
 from koru.queue.types import CommandResult
 
-
 #: A ticket opted into ``inputs.strict_files`` and the patch touches files it did not declare.
 PATCH_TARGETS_OUTSIDE_DECLARED_FILES = "patch_targets_outside_declared_files"
 

@@ -461,4 +461,6 @@ project analysis or human-owned ticket inputs.
 | **ticket-463** | [`README.md`](./ticket-463/README.md) | - | - | - | - | - |
 | **ticket-464** | [`README.md`](./ticket-464/README.md) | - | - | - | - | - |
 | **ticket-465** | [`README.md`](./ticket-465/README.md) | - | - | - | - | - |
+| **ticket-466** | [`README.md`](./ticket-466/README.md) | - | - | - | - | - |
+| **ticket-467** | [`README.md`](./ticket-467/README.md) | - | - | - | - | - |
 <!-- AUTO:TICKET_INDEX:END -->

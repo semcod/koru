@@ -2859,6 +2859,50 @@ class TestPatchMode(unittest.TestCase):
         self.assertLess(len(cleaned), 2_200)
         self.assertIn("truncated", cleaned)
 
+    def test_redact_secrets_preserves_code_expressions_and_repairs_closing_brace(self) -> None:
+        from koru.queue.diff_repair import extract_unified_diff
+        from koru.queue.patch_mode import redact_secrets
+
+        code_excerpt = (
+            "const SECRET_FIELDS = new Set(['username', 'password']);\n"
+            "this.key = encryptionKey;\n"
+            "return {...entry, secrets: decryptJson(entry.envelope, this.key)};\n"
+            "if (nextKey === this.key) return {rotated: false};\n"
+        )
+        self.assertEqual(redact_secrets(code_excerpt), code_excerpt)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            target = project / "src" / "vault.mjs"
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(
+                "  async metadata(id, requestedOrigin) {\n"
+                "    return {...entry, fields: Object.keys(secrets).sort()};\n"
+                "  }\n"
+                "\n"
+                "  async rotateEncryptionKey(nextKey) {\n"
+                "    if (nextKey === this.key) return {rotated: false};\n"
+                "  }\n",
+                encoding="utf-8",
+            )
+            raw_diff = (
+                "diff --git a/src/vault.mjs b/src/vault.mjs\n"
+                "--- a/src/vault.mjs\n"
+                "+++ b/src/vault.mjs\n"
+                "@@ -1,6 +1,12 @@\n"
+                "     return {...entry, fields: Object.keys(secrets).sort()};\n"
+                "   }\n"
+                " \n"
+                "+  async verifyKeyReadiness() {\n"
+                "+    return {ok: true};\n"
+                "   }\n"
+                " \n"
+                "   async rotateEncryptionKey(nextKey) {\n"
+            )
+            repaired = extract_unified_diff(raw_diff, project=project, known_files=("src/vault.mjs",))
+            assert repaired is not None
+            self.assertIn("+  }\n+\n+  async verifyKeyReadiness() {\n+    return {ok: true};\n   }\n", repaired)
+
     def test_patch_creating_a_new_file_is_promoted(self) -> None:
         from koru.queue.patch_transaction import apply_proposed_patch
 

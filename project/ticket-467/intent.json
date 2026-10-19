@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-467",
+  "summary": "fix(queue): prevent redact_secrets from corrupting code excerpts and repair missing + on closing delimiters (#728)",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-467/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/diff_repair.py",
+    "src/koru/queue/patch_mode.py",
+    "src/koru/queue/transaction/preflight.py",
+    "tests/test_planfile_queue.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "8b00aaa907526dad25f88295147cdb459338141b",
+    "targetBranch": "main",
+    "outcome": "Prevent redact_secrets in src/koru/queue/patch_mode.py from corrupting code expressions in current_file_excerpt and build_verify_retry_prompt, and recover unmarked closing delimiters and trailing-blank pre_ctx anchors in src/koru/queue/diff_repair.py (#728).",
+    "nonGoals": [
+      "Do not weaken credential redaction for quoted or env-style secret assignments."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 20,
+    "budgets": {
+      "maxImplementationFiles": 5,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Narrow _SECRET_PATTERNS in src/koru/queue/patch_mode.py to quoted and env-style secret assignments and add _try_promote_unmarked_closing_delimiter plus non-empty pre_ctx anchor resolution in src/koru/queue/diff_repair.py.",
+      "components": [
+        {
+          "name": "queue-patch-repair",
+          "paths": [
+            "src/koru/queue/patch_mode.py",
+            "src/koru/queue/diff_repair.py",
+            "src/koru/queue/transaction/preflight.py",
+            "tests/test_planfile_queue.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-467."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "PYTHONPATH=src pytest -q -o addopts='' tests/test_planfile_queue.py -k 'redact or context_excerpt' tests/test_queue_evidence.py -k 'secrets'",
+          "python3 -m ruff check src/koru/queue/patch_mode.py src/koru/queue/diff_repair.py tests/test_planfile_queue.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-467/README.md"
+      }
+    ]
+  }
+}

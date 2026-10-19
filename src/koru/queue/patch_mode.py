@@ -259,10 +259,15 @@ def wrap_reply_in_proposal_envelope(
 
 
 _SECRET_PATTERNS = (
-    # Assignments: API_KEY=..., token: "...", password = '...'
+    # Quoted secret assignments: API_KEY="...", token: "...", password = '...'
     re.compile(
         r"(?i)\b([A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL)[A-Z0-9_]*)"
-        r"(\s*[:=]\s*)(\"[^\"]*\"|'[^']*'|\S+)",
+        r"(?<![=!<>:])(\s*[:=](?![=>:])\s*)(\"[^\"\n]{4,}\"|'[^'\n]{4,}')",
+    ),
+    # Unquoted env/CLI secret assignments: OPENAI_API_KEY=sk-live-...
+    re.compile(
+        r"(?i)\b([A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL)[A-Z0-9_]*)"
+        r"(?<![=!<>:])(=)(?![=>])([A-Za-z0-9_\-./+=]{6,})(?=$|\s|[,;\"'])",
     ),
     # Bearer / Authorization headers.
     re.compile(r"(?i)\b(authorization|bearer)(\s*:?\s+)(\S+)"),

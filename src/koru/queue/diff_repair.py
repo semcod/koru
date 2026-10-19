@@ -521,15 +521,22 @@ def _apply_edit_subblocks_fallback(
             else:
                 ins_pos: int | None = None
                 if pre_ctx:
-                    anchor = pre_ctx[-1].strip()
-                    if anchor:
+                    non_empty = [
+                        (idx, line.strip())
+                        for idx, line in enumerate(pre_ctx)
+                        if line.strip()
+                    ]
+                    if non_empty:
+                        last_idx, anchor = non_empty[-1]
+                        trailing_blanks = len(pre_ctx) - 1 - last_idx
                         best_dist = len(working) + 1000
                         for cand, w_line in enumerate(working):
                             if w_line.strip() == anchor:
-                                dist = abs(cand + 1 - expected_start)
+                                target_pos = min(len(working), cand + 1 + trailing_blanks)
+                                dist = abs(target_pos - expected_start)
                                 if dist < best_dist:
                                     best_dist = dist
-                                    ins_pos = cand + 1
+                                    ins_pos = target_pos
                 if ins_pos is None and post_ctx:
                     anchor = post_ctx[0].strip()
                     if anchor:
@@ -550,6 +557,45 @@ def _apply_edit_subblocks_fallback(
         pre_ctx = []
 
     return working, changed_any
+
+
+_CLOSING_DELIMITER_STRIPS = frozenset({"}", "};", ")", ");", "]", "];"})
+
+
+def _try_promote_unmarked_closing_delimiter(
+    working: list[str],
+    new_chunk_template: list[tuple[str, str]],
+    expected_start: int,
+) -> tuple[list[tuple[str, str]], list[str], int] | None:
+    """Recover when a model omits the leading '+' on a closing delimiter right after '+' lines."""
+    candidates: list[list[tuple[str, str]]] = []
+    for idx in range(1, len(new_chunk_template)):
+        kind, text = new_chunk_template[idx]
+        if kind == " " and text.strip() in _CLOSING_DELIMITER_STRIPS and new_chunk_template[idx - 1][0] == "+":
+            promoted = list(new_chunk_template)
+            promoted[idx] = ("+", text)
+            candidates.append(promoted)
+            if idx + 1 < len(new_chunk_template) and new_chunk_template[idx + 1] == (" ", ""):
+                promoted_with_blank = list(promoted)
+                promoted_with_blank[idx + 1] = ("+", "")
+                candidates.append(promoted_with_blank)
+    for cand_tpl in candidates:
+        cand_old = [t for k, t in cand_tpl if k in (" ", "-")]
+        m_len = len(cand_old)
+        if not m_len or m_len > len(working):
+            continue
+        cand_strip = [x.strip() for x in cand_old]
+        best_dist = len(working) + 1
+        best_pos: int | None = None
+        for i in range(len(working) - m_len + 1):
+            if [w.strip() for w in working[i : i + m_len]] == cand_strip:
+                dist = abs(i - expected_start)
+                if dist < best_dist:
+                    best_dist = dist
+                    best_pos = i
+        if best_pos is not None:
+            return cand_tpl, cand_old, best_pos
+    return None
 
 
 def _apply_hunks_with_fuzzy_fallback(
@@ -623,6 +669,13 @@ def _apply_hunks_with_fuzzy_fallback(
                         if dist < best_dist:
                             best_dist = dist
                             match_pos = i
+            if match_pos is None:
+                promoted_delim = _try_promote_unmarked_closing_delimiter(
+                    working, new_chunk_template, expected_start
+                )
+                if promoted_delim is not None:
+                    new_chunk_template, old_chunk, match_pos = promoted_delim
+                    n = len(old_chunk)
 
         if match_pos is not None and match_pos >= 0:
             matched_disk_lines = working[match_pos : match_pos + n]
