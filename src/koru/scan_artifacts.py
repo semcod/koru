@@ -250,7 +250,7 @@ def _file_evidence(project: Path, file_path: Path, rel: str | None = None) -> di
 def _code2llm_regenerate_command(project: Path) -> str:
     return (
         f"code2llm {project} -f all -o {project / 'project'} --no-chunk "
-        "--exclude '*.md' --planfile-apply --planfile-source koru-project-discovery "
+        "--exclude '*.md' --exclude .worktrees --planfile-apply --planfile-source koru-project-discovery "
         f"--planfile-sprint current --planfile-project {project} --planfile-limit 20"
     )
 
@@ -835,10 +835,14 @@ def _parse_refactor_suggestions(
     *,
     source_context: dict[str, object] | None = None,
     skip_duplicate_items: bool = False,
+    fallback_files: Sequence[str] = (),
 ) -> list[Suggestion]:
     """Parse refactor item suggestions from analysis text."""
     suggestions: list[Suggestion] = []
     in_refactor = False
+    clean_fallback = tuple(
+        dict.fromkeys(p for p in fallback_files if p and not _is_scan_artifact_rel(p))
+    )
     for line in text.splitlines():
         if line.startswith("REFACTOR"):
             in_refactor = True
@@ -857,6 +861,10 @@ def _parse_refactor_suggestions(
         extracted_files = tuple(
             p for p in _REFACTOR_PATH_RE.findall(desc) if not _is_scan_artifact_rel(p)
         )
+        if not extracted_files and clean_fallback and (
+            "high-cc" in desc.lower() or "cc>" in note.lower()
+        ):
+            extracted_files = clean_fallback
         suggestions.append(
             _with_source_context(
                 Suggestion(
@@ -974,20 +982,21 @@ def _scan_code2llm_analysis(project: Path) -> list[Suggestion]:
         ),
     )
     suggestions.extend(_parse_god_module_suggestions(text, rel, source_context=source_context))
-    suggestions.extend(
-        _parse_high_cc_suggestions(
-            text,
-            rel,
-            source_context=source_context,
-            locations=_code2llm_cc_locations(project),
-        ),
+    cc_suggestions = _parse_high_cc_suggestions(
+        text,
+        rel,
+        source_context=source_context,
+        locations=_code2llm_cc_locations(project),
     )
+    suggestions.extend(cc_suggestions)
+    cc_files = tuple(dict.fromkeys(f for sug in cc_suggestions for f in sug.files))
     suggestions.extend(
         _parse_refactor_suggestions(
             text,
             rel,
             source_context=source_context,
             skip_duplicate_items=skip_mirror_dups,
+            fallback_files=cc_files,
         ),
     )
     suggestions.extend(

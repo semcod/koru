@@ -49,6 +49,8 @@ DEFAULT_FORMATS = "all"
 DEFAULT_EXCLUDES: tuple[str, ...] = (
     "*.md",
     "plugins",
+    ".worktrees",
+    "worktrees",
 )
 DEFAULT_STALE_MINUTES = 60.0
 DEFAULT_SOURCE = "koru-project-discovery"
@@ -62,10 +64,12 @@ DEFAULT_SOURCE_SKIP_DIRS = frozenset(
         ".ruff_cache",
         ".tox",
         ".venv",
+        ".worktrees",
         "__pycache__",
         "code2llm_output",
         "node_modules",
         "plugins",
+        "worktrees",
         DEFAULT_OUTPUT_SUBDIR,
     }
 )

@@ -385,6 +385,16 @@ class TestScanArtifactFilteringAndDuplicationToon:
             assert rel not in sug.files
             assert all(not _is_readonly_scan_artifact(f) for f in sug.files)
 
+        high_cc_toon = (
+            "REFACTOR[1]:\n"
+            "  1. split 2 high-CC methods  (CC>15)\n"
+        )
+        ref_sugs = _parse_refactor_suggestions(
+            high_cc_toon, rel, fallback_files=("src/complex.py", "project/analysis.toon.yaml")
+        )
+        assert len(ref_sugs) == 1
+        assert ref_sugs[0].files == ("src/complex.py",)
+
     def test_duplication_toon_parsing_and_filtering(self, tmp_path: Path) -> None:
         dup_dir = tmp_path / "project"
         dup_dir.mkdir()

@@ -1,0 +1,78 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-469",
+  "summary": "fix(scan,discovery): exclude .worktrees in code2llm runs and resolve high-CC refactor files",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-469/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/code2llm_discovery.py",
+    "src/koru/scan_artifacts.py",
+    "tests/test_code2llm_discovery.py",
+    "tests/test_diff_repair_and_refactor.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "615bab7446bcd9d414e612c1aa87009e455ea0a9",
+    "targetBranch": "main",
+    "outcome": "Exclude .worktrees and worktrees from code2llm discovery runs and populate located high-CC files onto code2llm_refactor suggestions.",
+    "nonGoals": [
+      "Do not alter external code2llm CLI invocation flags outside koru discovery and regenerate_command."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add .worktrees and worktrees to DEFAULT_EXCLUDES and DEFAULT_SOURCE_SKIP_DIRS in code2llm_discovery.py and pass located high-CC files as fallback_files into _parse_refactor_suggestions.",
+      "components": [
+        {
+          "name": "code2llm-discovery-and-scan",
+          "paths": [
+            "src/koru/autonomy/code2llm_discovery.py",
+            "src/koru/scan_artifacts.py",
+            "tests/test_code2llm_discovery.py",
+            "tests/test_diff_repair_and_refactor.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-469."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_code2llm_discovery.py tests/test_diff_repair_and_refactor.py -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-469/README.md"
+      }
+    ]
+  }
+}

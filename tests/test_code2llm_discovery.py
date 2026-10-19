@@ -57,6 +57,10 @@ def test_default_excludes_skip_plugins_folder() -> None:
     excludes = cd.DEFAULT_EXCLUDES
     assert "*.md" in excludes
     assert "plugins" in excludes
+    assert ".worktrees" in excludes
+    assert "worktrees" in excludes
+    assert ".worktrees" in cd.DEFAULT_SOURCE_SKIP_DIRS
+    assert "worktrees" in cd.DEFAULT_SOURCE_SKIP_DIRS
 
 
 def test_build_cmd_uses_scoped_source_when_provided(tmp_path: Path) -> None:
