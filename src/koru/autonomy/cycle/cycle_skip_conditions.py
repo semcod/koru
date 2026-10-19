@@ -400,7 +400,11 @@ def _check_autopilot_skip_conditions(
             action_hint="set --autopilot-action drive",
         ).as_skip_tuple()
 
-    if autopilot_on_idle_only and queue_result.last_status != "idle":
+    if (
+        autopilot_on_idle_only
+        and queue_result.last_status != "idle"
+        and not _is_waiting_llm_ready_ticket(queue_result=queue_result, project=project)
+    ):
         _hp("- autopilot skipped (idle_only)")
         return AutopilotPolicyDecision.skip(
             "idle_only",

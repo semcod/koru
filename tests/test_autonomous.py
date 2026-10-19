@@ -6294,3 +6294,86 @@ class TestGhostWaitingTicketGuard:
         decision = self._decision(monkeypatch, tmp_path, missing=False)
         assert decision.kind == "escalation_prompt"
         assert "PLF-001" in decision.prompt
+
+
+def test_idle_only_allows_waiting_llm_ready_ticket(tmp_path: Path) -> None:
+    sprint_dir = tmp_path / ".planfile" / "sprints"
+    sprint_dir.mkdir(parents=True)
+    (sprint_dir / "current.yaml").write_text(
+        "sprint:\n"
+        "  id: current\n"
+        "  tickets:\n"
+        "    PLF-191:\n"
+        "      id: PLF-191\n"
+        "      status: open\n"
+        "      labels:\n"
+        "        - koru\n"
+        "        - llm-ready\n",
+        encoding="utf-8",
+    )
+    queue_result = QueueLoopResult(
+        iterations=1,
+        completed=[],
+        failed=[],
+        waiting=["PLF-191"],
+        last_status="waiting_input",
+        last_ticket_id="PLF-191",
+    )
+    state = autonomous_mod.AutoloopState(stagnation_streak=1)
+    telemetry: dict[str, object] = {}
+    lines: list[str] = []
+
+    should_skip, reason = skip_conditions_mod._check_autopilot_skip_conditions(
+        tmp_path,
+        queue_result,
+        state,
+        autopilot_action="drive",
+        autopilot_on_idle_only=True,
+        autopilot_skip_on_diagnostics_fail=False,
+        autopilot_skip_drive_idle_streak=0,
+        autopilot_skip_statuses="waiting_input",
+        diag_result=autonomous_cycle_mod.DiagnosticResult("skipped", []),
+        topology_integration=False,
+        cycle_telemetry=telemetry,
+        _hp=lines.append,
+    )
+
+    assert should_skip is False
+    assert reason == ""
+
+
+def test_scan_ticket_emission_stamps_expect_files_changed_for_file_scoped_suggestion(
+    tmp_path: Path,
+) -> None:
+    from koru.scan_ticket_emission import create_ticket
+    from koru.scan_types import Suggestion
+
+    captured: dict[str, object] = {}
+
+    def _fake_create_nl_task(project: Path, text: str, *, priority: str, scaffold: dict):
+        captured["scaffold"] = scaffold
+        return SimpleNamespace(reused=False)
+
+    suggestion = Suggestion(
+        signal="code2llm_smell",
+        title="Address code smell: Data Clump",
+        description="Fix data clump in scope.py",
+        priority="normal",
+        files=["repatch/scope.py"],
+        labels=["code2llm", "code-smell"],
+    )
+    res = create_ticket(
+        tmp_path,
+        suggestion,
+        source="koru-scan",
+        runner=None,
+        create_nl_task=_fake_create_nl_task,
+        format_create_exception=str,
+        suggestion_dedupe_key=lambda s, sug: f"{s}:{sug.signal}",
+        default_runner=lambda cmd, p: SimpleNamespace(returncode=0, stdout="", stderr=""),
+    )
+    assert res.ok is True
+    scaffold = captured["scaffold"]
+    assert isinstance(scaffold, dict)
+    assert scaffold.get("inputs") == {"expect_files_changed": True, "patch_mode": True}
+

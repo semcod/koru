@@ -1,0 +1,77 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-462",
+  "summary": "Stamp expect_files_changed on file-scoped scan tickets and allow autopilot on waiting llm-ready tickets when idle-only is set",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-462/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/cycle/cycle_skip_conditions.py",
+    "src/koru/scan_ticket_emission.py",
+    "tests/test_autonomous.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "acf1273a8c528ff6023ef66fcd0c9c3230e950bf",
+    "targetBranch": "main",
+    "outcome": "Stamp inputs.expect_files_changed=True and inputs.patch_mode=True on file-scoped scan tickets and allow autopilot to drive waiting_input tickets that carry the llm-ready label when autopilot_on_idle_only is enabled.",
+    "nonGoals": [
+      "Do not alter non-llm-ready waiting_input skip behavior."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Populate scaffold['inputs'] in scan_ticket_emission.create_ticket when suggestion.files is non-empty, and guard the idle_only skip in cycle_skip_conditions._check_autopilot_skip_conditions with not _is_waiting_llm_ready_ticket.",
+      "components": [
+        {
+          "name": "scan-ticket-emission-and-autonomy-skip-conditions",
+          "paths": [
+            "src/koru/scan_ticket_emission.py",
+            "src/koru/autonomy/cycle/cycle_skip_conditions.py",
+            "tests/test_autonomous.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-462."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_autonomous.py -k 'test_idle_only_allows_waiting_llm_ready_ticket or test_scan_ticket_emission_stamps_expect_files_changed'",
+          "python3 -m ruff check src/koru/scan_ticket_emission.py src/koru/autonomy/cycle/cycle_skip_conditions.py tests/test_autonomous.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-462/README.md"
+      }
+    ]
+  }
+}
