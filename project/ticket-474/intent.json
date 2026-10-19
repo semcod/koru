@@ -1,0 +1,95 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-474",
+  "summary": "Restore koru.queue lower-layer import contract (#731)",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-474/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/activity_log.py",
+    "src/koru/autonomy/cycle_trace.py",
+    "src/koru/autonomy/verification_engine/budget.py",
+    "src/koru/bounded_contexts/planfile_queue/application.py",
+    "src/koru/drive_budget.py",
+    "src/koru/task_model_policy.py",
+    "src/koru/ticket_logs.py",
+    "tests/test_queue_layer_contract.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "542339cd8dfcae760a03de346db4616a0eba9f42",
+    "targetBranch": "main",
+    "outcome": "koru.queue no longer imports koru.autonomy; main CI import-contract step passes.",
+    "nonGoals": [
+      "No behaviour change; existing import paths are kept via re-exports."
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 60,
+    "budgets": {
+      "maxImplementationFiles": 8,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 2,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Move stdlib-only ticket-log and drive-budget helpers to neutral koru modules; autonomy modules re-export them.",
+      "components": [
+        {
+          "name": "queue-layering",
+          "paths": [
+            "src/koru/ticket_logs.py",
+            "src/koru/drive_budget.py",
+            "src/koru/autonomy/cycle_trace.py",
+            "src/koru/autonomy/verification_engine/budget.py",
+            "src/koru/activity_log.py",
+            "src/koru/bounded_contexts/planfile_queue/application.py",
+            "src/koru/task_model_policy.py",
+            "tests/test_queue_layer_contract.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "koru.ticket_logs",
+        "koru.drive_budget"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "PYTHONPATH=src:packages/koruide/src lint-imports"
+        ],
+        "evidence": "project/ticket-474/README.md"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=src python3 -m pytest -q -o addopts='' tests/test_queue_layer_contract.py tests/test_queue_log_markdown.py tests/test_cycle_trace.py tests/test_autonomous_retry_guard.py"
+        ],
+        "evidence": "project/ticket-474/README.md"
+      }
+    ]
+  }
+}

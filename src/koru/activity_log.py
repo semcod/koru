@@ -390,7 +390,7 @@ def _append_activity_to_ticket_markdown_log(
     target_ticket_dir: Path | None = None
     if ticket_id:
         try:
-            from koru.autonomy.cycle_trace import find_ticket_dir
+            from koru.ticket_logs import find_ticket_dir
             target_ticket_dir = find_ticket_dir(project_root, str(ticket_id))
         except ImportError:
             pass
