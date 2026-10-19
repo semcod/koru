@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-466",
+  "summary": "Opt-in strict_files: refuse promotion of patches outside declared ticket files (#726)",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-466/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/transaction/preflight.py",
+    "tests/test_strict_files.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "5958f94d3692f250318080f5479dc27d092db443",
+    "targetBranch": "main",
+    "outcome": "Tickets opting into inputs.strict_files cannot promote patches that touch undeclared files.",
+    "nonGoals": [
+      "No default behaviour change for tickets without strict_files",
+      "No verify_not_discriminating outcome yet"
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 25,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Screen undeclared targets in screen_promotion_preconditions when inputs.strict_files is true.",
+      "components": [
+        {
+          "name": "queue-preflight",
+          "paths": [
+            "src/koru/queue/transaction/preflight.py",
+            "tests/test_strict_files.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [
+        "New ticket input inputs.strict_files and outcome code patch_targets_outside_declared_files"
+      ],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python3 -m pytest -q tests/test_strict_files.py tests/test_queue_transaction_phases.py"
+        ],
+        "evidence": "project/ticket-466/README.md"
+      }
+    ]
+  }
+}
