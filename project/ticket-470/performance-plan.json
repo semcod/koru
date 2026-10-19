@@ -1,0 +1,129 @@
+{
+  "schema": "performance.plan/v1",
+  "subject": {
+    "repository": "semcod/koru",
+    "revision": "4f0b880c25fd09f9ef6766e3ee36cfe01a197496",
+    "component": "koru.autonomy.operator package import"
+  },
+  "profiles": [
+    "developer-workstation"
+  ],
+  "workload": {
+    "id": "import-koru-cli",
+    "description": "import koru.cli in a fresh interpreter, as every koru CLI invocation does",
+    "method": "perf_counter around the import in a fresh python process",
+    "warmup": "none, each sample is a cold interpreter with warm OS page cache",
+    "samples": 7,
+    "evidence": {
+      "uri": "repo:semcod/koru/project/ticket-470/evidence/import-ab.json",
+      "sha256": "f7b56ec79366b35c806623a67da647b2ca7e047d33effa9f6d5e80519e33bab2"
+    }
+  },
+  "baseline": {
+    "workloadId": "import-koru-cli",
+    "metrics": [
+      {
+        "name": "import_koru_cli_median",
+        "unit": "ms",
+        "value": 836.1
+      }
+    ],
+    "evidence": {
+      "uri": "repo:semcod/koru/project/ticket-470/evidence/import-ab.json",
+      "sha256": "f7b56ec79366b35c806623a67da647b2ca7e047d33effa9f6d5e80519e33bab2"
+    }
+  },
+  "candidate": {
+    "workloadId": "import-koru-cli",
+    "metrics": [
+      {
+        "name": "import_koru_cli_median",
+        "unit": "ms",
+        "value": 157.3
+      }
+    ],
+    "evidence": {
+      "uri": "repo:semcod/koru/project/ticket-470/evidence/import-ab.json",
+      "sha256": "f7b56ec79366b35c806623a67da647b2ca7e047d33effa9f6d5e80519e33bab2"
+    }
+  },
+  "budgets": [
+    {
+      "metric": "import_koru_cli_median",
+      "unit": "ms",
+      "comparison": "at_most",
+      "threshold": 400
+    }
+  ],
+  "controls": [
+    {
+      "kind": "background_work",
+      "target": "koru CLI invocations from hooks and dispatchers",
+      "limit": 400,
+      "unit": "milliseconds",
+      "mechanism": "lazy PEP 562 package barrel",
+      "verification": "interleaved import timing",
+      "exception": ""
+    },
+    {
+      "kind": "process_resource",
+      "target": "koru CLI process start",
+      "limit": 400,
+      "unit": "milliseconds",
+      "mechanism": "operator submodules load on first use only",
+      "verification": "sys.modules check in tests/test_operator_lazy_barrel.py",
+      "exception": ""
+    }
+  ],
+  "invariants": [
+    {
+      "id": "functional",
+      "kind": "functional",
+      "verification": "star-export equals the 144 names of the eager barrel, attribute access unchanged, shim imports stay lazy",
+      "required": true
+    },
+    {
+      "id": "security",
+      "kind": "security",
+      "verification": "no change to any operator submodule",
+      "required": true
+    },
+    {
+      "id": "resource",
+      "kind": "resource",
+      "verification": "submodules still load on demand",
+      "required": true
+    },
+    {
+      "id": "authority",
+      "kind": "authority",
+      "verification": "plan grants no execution authority",
+      "required": true
+    }
+  ],
+  "strategy": {
+    "outcome": "same_language",
+    "rationale": "import fan-out of 19 eagerly star-imported modules dominated CLI startup",
+    "changedPaths": [
+      "src/koru/autonomy/operator/__init__.py",
+      "tests/test_operator_lazy_barrel.py"
+    ],
+    "compatibility": "identical public names and attributes"
+  },
+  "rollout": {
+    "mechanism": "merge and editable install refresh",
+    "scope": "local koru runtime",
+    "observationSeconds": 3600,
+    "abortThreshold": "any import or attribute error from koru.autonomy.operator"
+  },
+  "rollback": {
+    "mechanism": "revert the commit",
+    "scope": "same package",
+    "observationSeconds": 600,
+    "abortThreshold": "import errors persist"
+  },
+  "authority": {
+    "requestOnly": true,
+    "executionGrantEmbedded": false
+  }
+}

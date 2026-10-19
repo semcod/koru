@@ -1,0 +1,47 @@
+{
+ "schema": "koru.import-time-ab/v1",
+ "measuredAt": "2026-10-19",
+ "host": "developer workstation x86_64 Linux 6.17, python 3.13 (miniconda), shared host under load",
+ "method": "fresh interpreter per sample; perf_counter around 'import koru.cli'; A=origin/main src (eager barrel), B=ticket-470 src (lazy barrel); arms interleaved ABAB; 7 samples each",
+ "summary": {
+  "A_main_eager": {
+   "median_ms": 836.1,
+   "min_ms": 711.6,
+   "max_ms": 938.2,
+   "stdev_ms": 82.4,
+   "n": 7
+  },
+  "B_lazy": {
+   "median_ms": 157.3,
+   "min_ms": 128.0,
+   "max_ms": 315.1,
+   "stdev_ms": 82.9,
+   "n": 7
+  }
+ },
+ "samples_ms": {
+  "A_main_eager": [
+   938.2,
+   781.5,
+   720.2,
+   863.1,
+   711.6,
+   859.3,
+   836.1
+  ],
+  "B_lazy": [
+   315.1,
+   309.9,
+   128.0,
+   157.3,
+   137.3,
+   159.8,
+   139.1
+  ]
+ },
+ "loadavg": [
+  "43.64",
+  "49.46",
+  "45.62"
+ ]
+}

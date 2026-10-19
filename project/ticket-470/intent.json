@@ -1,0 +1,80 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-470",
+  "summary": "Lazy operator package barrel to cut koru CLI import time (#730)",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-470/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/operator/__init__.py",
+    "tests/test_operator_lazy_barrel.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "4f0b880c25fd09f9ef6766e3ee36cfe01a197496",
+    "targetBranch": "main",
+    "outcome": "koru CLI import no longer loads the whole operator package; star-export unchanged.",
+    "nonGoals": [
+      "No change to any operator submodule or to exported names."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 40,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "PEP 562 lazy barrel with submodule fast path and re-entrancy guard.",
+      "components": [
+        {
+          "name": "operator",
+          "paths": [
+            "src/koru/autonomy/operator/__init__.py",
+            "tests/test_operator_lazy_barrel.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the commit to restore eager star-imports."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "PYTHONPATH=src python3 -m pytest -q -o addopts='' -p no:cacheprovider tests/test_operator_lazy_barrel.py"
+        ],
+        "evidence": "project/ticket-470/README.md"
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "PYTHONPATH=src python3 -m pytest -q -o addopts='' -p no:cacheprovider tests/test_operator_lazy_barrel.py"
+        ],
+        "evidence": "project/ticket-470/README.md"
+      }
+    ]
+  }
+}
