@@ -1,0 +1,79 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-460",
+  "summary": "Skip unrunnable koru.yaml task gates when Taskfile or target is absent",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-460/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/todo2code_gate.py",
+    "src/koru/queue/verify/legacy.py",
+    "tests/test_diff_repair_and_refactor.py",
+    "tests/test_todo2code_autonomous_gate.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "167183d223bfe0709f13b03bb32fc4e5c24b246b",
+    "targetBranch": "main",
+    "outcome": "Skip declared task <target> commands in koru.yaml when the repository has no Taskfile or does not define <target>, falling back to policy.yaml or toolchain auto-detection.",
+    "nonGoals": [
+      "Do not alter named verify_profile resolution."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add is_runnable_project_gate_command(project, command) in src/koru/queue/verify/legacy.py and use it in both _verify_command_from_project and _verify_from_koru_yaml.",
+      "components": [
+        {
+          "name": "queue-verify-legacy-and-todo2code-gate",
+          "paths": [
+            "src/koru/queue/verify/legacy.py",
+            "src/koru/queue/todo2code_gate.py",
+            "tests/test_diff_repair_and_refactor.py",
+            "tests/test_todo2code_autonomous_gate.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-460."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_diff_repair_and_refactor.py tests/test_todo2code_autonomous_gate.py",
+          "python3 -m ruff check src tests",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-460/README.md"
+      }
+    ]
+  }
+}

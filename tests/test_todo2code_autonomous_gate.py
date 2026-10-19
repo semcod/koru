@@ -53,6 +53,20 @@ class Todo2codeAutonomousGateTest(unittest.TestCase):
                 ],
             )
 
+    def test_unrunnable_task_gate_falls_back_to_pytest(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "pyproject.toml").write_text("[project]\nname='x'\n", encoding="utf-8")
+            (project / "tests").mkdir()
+            (project / "koru.yaml").write_text(
+                "when:\n  before_complete_ticket:\n    commands:\n      - task quality:regix:local\n",
+                encoding="utf-8",
+            )
+            command = infer_project_verify_command(project)
+            self.assertIsNotNone(command)
+            self.assertEqual(command[-3:], ["-m", "pytest", "-q"])
+
+
     def test_docker_project_refuses_undeclared_host_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
