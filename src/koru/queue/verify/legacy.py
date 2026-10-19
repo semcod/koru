@@ -51,6 +51,27 @@ def verify_command_from_criteria(ticket: dict) -> str:
     return ""
 
 
+_TASKFILE_NAMES = ("Taskfile.yml", "Taskfile.yaml", "Taskfile.dist.yml", "Taskfile.dist.yaml")
+
+
+def is_runnable_project_gate_command(project: Path, command: str) -> bool:
+    """Return False when a declared ``task <target>`` gate lacks a Taskfile or target."""
+    parts = command.strip().split()
+    if not parts or parts[0] != "task":
+        return True
+    taskfile = next((project / name for name in _TASKFILE_NAMES if (project / name).is_file()), None)
+    if taskfile is None:
+        return False
+    target = next((token for token in parts[1:] if not token.startswith("-")), "")
+    if not target:
+        return True
+    try:
+        text = taskfile.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return False
+    return f"{target}:" in text
+
+
 def _verify_command_from_project(project: Path) -> str:
     """Use the existing project gate before the declared Planfile CI gate."""
     try:
@@ -67,8 +88,10 @@ def _verify_command_from_project(project: Path) -> str:
         commands = []
     except (OSError, AttributeError, yaml.YAMLError):
         return ""
-    if commands:
-        return str(commands[0]).strip()
+    for raw_command in commands:
+        candidate = str(raw_command or "").strip()
+        if candidate and is_runnable_project_gate_command(project, candidate):
+            return candidate
 
     policy_path = project / ".planfile" / ".koru" / "policy.yaml"
     if policy_path.exists():

@@ -35,7 +35,13 @@ def _verify_from_koru_yaml(project: Path) -> list[list[str]]:
         ) or [])
     except (OSError, AttributeError, ValueError):
         return []
-    declared = [str(command).strip() for command in declared_commands if str(command).strip()]
+    from koru.queue.verify.legacy import is_runnable_project_gate_command
+
+    declared = [
+        str(command).strip()
+        for command in declared_commands
+        if str(command).strip() and is_runnable_project_gate_command(project, str(command).strip())
+    ]
     return [["sh", "-lc", command] for command in declared]
 
 

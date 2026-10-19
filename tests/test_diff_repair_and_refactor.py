@@ -492,6 +492,30 @@ class TestVerifyAutoDetection:
         (node_dir / "package.json").write_text('{"name": "demo"}\n', encoding="utf-8")
         assert resolve_legacy_verify_command(node_dir, {}) == "npm test"
 
+    def test_skips_unrunnable_koru_yaml_task_command_without_taskfile_or_target(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        monkeypatch.delenv("KORU_QUEUE_VERIFY_COMMAND", raising=False)
+        (tmp_path / "pyproject.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
+        (tmp_path / "koru.yaml").write_text(
+            "when:\n  before_complete_ticket:\n    commands:\n      - task quality:regix:local\n",
+            encoding="utf-8",
+        )
+        # No Taskfile.yml -> falls back to auto-detected pytest -q
+        assert resolve_legacy_verify_command(tmp_path, {}) == "pytest -q"
+
+        # Taskfile.yml exists but lacks quality:regix:local target -> still falls back to pytest -q
+        (tmp_path / "Taskfile.yml").write_text("version: '3'\ntasks:\n  test:\n    cmds: [pytest]\n", encoding="utf-8")
+        assert resolve_legacy_verify_command(tmp_path, {}) == "pytest -q"
+
+        # Taskfile.yml defines quality:regix:local -> honours koru.yaml command
+        (tmp_path / "Taskfile.yml").write_text(
+            "version: '3'\ntasks:\n  quality:regix:local:\n    cmds: [regix]\n",
+            encoding="utf-8",
+        )
+        assert resolve_legacy_verify_command(tmp_path, {}) == "task quality:regix:local"
+
+
 
 class TestScreenPatchQualityGate:
     def test_refuses_destructive_truncation_of_public_symbols(self, tmp_path: Path) -> None:
