@@ -379,4 +379,16 @@ def test_sandbox_prepends_project_venv_and_skips_unrecoverable_baseline_retries(
     assert "a/.gitignore b/.gitignore" in sr_diff
 
 
+def test_sandbox_strips_foreign_runtime_pythonpath(tmp_path: Path, monkeypatch) -> None:
+    from koru.queue.verification_sandbox import _command
 
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    monkeypatch.setattr("koru.queue.verification_sandbox._export_filter", lambda p, **kw: p.write_bytes(b"ok"))
+    monkeypatch.setenv(
+        "PYTHONPATH",
+        f"/home/user/.local/share/koru/runtime/cand/venv/lib/python3.12/site-packages{os.pathsep}{tmp_path / 'src'}",
+    )
+    cmd = _command("pytest -q", tmp_path, scratch, "/usr/bin/bwrap")
+    assert "python3.12/site-packages" not in cmd
+    assert f"PYTHONPATH={tmp_path / 'src'}" in cmd
