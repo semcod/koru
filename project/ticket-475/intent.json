@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-475",
+  "summary": "Honor commit hooks during governed queue promotion (koru issue 737)",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-475/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/workspace.py",
+    "tests/test_queue_commit_hooks.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "542339cd8dfcae760a03de346db4616a0eba9f42",
+    "targetBranch": "main",
+    "outcome": "Queue promotion honors configured Git hooks, propagates rejection and preserves proposed work.",
+    "nonGoals": [
+      "Writer admission and repository lease validation remain tracked separately in issue 737.",
+      "No deployment or publication bypass."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use the ordinary git commit path for every queue promotion; exercise real hooks and Git state for both rejecting and accepting hooks.",
+      "components": [
+        {
+          "name": "queue-workspace",
+          "paths": [
+            "src/koru/queue/workspace.py",
+            "tests/test_queue_commit_hooks.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket-475 material commit."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "python -m pytest tests/test_queue_commit_hooks.py tests/test_queue_workspace_retention.py tests/test_queue_recovery.py -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-475/README.md"
+      }
+    ]
+  }
+}
