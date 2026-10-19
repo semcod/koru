@@ -401,6 +401,10 @@ def _remove_unchanged_staging(project: Path, path: Path, head: str, git_dir: str
     current_head = _git(path, "rev-parse", "HEAD")
     branch = _git(path, "symbolic-ref", "--quiet", "HEAD")
     status = _git(path, "status", "--porcelain=v1", "--untracked-files=all", "--ignored")
+    non_koru_lines = [
+        ln for ln in (status.stdout or "").splitlines()
+        if ln.strip() and not ln[3:].startswith(".koru/")
+    ]
     if (
         current_dir.returncode != 0
         or current_dir.stdout.strip() != git_dir
@@ -408,10 +412,12 @@ def _remove_unchanged_staging(project: Path, path: Path, head: str, git_dir: str
         or current_head.stdout.strip() != head
         or branch.returncode != 1
         or status.returncode != 0
-        or status.stdout.strip()
+        or non_koru_lines
     ):
         logging.getLogger(__name__).warning("Preserved staging worktree for reconciliation: %s", path)
         return
+    if (path / ".koru").exists():
+        shutil.rmtree(path / ".koru", ignore_errors=True)
     # Git performs its own dirty/locked check. Never retry with --force.
     removed = _git(project, "worktree", "remove", str(path))
     if removed.returncode != 0:

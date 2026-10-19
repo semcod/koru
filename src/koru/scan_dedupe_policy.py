@@ -242,7 +242,7 @@ def existing_scan_history_keys(project: Path, *, source: str) -> set[str]:
             if not isinstance(entry, dict):
                 continue
             status = str(entry.get("status") or "").lower()
-            if status not in SCAN_DEDUP_SKIP_STATUSES:
+            if status not in (SCAN_DEDUP_SKIP_STATUSES | {"blocked", "failed"}):
                 continue
             context = _source_context(entry, source=source)
             history_key = _history_dedupe_key(source, context)

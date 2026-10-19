@@ -149,6 +149,7 @@ def _command(command: str, project: Path, scratch: Path, binary: str) -> str:
         "LANG": "C.UTF-8",
         "HOME": str(scratch / "home"),
         "TMPDIR": str(scratch / "tmp"),
+        "GIT_CEILING_DIRECTORIES": str(scratch),
         "XDG_CACHE_HOME": str(scratch / "cache"),
         "XDG_CONFIG_HOME": str(scratch / "config"),
         "RUFF_CACHE_DIR": str(scratch / "cache" / "ruff"),
