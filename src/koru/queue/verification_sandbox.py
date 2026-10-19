@@ -155,8 +155,11 @@ def _command(command: str, project: Path, scratch: Path, binary: str) -> str:
     }
     if "no:cacheprovider" not in command:
         environment["PYTEST_ADDOPTS"] = "-o cache_dir=" + str(scratch / "cache")
-    if os.environ.get("PYTHONPATH"):
-        environment["PYTHONPATH"] = os.environ["PYTHONPATH"]
+    from koru.utils.subprocess_runner import sanitized_subprocess_env
+
+    clean_pypath = sanitized_subprocess_env(project).get("PYTHONPATH")
+    if clean_pypath:
+        environment["PYTHONPATH"] = clean_pypath
     argv = ["env", "-i", *(key + "=" + value for key, value in environment.items()),
             binary, "--ro-bind", "/", "/",
             "--bind", str(subactor_cache), str(project / ".subactor/cache"),
