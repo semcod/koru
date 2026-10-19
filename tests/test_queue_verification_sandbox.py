@@ -380,7 +380,7 @@ def test_sandbox_prepends_project_venv_and_skips_unrecoverable_baseline_retries(
 
 
 def test_sandbox_strips_foreign_runtime_pythonpath(tmp_path: Path, monkeypatch) -> None:
-    from koru.queue.verification_sandbox import _command
+    from koru.queue.verification_sandbox import _command, _prune_empty_scratch_parents
 
     scratch = tmp_path / "scratch"
     scratch.mkdir()
@@ -392,3 +392,10 @@ def test_sandbox_strips_foreign_runtime_pythonpath(tmp_path: Path, monkeypatch) 
     cmd = _command("pytest -q", tmp_path, scratch, "/usr/bin/bwrap")
     assert "python3.12/site-packages" not in cmd
     assert f"PYTHONPATH={tmp_path / 'src'}" in cmd
+    assert f"RUFF_CACHE_DIR={scratch / 'cache' / 'ruff'}" in cmd
+    assert f"MYPY_CACHE_DIR={scratch / 'cache' / 'mypy'}" in cmd
+
+    (tmp_path / ".subactor/cache/koru-verification").mkdir(parents=True)
+    _prune_empty_scratch_parents(tmp_path)
+    assert not (tmp_path / ".subactor").exists()
+

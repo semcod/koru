@@ -30,7 +30,7 @@ from koru.queue.transaction.verification import (
 )
 from koru.queue.types import CommandResult
 from koru.queue.verification_sandbox import run_verification
-from koru.queue.workspace import StagingAdmissionRequired
+from koru.queue.workspace import StagingAdmissionRequired, reverse_unified_diff
 
 
 def stage_patch(
@@ -75,6 +75,8 @@ def _stage_patch(
 
         verify = run_verification(plan.verify_command, staged, shell_runner)
         if verify.returncode != 0:
+            if not baseline.ok:
+                reverse_unified_diff(staged, plan.diff)
             return StagingResult.refused(_staged_verify_failure(plan, baseline, verify))
 
         if plan.mode == PROMOTION_BRANCH:

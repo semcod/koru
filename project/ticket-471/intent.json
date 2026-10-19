@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-471",
+  "summary": "fix(queue): redirect ruff and mypy caches in verification sandbox and clean up empty scratch dirs",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-471/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/transaction/staging.py",
+    "src/koru/queue/verification_sandbox.py",
+    "tests/test_queue_verification_sandbox.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "74d286f6e177a3bdb970075ef646e56d42ea0c6f",
+    "targetBranch": "main",
+    "outcome": "Redirect RUFF_CACHE_DIR and MYPY_CACHE_DIR into writable scratch cache inside the bubblewrap verification sandbox, prune empty .subactor/cache/koru-verification directories after verification, and reverse the staged unified diff on VERIFY_BASELINE_FAILED so broken-baseline runs do not leak dirty detached-HEAD worktrees.",
+    "nonGoals": [
+      "Do not weaken seccomp or read-only filesystem isolation in verification_sandbox.py."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 15,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Set RUFF_CACHE_DIR and MYPY_CACHE_DIR inside scratch/cache in verification_sandbox._command, prune empty .subactor/cache/koru-verification parent directories in run_verification, and call reverse_unified_diff(staged, plan.diff) when verify fails with an already-failing baseline.",
+      "components": [
+        {
+          "name": "queue-verification-and-staging",
+          "paths": [
+            "src/koru/queue/transaction/staging.py",
+            "src/koru/queue/verification_sandbox.py",
+            "tests/test_queue_verification_sandbox.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-471."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest tests/test_queue_verification_sandbox.py tests/test_queue_workspace_retention.py tests/test_planfile_queue.py -q",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-471/README.md"
+      }
+    ]
+  }
+}
