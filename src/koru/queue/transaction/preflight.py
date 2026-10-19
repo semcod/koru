@@ -40,6 +40,10 @@ from koru.queue.transaction.result import PatchPlan
 from koru.queue.types import CommandResult
 
 
+#: A ticket opted into ``inputs.strict_files`` and the patch touches files it did not declare.
+PATCH_TARGETS_OUTSIDE_DECLARED_FILES = "patch_targets_outside_declared_files"
+
+
 def extract_patch(
     result: CommandResult,
     *,
@@ -334,8 +338,36 @@ def run_patch_preflight(
     return build_patch_plan(project, ticket, diff, manifest, proposal=proposal), None
 
 
+def undeclared_targets(plan: PatchPlan) -> tuple[str, ...]:
+    """Targets outside ``ticket.files`` when the ticket opted into strict files."""
+    ticket = plan.ticket if isinstance(plan.ticket, dict) else {}
+    inputs = ticket.get("inputs")
+    if not isinstance(inputs, dict) or inputs.get("strict_files") is not True:
+        return ()
+    declared = {
+        str(rel).replace("\\", "/").removeprefix("./") for rel in (ticket.get("files") or [])
+    }
+    if not declared:
+        return ()
+    return tuple(
+        sorted(
+            t for t in plan.targets if t.replace("\\", "/").removeprefix("./") not in declared
+        )
+    )
+
+
 def screen_promotion_preconditions(plan: PatchPlan) -> PatchOutcome | None:
     """Refuse a promotion the workspace cannot honour cleanly."""
+    outside = undeclared_targets(plan)
+    if outside:
+        return PatchOutcome(
+            code=PATCH_TARGETS_OUTSIDE_DECLARED_FILES,
+            message=(
+                "inputs.strict_files is set and the patch touches files the ticket "
+                f"does not declare: {', '.join(outside)}. Declare them in ticket.files "
+                "or drop them from the patch."
+            ),
+        )
     if plan.mode != PROMOTION_COMMIT or repository_is_clean(plan.project):
         return None
     return PatchOutcome(
