@@ -367,9 +367,87 @@ def planfile_lifecycle_command(
     return _transition_result(transition, parity=parity)
 
 
+def _is_human_or_missing_executor(ticket: Any) -> int:
+    executor = getattr(ticket, "executor", None)
+    kind = str(getattr(executor, "kind", None) or "").strip().lower() if executor else ""
+    return 1 if kind in {"", "human"} else 0
+
+
+def _ensure_planfile_autonomy_deferral() -> None:
+    """Ensure Planfile SDK next_ticket/next_tickets skip operator human tickets and defer human work."""
+    try:
+        from planfile import Planfile
+    except ImportError:
+        return
+    if getattr(Planfile, "_koru_autonomy_deferral_installed", False):
+        return
+
+    orig_skip = Planfile.runnability_skip_reason
+    orig_next_ticket = Planfile.next_ticket
+    orig_next_tickets = getattr(Planfile, "next_tickets", None)
+    orig_sort_key = Planfile._ticket_sort_key
+
+    def _wrapped_skip_reason(
+        self: Any,
+        ticket: Any,
+        queue: str | None = None,
+        *,
+        ticket_by_id: dict[str, Any] | None = None,
+    ) -> str:
+        reason = orig_skip(self, ticket, queue=queue, ticket_by_id=ticket_by_id)
+        if reason or os.environ.get("PLANFILE_NO_AUTONOMY_FILTER") == "1" or queue == "operator":
+            return reason
+        executor = getattr(ticket, "executor", None)
+        kind = str(getattr(executor, "kind", None) or "").strip().lower() if executor else ""
+        execution = getattr(ticket, "execution", None)
+        exec_queue = str(getattr(execution, "queue", None) or "default").strip().lower() if execution else "default"
+        labels = {str(lbl).lower() for lbl in (getattr(ticket, "labels", None) or [])}
+        if kind == "human" and (exec_queue == "operator" or "operator" in labels):
+            return "actor:human"
+        return ""
+
+    def _deferred_sort_key(ticket: Any) -> tuple[Any, ...]:
+        base = orig_sort_key(ticket)
+        return ((_is_human_or_missing_executor(ticket), base[0]), *base[1:])
+
+    def _wrapped_next_ticket(self: Any, sprint: str = "current", queue: str | None = None) -> Any:
+        prev = getattr(self, "_ticket_sort_key", None)
+        self._ticket_sort_key = _deferred_sort_key
+        try:
+            return orig_next_ticket(self, sprint=sprint, queue=queue)
+        finally:
+            if prev is None:
+                self.__dict__.pop("_ticket_sort_key", None)
+            else:
+                self._ticket_sort_key = prev
+
+    Planfile.runnability_skip_reason = _wrapped_skip_reason  # type: ignore[method-assign]
+    Planfile.next_ticket = _wrapped_next_ticket  # type: ignore[method-assign]
+
+    if callable(orig_next_tickets):
+        def _wrapped_next_tickets(self: Any, *args: Any, **kwargs: Any) -> Any:
+            prev = getattr(self, "_ticket_sort_key", None)
+            self._ticket_sort_key = _deferred_sort_key
+            try:
+                return orig_next_tickets(self, *args, **kwargs)
+            finally:
+                if prev is None:
+                    self.__dict__.pop("_ticket_sort_key", None)
+                else:
+                    self._ticket_sort_key = prev
+
+        Planfile.next_tickets = _wrapped_next_tickets  # type: ignore[method-assign]
+
+    Planfile._koru_autonomy_deferral_installed = True  # type: ignore[attr-defined]
+
+
+_ensure_planfile_autonomy_deferral()
+
+
 __all__ = [
     "LifecycleRequest",
     "PlanfileLifecycleCommandResult",
     "parse_lifecycle_request",
     "planfile_lifecycle_command",
 ]
+
