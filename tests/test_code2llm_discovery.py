@@ -558,3 +558,33 @@ def test_applies_planfile_tickets_skips_archived_history_ticket_when_file_unchan
 
     assert outcome.applied_titles == []
     assert outcome.skipped_titles == ["Address code smell: God Function: check_for_updates"]
+
+
+def test_ticket_item_scaffold_stamps_executor_kind_and_patch_contract(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KORU_SCAN_EXECUTOR_KIND", "llm")
+    scaffold = cd._ticket_item_scaffold(
+        {
+            "title": "Address code smell: Data Clump",
+            "labels": ["llm-ready", "code2llm", "code-smell", "data-clump"],
+            "files": ["repatch/scope.py"],
+            "signal": "code2llm_smell_data_clump",
+            "dedupe_key": "code2llm:smell:data_clump:repatch/scope.py:207",
+        },
+        "koru-project-discovery",
+    )
+    assert scaffold["executor_kind"] == "llm"
+    assert scaffold["inputs"] == {
+        "expect_files_changed": True,
+        "patch_mode": True,
+    }
+
+    monkeypatch.delenv("KORU_SCAN_EXECUTOR_KIND", raising=False)
+    bare = cd._ticket_item_scaffold(
+        {"title": "Unscoped discovery", "labels": ["code2llm"], "files": []},
+        "koru-project-discovery",
+    )
+    assert bare["executor_kind"] == "human"
+    assert "inputs" not in bare
+
