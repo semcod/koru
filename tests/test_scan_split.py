@@ -253,3 +253,11 @@ def _forward_apply_result(
         decisions.append((suggestion.signal, None))
     else:
         kwargs["skipped"].append(suggestion.title)
+
+
+def test_blocked_history_entry_suppresses_identical_evidence_fingerprint(tmp_path: Path) -> None:
+    entry = {**_history_entry(), "status": "blocked"}
+    _write_history(tmp_path / ".planfile" / "sprints" / "history-blocked.yaml", entry)
+    existing = existing_scan_history_keys(tmp_path, source="koru-scan")
+    assert len(existing) == 1
+
