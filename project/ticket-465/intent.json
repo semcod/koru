@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-465",
+  "summary": "Defer human and skip operator tickets in Planfile SDK queue selection",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-465/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/queue/planfile_sdk.py",
+    "tests/test_queue_ticket_selection.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "d896bff33595388d6cf4c9df5b06c7e9ea64a314",
+    "targetBranch": "main",
+    "outcome": "Ensure Planfile SDK next_ticket and next_tickets skip operator-queue human tickets during default autonomous drain and rank machine-runnable executors ahead of human or unspecified executors.",
+    "nonGoals": [
+      "Do not alter explicit queue='operator' selection or interactive mode ordering."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Install _ensure_planfile_autonomy_deferral in koru.queue.planfile_sdk so Planfile.runnability_skip_reason skips operator-queue human tickets and Planfile.next_ticket / Planfile.next_tickets rank machine executors ahead of human or unspecified executors.",
+      "components": [
+        {
+          "name": "planfile-sdk",
+          "paths": [
+            "src/koru/queue/planfile_sdk.py",
+            "tests/test_queue_ticket_selection.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-465."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_queue_ticket_selection.py",
+          "python3 -m ruff check src/koru/queue/planfile_sdk.py tests/test_queue_ticket_selection.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-465/README.md"
+      }
+    ]
+  }
+}
