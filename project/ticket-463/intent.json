@@ -1,0 +1,75 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-463",
+  "summary": "Stamp scan_executor_kind and patch_mode contract on code2llm_discovery tickets",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-463/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/autonomy/code2llm_discovery.py",
+    "tests/test_code2llm_discovery.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "2bd660246c9cb8fce216bfa2ec81a7d56e74f882",
+    "targetBranch": "main",
+    "outcome": "Resolve executor_kind via scan_executor_kind() and stamp inputs.expect_files_changed=True and inputs.patch_mode=True on file-scoped code2llm_discovery tickets.",
+    "nonGoals": [
+      "Do not modify unscoped discovery ticket generation."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 10,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Import scan_executor_kind in code2llm_discovery._ticket_item_scaffold and attach inputs.expect_files_changed=True and inputs.patch_mode=True when files is non-empty.",
+      "components": [
+        {
+          "name": "code2llm-discovery-ticket-scaffold",
+          "paths": [
+            "src/koru/autonomy/code2llm_discovery.py",
+            "tests/test_code2llm_discovery.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert commit for ticket-463."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "PYTHONPATH=src pytest -q tests/test_code2llm_discovery.py",
+          "python3 -m ruff check src/koru/autonomy/code2llm_discovery.py tests/test_code2llm_discovery.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-463/README.md"
+      }
+    ]
+  }
+}

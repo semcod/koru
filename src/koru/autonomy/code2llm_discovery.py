@@ -590,19 +590,28 @@ def _ticket_item_scaffold(
     project: Path | None = None,
     artifacts_dir: Path | None = None,
 ) -> dict[str, Any]:
-    return {
+    from koru.scan_ticket_emission import scan_executor_kind
+
+    files = _string_list(item.get("files"))
+    scaffold: dict[str, Any] = {
         "title": str(item.get("title") or "code2llm discovery ticket").strip(),
         "labels": _string_list(item.get("labels")),
-        "files": _string_list(item.get("files")),
+        "files": files,
         "source_tool": source,
         "source_context": _ticket_item_source_context(
             item,
             project=project,
             artifacts_dir=artifacts_dir,
         ),
-        "executor_kind": "human",
+        "executor_kind": scan_executor_kind(),
         "executor_mode": "interactive",
     }
+    if files:
+        scaffold["inputs"] = {
+            "expect_files_changed": True,
+            "patch_mode": True,
+        }
+    return scaffold
 
 
 def _ticket_item_source_context(
