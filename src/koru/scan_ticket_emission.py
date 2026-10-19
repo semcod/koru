@@ -37,23 +37,29 @@ def create_ticket(
     """Create one ticket via ``create_nl_task`` or ``planfile ticket create``."""
     if runner is None:
         try:
+            scaffold: dict[str, Any] = {
+                "labels": suggestion.labels,
+                "files": suggestion.files,
+                "title": suggestion.title,
+                "source_tool": source,
+                "source_context": {
+                    "signal": suggestion.signal,
+                    "dedupe_key": suggestion_dedupe_key(source, suggestion),
+                    **suggestion.source_context,
+                },
+                "executor_kind": scan_executor_kind(),
+                "executor_mode": "interactive",
+            }
+            if suggestion.files:
+                scaffold["inputs"] = {
+                    "expect_files_changed": True,
+                    "patch_mode": True,
+                }
             created = create_nl_task(
                 project,
                 suggestion.description,
                 priority=suggestion.priority,
-                scaffold={
-                    "labels": suggestion.labels,
-                    "files": suggestion.files,
-                    "title": suggestion.title,
-                    "source_tool": source,
-                    "source_context": {
-                        "signal": suggestion.signal,
-                        "dedupe_key": suggestion_dedupe_key(source, suggestion),
-                        **suggestion.source_context,
-                    },
-                    "executor_kind": scan_executor_kind(),
-                    "executor_mode": "interactive",
-                },
+                scaffold=scaffold,
             )
             if getattr(created, "reused", False):
                 return CreateTicketResult(ok=False, detail="task already exists (reused)")
