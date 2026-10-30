@@ -21,15 +21,20 @@ def test_apply_validate_lane() -> None:
 def test_default_backend_uses_central_koru_route(monkeypatch, tmp_path) -> None:
     observed = {}
 
-    def run(messages, project, *, route_function):
-        observed.update(messages=messages, project=project, route_function=route_function)
-        return SimpleNamespace(
-            returncode=0,
-            stdout='{"dsl":"VALIDATE_LANE --lane main"}',
-            stderr="",
-        )
+    def environment(*, cwd):
+        observed["project"] = cwd
+        return {}
 
-    monkeypatch.setattr("korullm.run_subllm_messages", run)
+    def run(application, route_function, messages, **kwargs):
+        observed.update(messages=messages, route_function=route_function)
+        assert application == "koru-agent"
+        assert kwargs["response_format"] == {"type": "json_object"}
+        result = SimpleNamespace(content='{"dsl":"VALIDATE_LANE --lane main"}')
+        assert kwargs["quality_gate"](result) is True
+        return result
+
+    monkeypatch.setattr("subllm.complete", run)
+    monkeypatch.setattr("subllm.merged_environment", environment)
 
     line = nl_to_dsl_line(
         "validate main",
