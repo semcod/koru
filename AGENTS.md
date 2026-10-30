@@ -19,8 +19,11 @@ navigation only and are never fetched or executed by an agent.
 - Ticket lifecycle: [ticket-lifecycle.schema.json](https://github.com/wellmanifest/ticket-lifecycle/blob/main/standard/ticket-lifecycle.schema.json)
 - Policy DSL: [POLICY_DSL.md](https://github.com/wellmanifest/policy-dsl/blob/main/spec/POLICY_DSL.md)
 - Logs contract: [logs.contract.json](https://github.com/wellmanifest/logs/blob/main/contracts/logs.contract.json)
+- Docs contract: [wellmanifest/docs POLICY.md](https://github.com/wellmanifest/docs/blob/main/docs/standard/POLICY.md)
 - Agent contract: [agent.schema.json](https://github.com/wellmanifest/agent/blob/main/standard/agent.schema.json)
 - LLM policy boundary: [wellmanifest/llm README](https://github.com/wellmanifest/llm/blob/main/README.md)
+- Session recovery: [session-recovery.schema.json](https://github.com/wellmanifest/session-recovery/blob/main/standard/session-recovery.schema.json)
+- Embedded SemVer & Heterogeneous Fleet: [embedded-release.schema.json](https://github.com/wellmanifest/semver/blob/main/schemas/embedded-release.schema.json)
 - Offer pointer: [wellmanifest/offer README](https://github.com/wellmanifest/offer/blob/main/README.md)
 - Brand pointer: [wellmanifest/brand README](https://github.com/wellmanifest/brand/blob/main/README.md)
 
@@ -46,7 +49,7 @@ files until a repository's protected CI adoption canary succeeds.
 This target repository follows `wellmanifest/new-project` policy-as-code.
 
 HOME vs ADOPT: wellmanifest owns standards; product CLI/daemons HOME in
-`subactor` or `semcod`. "w ramach wellmanifest" means ADOPT packs such as
+`subactor`, `semcod` or `paxlet-com`. "w ramach wellmanifest" means ADOPT packs such as
 `wellmanifest/{new-project,dsl,logs}`, not HOME wellmanifest. For
 SERVICE/FEATURE that create a repo, fill `intent.json` `placement`
 (`home`, `shape`, `runtimeOwner`, `adopt`) in WAIT_FOR_APPROVAL.
@@ -152,8 +155,10 @@ Unknown ownership or remote/independent-clone state must not be guessed.
    either a `User` login is in protected `trusted-reviewers` or a `Bot` login
    is in the separate protected `trusted-validator-apps` input. Never trust an
    arbitrary Bot review.
-11a. **USE LOCAL ONEDEV AND THE INDEPENDENT VALIDATOR.** For `semcod/*` and
-   `subactor/*`, follow [.governance/docs/LOCAL_CI_PUBLICATION.md](.governance/docs/LOCAL_CI_PUBLICATION.md).
+11a. **USE LOCAL ONEDEV AND THE INDEPENDENT VALIDATOR.** For every repository,
+   follow [.governance/docs/LOCAL_CI_PUBLICATION.md](.governance/docs/LOCAL_CI_PUBLICATION.md).
+   This is the default for all owners; only `.governance/local-ci-publication.json`
+   with `scope.mode: "restricted"` narrows it, and never grants authority.
    Resolve the protected repository profile, observe the current OneDev
    head/base receipt and reuse any existing local reconciliation result.
    Invoke the trusted `subactor/validator-agent/bin/run-local-direct-pr.sh`
@@ -267,6 +272,30 @@ Unknown ownership or remote/independent-clone state must not be guessed.
 Markdown approval is an audit note, not trusted merge approval. Required
 merge approval comes from the repository's protected review, attestation and
 ruleset boundary.
+
+## Project-bound development execution
+
+Before running Python or pytest, select the independently approved full Wellman
+runtime and verify its source pin and `run --help` capability. Use
+`<approved-tool-venv>/bin/wellman run --root <ticket-checkout> -- python -m pytest ...`
+or the executor's enrolled SDK adapter. Reuse the canonical `wellman.execution`
+implementation; do not copy admission logic into project scripts. The static
+checker is the separate `wellman-governance` command and cannot mediate a child
+process. Never select a runtime merely because a command named `wellman` is on PATH.
+
+The child cwd, candidate source, interpreter association and development
+temp/cache must bind to that Git checkout. Prepare its local `.venv` first.
+Reuse of the same repository's registered primary `.venv` must be explicit;
+another project's mutable environment is not a fallback. Development scratch
+belongs in the checkout's ignored private `.subactor/cache/`. Immutable tools,
+protected CI scratch and external receipt stores require distinct declared roles,
+pins and ownership; their location alone neither grants nor denies authority.
+
+Missing enrollment or a missing/mismatched execution receipt is a prerequisite
+to repair, never evidence of successful execution. Preserve the real command,
+stdout/stderr and exit status. A static governance PASS, a local execution
+observation or these instructions do not establish universal shell/IDE mediation,
+a filesystem sandbox, a writer lease or independent publication approval.
 
 ## Bounded session controls
 

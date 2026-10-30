@@ -342,6 +342,12 @@ def _stable_patch_id(payload: bytes, env: dict[str, str]) -> str | None:
     return fields[0] if len(fields) >= 2 and SHA_RE.fullmatch(fields[0]) else None
 
 
+# project/readme.sh regenerates this index from the ticket directories. A
+# squash or rebase onto a target where a sibling already added the same rows
+# drops its hunk, so patch identity covers every authored path but not it.
+GENERATED_INDEX_PATHSPEC = ("--", ":(top)", ":(top,exclude)project/TICKETS.md")
+
+
 def _patch_id(root: Path, commit: str) -> str | None:
     """Return Git's stable patch identity for one non-empty commit."""
     env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
@@ -356,6 +362,7 @@ def _patch_id(root: Path, commit: str) -> str | None:
             "--binary",
             "--full-index",
             commit,
+            *GENERATED_INDEX_PATHSPEC,
         ],
         capture_output=True,
         check=False,
@@ -381,6 +388,7 @@ def _range_patch_id(root: Path, base: str, head: str) -> str | None:
             "--full-index",
             base,
             head,
+            *GENERATED_INDEX_PATHSPEC,
         ],
         capture_output=True,
         check=False,
@@ -455,31 +463,30 @@ def _target_ref(root: Path, branch: str) -> str | None:
     return None
 
 
+def _ticket_branch_matches(branch: str, ticket: str) -> bool:
+    number = str(int(ticket.removeprefix("ticket-")))
+    return re.search(rf"(?:^|[^0-9a-z])ticket[-_/]?0*{number}(?:[^0-9a-z]|$)", branch, re.IGNORECASE) is not None
+
+
 def _advanced_ticket_branch(root: Path, ticket: str, head_sha: str, terminal_sha: str) -> bool:
     branch = _git(root, "branch", "--show-current", check=False)
-    number = str(int(ticket.removeprefix("ticket-")))
-    if not branch or re.search(rf"(?:^|[^0-9a-z])ticket[-_/]?0*{number}(?:[^0-9]|$)", branch, re.IGNORECASE) is None:
+    if not branch or not _ticket_branch_matches(branch, ticket):
         return False
     current = _git(root, "rev-parse", "HEAD", check=False)
     return bool(current and current != head_sha and _ancestor(root, head_sha, current) and not _ancestor(root, current, terminal_sha))
 
 
 def _unmerged_ticket_branch(root: Path, ticket: str, target: str) -> bool:
-    """Report whether any branch for this ticket is still outside the target."""
-    number = ticket.removeprefix("ticket-")
-    listed = _git(
-        root, "for-each-ref", "--format=%(objectname)",
-        f"refs/remotes/origin/ticket/{number}",
-        f"refs/remotes/origin/ticket/{number}-*",
-        f"refs/heads/ticket/{number}",
-        f"refs/heads/ticket/{number}-*",
-        check=False,
-    )
-    for ref in (listed or "").splitlines():
-        ref = ref.strip()
-        if ref and not _ancestor(root, ref, target):
+    """Keep supported outstanding ticket branches active from a strict inventory."""
+    listed = _git(root, "for-each-ref", "--format=%(refname) %(objectname)",
+                  "refs/remotes/origin", "refs/heads")
+    for entry in listed.splitlines():
+        ref, _, head = entry.partition(" ")
+        branch = ref.removeprefix("refs/remotes/origin/").removeprefix("refs/heads/")
+        if _ticket_branch_matches(branch, ticket) and not _ancestor(root, head, target):
             return True
     return False
+
 
 
 def delivery_landed(root: Path, ticket_dir: Path, target: str) -> bool:

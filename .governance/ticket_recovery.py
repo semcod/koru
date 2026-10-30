@@ -155,11 +155,15 @@ def inspect_recovery(root, request, workstream):
     for entry in registrations:
         require(not (safe_path(entry["worktree"]) / "project" / ticket).exists(), "Ticket already exists in a checkout")
     refs = start.git(root, "for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes").splitlines()
+    origin_alias = "refs/remotes/origin/" + branch.removeprefix("refs/heads/")
     for ref in refs:
         require(not start.git(root, "ls-tree", "--name-only", ref, own.rstrip("/")).strip(), "Ticket already exists in Git history")
         name = ref.removeprefix("refs/heads/") if ref.startswith("refs/heads/") else ref.split("/", 3)[-1]
         other = start.TICKET.fullmatch(name)
-        require(not other or other[1] != ticket[7:] or ref == branch, "Ticket branch collision")
+        same_published_branch = (ref == origin_alias
+                                 and start.git(root, "rev-parse", ref).strip() == request["headSha"])
+        require(not other or other[1] != ticket[7:] or ref == branch or same_published_branch,
+                "Ticket branch collision")
     require(report["targetBranch"] == intent["delivery"]["targetBranch"], "Target branch mismatch")
     return intent, report, primary, branch
 
