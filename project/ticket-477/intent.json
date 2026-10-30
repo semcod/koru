@@ -1,0 +1,102 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-477",
+  "summary": "Validate Koru model responses before route success",
+  "workstream": "application",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-477/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "packages/nlp2coru/tests/test_nlp2coru.py",
+    "packages/nlp2koru/src/nlp2koru/llm_backend.py",
+    "packages/nlp2koru/src/nlp2koru/response_quality.py",
+    "packages/nlp2koru/tests/test_intent_matrix.py",
+    "packages/nlp2koru/tests/test_nlp2koru.py",
+    "packages/nlp2koru/tests/test_response_quality.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "targetBranch": "main",
+    "acceptedBaseSha": "cee16e74ca78f69a7b37b98b266fd44d8d753099",
+    "outcome": "Task-invalid Koru JSON is rejected before a model attempt is accepted, while existing policy controls fallback and plain-text/custom backend compatibility remains intact.",
+    "complexity": "M",
+    "estimatedMinutes": 75,
+    "budgets": {
+      "maxImplementationFiles": 6,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep response acceptance with the Koru task. Default structured calls use public SubLLM complete with the declared JSON format and a bounded predicate; central routing owns accounting and model fallback. Existing grammar/schema validation remains read-only. Custom complete signatures and plain-text chat transport stay compatible.",
+      "components": [
+        {
+          "name": "nlp2koru",
+          "paths": [
+            "packages/nlp2koru/src/nlp2koru/llm_backend.py",
+            "packages/nlp2koru/src/nlp2koru/response_quality.py",
+            "packages/nlp2koru/tests/test_response_quality.py",
+            "packages/nlp2koru/tests/test_nlp2koru.py",
+            "packages/nlp2koru/tests/test_intent_matrix.py"
+          ]
+        },
+        {
+          "name": "legacy-coru-alias",
+          "paths": [
+            "packages/nlp2coru/tests/test_nlp2coru.py"
+          ]
+        }
+      ],
+      "interfaceChanges": [
+        "Add the checked default-backend path without changing injected complete signatures."
+      ],
+      "responsibilityChanges": false,
+      "dataChanges": [],
+      "rollback": "Revert the bounded application patch through protected review; no state or data migration is required.",
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      }
+    },
+    "runtimeDependencies": [],
+    "nonGoals": [
+      "No standard upgrade, provider policy change, LLM judge, global model quarantine, command execution or universal semantic-correctness claim."
+    ],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "PYTHONPATH=packages/nlp2coru/src:packages/dsl2coru/src python -m pytest -q packages/nlp2koru/tests packages/nlp2coru/tests"
+        ],
+        "evidence": "Task gates reject unsupported actions and malformed types before central acceptance; canonical and legacy aliases submit JSON and their task predicates."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "python -m pytest -q packages/nlp2koru/tests/test_response_quality.py"
+        ],
+        "evidence": "Invalid DSL, ambiguous JSON and string install flags fail safely without executing commands; valid grammar/schema fixtures are accepted."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "python -m pytest -q tests/test_koru_queue_argv.py tests/test_mcp_server.py tests/test_planfile_queue.py tests/test_queue_cli_helpers.py"
+        ],
+        "evidence": "Required protected baseline plus independent exact-head validation; custom backends and plain-text rewriting retain their interfaces."
+      }
+    ]
+  }
+}

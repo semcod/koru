@@ -30,15 +30,16 @@ def test_apply_offline_no_execute(monkeypatch) -> None:
 def test_default_backend_uses_central_coru_route(monkeypatch) -> None:
     observed = {}
 
-    def run(messages, project, *, route_function):
-        observed.update(messages=messages, project=project, route_function=route_function)
-        return SimpleNamespace(
-            returncode=0,
-            stdout='{"action":"doctor","install":false}',
-            stderr="",
-        )
+    def run(application, route_function, messages, **kwargs):
+        observed.update(messages=messages, route_function=route_function)
+        assert application == "koru-agent"
+        assert kwargs["response_format"] == {"type": "json_object"}
+        result = SimpleNamespace(content='{"action":"doctor","install":false}')
+        assert kwargs["quality_gate"](result) is True
+        return result
 
-    monkeypatch.setattr("korullm.run_subllm_messages", run)
+    monkeypatch.setattr("subllm.complete", run)
+    monkeypatch.setattr("subllm.merged_environment", lambda **_kwargs: {})
 
     plan = llm_plan("diagnose it", model="legacy-provider/ignored-model")
 
@@ -69,10 +70,11 @@ def test_injected_backend_remains_supported() -> None:
 
 
 def test_central_route_failure_falls_back_to_offline_heuristic(monkeypatch) -> None:
-    monkeypatch.setattr(
-        "korullm.run_subllm_messages",
-        lambda *args, **kwargs: SimpleNamespace(returncode=1, stdout="", stderr="unavailable"),
-    )
+    def fail(*_args, **_kwargs):
+        raise RuntimeError("unavailable")
+
+    monkeypatch.setattr("subllm.complete", fail)
+    monkeypatch.setattr("subllm.merged_environment", lambda **_kwargs: {})
 
     plan = llm_plan("show status")
 

@@ -53,11 +53,15 @@ def test_rendering_matrix(prompt, lines) -> None:
 def test_central_route_matrix(monkeypatch, planner, route) -> None:
     observed = []
 
-    def run(messages, project, *, route_function):
-        observed.append((messages, project, route_function))
-        return SimpleNamespace(returncode=0, stdout='prefix {"action":"doctor"} suffix', stderr="")
+    def run(application, route_function, messages, **kwargs):
+        observed.append((messages, application, route_function))
+        assert kwargs["response_format"] == {"type": "json_object"}
+        result = SimpleNamespace(content='{"action":"doctor"}')
+        assert kwargs["quality_gate"](result) is True
+        return result
 
-    monkeypatch.setattr("korullm.run_subllm_messages", run)
+    monkeypatch.setattr("subllm.complete", run)
+    monkeypatch.setattr("subllm.merged_environment", lambda **_kwargs: {})
 
     plan = planner("diagnose")
 

@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
-from nlp2koru.to_dsl import _VALID_ACTIONS, KoruIntent, KoruPlan, heuristic_plan
+from nlp2koru.response_quality import response_object, valid_dsl_response, valid_intent_payload, valid_intent_response
+from nlp2koru.to_dsl import KoruIntent, KoruPlan, heuristic_plan
 
 _ROUTE_FUNCTION = "nl-to-koru-dsl"
 _LEGACY_ROUTE_FUNCTION = "nl-to-coru-dsl"
@@ -47,6 +49,10 @@ class SubLlmBackend:
         temperature: float = 0.2,
         response_format: dict[str, Any] | None = None,
     ) -> str:
+        if response_format is not None:
+            return self.complete_checked(
+                model=model, messages=messages, response_format=response_format, accept=lambda _text: True
+            )
         from korullm import run_subllm_messages
 
         _ = model, temperature, response_format
@@ -54,6 +60,29 @@ class SubLlmBackend:
         if result.returncode != 0:
             raise RuntimeError(result.stderr or "central SubLLM route failed")
         return result.stdout.strip()
+
+    def complete_checked(
+        self,
+        *,
+        model: str,
+        messages: list[dict[str, str]],
+        accept: Callable[[str], bool],
+        response_format: dict[str, Any] | None = None,
+    ) -> str:
+        """Submit task acceptance through public SubLLM's model-attempt gate."""
+        from subllm import complete, merged_environment
+
+        # The central route owns model selection, including compatibility hints.
+        _ = model
+        response = complete(
+            "koru-agent",
+            self._route_function,
+            messages,
+            environ=merged_environment(cwd=self._project),
+            response_format=response_format or {"type": "json_object"},
+            quality_gate=lambda result: accept(result.content),
+        )
+        return response.content.strip()
 
 
 def get_backend(
@@ -81,7 +110,7 @@ def nl_to_dsl_line(
         'Return JSON: {"dsl": "..."}'
     )
     try:
-        content = llm.complete(
+        arguments = dict(
             model=model or "",
             messages=[
                 {"role": "system", "content": system},
@@ -89,8 +118,15 @@ def nl_to_dsl_line(
             ],
             response_format={"type": "json_object"},
         )
-        dsl = str(json.loads(content or "{}").get("dsl", "")).strip()
-        return dsl or None
+        if isinstance(llm, SubLlmBackend) and type(llm).complete is SubLlmBackend.complete:
+            content = llm.complete_checked(
+                **arguments, accept=lambda text: valid_dsl_response(text, project=project)
+            )
+        else:
+            content = llm.complete(**arguments)
+        if not valid_dsl_response(content, project=project):
+            return None
+        return response_object(content)["dsl"].strip()
     except Exception:
         return None
 
@@ -99,7 +135,7 @@ def _parse_llm_json(text: str) -> dict[str, Any]:
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if not match:
         raise ValueError("LLM response did not include JSON")
-    return json.loads(match.group(0))
+    return response_object(match.group(0))
 
 
 def _plan_with_route(
@@ -117,27 +153,31 @@ def _plan_with_route(
         f"Prompt: {text}"
     )
     try:
-        content = llm.complete(
+        arguments = dict(
             model=model or "",
             messages=[
                 {"role": "system", "content": "You map user intent to Koru control actions."},
                 {"role": "user", "content": prompt},
             ],
         )
+        if isinstance(llm, SubLlmBackend) and type(llm).complete is SubLlmBackend.complete:
+            content = llm.complete_checked(**arguments, accept=valid_intent_response)
+        else:
+            content = llm.complete(**arguments)
         payload = _parse_llm_json(content)
+        if not valid_intent_payload(payload):
+            raise ValueError("unsupported Koru control intent")
     except Exception:
         return heuristic_plan(text)
 
-    action = str(payload.get("action") or "status").strip().lower()
-    if action not in _VALID_ACTIONS:
-        action = "status"
+    action = payload["action"].strip().lower()
     return KoruPlan(
         [
             KoruIntent(
                 action=action,
                 ide=str(payload.get("ide") or "") or None,
                 instance=str(payload.get("instance") or "") or None,
-                install=bool(payload.get("install", False)),
+                install=payload.get("install", False),
             )
         ],
         use_llm=True,
