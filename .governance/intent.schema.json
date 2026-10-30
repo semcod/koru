@@ -31,6 +31,39 @@
         "origin": { "enum": ["regression", "requested", "health"] }
       }
     },
+    "physicalChanges": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Required when a changed path matches an adopter physical contract (P-PHYS-001). One entry per exact contract/property/signal; the runtime rejects repeated claims even when before, after or acceptance differ. Property none records an edit that keeps physical meaning and must be the only entry for that contract.",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["contract", "property", "signal", "before", "after", "acceptance"],
+            "properties": {
+              "contract": { "type": "string", "minLength": 1 },
+              "property": { "enum": ["pin-assignment", "active-level", "pull", "capability-set", "unit-scale", "limit-range", "timing"] },
+              "signal": { "type": "string", "minLength": 1 },
+              "before": { "type": "string", "minLength": 1 },
+              "after": { "type": "string", "minLength": 1 },
+              "acceptance": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["contract", "property", "rationale"],
+            "properties": {
+              "contract": { "type": "string", "minLength": 1 },
+              "property": { "const": "none" },
+              "rationale": { "type": "string", "minLength": 1 }
+            }
+          }
+        ]
+      }
+    },
     "placement": {
       "type": "object",
       "additionalProperties": false,
@@ -38,11 +71,11 @@
       "description": "Optional HOME vs ADOPT. Fill for SERVICE/FEATURE that create or place a repository. Missing is valid so existing tickets still parse; invalid values reject. runtime_service must not HOME wellmanifest.",
       "properties": {
         "home": {
-          "enum": ["wellmanifest", "subactor", "semcod"],
+          "enum": ["wellmanifest", "subactor", "semcod", "paxlet-com"],
           "description": "Org that owns the repository. Not the same as adopt."
         },
         "runtimeOwner": {
-          "enum": ["wellmanifest", "subactor", "semcod"],
+          "enum": ["wellmanifest", "subactor", "semcod", "paxlet-com"],
           "description": "Org that runs the CLI/daemon. Omit to inherit home. wellmanifest does not host product daemons."
         },
         "shape": {
@@ -345,7 +378,7 @@
   ],
   "$defs": {
     "glob": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$" },
-    "branch": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:\\.\\.|//|@\\{|[~^:?*\\[\\\\])).+$" },
+    "branch": { "type": "string", "minLength": 1, "pattern": "^(?!@?$)(?!HEAD$)(?![-/])(?![\\s\\S]*(?:\\.\\.|//|@\\{|[ ~^:?*\\[\\\\\\x00-\\x1f\\x7f]))(?![\\s\\S]*(?:^|/)\\.)(?![\\s\\S]*(?:^|/)[^/]*\\.lock(?:/|$))(?![\\s\\S]*[/.]$)[\\s\\S]+$" },
     "sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
   }
 }

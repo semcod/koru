@@ -32,10 +32,21 @@ def repo_root() -> Path:
 
 def yaml_scalar(raw: str) -> str:
     value = raw.strip()
+    if value.startswith('"'):
+        try:
+            decoded, end = json.JSONDecoder().raw_decode(value)
+        except json.JSONDecodeError as exc:
+            raise SystemExit('unsupported double-quoted workflow scalar') from exc
+        if value[end:].strip() and not value[end:].lstrip().startswith('#'):
+            raise SystemExit('invalid trailing workflow scalar content')
+        return decoded
+    if value.startswith("'"):
+        match = re.fullmatch(r"'((?:[^']|'')*)'\s*(?:#.*)?", value)
+        if match is None:
+            raise SystemExit('unsupported single-quoted workflow scalar')
+        return match.group(1).replace("''", "'")
     if " #" in value:
         value = value.split(" #", 1)[0].rstrip()
-    if len(value) >= 2 and value[0] in {"'", '"'} and value[-1] == value[0]:
-        return value[1:-1]
     return value
 
 
@@ -98,8 +109,25 @@ def load_source(path: Path) -> dict:
     return data
 
 
-def workflow_job_names(workflow_path: Path) -> list[str]:
+def workflow_job_names(workflow_path: Path, root: Path | None = None) -> list[str]:
     text = workflow_path.read_text(encoding="utf-8")
+    active = '\n'.join(line for line in text.splitlines() if not line.lstrip().startswith('#'))
+    if re.search(r'^    (?:uses:|[\'\"]uses[\'\"]:)|^  [A-Za-z0-9][A-Za-z0-9_-]*:\s*\{.*\buses\b', active, re.M):
+        # Both scripts are managed package members. Direct-job-only fixtures
+        # keep their standalone checker behavior without requiring this import.
+        import importlib.util
+        generator_path = Path(__file__).resolve().with_name('generate_required_checks.py')
+        spec = importlib.util.spec_from_file_location('required_checks_resolver', generator_path)
+        if spec is None or spec.loader is None:
+            raise SystemExit('managed reusable workflow resolver is missing')
+        generator = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(generator)
+        callers: list[str] = []
+        names = generator.resolved_checks_text(
+            text, generator.reusable_sources(root or workflow_path.parents[2]), callers)
+        if callers:
+            raise SystemExit('unresolved reusable workflow callers: ' + ', '.join(callers))
+        return names
     lines = text.splitlines()
     in_jobs = False
     jobs: list[str] = []
@@ -210,13 +238,18 @@ def check_instance_identity(root: Path, data: dict, source_path: Path) -> list[s
     declared = data.get("repository")
     if not isinstance(declared, str) or not declared:
         return []
+    own = own_identity(root)
     if declared == UNRESOLVED_ADOPTER:
+        # The managed updater is the only writer of the adoption lock, so the
+        # remedy is a rerun that binds the detected name, never a manual edit.
+        detected = (f"detected {own!r}; rerun" if own else
+                    "no origin remote detected; add it or pass --repository OWNER/NAME and rerun")
         return [
             f"{source_path} still carries the unadapted template identity "
-            f"{UNRESOLVED_ADOPTER!r}; set repository, workflowFile and the check "
-            "names this repository's own workflows publish"
+            f"{UNRESOLVED_ADOPTER!r}; {detected} the managed updater "
+            "(create_adoption_lock.py --target-root . --source-revision <locked "
+            "sourceRevision> --upgrade) to bind it to the repository's own workflow checks"
         ]
-    own = own_identity(root)
     if own is None or declared.casefold() == own.casefold():
         return []
     return [
@@ -301,7 +334,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"workflow file not found: {workflow_path}", file=sys.stderr)
             return 2
         required = [name for name, _workflow in pairs]
-        published = workflow_job_names(workflow_path)
+        published = workflow_job_names(workflow_path, root)
         errors = compare(required, published)
         published_names = published
     else:
@@ -315,7 +348,7 @@ def main(argv: list[str] | None = None) -> int:
             if not workflow_path.is_file():
                 print(f"workflow file not found: {workflow_path}", file=sys.stderr)
                 return 2
-            published = workflow_job_names(workflow_path)
+            published = workflow_job_names(workflow_path, root)
             published_names.extend(published)
             errors.extend(compare(required, published))
     if errors:
