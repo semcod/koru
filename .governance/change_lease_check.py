@@ -5,9 +5,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import hashlib
+import os
+import stat
+import subprocess
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -58,13 +63,96 @@ def closed_object(value: dict[str, Any], expected: set[str], label: str) -> list
 
 
 def valid_time(value: Any) -> bool:
-    if not isinstance(value, str):
+    if not isinstance(value, str) or not re.fullmatch(
+        r"[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt][0-9]{2}:[0-9]{2}:[0-9]{2}"
+        r"(?:\.[0-9]+)?(?:[Zz]|[+-][0-9]{2}:[0-9]{2})", value
+    ):
         return False
     try:
-        datetime.fromisoformat(value.replace("Z", "+00:00"))
+        timestamp = datetime.fromisoformat(value.replace("Z", "+00:00").replace("z", "+00:00"))
     except ValueError:
         return False
+    return timestamp.utcoffset() is not None
+
+
+@lru_cache(maxsize=1)
+def lease_schema() -> dict[str, Any]:
+    directory = Path(__file__).resolve().parent
+    for path in (directory / "change-lease.schema.json",
+                 directory.parent / "subprojects/change-lease/change-lease.schema.json"):
+        if path.is_symlink():
+            raise ValueError("Canonical lease schema must be a regular managed file.")
+        if path.is_file():
+            if path.stat().st_size > 65536:
+                raise ValueError("Canonical lease schema exceeds its bounded size.")
+            schema = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(schema, dict) or not isinstance(schema.get("$defs"), dict):
+                raise ValueError("Canonical lease schema has no definitions.")
+            return schema
+    raise ValueError("Canonical lease schema is missing; restore the managed package.")
+
+
+def scalar_shape_matches(value: Any, shape: dict[str, Any], definitions: dict[str, Any], depth: int = 0) -> bool:
+    """Match only the bounded scalar vocabulary used by this pinned contract.
+
+    This is not a general JSON Schema engine. Unknown constraints fail closed.
+    Semantic publication/CAS checks still run separately after shape validation.
+    """
+    supported = {"$ref", "type", "enum", "const", "minLength", "maxLength",
+                 "minimum", "pattern", "format", "oneOf"}
+    if depth > 16 or not isinstance(shape, dict) or set(shape) - supported:
+        return False
+    if "$ref" in shape:
+        reference = shape["$ref"]
+        if not isinstance(reference, str) or not reference.startswith("#/$defs/"):
+            return False
+        target = definitions.get(reference[len("#/$defs/"):])
+        if not scalar_shape_matches(value, target, definitions, depth + 1):
+            return False
+    if "oneOf" in shape:
+        choices = shape["oneOf"]
+        if not isinstance(choices, list) or sum(
+            scalar_shape_matches(value, choice, definitions, depth + 1) for choice in choices
+        ) != 1:
+            return False
+    if "type" in shape:
+        types = shape["type"] if isinstance(shape["type"], list) else [shape["type"]]
+        matches = {"string": isinstance(value, str), "integer": type(value) is int,
+                   "boolean": type(value) is bool, "null": value is None}
+        if any(kind not in matches for kind in types) or not any(matches[kind] for kind in types):
+            return False
+    if "const" in shape and value != shape["const"]:
+        return False
+    if "enum" in shape and value not in shape["enum"]:
+        return False
+    if value is None:
+        return True
+    for key, compare in (("minLength", lambda a, b: a >= b), ("maxLength", lambda a, b: a <= b)):
+        if key in shape and (not isinstance(value, str) or not compare(len(value), shape[key])):
+            return False
+    if "minimum" in shape and (type(value) is not int or value < shape["minimum"]):
+        return False
+    if "pattern" in shape and (not isinstance(value, str) or not re.fullmatch(shape["pattern"], value)):
+        return False
+    if "format" in shape and (shape["format"] != "date-time" or not valid_time(value)):
+        return False
     return True
+
+
+def schema_shape_errors(value: dict[str, Any], definition: str) -> list[dict[str, Any]]:
+    try:
+        definitions = lease_schema()["$defs"]
+        shape = definitions[definition]
+        if (shape.get("type") != "object" or shape.get("additionalProperties") is not False
+                or set(shape) - {"type", "additionalProperties", "required", "properties"}):
+            raise ValueError("Unsupported canonical document shape.")
+        required, properties = set(shape["required"]), shape["properties"]
+        if not required.issubset(value) or not set(value).issubset(properties):
+            return [finding("GOV-CHANGE-LEASE-001", "Document fields differ from the canonical schema.")]
+        return [finding("GOV-CHANGE-LEASE-001", f"{key} does not satisfy its canonical scalar contract.")
+                for key, item in value.items() if not scalar_shape_matches(item, properties[key], definitions)]
+    except (OSError, UnicodeError, ValueError, KeyError, TypeError) as error:
+        return [finding("GOV-CHANGE-LEASE-001", f"Cannot validate canonical document shape: {error}")]
 
 
 def validate_publication_lease_fields(value, phase, errors) -> None:
@@ -81,7 +169,7 @@ def validate_publication_lease_fields(value, phase, errors) -> None:
 
 
 def validate_lease(value: dict[str, Any]) -> list[dict[str, Any]]:
-    errors = closed_object(value, LEASE_FIELDS, "lease")
+    errors = closed_object(value, LEASE_FIELDS, "lease") or schema_shape_errors(value, "lease")
     if errors:
         return errors
     strings = ["leaseId", "repositoryRef", "targetBranch", "ticketId", "workstream", "branchRef", "worktreeId", "ownerActor", "ownerSession"]
@@ -103,7 +191,7 @@ def validate_lease(value: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def validate_request(value: dict[str, Any]) -> list[dict[str, Any]]:
-    errors = closed_object(value, REQUEST_FIELDS, "transition request")
+    errors = closed_object(value, REQUEST_FIELDS, "transition request") or schema_shape_errors(value, "transition")
     if errors:
         return errors
     if value.get("schema") != REQUEST_SCHEMA or value.get("action") not in TRANSITIONS:
@@ -123,7 +211,7 @@ def validate_request(value: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def validate_receipt(value: dict[str, Any]) -> list[dict[str, Any]]:
-    errors = closed_object(value, RECEIPT_FIELDS, "transition receipt")
+    errors = closed_object(value, RECEIPT_FIELDS, "transition receipt") or schema_shape_errors(value, "receipt")
     if errors:
         return errors
     if value.get("schema") != RECEIPT_SCHEMA or value.get("action") not in TRANSITIONS or value.get("outcome") not in {"accepted", "rejected", "idempotent"}:
@@ -135,6 +223,11 @@ def validate_receipt(value: dict[str, Any]) -> list[dict[str, Any]]:
             errors.append(finding("GOV-CHANGE-LEASE-001", f"{key} must be a positive integer."))
     if value.get("outcome") == "accepted" and (value["leaseRevision"] != value["previousRevision"] + 1 or value["fencingToken"] != value["previousFencingToken"] + 1):
         errors.append(finding("GOV-CHANGE-LEASE-002", "Accepted receipt must increment revision and fencing token exactly once."))
+    if value["outcome"] == "rejected" and (
+            value["leaseRevision"] != value["previousRevision"]
+            or value["fencingToken"] != value["previousFencingToken"]
+            or value["phaseAfter"] != value["phaseBefore"]):
+        errors.append(finding("GOV-CHANGE-LEASE-002", "Rejected receipt must not advance state."))
     if not valid_time(value.get("occurredAt")):
         errors.append(finding("GOV-CHANGE-LEASE-001", "Receipt timestamp is invalid."))
     return errors
@@ -185,8 +278,11 @@ def replacement_receipt_error(request, replacement):
     return None, None
 
 
-def evaluate_transition(lease: dict[str, Any], request: dict[str, Any], replacement: dict[str, Any] | None = None) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def evaluate_transition(lease: dict[str, Any], request: dict[str, Any], replacement: dict[str, Any] | None = None) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
     errors = validate_lease(lease) + validate_request(request)
+    if errors:
+        # Invalid inputs cannot identify a trustworthy state to receipt.
+        return None, errors
     phase, action = str(lease.get("phase", "claimed")), request.get("action")
     code, message = transition_identity_error(lease, request, phase, errors)
     next_phase = TRANSITIONS.get(str(action), {}).get(phase)
@@ -215,8 +311,11 @@ def validate_trace(path: Path) -> list[dict[str, Any]]:
             findings.append(finding("GOV-CHANGE-LEASE-001", f"Invalid receipt JSON: {error}", line=number)); continue
         if not isinstance(receipt, dict):
             findings.append(finding("GOV-CHANGE-LEASE-001", "Receipt must be an object.", line=number)); continue
-        findings.extend(validate_receipt(receipt))
-        if previous is not None and receipt.get("outcome") == "accepted" and (receipt.get("leaseId") != previous.get("leaseId") or receipt.get("previousRevision") != previous.get("leaseRevision") or receipt.get("previousFencingToken") != previous.get("fencingToken") or receipt.get("phaseBefore") != previous.get("phaseAfter")):
+        errors = validate_receipt(receipt)
+        findings.extend(errors)
+        if errors:
+            continue
+        if previous is not None and receipt.get("outcome") in {"accepted", "rejected"} and (receipt.get("leaseId") != previous.get("leaseId") or receipt.get("previousRevision") != previous.get("leaseRevision") or receipt.get("previousFencingToken") != previous.get("fencingToken") or receipt.get("phaseBefore") != previous.get("phaseAfter")):
             findings.append(finding("GOV-CHANGE-LEASE-002", "Receipt trace is not monotonic.", line=number))
         if receipt.get("outcome") == "accepted":
             previous = receipt
@@ -248,6 +347,112 @@ def print_findings(findings: list[dict[str, Any]], output_format: str) -> None:
     for item in findings: print(f"{item['code']} ERROR: {item['message']}")
 
 
+TICKET_REF = re.compile(r"^refs/heads/ticket[-/]([0-9]{3,})-[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+
+def read_writer_lease(path: Path) -> dict[str, Any]:
+    """Open bounded regular data without following any symlink component."""
+    if os.name == "nt":
+        if path.is_symlink() or any(p.is_symlink() for p in path.parents):
+            raise ValueError("Lease path contains symlinks")
+        if not path.is_file():
+            raise ValueError("Lease must be a regular file")
+        raw = path.read_bytes()
+        if len(raw) > 65536:
+            raise ValueError("Lease exceeds bounded size")
+        value = json.loads(raw.decode("utf-8"))
+        if not isinstance(value, dict):
+            raise ValueError("Lease must be an object")
+        return value
+    flags = os.O_RDONLY | os.O_NOFOLLOW
+    descriptor = os.open(path.anchor, flags | os.O_DIRECTORY)
+    try:
+        for component in path.parts[1:-1]:
+            child = os.open(component, flags | os.O_DIRECTORY, dir_fd=descriptor)
+            os.close(descriptor)
+            descriptor = child
+        leaf = os.open(path.name, flags | os.O_NONBLOCK, dir_fd=descriptor)
+        with os.fdopen(leaf, "rb") as stream:
+            if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                raise ValueError("Lease must be a regular file")
+            raw = stream.read(65537)
+            if len(raw) > 65536:
+                raise ValueError("Lease exceeds bounded size")
+            value = json.loads(raw)
+            if not isinstance(value, dict):
+                raise ValueError("Lease must be an object")
+            return value
+    finally:
+        os.close(descriptor)
+
+
+def check_writer(root: Path, ref: str, operation: str, actor: str, session: str,
+                 revision: str, fencing: str) -> list[dict[str, Any]]:
+    """Read the canonical controller projection; never renew or accept handoffs.
+
+    Identity and CAS values must come from the invoking session, not this file.
+    Local hooks defend against accidental competing writers, not a hostile OS user.
+    """
+    match = TICKET_REF.fullmatch(ref)
+    if not match:
+        return [finding("GOV-CHANGE-LEASE-001", "Writer check requires an exact ticket branch ref.")]
+    if (not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:@/-]{0,159}", actor)
+            or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:@/-]{0,254}", session)
+            or not re.fullmatch(r"[1-9][0-9]{0,18}", revision)
+            or not re.fullmatch(r"[1-9][0-9]{0,18}", fencing)):
+        return [finding("GOV-CHANGE-LEASE-001", "Supply writer actor/session and current lease revision/fencing from the controller.")]
+    try:
+        # Git hook variables may name another checkout's index/git-dir. Discovery
+        # must be relative to the explicitly supplied root.
+        env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+        def git(*args: str) -> str:
+            return subprocess.run(["git", "-C", str(root), *args], env=env,
+                                  check=True, capture_output=True, text=True).stdout.strip()
+        rows = git("worktree", "list", "--porcelain", "-z").split("\0\0")
+        records = [dict(field.split(" ", 1) for field in row.split("\0") if " " in field)
+                   for row in rows if row]
+        primary = Path(records[0]["worktree"]).resolve()
+        owners = [row for row in records if row.get("branch") == ref]
+        if len(owners) != 1:
+            raise ValueError("Ticket ref needs exactly one registered canonical worktree")
+        ticket = "ticket-" + match[1]
+        slug = ref.split(match[1] + "-", 1)[1]
+        worktree_id = ticket + "--" + slug
+        expected = primary / ".worktrees" / worktree_id
+        owner_worktree = Path(owners[0]["worktree"])
+        if os.name == "nt":
+            if owner_worktree.resolve() != expected.resolve() or expected.is_symlink():
+                raise ValueError("Ticket worktree is not canonical")
+            if operation == "commit" and root.resolve() != expected.resolve():
+                raise ValueError("Commit must run in the owned worktree")
+        else:
+            if owner_worktree != expected or expected.resolve() != expected:
+                raise ValueError("Ticket worktree is not canonical")
+            if operation == "commit" and root.resolve() != expected:
+                raise ValueError("Commit must run in the owned worktree")
+        lease = read_writer_lease(primary / ".subactor/leases" / (worktree_id + ".json"))
+        errors = validate_lease(lease)
+        if errors:
+            return errors
+        repository = "local/" + hashlib.sha256(str(primary).encode("utf-8")).hexdigest()
+        if (lease["branchRef"] != ref or lease["ticketId"] != ticket
+                or lease["worktreeId"] != worktree_id or lease["repositoryRef"] != repository):
+            raise ValueError("Lease repository, ticket, branch or worktree binding differs")
+        if (lease["ownerActor"] != actor or lease["ownerSession"] != session
+                or lease["leaseRevision"] != int(revision) or lease["fencingToken"] != int(fencing)):
+            return [finding("GOV-CHANGE-LEASE-002", "Writer/session or controller fencing differs; use GOV-WORK-START accepted handoff, never copy the holder identity.")]
+        now = datetime.now(timezone.utc)
+        times = [datetime.fromisoformat(lease[key].replace("Z", "+00:00").replace("z", "+00:00"))
+                 for key in ("issuedAt", "heartbeatAt", "expiresAt")]
+        if not times[0] <= times[1] <= now < times[2]:
+            return [finding("GOV-CHANGE-LEASE-002", "Lease is expired or its clock bounds are invalid; timeout is not a handoff.")]
+        if lease["phase"] not in {"claimed", "editing", "validating"} or lease["publicationFrozen"]:
+            return [finding("GOV-CHANGE-LEASE-003", "Lease phase forbids Git mutation; preserve the frozen or released writer state.")]
+    except (OSError, ValueError, KeyError, IndexError, AttributeError, subprocess.SubprocessError):
+        return [finding("GOV-CHANGE-LEASE-001", "Cannot verify canonical writer lease; restore controller evidence without taking ownership.")]
+    return []
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--format", choices=("text", "json"), default="text")
@@ -256,12 +461,23 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     transition = sub.add_parser("transition"); transition.add_argument("--lease", type=Path, required=True); transition.add_argument("--request", type=Path, required=True); transition.add_argument("--replacement-receipt", type=Path)
     trace = sub.add_parser("trace"); trace.add_argument("document", type=Path)
     repository = sub.add_parser("repository"); repository.add_argument("root", type=Path)
+    writer = sub.add_parser("writer-check")
+    writer.add_argument("--root", type=Path, required=True)
+    writer.add_argument("--ref", required=True)
+    writer.add_argument("--operation", choices=("commit", "push"), required=True)
+    for name in ("actor", "session", "revision", "fencing"):
+        variable = {"actor": "WRITER_ACTOR", "session": "WRITER_SESSION",
+                    "revision": "LEASE_REVISION", "fencing": "FENCING_TOKEN"}[name]
+        writer.add_argument("--" + name, default=os.environ.get("NEW_PROJECT_" + variable, ""))
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
-    if args.command == "validate": findings = validate_document(args.document)
+    if args.command == "writer-check":
+        findings = check_writer(args.root, args.ref, args.operation, args.actor, args.session,
+                                args.revision, args.fencing)
+    elif args.command == "validate": findings = validate_document(args.document)
     elif args.command == "trace": findings = validate_trace(args.document)
     elif args.command == "repository": findings = validate_repository(args.root.resolve())
     else:
@@ -270,6 +486,9 @@ def main(argv: list[str] | None = None) -> int:
         if lease is None or request is None or repl:
             print_findings(left + right + repl, args.format); return 1
         receipt, findings = evaluate_transition(lease, request, replacement)
+        if receipt is None:
+            print_findings(findings, args.format)
+            return 1
         print(json.dumps(receipt, indent=2, sort_keys=True)); return 1 if findings else 0
     print_findings(findings, args.format); return 1 if findings else 0
 

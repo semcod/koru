@@ -17,7 +17,7 @@
       "sourcePath": "operations/conformance.py",
       "packageSourcePath": "subprojects/worktrees/conformance.py",
       "managedTargetPath": ".governance/worktree_path_check.py",
-      "sourceSha256": "fad10912f3b14913cc348880996b636ba0d31ea66a853dd264b53e4e66f17feb"
+      "sourceSha256": "286fb1801fa437c9a5643a04a81dd421234a3f5412815c2cbba79bf5adf38562"
     }
   ],
   "installation": {

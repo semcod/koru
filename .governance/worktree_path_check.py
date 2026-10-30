@@ -201,7 +201,7 @@ def parse_worktree_porcelain(raw: bytes) -> list[dict[str, Any]]:
 
 def registered_worktrees(start_path: str) -> list[dict[str, Any]]:
     """Observe Git's registered worktrees; this function performs no repair."""
-    raw = _git_output(["-C", start_path, "worktree", "list", "--porcelain", "-z"])
+    raw = _git_output(["-C", start_path, "worktree", "list", "--porcelain", "-z"], cwd=None)
     records = parse_worktree_porcelain(raw)
     if not records:
         raise ValueError("Git returned no registered worktrees")
