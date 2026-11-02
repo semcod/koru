@@ -78,7 +78,7 @@
     ".governance/standard-adoption.schema.json": "d9c58e86d11ebd23174ed8a5c209c13ae96bd4cd34b7866ac8c61a66de19bc9b",
     ".governance/standard-packs.json": "02419af2fa2bde66e5ccf93ed58061d56db7be12a91b868ea3e5a82c7f0e0910",
     ".governance/standard-propagation-request.schema.json": "25b189eb11402137afc67d5a53c426a6b91e083dfa0ca03e720b0bbeebe33beb",
-    ".governance/standard_pack_check.py": "a7f4cc060a7b337fb0409c8751039f9c417952ee65e0d9ea8845014083d90a38",
+    ".governance/standard_pack_check.py": "e5bee4c152ab295125d0ddd069b2a92a08ecee76e117834e3d47d5a1506ffd86",
     ".governance/templates/conftest-worktree-bootstrap.py": "1901fb6924b844915479d5ef781d6bca16232f6f1d2b93dcf93bb2c70bd9663b",
     ".governance/terminal-receipt-registry.schema.json": "799dac322e708421a1ff2dbb00408a47cd05f7021c87920d1d37a1e70fe671f9",
     ".governance/ticket-activity-override.schema.json": "070f22044fba29e1a09543d7236b3105aa9127b9c22229f3e3d9aa067c6c8d17",

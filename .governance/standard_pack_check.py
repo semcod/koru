@@ -150,10 +150,10 @@ EXTERNAL_EVIDENCE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]+:")  # RFC 3986 scheme 
 def evidence_proves(root, item) -> bool:
     """External proof is taken as declared; repository evidence must exist and match its digest."""
     uri = item["uri"]
-    if PureWindowsPath(uri).drive or PureWindowsPath(uri).root or ".." in Path(uri).parts:
-        return False
     if EXTERNAL_EVIDENCE.match(uri):
         return True
+    if PureWindowsPath(uri).drive or PureWindowsPath(uri).root or ".." in Path(uri).parts:
+        return False
     try:
         path = (root / uri).resolve()
         path.relative_to(root.resolve())
