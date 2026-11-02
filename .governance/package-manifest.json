@@ -2,8 +2,20 @@
   "schema": "new-project.package-manifest/v1",
   "files": [
     {
+      "source": "scripts/snapshot_allocation.py",
+      "target": ".governance/snapshot_allocation.py",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
       "source": "scripts/ticket_recovery.py",
       "target": ".governance/ticket_recovery.py",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "scripts/ticket_restoration.py",
+      "target": ".governance/ticket_restoration.py",
       "strategy": "managed",
       "executable": false
     },
@@ -176,6 +188,18 @@
       "executable": false
     },
     {
+      "source": "error/GOV-HOST-MERGE.md",
+      "target": ".governance/error/GOV-HOST-MERGE.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "error/GOV-PUSH.md",
+      "target": ".governance/error/GOV-PUSH.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
       "source": "error/GOV-APPROVAL.md",
       "target": ".governance/error/GOV-APPROVAL.md",
       "strategy": "managed",
@@ -226,6 +250,18 @@
     {
       "source": "error/GOV-CHANGE-LEASE.md",
       "target": ".governance/error/GOV-CHANGE-LEASE.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "error/GOV-PHYS.md",
+      "target": ".governance/error/GOV-PHYS.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "governance/physical-contracts.schema.json",
+      "target": ".governance/physical-contracts.schema.json",
       "strategy": "managed",
       "executable": false
     },
@@ -308,7 +344,7 @@
       "executable": true
     },
     {
-      "source": "worktree-guard.yaml",
+      "source": "template/files/worktree-guard.template.yaml",
       "target": "worktree-guard.yaml",
       "strategy": "managed",
       "executable": false
@@ -428,6 +464,24 @@
       "executable": true
     },
     {
+      "source": "scripts/policy_dsl_check.py",
+      "target": ".governance/policy_dsl_check.py",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "governance/policy-dsl.lock.json",
+      "target": ".governance/policy-dsl.lock.json",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "scripts/repository_policy.py",
+      "target": ".governance/repository_policy.py",
+      "strategy": "managed",
+      "executable": true
+    },
+    {
       "source": "template/files/new-project-governance.workflow.yml",
       "target": ".github/workflows/new-project-governance.yml",
       "strategy": "managed",
@@ -520,6 +574,18 @@
     {
       "source": "template/files/pre-commit.template.sh",
       "target": ".githooks/pre-commit",
+      "strategy": "managed",
+      "executable": true
+    },
+    {
+      "source": "template/files/commit-msg.template.sh",
+      "target": ".githooks/commit-msg",
+      "strategy": "managed",
+      "executable": true
+    },
+    {
+      "source": "template/files/pre-push.template.sh",
+      "target": ".githooks/pre-push",
       "strategy": "managed",
       "executable": true
     },
@@ -650,10 +716,46 @@
       "executable": false
     },
     {
+      "source": "governance/managed-copies.json",
+      "target": ".governance/managed-copies.json",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
       "source": "error/GOV-ARCHITECTURE-001.md",
       "target": ".governance/error/GOV-ARCHITECTURE-001.md",
       "strategy": "managed",
       "executable": false
+    },
+    {
+      "source": "governance/reusable-workflows.schema.json",
+      "target": ".governance/reusable-workflows.schema.json",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "error/GOV-VERSION.md",
+      "target": ".governance/error/GOV-VERSION.md",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "governance/standard-adoption-plan.schema.json",
+      "target": ".governance/standard-adoption-plan.schema.json",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "governance/standard-propagation-request.schema.json",
+      "target": ".governance/standard-propagation-request.schema.json",
+      "strategy": "managed",
+      "executable": false
+    },
+    {
+      "source": "scripts/seed_baseline.py",
+      "target": ".governance/seed_baseline.py",
+      "strategy": "managed",
+      "executable": true
     }
   ]
 }
