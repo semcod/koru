@@ -263,7 +263,7 @@ fi
 
 TICKET_STORAGE="${TICKET_STORAGE:-$(git config --local --get new-project.ticketStorage 2>/dev/null || true)}"
 TICKET_STORAGE="${TICKET_STORAGE:-files}"
-if [[ -n "$STANDARD_ADOPTION_PLAN" && ( "$TICKET_STORAGE" != files || "$REFRESH_REMOTE" == true || "$FORCE_NEW" == true || -n "$BOOTSTRAP_ADOPTION_DIGEST" || -n "$SNAPSHOT_PROPOSAL" || -n "$SNAPSHOT_MATERIALIZE" || -n "$MIGRATION_AUTHORIZATION" || -n "$MIGRATION_AUTHORIZATION_SHA256" || -n "$RECOVER_REQUEST" || -n "$RECOVERY_LEASE_STORE" ) ]]; then
+if [[ -n "$STANDARD_ADOPTION_PLAN" && ( "$TICKET_STORAGE" != files || "$REFRESH_REMOTE" == true || "$FORCE_NEW" == true || -n "$BOOTSTRAP_ADOPTION_DIGEST" || -n "$SNAPSHOT_PROPOSAL" || -n "$SNAPSHOT_MATERIALIZE" || -n "$MIGRATION_AUTHORIZATION" || -n "$MIGRATION_AUTHORIZATION_SHA256" || -n "$RECOVER_REQUEST" || -n "$RECOVERY_LEASE_STORE" || -n "$SEED_BASELINE_REQUEST" ) ]]; then
   echo "GOV-TICKET-ALLOCATION-003: adoption plans require exclusive local file allocation without bootstrap or recovery overrides." >&2
   exit 5
 fi
@@ -273,8 +273,14 @@ if [[ "$TICKET_STORAGE" != files && "$TICKET_STORAGE" != sqlite ]]; then
 fi
 # Reject incompatible snapshot inputs before any candidate executable bridge.
 if [[ -n "$SNAPSHOT_PROPOSAL" || -n "$SNAPSHOT_MATERIALIZE" || -n "$MIGRATION_AUTHORIZATION" || -n "$MIGRATION_AUTHORIZATION_SHA256" ]]; then
-  if [[ "$TICKET_STORAGE" != files || "$REFRESH_REMOTE" == true || "$FORCE_NEW" == true || ${#SCOPE_ARGUMENTS[@]} -ne 0 || -n "$RECOVER_REQUEST" ]]; then
+  if [[ "$TICKET_STORAGE" != files || "$REFRESH_REMOTE" == true || "$FORCE_NEW" == true || ${#SCOPE_ARGUMENTS[@]} -ne 0 || -n "$RECOVER_REQUEST" || -n "$SEED_BASELINE_REQUEST" ]]; then
     echo "GOV-TICKET-ALLOCATION-003: snapshot inputs require local file allocation and an exclusive bounded request." >&2
+    exit 5
+  fi
+fi
+if [[ -n "$SEED_BASELINE_REQUEST" ]]; then
+  if [[ "$TICKET_STORAGE" != files || "$REFRESH_REMOTE" == true || "$FORCE_NEW" == true || ${#SCOPE_ARGUMENTS[@]} -ne 0 || -n "$RECOVER_REQUEST" || -n "$SNAPSHOT_PROPOSAL" || -n "$SNAPSHOT_MATERIALIZE" || -n "$MIGRATION_AUTHORIZATION" || -n "$MIGRATION_AUTHORIZATION_SHA256" || -n "$BOOTSTRAP_ADOPTION_DIGEST" || -n "$STANDARD_ADOPTION_PLAN" ]]; then
+    echo "GOV-TICKET-ALLOCATION-003: seed baseline requests require exclusive local file allocation without snapshot, migration, bootstrap or recovery overrides." >&2
     exit 5
   fi
 fi
@@ -545,6 +551,9 @@ if [[ -n "$SEED_BASELINE_REQUEST" ]]; then
   if [[ "$ALLOCATION_MODE" != local-single-clone || "$TICKET_STORAGE" != files \
       || -z "$PRIMARY_CHECKOUT" || "$WRITER_IDENTITY_EXPLICIT" != true \
       || -n "$RECOVER_REQUEST" || -n "$STANDARD_ADOPTION_PLAN" \
+      || -n "$BOOTSTRAP_ADOPTION_DIGEST" \
+      || -n "$SNAPSHOT_PROPOSAL" || -n "$SNAPSHOT_MATERIALIZE" \
+      || -n "$MIGRATION_AUTHORIZATION" || -n "$MIGRATION_AUTHORIZATION_SHA256" \
       || "$REFRESH_REMOTE" == true || "$FORCE_NEW" == true ]]; then
     echo "GOV-TICKET-ALLOCATION-003: seed requires explicit local file allocation and writer identity only." >&2
     exit 5
@@ -560,7 +569,7 @@ if [[ -n "$STANDARD_ADOPTION_PLAN" && "$ALLOCATION_MODE" != local-single-clone ]
 fi
 
 if [[ -n "$BOOTSTRAP_ADOPTION_DIGEST" ]]; then
-  if [[ ! "$BOOTSTRAP_ADOPTION_DIGEST" =~ ^[0-9a-f]{64}$ || "$TICKET_STORAGE" != files || "$ALLOCATION_MODE" != local-single-clone || "$REFRESH_REMOTE" == true || "$FORCE_NEW" == true || ${#SCOPE_ARGUMENTS[@]} -eq 0 || -n "$RECOVER_REQUEST$SNAPSHOT_PROPOSAL$SNAPSHOT_MATERIALIZE$MIGRATION_AUTHORIZATION$MIGRATION_AUTHORIZATION_SHA256" ]]; then
+  if [[ ! "$BOOTSTRAP_ADOPTION_DIGEST" =~ ^[0-9a-f]{64}$ || "$TICKET_STORAGE" != files || "$ALLOCATION_MODE" != local-single-clone || "$REFRESH_REMOTE" == true || "$FORCE_NEW" == true || ${#SCOPE_ARGUMENTS[@]} -eq 0 || -n "$RECOVER_REQUEST$SNAPSHOT_PROPOSAL$SNAPSHOT_MATERIALIZE$MIGRATION_AUTHORIZATION$MIGRATION_AUTHORIZATION_SHA256" || -n "$SEED_BASELINE_REQUEST" ]]; then
     echo "GOV-WORK-START-001: bootstrap acknowledgement requires exclusive first bounded file allocation." >&2
     exit 3
   fi

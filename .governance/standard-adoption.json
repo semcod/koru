@@ -13,7 +13,7 @@
       "artifacts": [
         {
           "target": ".governance/standard-pack-evidence/new-project.json",
-          "sha256": "b294deddbb20dcec76a565dca5e004f32a0764f72ec521c7b15cd87c0e12164b"
+          "sha256": "078d17d94e87bb29945691adff065f20d0355f9b8974f7710971819fef6d6ea5"
         },
         {
           "target": ".governance/standard-packs.json",
@@ -21,7 +21,7 @@
         },
         {
           "target": ".governance/standard_pack_check.py",
-          "sha256": "e5bee4c152ab295125d0ddd069b2a92a08ecee76e117834e3d47d5a1506ffd86"
+          "sha256": "a7f4cc060a7b337fb0409c8751039f9c417952ee65e0d9ea8845014083d90a38"
         }
       ],
       "evidence": [
@@ -37,8 +37,8 @@
         },
         {
           "level": "S2",
-          "uri": "urn:sha256:b294deddbb20dcec76a565dca5e004f32a0764f72ec521c7b15cd87c0e12164b",
-          "sha256": "b294deddbb20dcec76a565dca5e004f32a0764f72ec521c7b15cd87c0e12164b"
+          "uri": "urn:sha256:078d17d94e87bb29945691adff065f20d0355f9b8974f7710971819fef6d6ea5",
+          "sha256": "078d17d94e87bb29945691adff065f20d0355f9b8974f7710971819fef6d6ea5"
         },
         {
           "level": "S3",

@@ -610,7 +610,7 @@ def _windows_stream_descriptor(path: Path, append: bool, *, readwrite: bool = Fa
         handle = open_handle(path)
         descriptor = msvcrt.open_osfhandle(
             handle, os.O_BINARY | os.O_NOINHERIT | (
-                os.O_RDWR if readwrite else (os.O_APPEND if append else os.O_RDONLY))
+                os.O_RDWR if readwrite else ((os.O_WRONLY | os.O_APPEND) if append else os.O_RDONLY))
         )
         handles.pop()  # The CRT descriptor now owns the file handle.
         yield descriptor

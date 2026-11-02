@@ -6,7 +6,7 @@
     "sourceRepository": "wellmanifest/policy-dsl",
     "sourceRevision": "daaf7b7b96312a2469de1b4799f2f81c7396de4e",
     "sourcePath": "tests/policy_dsl_check.py",
-    "sourceSha256": "1ebed8ada3f687bf82de235b352ec1ce94b606887ad2a1657d66bd58f04314e8"
+    "sourceSha256": "ca0be49f82f4738c734ac3d77e2ef8b403edd81962bd47a5bff8d7cd603f692a"
   },
   "installation": {
     "packageSourcePath": "scripts/policy_dsl_check.py",

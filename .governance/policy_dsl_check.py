@@ -581,12 +581,12 @@ def validate_expression(value: Any) -> None:
             raise PolicyError("POLICY-SEMANTIC-001", "invalid symbol")
     elif node == "unary":
         _keys(value, {"node", "operator", "operand"}, {"node", "operator", "operand"}, "unary")
-        if value["operator"] not in {"NOT", "-"}:
+        if not isinstance(value["operator"], str) or value["operator"] not in {"NOT", "-"}:
             raise PolicyError("POLICY-SEMANTIC-001", "invalid unary operator")
         validate_expression(value["operand"])
     elif node == "binary":
         _keys(value, {"node", "operator", "left", "right"}, {"node", "operator", "left", "right"}, "binary")
-        if value["operator"] not in ExpressionParser.PRECEDENCE:
+        if not isinstance(value["operator"], str) or value["operator"] not in ExpressionParser.PRECEDENCE:
             raise PolicyError("POLICY-SEMANTIC-001", "invalid binary operator")
         validate_expression(value["left"])
         validate_expression(value["right"])
@@ -633,7 +633,7 @@ def validate_ir(ir: Any) -> None:
         not isinstance(document["language"], str) or not re.fullmatch(SYMBOL, document["language"])
     ):
         raise PolicyError("POLICY-SEMANTIC-001", "invalid document language")
-    if document["mode"] not in {"STRICT", "PROCEDURAL"}:
+    if not isinstance(document["mode"], str) or document["mode"] not in {"STRICT", "PROCEDURAL"}:
         raise PolicyError("POLICY-SEMANTIC-001", "invalid document mode")
     for name, limit in (("purpose", 1000), ("policy", 320)):
         if document[name] is not None and (not isinstance(document[name], str) or len(document[name]) > limit):
@@ -668,15 +668,20 @@ def validate_ir(ir: Any) -> None:
         _keys(binding, {"name", "operator", "value"}, {"name", "operator", "value"}, "binding")
         if not isinstance(binding["name"], str) or not re.fullmatch(SYMBOL, binding["name"]):
             raise PolicyError("POLICY-SEMANTIC-001", "invalid binding name")
-        if binding["operator"] not in {"=", "IN"}:
+        if not isinstance(binding["operator"], str) or binding["operator"] not in {"=", "IN"}:
             raise PolicyError("POLICY-SEMANTIC-001", "invalid binding operator")
         validate_expression(binding["value"])
+    if any(not isinstance(state, str) or not re.fullmatch(SYMBOL, state) for state in ir["states"]):
+        raise PolicyError("POLICY-SEMANTIC-001", "invalid state")
+    if len(set(ir["states"])) != len(ir["states"]):
+        raise PolicyError("POLICY-SEMANTIC-001", "duplicate state")
+    declared_states = set(ir["states"])
     for rule in ir["rules"]:
         rule_keys = {"id", "type", "condition", "actions", "forbidden", "assertions", "next"}
         _keys(rule, rule_keys, rule_keys, "rule")
         if not isinstance(rule["id"], str) or not re.fullmatch(STABLE_ID, rule["id"]):
             raise PolicyError("POLICY-SEMANTIC-001", "invalid rule identifier")
-        if rule["type"] not in {"REQUIRED", "FORBIDDEN"}:
+        if not isinstance(rule["type"], str) or rule["type"] not in {"REQUIRED", "FORBIDDEN"}:
             raise PolicyError("POLICY-SEMANTIC-001", "invalid rule type")
         for name, limit in (("actions", 128), ("forbidden", 128), ("assertions", 128), ("next", 32)):
             if not isinstance(rule[name], list) or len(rule[name]) > limit:
@@ -701,19 +706,19 @@ def validate_ir(ir: Any) -> None:
             _keys(target, {"target", "condition"}, {"target", "condition"}, "next target")
             if not isinstance(target["target"], str) or not re.fullmatch(SYMBOL, target["target"]):
                 raise PolicyError("POLICY-SEMANTIC-001", "invalid NEXT target")
+            if target["target"] not in declared_states:
+                raise PolicyError("POLICY-SEMANTIC-001", "invalid NEXT target")
             if target["condition"] is not None:
                 validate_expression(target["condition"])
     if len({rule["id"] for rule in ir["rules"]}) != len(ir["rules"]):
         raise PolicyError("POLICY-SEMANTIC-001", "duplicate rule identifier")
     for assertion in ir["assertions"]:
         validate_expression(assertion)
-    if any(not isinstance(state, str) or not re.fullmatch(SYMBOL, state) for state in ir["states"]):
-        raise PolicyError("POLICY-SEMANTIC-001", "invalid state")
-    if len(set(ir["states"])) != len(ir["states"]):
-        raise PolicyError("POLICY-SEMANTIC-001", "duplicate state")
     for transition in ir["transitions"]:
         _keys(transition, {"from", "to", "condition"}, {"from", "to", "condition"}, "transition")
         if any(not isinstance(transition[name], str) or not re.fullmatch(SYMBOL, transition[name]) for name in ("from", "to")):
+            raise PolicyError("POLICY-SEMANTIC-001", "invalid transition state")
+        if transition["from"] not in declared_states or transition["to"] not in declared_states:
             raise PolicyError("POLICY-SEMANTIC-001", "invalid transition state")
         if transition["condition"] is not None:
             validate_expression(transition["condition"])
@@ -722,7 +727,7 @@ def validate_ir(ir: Any) -> None:
 def _validate_environment_name_type(environment: dict[str, Any]) -> None:
     if not isinstance(environment["name"], str) or not re.fullmatch(SYMBOL, environment["name"]):
         raise PolicyError("POLICY-SEMANTIC-001", "invalid environment name")
-    if environment["value_type"] not in SCALAR_TYPES:
+    if not isinstance(environment["value_type"], str) or environment["value_type"] not in SCALAR_TYPES:
         raise PolicyError("POLICY-SEMANTIC-001", "invalid environment scalar type")
 
 
