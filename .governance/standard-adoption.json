@@ -17,11 +17,11 @@
         },
         {
           "target": ".governance/standard-packs.json",
-          "sha256": "9126f71189dd6ee5c80a53f4d8021718d455501c977ce81da81b437dd0216272"
+          "sha256": "02419af2fa2bde66e5ccf93ed58061d56db7be12a91b868ea3e5a82c7f0e0910"
         },
         {
           "target": ".governance/standard_pack_check.py",
-          "sha256": "412316ef0b35fe1c5f389bc067193693b13c389b7ce9126d78630ebb927c8527"
+          "sha256": "e5bee4c152ab295125d0ddd069b2a92a08ecee76e117834e3d47d5a1506ffd86"
         }
       ],
       "evidence": [
@@ -49,6 +49,36 @@
           "level": "S4",
           "uri": "urn:sha256:9288319177709989c277268de08efbab56c1193b5f71948fb0c8d1f99b64c86c",
           "sha256": "9288319177709989c277268de08efbab56c1193b5f71948fb0c8d1f99b64c86c"
+        }
+      ]
+    },
+    {
+      "id": "wellmanifest/docs",
+      "version": "1.0.0",
+      "revision": "0000000000000000000000000000000000000000",
+      "model": "protected-conformance",
+      "level": "S3",
+      "artifacts": [],
+      "evidence": [
+        {
+          "level": "S0",
+          "uri": "urn:wellmanifest:wellmanifest/docs:S0",
+          "sha256": "6c635a3772e4e5b01d0ffe1b791ccea3d40601a7001479caa41cabf215b808fc"
+        },
+        {
+          "level": "S1",
+          "uri": "urn:wellmanifest:wellmanifest/docs:S1",
+          "sha256": "01f4f1c52a55afea12c8452379882312f653178ad62a21d62a5f8083e168918d"
+        },
+        {
+          "level": "S2",
+          "uri": "urn:wellmanifest:wellmanifest/docs:S2",
+          "sha256": "2302637411ea98ed146ff7d679b83281c20dbb79a24ee2117ee66ed9facdb339"
+        },
+        {
+          "level": "S3",
+          "uri": "urn:wellmanifest:wellmanifest/docs:S3",
+          "sha256": "96e3649bfc549dbd6876f20980eb77ab19d724397a99aa8327d2e1fa70ce7957"
         }
       ]
     },
@@ -109,7 +139,7 @@
         },
         {
           "target": ".governance/worktree_path_check.py",
-          "sha256": "fad10912f3b14913cc348880996b636ba0d31ea66a853dd264b53e4e66f17feb"
+          "sha256": "286fb1801fa437c9a5643a04a81dd421234a3f5412815c2cbba79bf5adf38562"
         }
       ],
       "evidence": [
