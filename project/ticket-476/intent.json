@@ -53,6 +53,9 @@
     ".governance/snapshot_migration.py",
     ".governance/standard-adoption-plan.schema.json",
     ".governance/standard-adoption.json",
+    ".governance/standard-pack-evidence/**",
+    ".governance/standard-pack-evidence/docs.json",
+    ".governance/standard-pack-evidence/new-project.json",
     ".governance/standard-packs.json",
     ".governance/standard-propagation-request.schema.json",
     ".governance/standard_pack_check.py",
@@ -90,7 +93,7 @@
   "conflictsWith": [],
   "integrationTicket": null,
   "delivery": {
-    "acceptedBaseSha": "cee16e74ca78f69a7b37b98b266fd44d8d753099",
+    "acceptedBaseSha": "66e66f48ea70c67417b63678138ed0144330ffdd",
     "architecture": {
       "components": [
         {
@@ -137,6 +140,8 @@
             ".governance/snapshot_migration.py",
             ".governance/standard-adoption-plan.schema.json",
             ".governance/standard-adoption.json",
+            ".governance/standard-pack-evidence/docs.json",
+            ".governance/standard-pack-evidence/new-project.json",
             ".governance/standard-packs.json",
             ".governance/standard-propagation-request.schema.json",
             ".governance/standard_pack_check.py",

@@ -1,0 +1,37 @@
+{
+  "schema": "semcod.standard-pack-projection/v1",
+  "packId": "wellmanifest/docs",
+  "version": "0.1.0",
+  "claimedLevel": "S3",
+  "source": {
+    "repository": "wellmanifest/docs",
+    "revision": "aa92136b4e94f48355c39fb206286aba024c6aa4",
+    "contract": {
+      "path": "docs/standard/policy.json",
+      "uri": "https://github.com/wellmanifest/docs/blob/aa92136b4e94f48355c39fb206286aba024c6aa4/docs/standard/policy.json",
+      "sha256": "af5fde2d52e1c292e569cd47a4068f0e42181a8f8fb9fc21737a569bee9a206f"
+    },
+    "conformance": {
+      "path": "docs/standard/check.py",
+      "uri": "https://github.com/wellmanifest/docs/blob/aa92136b4e94f48355c39fb206286aba024c6aa4/docs/standard/check.py",
+      "sha256": "ef384e88011ce21028a9bf9163d4b6e046e830d9f0d5a839170b172af638d53e"
+    }
+  },
+  "localBindings": [],
+  "ciReceipt": {
+    "sha256": "4c6d489dae90e18a3c9f395ce21e260ae782e8cdd959c95c11309cdf56142659",
+    "snapshot": {
+      "schema": "semcod.projection-ci-receipt/v1",
+      "repository": "semcod/koru",
+      "subjectSha": "10ed01410fa137273a25d4df45b679fa6c2105eb",
+      "checkName": "standard packs / conformance",
+      "conclusion": "success",
+      "completedAt": "2026-09-01T20:05:46Z",
+      "sourceUri": "https://api.github.com/repos/semcod/koru/check-runs/100007807439",
+      "statusId": 100007807439,
+      "sourceRevision": "aa92136b4e94f48355c39fb206286aba024c6aa4",
+      "sourceProjectionSha256": "bfc6430390d620f577233fea9c2a51ef1b58e6efe55ee88ae8b458a9c8df141f"
+    }
+  },
+  "protectionReceipt": null
+}
