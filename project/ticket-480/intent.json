@@ -1,0 +1,78 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-480",
+  "summary": "Scan: ingest process expectation contract audit and add the audit module",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-480/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/expectation_audit.py",
+    "src/koru/scan_artifacts.py",
+    "tests/test_expectation_audit.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "b4b3334c1849028a6e64161548fd865d3be5847e",
+    "targetBranch": "main",
+    "outcome": "koru scan opens one ticket for process expectations that no producer can satisfy, from a read-only audit module that writes .expectation-audit/report.json.",
+    "nonGoals": [
+      "Do not change the verifier or any producer",
+      "Do not execute repairs or open one ticket per finding"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 2,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Add koru.expectation_audit (read-only, stdlib) with rules S1-S5 and ingest its report through the existing structured-report scanner as signal expectation_contract.",
+      "components": [
+        {
+          "name": "scan-expectation-contract",
+          "paths": [
+            "src/koru/expectation_audit.py",
+            "src/koru/scan_artifacts.py",
+            "tests/test_expectation_audit.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket-480 commit; the scan signal and module are additive."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_expectation_audit.py",
+          "python3 -m ruff check src tests",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "New tests, ruff check and governance-check.sh pass."
+      }
+    ]
+  }
+}

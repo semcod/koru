@@ -1386,6 +1386,23 @@ def _count_pfix_diagnose_issues(data: object) -> tuple[int, tuple[str, ...]]:
     return count, tuple(dict.fromkeys(failed_paths))
 
 
+def _scan_expectation_contract_report(project: Path) -> list[Suggestion]:
+    """One ticket for `python -m koru.expectation_audit` findings (informational entries are not counted)."""
+    return _scan_structured_semcod_report(
+        project,
+        candidates=(
+            ".expectation-audit/report.json",
+            "expectation-audit-report.json",
+        ),
+        signal="expectation_contract",
+        title="Repair unsatisfiable process expectations",
+        command_hint="python -m koru.expectation_audit",
+        labels=("expectation-contract", "process-envelope", "scan"),
+        keys=frozenset({"findings"}),
+        high_threshold=3,
+    )
+
+
 def _scan_pfix_report(project: Path) -> list[Suggestion]:
     diagnose_artifact = _first_existing_artifact(
         project,
@@ -1599,6 +1616,7 @@ def scan_semcod_quality_artifacts(project: Path) -> list[Suggestion]:
     out.extend(_scan_redsl_report(project))
     out.extend(_scan_metrun_report(project))
     out.extend(_scan_pfix_report(project))
+    out.extend(_scan_expectation_contract_report(project))
     out.extend(_scan_todo2code_plans(project))
     return out
 
@@ -1616,6 +1634,7 @@ __all__ = [
     "_parse_duplication_toon_suggestions",
     "_scan_code2llm_analysis",
     "_scan_duplication_toon",
+    "_scan_expectation_contract_report",
     "_scan_jscpd_report",
     "_scan_metrun_report",
     "_scan_pfix_report",
