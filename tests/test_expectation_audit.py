@@ -75,6 +75,28 @@ class ExpectationAuditTests(unittest.TestCase):
         self.assertEqual(report["findings"], [])
         self.assertEqual(_rules(report, "informational"), ["S4-unresolved"])
 
+    def test_indexed_constant_uri_arrays_are_resolved(self) -> None:
+        indexed = (
+            'const URIS = Object.freeze(["demo://other/query/a", "demo://registry/query/manifests"]);\n'
+            + CONSUMER.replace("const SCAN_URI", "const UNUSED_URI").replace("uri: SCAN_URI", "uri: URIS[1]")
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            consumer, producer = _tree(Path(tmp), SILENT_PRODUCER, indexed)
+            report = audit([], [consumer], [producer])
+        self.assertEqual(_rules(report, "informational"), [])
+        s4 = next(item for item in report["findings"] if item["rule"] == "S4")
+        self.assertEqual(s4["uri"], "demo://registry/query/manifests")
+
+    def test_out_of_range_index_stays_unresolved(self) -> None:
+        indexed = (
+            'const URIS = ["demo://registry/query/manifests"];\n'
+            + CONSUMER.replace("uri: SCAN_URI", "uri: URIS[3]")
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            consumer, producer = _tree(Path(tmp), SILENT_PRODUCER, indexed)
+            report = audit([], [consumer], [producer])
+        self.assertEqual(_rules(report, "informational"), ["S4-unresolved"])
+
     def test_ticket_manifests_are_classified_by_rule(self) -> None:
         def ticket(ticket_id: str, expectation: dict) -> dict:
             return {"id": ticket_id, "inputs": {"process_manifest": {"definitions": {"eql": [expectation]}}}}

@@ -83,19 +83,41 @@ def _top_level_keys(text: str) -> list[str]:
     return [match.group(1) for match in _KEY_RE.finditer("".join(kept))]
 
 
-def _constants(text: str) -> dict[str, str]:
-    return dict(re.findall(r"""(?:const|let|var)\s+([A-Z_][A-Z0-9_]*)\s*=\s*["']([^"']+)["']""", text))
+_ARRAY_CONST_RE = re.compile(r"""(?:const|let|var)\s+([A-Z_][A-Z0-9_]*)\s*=\s*(?:Object\.freeze\(\s*)?\[([^\]]*)\]""")
 
 
-def _resolve_uris(text: str, step_id: str, constants: dict[str, str]) -> list[str]:
-    pattern = re.compile(
-        r"""\bid\s*:\s*["']""" + re.escape(step_id) + r"""["'][^{}]{0,500}?\buri\s*:\s*("[^"]+"|'[^']+'|[A-Za-z_]\w*)"""
+def _constants(text: str) -> dict[str, str | list[str]]:
+    """String constants and arrays of string literals (``const NAME = Object.freeze([...])``)."""
+    found: dict[str, str | list[str]] = dict(
+        re.findall(r"""(?:const|let|var)\s+([A-Z_][A-Z0-9_]*)\s*=\s*["']([^"']+)["']""", text)
     )
-    found: list[str] = []
-    for match in pattern.finditer(text):
-        value = match.group(1)
-        found.append(value.strip("\"'") if value[0] in "\"'" else constants.get(value, ""))
-    return [uri for uri in found if uri]
+    for name, body in _ARRAY_CONST_RE.findall(text):
+        items = re.findall(r"""["']([^"']+)["']""", body)
+        if items:
+            found[name] = items
+    return found
+
+
+def _lookup(value: str, constants: dict[str, str | list[str]]) -> str:
+    """Resolve ``"literal"``, ``NAME`` and ``NAME[3]`` to a URI string ('' when unknown)."""
+    if value[0] in "\"'":
+        return value.strip("\"'")
+    indexed = re.fullmatch(r"([A-Za-z_]\w*)\[(\d+)\]", value)
+    if indexed:
+        items = constants.get(indexed.group(1))
+        position = int(indexed.group(2))
+        return items[position] if isinstance(items, list) and position < len(items) else ""
+    resolved = constants.get(value)
+    return resolved if isinstance(resolved, str) else ""
+
+
+def _resolve_uris(text: str, step_id: str, constants: dict[str, str | list[str]]) -> list[str]:
+    pattern = re.compile(
+        r"""\bid\s*:\s*["']"""
+        + re.escape(step_id)
+        + r"""["'][^{}]{0,500}?\buri\s*:\s*("[^"]+"|'[^']+'|[A-Za-z_]\w*(?:\[\d+\])?)"""
+    )
+    return [uri for uri in (_lookup(match.group(1), constants) for match in pattern.finditer(text)) if uri]
 
 
 def _uri_tail(uri: str) -> str | None:
