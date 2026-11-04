@@ -1,0 +1,76 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-481",
+  "summary": "Expectation audit: resolve indexed constant URI arrays",
+  "workstream": "application",
+  "classification": {
+    "kind": "FEATURE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-481/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/expectation_audit.py",
+    "tests/test_expectation_audit.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "80acb166e1425c80a35c2684835ee8eb05b0005c",
+    "targetBranch": "main",
+    "outcome": "The expectation audit resolves verifying URIs written as NAME[index] over constant string arrays, so founder-form expectations are checked instead of reported as unresolved.",
+    "nonGoals": [
+      "Do not change the verifier, any producer or the report schema",
+      "Do not resolve constants across files"
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 3,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 2,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Parse const arrays of string literals next to string constants and resolve NAME[i] in _resolve_uris; out-of-range indexes stay unresolved.",
+      "components": [
+        {
+          "name": "scan-expectation-contract",
+          "paths": [
+            "src/koru/expectation_audit.py",
+            "tests/test_expectation_audit.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the ticket-481 commit; the change is internal to the audit module."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_expectation_audit.py",
+          "python3 -m ruff check src tests",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "New and existing audit tests, ruff check and governance-check.sh pass."
+      }
+    ]
+  }
+}
