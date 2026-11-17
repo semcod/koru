@@ -1,5 +1,7 @@
 # koru — Documentation
 
+- [Rola Koru w lokalnym stosie integracji agentowych](information/composio-integration-role.md) — zakres odpowiedzialności i kryteria porównania z Composio.
+
 This directory contains the full documentation for **koru** — a closed-loop
 refactor automation system for multi-repo workspaces.
 

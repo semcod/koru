@@ -1,0 +1,87 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-482",
+  "summary": "Document Koru role in Composio alternative",
+  "workstream": "integration",
+  "classification": {
+    "kind": "SERVICE",
+    "priority": "P2",
+    "origin": "health"
+  },
+  "allowedPaths": [
+    "project/ticket-482/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "docs/README.md",
+    "docs/information/composio-integration-role.md"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "targetBranch": "main",
+    "acceptedBaseSha": "27bfaab3ff938303d63d2ce2225798a32b86a57d",
+    "outcome": "Document Koru responsibility and acceptance boundaries in the local Composio comparison, with a discoverable index entry.",
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 2,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Keep the cross-project comparison in Subactor docs and explain Koru planning and DSL responsibilities in this repository using observed implementation evidence.",
+      "components": [
+        {
+          "name": "documentation",
+          "paths": [
+            "docs/README.md",
+            "docs/information/composio-integration-role.md"
+          ]
+        }
+      ],
+      "interfaceChanges": [],
+      "responsibilityChanges": false,
+      "dataChanges": [],
+      "rollback": "Revert the documentation and index entry through protected publication.",
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      }
+    },
+    "runtimeDependencies": [],
+    "nonGoals": [
+      "No connector runtime, OAuth service, credentials or publication policy changes."
+    ],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "git diff --check"
+        ],
+        "evidence": "Review sourced responsibility boundaries and explicit limitations."
+      },
+      {
+        "criterion": "AC-02",
+        "commands": [
+          "Run adopted wellmanifest/docs checker with --complete for docs/information/composio-integration-role.md."
+        ],
+        "evidence": "Canonical link and local index are checked by the adopted documentation standard."
+      },
+      {
+        "criterion": "AC-03",
+        "commands": [
+          "./project/governance-check.sh --base 27bfaab3ff938303d63d2ce2225798a32b86a57d --format json"
+        ],
+        "evidence": "Scoped governance and documentation checks plus exact-head OneDev and independent Validator before merge."
+      }
+    ]
+  }
+}
