@@ -1,0 +1,89 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-483",
+  "summary": "Bind pytest missing-module incidents to verified recovery and preserve them across sprint archival (PLF-20052)",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P1",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-483/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/pytest_incidents.py",
+    "src/koru/scan.py",
+    "src/koru/scan_dedupe_policy.py",
+    "src/koru/scan_ticket_emission.py",
+    "tests/test_pytest_incidents.py",
+    "tests/test_scan.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "acceptedBaseSha": "67c9469b588948b80729044e39cab9a0c58953ff",
+    "targetBranch": "main",
+    "outcome": "Produce one scoped diagnosis for each missing module until verified project pytest collection succeeds, preserve evidence across archive rotation and submit transitions to the configured URTLog store.",
+    "nonGoals": [
+      "General package installation and editing project dependency files."
+    ],
+    "complexity": "M",
+    "estimatedMinutes": 45,
+    "budgets": {
+      "maxImplementationFiles": 6,
+      "maxAffectedComponents": 2,
+      "maxPublicInterfaceChanges": 1,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Use project-scoped SQLite for probe ordering and a durable optional URTLog outbox. Reuse current Planfile intake and native Reflex observation fields.",
+      "components": [
+        {
+          "name": "scan",
+          "paths": [
+            "src/koru/pytest_incidents.py",
+            "src/koru/scan.py",
+            "src/koru/scan_dedupe_policy.py",
+            "src/koru/scan_ticket_emission.py",
+            "tests/test_pytest_incidents.py",
+            "tests/test_scan.py"
+          ]
+        }
+      ],
+      "responsibilityChanges": false,
+      "interfaceChanges": [],
+      "dataChanges": [
+        {
+          "kind": "component-local-state",
+          "component": "scan",
+          "description": "Local collection verification generation, current module incidents and pending telemetry in the existing per-project scanner runtime directory."
+        }
+      ],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the scanner change. The project-local incident database is additive."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_pytest_incidents.py tests/test_scan.py tests/test_scan_split.py",
+          "./project/governance-check.sh",
+          "wellman check"
+        ],
+        "evidence": "project/ticket-483/README.md"
+      }
+    ]
+  }
+}
