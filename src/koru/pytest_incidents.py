@@ -1,23 +1,27 @@
 """Track missing Python modules until pytest verifies collection in the same project."""
 from __future__ import annotations
 
-from contextlib import closing
-from datetime import datetime, timezone
 import hashlib
 import json
 import logging
 import os
-from pathlib import Path
 import re
 import sqlite3
 import subprocess
 import time
+from contextlib import closing
+from datetime import UTC, datetime
+from pathlib import Path
 
 from koru.runtime import runtime_dir
 from koru.scan_types import Suggestion
 
 # A pytest error line, not arbitrary prose about a previous missing module.
-MISSING = re.compile(r"^(?:E\s+|(?:ERROR|FAILED)\s+\S+\s+-\s+|\s*)ModuleNotFoundError: No module named ['\"]([a-zA-Z_]\w*(?:\.\w+)*)['\"]", re.MULTILINE)
+MISSING = re.compile(
+    r"^(?:E\s+|(?:ERROR|FAILED)\s+\S+\s+-\s+|\s*)"
+    r"ModuleNotFoundError: No module named ['\"]([a-zA-Z_]\w*(?:\.\w+)*)['\"]",
+    re.MULTILINE,
+)
 LOG = logging.getLogger(__name__)
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS probe (id INTEGER PRIMARY KEY CHECK(id=1), started INTEGER, generation TEXT);
@@ -44,7 +48,9 @@ def history_keys(source, context):
     if not isinstance(context, dict) or context.get("signal") != "pytest_collect":
         return set()
     text = context.get("input")
-    return {_source_key(source, module, "initial") for module in MISSING.findall(text)} if isinstance(text, str) else set()
+    if not isinstance(text, str):
+        return set()
+    return {_source_key(source, module, "initial") for module in MISSING.findall(text)}
 
 
 def suggestion(module, generation):
@@ -126,7 +132,7 @@ def record_probe(project: Path, modules: set[str], *, success: bool, started_ns:
                     body = {"repository": repository, "schema": "reflex.observation/v1", "event_type": "check.fact",
                             "operation": "dev.pytest-collect", "failure_code": cause,
                             "source_event_id": f"pytest-{started_ns}-{cause}", "evidence_digest": digest,
-                            "occurred_at": datetime.fromtimestamp(started_ns / 1e9, timezone.utc).isoformat(),
+                            "occurred_at": datetime.fromtimestamp(started_ns / 1e9, UTC).isoformat(),
                             "outcome": "success" if success else "failure"}
                     conn.execute("INSERT INTO outbox(body) VALUES (?)", (json.dumps(body),))
         if state and conn.execute("SELECT 1 FROM outbox LIMIT 1").fetchone():

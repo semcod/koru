@@ -32,9 +32,9 @@ planfile tickets through ``planfile ticket create``.
 
 import os
 import re
-import time
 import shutil
 import subprocess
+import time
 from collections.abc import Callable, Sequence
 from importlib.util import find_spec
 from pathlib import Path

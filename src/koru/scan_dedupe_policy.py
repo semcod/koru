@@ -8,12 +8,11 @@ import re
 import subprocess
 from collections.abc import Callable, Sequence
 from pathlib import Path
-
-from koru.pytest_incidents import history_keys, ticket_key
 from typing import Any
 
 import yaml
 
+from koru.pytest_incidents import history_keys, ticket_key
 from koru.scan_types import Suggestion
 
 SCAN_DEDUP_SKIP_STATUSES: frozenset[str] = frozenset(
