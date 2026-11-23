@@ -44,6 +44,12 @@ jobs:
         run: |
           python -m pytest tests/test_init.py tests/test_autopilot_cli.py -q
 
+      - name: Provision file watches for Koru doctor
+        run: |
+          if (( $(sysctl -n fs.inotify.max_user_watches) < 524288 )); then
+            sudo sysctl -w fs.inotify.max_user_watches=1048576
+          fi
+
       - name: CLI smoke
         run: |
           koru --help
