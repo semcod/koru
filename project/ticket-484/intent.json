@@ -20,5 +20,53 @@
   "stacks": [],
   "dependsOn": [],
   "conflictsWith": [],
-  "integrationTicket": null
+  "integrationTicket": null,
+  "delivery": {
+    "targetBranch": "main",
+    "acceptedBaseSha": "67c9469b588948b80729044e39cab9a0c58953ff",
+    "outcome": "Satisfy the existing Koru doctor watch requirement on its ephemeral GitHub-hosted smoke VM.",
+    "complexity": "S",
+    "estimatedMinutes": 12,
+    "budgets": {
+      "maxImplementationFiles": 1,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Provision the ephemeral Ubuntu runner before the same CLI smoke command. Keep higher kernel limits.",
+      "components": [
+        {
+          "name": "Koru CI smoke",
+          "paths": [
+            ".github/workflows/koru-ci.yml"
+          ]
+        }
+      ],
+      "interfaceChanges": [],
+      "responsibilityChanges": false,
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the CI configuration commit."
+    },
+    "runtimeDependencies": [],
+    "nonGoals": [
+      "Changing the production host or the doctor threshold."
+    ],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "./project/governance-check.sh",
+          "python -m koru --doctor --project ."
+        ],
+        "evidence": "Koru CI smoke run on the pull request head."
+      }
+    ]
+  }
 }
