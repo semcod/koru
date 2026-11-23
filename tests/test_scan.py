@@ -261,7 +261,7 @@ class TestScanPytestCollect(unittest.TestCase):
             self.assertEqual(result[0].files, ("tests/test_foo.py",))
             self.assertIn("tests/test_bar.py", result[1].title)
 
-    def test_falls_back_to_umbrella_import_ticket(self) -> None:
+    def test_identifies_missing_module_before_collection(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)
             (project / "pyproject.toml").write_text("[project]\nname='x'\n")
@@ -272,8 +272,8 @@ class TestScanPytestCollect(unittest.TestCase):
             )
             self.assertEqual(len(result), 1)
             self.assertEqual(result[0].signal, "pytest_collect")
-            self.assertIn("Fix package import path", result[0].title)
-            self.assertIn("pythonpath", result[0].description)
+            self.assertIn("missing pytest collection dependency goal", result[0].title)
+            self.assertEqual(result[0].source_context["pytest_incident"]["module"], "goal")
 
     def test_collection_timeout_emits_diagnostic_ticket(self) -> None:
         """A timeout is a *real* problem — koru must NOT swallow it.

@@ -32,6 +32,7 @@ planfile tickets through ``planfile ticket create``.
 
 import os
 import re
+import time
 import shutil
 import subprocess
 from collections.abc import Callable, Sequence
@@ -199,6 +200,7 @@ def scan_pytest_collect(
     *,
     runner: Callable[[Sequence[str], Path], subprocess.CompletedProcess[str]] | None = None,
     timeout_seconds: float = 60.0,
+    record_incidents: bool = False,
 ) -> list[Suggestion]:
     """Probe pytest collection; surface every collection failure as a ticket.
 
@@ -236,6 +238,7 @@ def scan_pytest_collect(
         "-p",
         "no:wellmanifest_governance",
     ]
+    started_ns = time.time_ns()
     try:
         result = use_runner(cmd, project)
     except subprocess.TimeoutExpired:
@@ -282,17 +285,22 @@ def scan_pytest_collect(
         # would not be able to act on it from inside the repo).
         return []
 
+    from koru import pytest_incidents
+    output = (result.stdout or "") + "\n" + (result.stderr or "")
+    modules = set(pytest_incidents.MISSING.findall(output)) if result.returncode else set()
+    generation = "initial"
+    if record_incidents and (result.returncode == 0 or modules):
+        generation = pytest_incidents.record_probe(project, modules, success=result.returncode == 0,
+                                                   started_ns=started_ns, output=output)
     if result.returncode == 0:
         return []
 
-    output = (result.stdout or "") + "\n" + (result.stderr or "")
-
-    suggestions: list[Suggestion] = []
+    suggestions = [pytest_incidents.suggestion(module, generation) for module in sorted(modules)] if generation else []
     seen_paths: set[str] = set()
     for match in _COLLECT_ERROR_RE.finditer(output):
         path = match.group("path").strip()
         msg = match.group("msg").strip()
-        if path in seen_paths:
+        if path in seen_paths or pytest_incidents.MISSING.match(msg):
             continue
         seen_paths.add(path)
         suggestions.append(
@@ -312,7 +320,7 @@ def scan_pytest_collect(
         )
 
     # No per-file match but stderr mentions an import error → one umbrella ticket.
-    if not suggestions:
+    if not suggestions and not modules:
         imp = _IMPORT_ERROR_RE.search(output)
         if imp:
             suggestions.append(
@@ -570,6 +578,7 @@ def collect_suggestions(
     project: Path,
     *,
     skip_pytest: bool = False,
+    record_pytest_incidents: bool = False,
     include_semcod_artifacts: bool = False,
     paths: Sequence[str | Path] | None = None,
 ) -> list[Suggestion]:
@@ -579,7 +588,8 @@ def collect_suggestions(
         skip_pytest=skip_pytest,
         include_semcod_artifacts=include_semcod_artifacts,
         paths=paths,
-        scan_pytest_collect=scan_pytest_collect,
+        scan_pytest_collect=(lambda path: scan_pytest_collect(path, record_incidents=True))
+        if record_pytest_incidents else scan_pytest_collect,
         scan_todo_markers=scan_todo_markers,
         scan_missing_gates=scan_missing_gates,
         scan_missing_tools=scan_missing_tools,
@@ -708,6 +718,10 @@ def _create_ticket(
 
 def _suggestion_dedupe_key(source: str, suggestion: Suggestion) -> str:
     """Return a stable producer-neutral key for repeated scan signals."""
+    from koru.pytest_incidents import ticket_key
+    incident_key = ticket_key(source, suggestion.source_context)
+    if incident_key:
+        return incident_key
     files = [str(path) for path in suggestion.files if str(path).strip()]
     if not files:
         files = re.findall(
@@ -827,6 +841,7 @@ def run_scan(
         ).strip().lower() in ("1", "true", "yes", "on")
     suggestions = collect_suggestions(
         project,
+        record_pytest_incidents=apply,
         skip_pytest=skip_pytest,
         include_semcod_artifacts=include_semcod_artifacts,
         paths=paths,

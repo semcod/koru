@@ -8,6 +8,8 @@ import re
 import subprocess
 from collections.abc import Callable, Sequence
 from pathlib import Path
+
+from koru.pytest_incidents import history_keys, ticket_key
 from typing import Any
 
 import yaml
@@ -117,6 +119,7 @@ def add_existing_scan_title_keys(
     status = str(entry.get("status") or "").lower()
     if status in skip_statuses:
         return
+    titles.update(history_keys(source, entry_context))
     active_key = _active_dedupe_key(source, entry_context)
     if active_key is not None:
         titles.add(active_key)
@@ -143,6 +146,7 @@ def add_active_scan_title_keys(
     entry_source = entry.get("source")
     entry_context = entry_source.get("context") if isinstance(entry_source, dict) else None
     if isinstance(entry_source, dict) and isinstance(entry_source.get("tool"), str):
+        titles.update(history_keys(entry_source["tool"], entry_context))
         active_key = _active_dedupe_key(entry_source["tool"], entry_context)
         if active_key is not None:
             titles.add(active_key)
@@ -245,6 +249,7 @@ def existing_scan_history_keys(project: Path, *, source: str) -> set[str]:
             if status not in (SCAN_DEDUP_SKIP_STATUSES | {"blocked", "failed"}):
                 continue
             context = _source_context(entry, source=source)
+            keys.update(history_keys(source, context))
             history_key = _history_dedupe_key(source, context)
             if history_key is not None:
                 keys.add(history_key)
@@ -341,6 +346,11 @@ def scan_duplicate_skip(
     source: str | None = None,
     suggestion_dedupe_key: Callable[[str, Suggestion], str] | None = None,
 ) -> tuple[str, str] | None:
+    incident_key = ticket_key(source, suggestion.source_context) if source else None
+    if incident_key:
+        if incident_key in existing:
+            return "duplicate_pytest_incident", f"same missing module and collection episode: {suggestion.title}"
+        return None
     if suggestion.title in existing:
         return (
             "duplicate_title",

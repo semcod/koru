@@ -50,6 +50,8 @@ def create_ticket(
                 "executor_kind": scan_executor_kind(),
                 "executor_mode": "interactive",
             }
+            if suggestion.source_context.get("pytest_incident") and not suggestion.files:
+                scaffold["inputs"] = {"expect_files_changed": False}
             if suggestion.files:
                 scaffold["inputs"] = {
                     "expect_files_changed": True,
