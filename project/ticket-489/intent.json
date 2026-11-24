@@ -1,0 +1,78 @@
+{
+  "schema": "new-project.intent/v3",
+  "ticket": "ticket-489",
+  "summary": "Bind VALLM scan tickets to finding evidence",
+  "workstream": "application",
+  "classification": {
+    "kind": "BUG",
+    "priority": "P2",
+    "origin": "requested"
+  },
+  "allowedPaths": [
+    "project/ticket-489/**",
+    "TODO.md",
+    "project/TICKETS.md",
+    "src/koru/scan_artifacts.py",
+    "src/koru/scan_dedupe_policy.py",
+    "src/koru/scan_ticket_emission.py",
+    "tests/test_scan_artifacts.py"
+  ],
+  "forbiddenPaths": [
+    "project/ticket-*/user-*.md"
+  ],
+  "stacks": [],
+  "dependsOn": [],
+  "conflictsWith": [],
+  "integrationTicket": null,
+  "delivery": {
+    "targetBranch": "main",
+    "acceptedBaseSha": "a94dd4994379ac2bf4b527a8d9a1dcea65ba527f",
+    "outcome": "Persist evidence of VALLM findings before scan ticket allocation and restrict repair suggestions to verified source paths.",
+    "nonGoals": [
+      "Changing the VALLM report format or amending existing Prefact tickets."
+    ],
+    "complexity": "S",
+    "estimatedMinutes": 30,
+    "budgets": {
+      "maxImplementationFiles": 4,
+      "maxAffectedComponents": 1,
+      "maxPublicInterfaceChanges": 0,
+      "maxRuntimeDependencies": 0
+    },
+    "architecture": {
+      "status": "accepted",
+      "decision": "Reuse archive deduplication and local report hashes. Exclude regeneration metadata from the findings hash and keep the full artifact hash for verification.",
+      "components": [
+        {
+          "name": "VALLM scan",
+          "paths": [
+            "src/koru/scan_artifacts.py",
+            "src/koru/scan_dedupe_policy.py",
+            "src/koru/scan_ticket_emission.py",
+            "tests/test_scan_artifacts.py"
+          ]
+        }
+      ],
+      "interfaceChanges": [],
+      "responsibilityChanges": false,
+      "dataChanges": [],
+      "ui": {
+        "impact": "none",
+        "states": [],
+        "evidence": []
+      },
+      "rollback": "Revert the scan admission commit. Existing ticket evidence remains valid."
+    },
+    "runtimeDependencies": [],
+    "validation": [
+      {
+        "criterion": "AC-01",
+        "commands": [
+          "pytest -q tests/test_scan_artifacts.py tests/test_scan.py",
+          "./project/governance-check.sh"
+        ],
+        "evidence": "project/ticket-489/README.md"
+      }
+    ]
+  }
+}

@@ -6,6 +6,7 @@ report parsing from core scan collection and execution.
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 import re
@@ -1183,34 +1184,85 @@ def _scan_vallm_validation(project: Path) -> list[Suggestion]:
         return []
     vallm_path, rel = validation_artifact
     try:
-        text = vallm_path.read_text(encoding="utf-8", errors="ignore")
+        body = vallm_path.read_bytes()
     except OSError:
         return []
-    errors = 0
-    warnings = 0
-    err_match = re.search(r"(?m)^\s*ERRORS\[(?P<count>\d+)\]", text)
-    warn_match = re.search(r"(?m)^\s*WARNINGS\[(?P<count>\d+)\]", text)
-    if err_match:
-        errors = int(err_match.group("count"))
-    if warn_match:
-        warnings = int(warn_match.group("count"))
+    text = body.decode("utf-8", errors="replace")
+    counts = {kind: int(count) for kind, count in re.findall(r"(?m)^[ \t]*(ERRORS|WARNINGS)\[(\d+)\]", text)}
+    errors = counts.get("ERRORS", 0)
+    warnings = counts.get("WARNINGS", 0)
     if errors <= 0 and warnings < 10:
         return []
-    vallm_priority = "high" if errors > 0 else "normal"
+    findings = [
+        section.strip()
+        for section in re.split(r"(?m)(?=^[A-Z][A-Z_]*(?:\[|:))", text)
+        if section.startswith(("ERRORS[", "WARNINGS["))
+    ]
+    files = _vallm_source_files(project, vallm_path, findings)
+    artifact_hash = hashlib.sha256(body).hexdigest()
+    # Summary, date and unsupported-file counts are regeneration metadata.
+    findings_hash = hashlib.sha256("\n".join(sorted(findings or [text])).encode()).hexdigest()
+    next_step = (
+        "Review the indicated source files, then regenerate the validation report."
+        if files
+        else "Verify the reported findings against existing project files before proposing a repair."
+    )
     return [
         Suggestion(
             signal="vallm_validation",
             title="Repair VALLM validation findings",
             description=(
-                f"`{rel}` reports {errors} error(s) and {warnings} warning(s). "
-                "Fix the highest-impact validation failures first, then re-run "
-                "`vallm validate` / the project validation task and refresh the report."
+                f"`{rel}` reports {errors} error(s) and {warnings} warning(s). {next_step}"
             ),
-            priority=vallm_priority,
+            priority="high" if errors > 0 else "normal",
             labels=("vallm", "validation", "scan"),
-            files=(rel,),
+            files=files,
+            source_context={
+                "dedupe_key": f"vallm-validation:{rel}",
+                "evidence": {
+                    "schema": "koru.ticket_evidence.v1",
+                    "kind": "vallm_validation",
+                    "artifact": {"path": rel, "sha256": artifact_hash, "size_bytes": len(body)},
+                    "findings_sha256": findings_hash,
+                },
+            },
         ),
     ]
+
+
+def _vallm_source_files(project: Path, report: Path, findings: Sequence[str]) -> tuple[str, ...]:
+    root = project.resolve()
+    report = report.resolve()
+    ignored_roots = {".git", ".worktrees", ".subactor", ".planfile", ".vallm"}
+    files: dict[str, None] = {}
+    for section in findings:
+        for line in section.splitlines():
+            if not line.startswith("  ") or line.startswith("   "):
+                continue
+            try:
+                row = next(csv.reader([line[2:]], strict=True))
+                if len(row) != 2 or not re.fullmatch(r"\d+\.\d+", row[1]):
+                    continue
+                target = Path(row[0])
+                if (
+                    target.is_absolute()
+                    or ".." in target.parts
+                    or any(part in ignored_roots for part in target.parts)
+                    or _is_scan_artifact_rel(row[0])
+                ):
+                    continue
+                resolved = (root / target).resolve(strict=True)
+                relative = resolved.relative_to(root)
+                if (
+                    resolved != report
+                    and resolved.is_file()
+                    and not ignored_roots.intersection(relative.parts)
+                    and not _is_scan_artifact_rel(relative.as_posix())
+                ):
+                    files[relative.as_posix()] = None
+            except (OSError, ValueError, RuntimeError, csv.Error):
+                continue
+    return tuple(files)
 
 
 def _scan_structured_semcod_report(

@@ -70,6 +70,9 @@ def evidence_fingerprint(evidence: object) -> str | None:
         or not _SHA256_RE.fullmatch(sha256)
     ):
         return None
+    findings_hash = evidence.get("findings_sha256")
+    if kind == "vallm_validation" and isinstance(findings_hash, str) and _SHA256_RE.fullmatch(findings_hash):
+        sha256 = findings_hash
     canonical = json.dumps(
         {
             "schema": _EVIDENCE_SCHEMA,
