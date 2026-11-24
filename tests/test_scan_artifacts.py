@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import Mock
+
+import yaml
 
 from koru import scan as scan_module
 from koru import scan_artifacts
@@ -21,6 +25,8 @@ from koru.scan_artifacts import (
     _scan_vallm_validation,
     scan_semcod_quality_artifacts,
 )
+from koru.scan_dedupe_policy import existing_scan_history_keys, scan_duplicate_skip
+from koru.scan_ticket_emission import create_ticket
 
 
 class TestScanArtifacts(unittest.TestCase):
@@ -105,6 +111,66 @@ class TestScanArtifacts(unittest.TestCase):
             self.assertEqual(len(suggestions), 1)
             self.assertEqual(suggestions[0].signal, "vallm_validation")
             self.assertEqual(suggestions[0].priority, "high")
+            self.assertEqual(suggestions[0].files, ())
+            enqueue = Mock()
+            enqueue.return_value.reused = False
+            result = create_ticket(
+                p,
+                suggestions[0],
+                source="koru-scan",
+                runner=None,
+                create_nl_task=enqueue,
+                format_create_exception=str,
+                suggestion_dedupe_key=scan_module._suggestion_dedupe_key,
+                default_runner=Mock(),
+            )
+            self.assertTrue(result.ok)
+            self.assertEqual(enqueue.call_args.kwargs["scaffold"]["inputs"], {"expect_files_changed": False})
+
+    def test_vallm_finding_evidence_survives_report_regeneration_and_archival(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            report = project / "validation.toon.yaml"
+            (project / "src").mkdir()
+            (project / "src" / "a,b.py").touch()
+            content = (
+                "# vallm batch | 2026-10-19\nSUMMARY:\n  scanned: 10\n"
+                "ERRORS[3]{path,score}:\n"
+                '  "src/a,b.py",0.53\n'
+                "    issues[1]{rule,severity,message,line}:\n"
+                "      python.import.resolvable,error,module missing,5\n"
+                "  validation.toon.yaml,0.67\n"
+                "  missing.py,0.72\n"
+                "UNSUPPORTED[1]{bucket,count}:\n  other,3\n"
+            )
+            report.write_text(content, encoding="utf-8")
+            original, = _scan_vallm_validation(project)
+            self.assertEqual(original.files, ("src/a,b.py",))
+            evidence = original.source_context["evidence"]
+            self.assertEqual(evidence["artifact"]["sha256"], hashlib.sha256(report.read_bytes()).hexdigest())
+            sprints = project / ".planfile" / "sprints"
+            sprints.mkdir(parents=True)
+            (sprints / "history-vallm.yaml").write_text(
+                yaml.safe_dump({"sprint": {"tickets": [{
+                    "status": "blocked",
+                    "source": {"tool": "koru-scan", "context": original.source_context},
+                }]}}),
+                encoding="utf-8",
+            )
+            history = existing_scan_history_keys(project, source="koru-scan")
+            report.write_text(content.replace("2026-10-19", "2026-10-20").replace("scanned: 10", "scanned: 12"),
+                              encoding="utf-8")
+            replayed, = _scan_vallm_validation(project)
+            self.assertNotEqual(replayed.source_context["evidence"]["artifact"], evidence["artifact"])
+            decision = scan_duplicate_skip(
+                replayed, history, source="koru-scan", suggestion_dedupe_key=scan_module._suggestion_dedupe_key,
+            )
+            self.assertEqual(decision[0], "duplicate_history_evidence")
+            report.write_text(content.replace("module missing", "different module"), encoding="utf-8")
+            changed, = _scan_vallm_validation(project)
+            self.assertIsNone(scan_duplicate_skip(
+                changed, history, source="koru-scan", suggestion_dedupe_key=scan_module._suggestion_dedupe_key,
+            ))
 
     def test_scan_semcod_quality_artifacts_aggregated(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
